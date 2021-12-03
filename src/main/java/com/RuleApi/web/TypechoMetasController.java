@@ -1,0 +1,174 @@
+package com.RuleApi.web;
+
+import com.RuleApi.common.*;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.RuleApi.entity.*;
+import com.RuleApi.service.*;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * 控制层
+ * TypechoMetasController
+ * @author buxia97
+ * @date 2021/11/29
+ */
+@Component
+@Controller
+@RequestMapping(value = "/typechoMetas")
+public class TypechoMetasController {
+
+    @Autowired
+    TypechoMetasService service;
+
+    @Autowired
+    private TypechoRelationshipsService relationshipsService;
+
+    @Autowired
+    private TypechoContentsService contentsService;
+
+    @Autowired
+    private TypechoFieldsService fieldsService;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
+
+    @Value("${webinfo.contentCache}")
+    private Integer contentCache;
+
+
+    RedisHelp redisHelp =new RedisHelp();
+    ResultAll Result = new ResultAll();
+
+
+    /***
+     * 查询分类或标签下的文章
+     *
+     */
+    @RequestMapping(value = "/selectContents")
+    @ResponseBody
+    public String selectContents (@RequestParam(value = "searchParams", required = false) String  searchParams,
+                                  @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
+                                  @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit) {
+
+        TypechoRelationships query = new TypechoRelationships();
+        if (StringUtils.isNotBlank(searchParams)) {
+            JSONObject object = JSON.parseObject(searchParams);
+            object.remove("mid");
+            query = object.toJavaObject(TypechoRelationships.class);
+        }
+        List jsonList = new ArrayList();
+        List cacheList = redisHelp.getList("selectContents_"+page+"_"+limit+"_"+searchParams,redisTemplate);
+
+        try{
+            if(cacheList.size()>0){
+                jsonList = cacheList;
+            }else{
+                //首先查询typechoRelationships获取映射关系
+                PageList<TypechoRelationships> pageList = relationshipsService.selectPage(query, page, limit);
+                List<TypechoRelationships> list = pageList.getList();
+
+                for (int i = 0; i < list.size(); i++) {
+                    Integer cid = list.get(i).getCid();
+                    TypechoContents typechoContents = contentsService.selectByKey(cid);
+                    Map contentsInfo = JSONObject.parseObject(JSONObject.toJSONString(typechoContents), Map.class);
+                    //处理文章内容为简介
+                    String text = contentsInfo.get("text").toString();
+                    text=text.replaceAll("(\\\r\\\n|\\\r|\\\n|\\\n\\\r)", "");
+                    text=text.replaceAll("\\s*", "");
+                    text=text.replaceAll("</?[^>]+>", "");
+                    contentsInfo.put("text",text.length()>200 ? text.substring(0,200) : text);
+
+                    //加入自定义字段，分类和标签
+                    //加入自定义字段信息，这里取消注释即可开启，但是数据库查询会消耗性能
+                    List<TypechoFields> fields = fieldsService.selectByKey(cid);
+                    contentsInfo.put("fields",fields);
+
+                    List<TypechoRelationships> relationships = relationshipsService.selectByKey(cid);
+
+                    List metas = new ArrayList();
+                    List tags = new ArrayList();
+                    for (int j = 0; j < relationships.size(); j++) {
+                        Map info = JSONObject.parseObject(JSONObject.toJSONString(relationships.get(j)), Map.class);
+                        if(info!=null){
+                            String mid = info.get("mid").toString();
+
+                            TypechoMetas metasList  = service.selectByKey(mid);
+                            Map metasInfo = JSONObject.parseObject(JSONObject.toJSONString(metasList), Map.class);
+                            String type = metasInfo.get("type").toString();
+                            if(type.equals("category")){
+                                metas.add(metasInfo);
+                            }
+                            if(type.equals("tag")){
+                                tags.add(metasInfo);
+                            }
+                        }
+
+                    }
+
+                    contentsInfo.remove("password");
+                    contentsInfo.put("category",metas);
+                    contentsInfo.put("tag",tags);
+                    jsonList.add(contentsInfo);
+                    //存入redis
+                    redisHelp.setList("selectContents_"+page+"_"+limit+"_"+searchParams,jsonList,this.contentCache,redisTemplate);
+                }
+
+            }
+        }catch (Exception e){
+            if(cacheList.size()>0){
+                jsonList = cacheList;
+            }
+        }
+
+        JSONObject response = new JSONObject();
+        response.put("code" , 0);
+        response.put("msg"  , "");
+        response.put("data" , null != jsonList ? jsonList : new JSONArray());
+        response.put("count", jsonList.size());
+        return response.toString();
+    }
+
+
+    /***
+     * 查询分类和标签
+     * @param searchParams Bean对象JSON字符串
+     * @param page         页码
+     * @param limit        每页显示数量
+     */
+    @RequestMapping(value = "/metasList")
+    @ResponseBody
+    public String metasList (@RequestParam(value = "searchParams", required = false) String  searchParams,
+                            @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
+                            @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit) {
+        TypechoMetas query = new TypechoMetas();
+        if (StringUtils.isNotBlank(searchParams)) {
+            JSONObject object = JSON.parseObject(searchParams);
+            query = object.toJavaObject(TypechoMetas.class);
+        }
+
+        PageList<TypechoMetas> pageList = service.selectPage(query, page, limit);
+        JSONObject response = new JSONObject();
+        response.put("code" , 0);
+        response.put("msg"  , "");
+        response.put("data" , null != pageList.getList() ? pageList.getList() : new JSONArray());
+        response.put("count", pageList.getTotalCount());
+        return response.toString();
+    }
+
+}

@@ -1,0 +1,347 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.RuleApi.dao.TypechoCommentsDao">
+
+    <resultMap id="BaseResultMap" type="com.RuleApi.entity.TypechoComments" >
+        <result column="coid" property="coid" />
+        <result column="cid" property="cid" />
+        <result column="created" property="created" />
+        <result column="author" property="author" />
+        <result column="authorId" property="authorId" />
+        <result column="ownerId" property="ownerId" />
+        <result column="mail" property="mail" />
+        <result column="url" property="url" />
+        <result column="ip" property="ip" />
+        <result column="agent" property="agent" />
+        <result column="text" property="text" />
+        <result column="type" property="type" />
+        <result column="status" property="status" />
+        <result column="parent" property="parent" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        `coid`,
+        `cid`,
+        `created`,
+        `author`,
+        `authorId`,
+        `ownerId`,
+        `mail`,
+        `url`,
+        `ip`,
+        `agent`,
+        `text`,
+        `type`,
+        `status`,
+        `parent`
+    </sql>
+
+    <!-- 插入数据 -->
+    <insert id="insert" parameterType="com.RuleApi.entity.TypechoComments">
+        INSERT INTO typecho_comments
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test ='null != coid'>
+                `coid`,
+            </if>
+            <if test ='null != cid'>
+                `cid`,
+            </if>
+            <if test ='null != created'>
+                `created`,
+            </if>
+            <if test ='null != author'>
+                `author`,
+            </if>
+            <if test ='null != authorId'>
+                `authorId`,
+            </if>
+            <if test ='null != ownerId'>
+                `ownerId`,
+            </if>
+            <if test ='null != mail'>
+                `mail`,
+            </if>
+            <if test ='null != url'>
+                `url`,
+            </if>
+            <if test ='null != ip'>
+                `ip`,
+            </if>
+            <if test ='null != agent'>
+                `agent`,
+            </if>
+            <if test ='null != text'>
+                `text`,
+            </if>
+            <if test ='null != type'>
+                `type`,
+            </if>
+            <if test ='null != status'>
+                `status`,
+            </if>
+            <if test ='null != parent'>
+                `parent`
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test ='null != coid'>
+                #{coid},
+            </if>
+            <if test ='null != cid'>
+                #{cid},
+            </if>
+            <if test ='null != created'>
+                #{created},
+            </if>
+            <if test ='null != author'>
+                #{author},
+            </if>
+            <if test ='null != authorId'>
+                #{authorId},
+            </if>
+            <if test ='null != ownerId'>
+                #{ownerId},
+            </if>
+            <if test ='null != mail'>
+                #{mail},
+            </if>
+            <if test ='null != url'>
+                #{url},
+            </if>
+            <if test ='null != ip'>
+                #{ip},
+            </if>
+            <if test ='null != agent'>
+                #{agent},
+            </if>
+            <if test ='null != text'>
+                #{text},
+            </if>
+            <if test ='null != type'>
+                #{type},
+            </if>
+            <if test ='null != status'>
+                #{status},
+            </if>
+            <if test ='null != parent'>
+                #{parent}
+            </if>
+        </trim>
+    </insert>
+
+    <!-- 批量插入数据 -->
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO typecho_comments ( <include refid="Base_Column_List" /> ) VALUES
+        <foreach collection="list" item="curr" index="index" separator=",">
+            (
+                #{curr.coid},
+                #{curr.cid},
+                #{curr.created},
+                #{curr.author},
+                #{curr.authorId},
+                #{curr.ownerId},
+                #{curr.mail},
+                #{curr.url},
+                #{curr.ip},
+                #{curr.agent},
+                #{curr.text},
+                #{curr.type},
+                #{curr.status},
+                #{curr.parent}
+            )
+        </foreach>
+    </insert>
+
+    <!-- 更新 -->
+    <update id="update" parameterType="com.RuleApi.entity.TypechoComments">
+        UPDATE typecho_comments
+        <set>
+            <if test ='null != cid'>`cid` = #{cid},</if>
+            <if test ='null != created'>`created` = #{created},</if>
+            <if test ='null != author'>`author` = #{author},</if>
+            <if test ='null != authorId'>`authorId` = #{authorId},</if>
+            <if test ='null != ownerId'>`ownerId` = #{ownerId},</if>
+            <if test ='null != mail'>`mail` = #{mail},</if>
+            <if test ='null != url'>`url` = #{url},</if>
+            <if test ='null != ip'>`ip` = #{ip},</if>
+            <if test ='null != agent'>`agent` = #{agent},</if>
+            <if test ='null != text'>`text` = #{text},</if>
+            <if test ='null != type'>`type` = #{type},</if>
+            <if test ='null != status'>`status` = #{status},</if>
+            <if test ='null != parent'>`parent` = #{parent}</if>
+        </set>
+        WHERE `coid` = #{coid}
+    </update>
+
+    <!-- 删除 -->
+    <delete id="delete">
+        DELETE FROM typecho_comments
+        WHERE `coid` = #{key}
+    </delete>
+
+    <!-- 批量删除 -->
+    <delete id="batchDelete" parameterType = "java.util.List">
+        DELETE FROM typecho_comments WHERE coid IN
+        <foreach collection="list"  item="item" open="(" separator="," close=")"  >
+            #{item}
+        </foreach>
+    </delete>
+
+    <!-- 主键查询 -->
+    <select id="selectByKey" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM typecho_comments
+        WHERE `coid` = #{key}
+    </select>
+
+    <!-- 条件查询 -->
+    <select id="selectList" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM typecho_comments
+        <where>
+            <if test ='null != coid'>
+                and `coid` = #{coid}
+            </if>
+            <if test ='null != cid'>
+                and `cid` = #{cid}
+            </if>
+            <if test ='null != created'>
+                and `created` = #{created}
+            </if>
+            <if test ='null != author'>
+                and `author` = #{author}
+            </if>
+            <if test ='null != authorId'>
+                and `authorId` = #{authorId}
+            </if>
+            <if test ='null != ownerId'>
+                and `ownerId` = #{ownerId}
+            </if>
+            <if test ='null != mail'>
+                and `mail` = #{mail}
+            </if>
+            <if test ='null != url'>
+                and `url` = #{url}
+            </if>
+            <if test ='null != ip'>
+                and `ip` = #{ip}
+            </if>
+            <if test ='null != agent'>
+                and `agent` = #{agent}
+            </if>
+            <if test ='null != text'>
+                and `text` = #{text}
+            </if>
+            <if test ='null != type'>
+                and `type` = #{type}
+            </if>
+            <if test ='null != status'>
+                and `status` = #{status}
+            </if>
+            <if test ='null != parent'>
+                and `parent` = #{parent}
+            </if>
+        </where>
+    </select>
+
+    <!-- 分页条件查询 -->
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM typecho_comments
+        <where>
+            <if test ='null != typechoComments.coid'>
+                and `coid` = #{typechoComments.coid}
+            </if>
+            <if test ='null != typechoComments.cid'>
+                and `cid` = #{typechoComments.cid}
+            </if>
+            <if test ='null != typechoComments.created'>
+                and `created` = #{typechoComments.created}
+            </if>
+            <if test ='null != typechoComments.author'>
+                and `author` = #{typechoComments.author}
+            </if>
+            <if test ='null != typechoComments.authorId'>
+                and `authorId` = #{typechoComments.authorId}
+            </if>
+            <if test ='null != typechoComments.ownerId'>
+                and `ownerId` = #{typechoComments.ownerId}
+            </if>
+            <if test ='null != typechoComments.mail'>
+                and `mail` = #{typechoComments.mail}
+            </if>
+            <if test ='null != typechoComments.url'>
+                and `url` = #{typechoComments.url}
+            </if>
+            <if test ='null != typechoComments.ip'>
+                and `ip` = #{typechoComments.ip}
+            </if>
+            <if test ='null != typechoComments.agent'>
+                and `agent` = #{typechoComments.agent}
+            </if>
+            <if test ='null != typechoComments.text'>
+                and `text` = #{typechoComments.text}
+            </if>
+            <if test ='null != typechoComments.type'>
+                and `type` = #{typechoComments.type}
+            </if>
+            <if test ='null != typechoComments.status'>
+                and `status` = #{typechoComments.status}
+            </if>
+            <if test ='null != typechoComments.parent'>
+                and `parent` = #{typechoComments.parent}
+            </if>
+        </where>
+        limit #{page,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
+    </select>
+
+    <!-- 总量查询 -->
+    <select id="total" resultType="java.lang.Integer">
+        SELECT count(*) FROM typecho_comments
+        <where>
+            <if test ='null != coid'>
+                and `coid` = #{coid}
+            </if>
+            <if test ='null != cid'>
+                and `cid` = #{cid}
+            </if>
+            <if test ='null != created'>
+                and `created` = #{created}
+            </if>
+            <if test ='null != author'>
+                and `author` = #{author}
+            </if>
+            <if test ='null != authorId'>
+                and `authorId` = #{authorId}
+            </if>
+            <if test ='null != ownerId'>
+                and `ownerId` = #{ownerId}
+            </if>
+            <if test ='null != mail'>
+                and `mail` = #{mail}
+            </if>
+            <if test ='null != url'>
+                and `url` = #{url}
+            </if>
+            <if test ='null != ip'>
+                and `ip` = #{ip}
+            </if>
+            <if test ='null != agent'>
+                and `agent` = #{agent}
+            </if>
+            <if test ='null != text'>
+                and `text` = #{text}
+            </if>
+            <if test ='null != type'>
+                and `type` = #{type}
+            </if>
+            <if test ='null != status'>
+                and `status` = #{status}
+            </if>
+            <if test ='null != parent'>
+                and `parent` = #{parent}
+            </if>
+        </where>
+    </select>
+</mapper>

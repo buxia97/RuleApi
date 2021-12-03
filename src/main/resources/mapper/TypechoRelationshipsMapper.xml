@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.RuleApi.dao.TypechoRelationshipsDao">
+
+    <resultMap id="BaseResultMap" type="com.RuleApi.entity.TypechoRelationships" >
+        <result column="cid" property="cid" />
+        <result column="mid" property="mid" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        `cid`,
+        `mid`
+    </sql>
+
+    <!-- 插入数据 -->
+    <insert id="insert" parameterType="com.RuleApi.entity.TypechoRelationships">
+        INSERT INTO typecho_relationships
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test ='null != cid'>
+                `cid`,
+            </if>
+            <if test ='null != mid'>
+                `mid`
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test ='null != cid'>
+                #{cid},
+            </if>
+            <if test ='null != mid'>
+                #{mid}
+            </if>
+        </trim>
+    </insert>
+
+    <!-- 批量插入数据 -->
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO typecho_relationships ( <include refid="Base_Column_List" /> ) VALUES
+        <foreach collection="list" item="curr" index="index" separator=",">
+            (
+                #{curr.cid},
+                #{curr.mid}
+            )
+        </foreach>
+    </insert>
+
+    <!-- 更新 -->
+    <update id="update" parameterType="com.RuleApi.entity.TypechoRelationships">
+        UPDATE typecho_relationships
+        <set>
+            <if test ='null != mid'>`mid` = #{mid}</if>
+        </set>
+        WHERE `cid` = #{cid}
+    </update>
+
+    <!-- 删除 -->
+    <delete id="delete">
+        DELETE FROM typecho_relationships
+        WHERE `cid` = #{key}
+    </delete>
+
+    <!-- 批量删除 -->
+    <delete id="batchDelete" parameterType = "java.util.List">
+        DELETE FROM typecho_relationships WHERE cid IN
+        <foreach collection="list"  item="item" open="(" separator="," close=")"  >
+            #{item}
+        </foreach>
+    </delete>
+
+    <!-- 主键查询 -->
+    <select id="selectByKey" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM typecho_relationships
+        WHERE `cid` = #{key}
+    </select>
+
+    <!-- 条件查询 -->
+    <select id="selectList" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM typecho_relationships
+        <where>
+            <if test ='null != cid'>
+                and `cid` = #{cid}
+            </if>
+            <if test ='null != mid'>
+                and `mid` = #{mid}
+            </if>
+        </where>
+    </select>
+
+    <!-- 分页条件查询 -->
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM typecho_relationships
+        <where>
+            <if test ='null != typechoRelationships.cid'>
+                and `cid` = #{typechoRelationships.cid}
+            </if>
+            <if test ='null != typechoRelationships.mid'>
+                and `mid` = #{typechoRelationships.mid}
+            </if>
+        </where>
+        limit #{page,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
+    </select>
+
+    <!-- 总量查询 -->
+    <select id="total" resultType="java.lang.Integer">
+        SELECT count(*) FROM typecho_relationships
+        <where>
+            <if test ='null != cid'>
+                and `cid` = #{cid}
+            </if>
+            <if test ='null != mid'>
+                and `mid` = #{mid}
+            </if>
+        </where>
+    </select>
+</mapper>

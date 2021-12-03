@@ -1,0 +1,410 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.RuleApi.dao.TypechoContentsDao">
+
+    <resultMap id="BaseResultMap" type="com.RuleApi.entity.TypechoContents" >
+        <result column="cid" property="cid" />
+        <result column="title" property="title" />
+        <result column="slug" property="slug" />
+        <result column="created" property="created" />
+        <result column="modified" property="modified" />
+        <result column="text" property="text" />
+        <result column="order" property="orderKey" />
+        <result column="authorId" property="authorId" />
+        <result column="template" property="template" />
+        <result column="type" property="type" />
+        <result column="status" property="status" />
+        <result column="password" property="password" />
+        <result column="commentsNum" property="commentsNum" />
+        <result column="allowComment" property="allowComment" />
+        <result column="allowPing" property="allowPing" />
+        <result column="allowFeed" property="allowFeed" />
+        <result column="parent" property="parent" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        `cid`,
+        `title`,
+        `slug`,
+        `created`,
+        `modified`,
+        `text`,
+        `order`,
+        `authorId`,
+        `template`,
+        `type`,
+        `status`,
+        `password`,
+        `commentsNum`,
+        `allowComment`,
+        `allowPing`,
+        `allowFeed`,
+        `parent`
+    </sql>
+
+    <!-- 插入数据 -->
+    <insert id="insert" parameterType="com.RuleApi.entity.TypechoContents"  keyProperty="cid" useGeneratedKeys="true">
+        INSERT INTO typecho_contents
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test ='null != cid'>
+                `cid`,
+            </if>
+            <if test ='null != title'>
+                `title`,
+            </if>
+            <if test ='null != slug'>
+                `slug`,
+            </if>
+            <if test ='null != created'>
+                `created`,
+            </if>
+            <if test ='null != modified'>
+                `modified`,
+            </if>
+            <if test ='null != text'>
+                `text`,
+            </if>
+            <if test ='null != orderKey'>
+                `order`,
+            </if>
+            <if test ='null != authorId'>
+                `authorId`,
+            </if>
+            <if test ='null != template'>
+                `template`,
+            </if>
+            <if test ='null != type'>
+                `type`,
+            </if>
+            <if test ='null != status'>
+                `status`,
+            </if>
+            <if test ='null != password'>
+                `password`,
+            </if>
+            <if test ='null != commentsNum'>
+                `commentsNum`,
+            </if>
+            <if test ='null != allowComment'>
+                `allowComment`,
+            </if>
+            <if test ='null != allowPing'>
+                `allowPing`,
+            </if>
+            <if test ='null != allowFeed'>
+                `allowFeed`,
+            </if>
+            <if test ='null != parent'>
+                `parent`
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test ='null != cid'>
+                #{cid},
+            </if>
+            <if test ='null != title'>
+                #{title},
+            </if>
+            <if test ='null != slug'>
+                #{slug},
+            </if>
+            <if test ='null != created'>
+                #{created},
+            </if>
+            <if test ='null != modified'>
+                #{modified},
+            </if>
+            <if test ='null != text'>
+                #{text},
+            </if>
+            <if test ='null != orderKey'>
+                #{orderKey},
+            </if>
+            <if test ='null != authorId'>
+                #{authorId},
+            </if>
+            <if test ='null != template'>
+                #{template},
+            </if>
+            <if test ='null != type'>
+                #{type},
+            </if>
+            <if test ='null != status'>
+                #{status},
+            </if>
+            <if test ='null != password'>
+                #{password},
+            </if>
+            <if test ='null != commentsNum'>
+                #{commentsNum},
+            </if>
+            <if test ='null != allowComment'>
+                #{allowComment},
+            </if>
+            <if test ='null != allowPing'>
+                #{allowPing},
+            </if>
+            <if test ='null != allowFeed'>
+                #{allowFeed},
+            </if>
+            <if test ='null != parent'>
+                #{parent}
+            </if>
+        </trim>
+    </insert>
+
+    <!-- 批量插入数据 -->
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO typecho_contents ( <include refid="Base_Column_List" /> ) VALUES
+        <foreach collection="list" item="curr" index="index" separator=",">
+            (
+                #{curr.cid},
+                #{curr.title},
+                #{curr.slug},
+                #{curr.created},
+                #{curr.modified},
+                #{curr.text},
+                #{curr.orderKey},
+                #{curr.authorId},
+                #{curr.template},
+                #{curr.type},
+                #{curr.status},
+                #{curr.password},
+                #{curr.commentsNum},
+                #{curr.allowComment},
+                #{curr.allowPing},
+                #{curr.allowFeed},
+                #{curr.parent}
+            )
+        </foreach>
+    </insert>
+
+    <!-- 更新 -->
+    <update id="update" parameterType="com.RuleApi.entity.TypechoContents">
+        UPDATE typecho_contents
+        <set>
+            <if test ='null != title'>`title` = #{title},</if>
+            <if test ='null != slug'>`slug` = #{slug},</if>
+            <if test ='null != created'>`created` = #{created},</if>
+            <if test ='null != modified'>`modified` = #{modified},</if>
+            <if test ='null != text'>`text` = #{text},</if>
+            <if test ='null != orderKey'>`order` = #{orderKey},</if>
+            <if test ='null != authorId'>`authorId` = #{authorId},</if>
+            <if test ='null != template'>`template` = #{template},</if>
+            <if test ='null != type'>`type` = #{type},</if>
+            <if test ='null != status'>`status` = #{status},</if>
+            <if test ='null != password'>`password` = #{password},</if>
+            <if test ='null != commentsNum'>`commentsNum` = #{commentsNum},</if>
+            <if test ='null != allowComment'>`allowComment` = #{allowComment},</if>
+            <if test ='null != allowPing'>`allowPing` = #{allowPing},</if>
+            <if test ='null != allowFeed'>`allowFeed` = #{allowFeed},</if>
+            <if test ='null != parent'>`parent` = #{parent}</if>
+        </set>
+        WHERE `cid` = #{cid}
+    </update>
+
+    <!-- 删除 -->
+    <delete id="delete">
+        DELETE FROM typecho_contents
+        WHERE `cid` = #{key}
+    </delete>
+
+    <!-- 批量删除 -->
+    <delete id="batchDelete" parameterType = "java.util.List">
+        DELETE FROM typecho_contents WHERE cid IN
+        <foreach collection="list"  item="item" open="(" separator="," close=")"  >
+            #{item}
+        </foreach>
+    </delete>
+
+    <!-- 主键查询 -->
+    <select id="selectByKey" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM typecho_contents
+        WHERE `cid` = #{key}
+    </select>
+
+    <!-- 条件查询 -->
+    <select id="selectList" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM typecho_contents
+        <where>
+            <if test ='null != cid'>
+                and `cid` = #{cid}
+            </if>
+            <if test ='null != title'>
+                and `title` = #{title}
+            </if>
+            <if test ='null != slug'>
+                and `slug` = #{slug}
+            </if>
+            <if test ='null != created'>
+                and `created` = #{created}
+            </if>
+            <if test ='null != modified'>
+                and `modified` = #{modified}
+            </if>
+            <if test ='null != text'>
+                and `text` = #{text}
+            </if>
+            <if test ='null != orderKey'>
+                and `order` = #{orderKey}
+            </if>
+            <if test ='null != authorId'>
+                and `authorId` = #{authorId}
+            </if>
+            <if test ='null != template'>
+                and `template` = #{template}
+            </if>
+            <if test ='null != type'>
+                and `type` = #{type}
+            </if>
+            <if test ='null != status'>
+                and `status` = #{status}
+            </if>
+            <if test ='null != password'>
+                and `password` = #{password}
+            </if>
+            <if test ='null != commentsNum'>
+                and `commentsNum` = #{commentsNum}
+            </if>
+            <if test ='null != allowComment'>
+                and `allowComment` = #{allowComment}
+            </if>
+            <if test ='null != allowPing'>
+                and `allowPing` = #{allowPing}
+            </if>
+            <if test ='null != allowFeed'>
+                and `allowFeed` = #{allowFeed}
+            </if>
+            <if test ='null != parent'>
+                and `parent` = #{parent}
+            </if>
+        </where>
+    </select>
+
+    <!-- 分页条件查询 -->
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM typecho_contents
+        <where>
+            <if test ='null != typechoContents.cid'>
+                and `cid` = #{typechoContents.cid}
+            </if>
+            <if test ='null != typechoContents.title'>
+                and `title` = #{typechoContents.title}
+            </if>
+            <if test ='null != typechoContents.slug'>
+                and `slug` = #{typechoContents.slug}
+            </if>
+            <if test ='null != typechoContents.created'>
+                and `created` = #{typechoContents.created}
+            </if>
+            <if test ='null != typechoContents.modified'>
+                and `modified` = #{typechoContents.modified}
+            </if>
+            <if test ='null != typechoContents.text'>
+                and `text` = #{typechoContents.text}
+            </if>
+            <if test ='null != typechoContents.orderKey'>
+                and `order` = #{typechoContents.orderKey}
+            </if>
+            <if test ='null != typechoContents.authorId'>
+                and `authorId` = #{typechoContents.authorId}
+            </if>
+            <if test ='null != typechoContents.template'>
+                and `template` = #{typechoContents.template}
+            </if>
+            <if test ='null != typechoContents.type'>
+                and `type` = #{typechoContents.type}
+            </if>
+            <if test ='null != typechoContents.status'>
+                and `status` = #{typechoContents.status}
+            </if>
+            <if test ='null != typechoContents.password'>
+                and `password` = #{typechoContents.password}
+            </if>
+            <if test ='null != typechoContents.commentsNum'>
+                and `commentsNum` = #{typechoContents.commentsNum}
+            </if>
+            <if test ='null != typechoContents.allowComment'>
+                and `allowComment` = #{typechoContents.allowComment}
+            </if>
+            <if test ='null != typechoContents.allowPing'>
+                and `allowPing` = #{typechoContents.allowPing}
+            </if>
+            <if test ='null != typechoContents.allowFeed'>
+                and `allowFeed` = #{typechoContents.allowFeed}
+            </if>
+            <if test ='null != typechoContents.parent'>
+                and `parent` = #{typechoContents.parent}
+            </if>
+            <if test ='"" != searchKey'>
+                and CONCAT(IFNULL(`title`,''),IFNULL(`text`,'')) LIKE '%${searchKey}%'
+            </if>
+        </where>
+        <if test ='"" != order'>
+            order by ${order} desc
+        </if>
+        limit ${page}, ${pageSize}
+    </select>
+
+    <!-- 总量查询 -->
+    <select id="total" resultType="java.lang.Integer">
+        SELECT count(*) FROM typecho_contents
+        <where>
+            <if test ='null != cid'>
+                and `cid` = #{cid}
+            </if>
+            <if test ='null != title'>
+                and `title` = #{title}
+            </if>
+            <if test ='null != slug'>
+                and `slug` = #{slug}
+            </if>
+            <if test ='null != created'>
+                and `created` = #{created}
+            </if>
+            <if test ='null != modified'>
+                and `modified` = #{modified}
+            </if>
+            <if test ='null != text'>
+                and `text` = #{text}
+            </if>
+            <if test ='null != orderKey'>
+                and `order` = #{orderKey}
+            </if>
+            <if test ='null != authorId'>
+                and `authorId` = #{authorId}
+            </if>
+            <if test ='null != template'>
+                and `template` = #{template}
+            </if>
+            <if test ='null != type'>
+                and `type` = #{type}
+            </if>
+            <if test ='null != status'>
+                and `status` = #{status}
+            </if>
+            <if test ='null != password'>
+                and `password` = #{password}
+            </if>
+            <if test ='null != commentsNum'>
+                and `commentsNum` = #{commentsNum}
+            </if>
+            <if test ='null != allowComment'>
+                and `allowComment` = #{allowComment}
+            </if>
+            <if test ='null != allowPing'>
+                and `allowPing` = #{allowPing}
+            </if>
+            <if test ='null != allowFeed'>
+                and `allowFeed` = #{allowFeed}
+            </if>
+            <if test ='null != parent'>
+                and `parent` = #{parent}
+            </if>
+        </where>
+    </select>
+</mapper>

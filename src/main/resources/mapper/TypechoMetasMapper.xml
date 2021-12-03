@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.RuleApi.dao.TypechoMetasDao">
+
+    <resultMap id="BaseResultMap" type="com.RuleApi.entity.TypechoMetas" >
+        <result column="mid" property="mid" />
+        <result column="name" property="name" />
+        <result column="slug" property="slug" />
+        <result column="type" property="type" />
+        <result column="description" property="description" />
+        <result column="count" property="count" />
+        <result column="order" property="orderKey" />
+        <result column="parent" property="parent" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        `mid`,
+        `name`,
+        `slug`,
+        `type`,
+        `description`,
+        `count`,
+        `order`,
+        `parent`
+    </sql>
+
+    <!-- 插入数据 -->
+    <insert id="insert" parameterType="com.RuleApi.entity.TypechoMetas">
+        INSERT INTO typecho_metas
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test ='null != mid'>
+                `mid`,
+            </if>
+            <if test ='null != name'>
+                `name`,
+            </if>
+            <if test ='null != slug'>
+                `slug`,
+            </if>
+            <if test ='null != type'>
+                `type`,
+            </if>
+            <if test ='null != description'>
+                `description`,
+            </if>
+            <if test ='null != count'>
+                `count`,
+            </if>
+            <if test ='null != orderKey'>
+                `order`,
+            </if>
+            <if test ='null != parent'>
+                `parent`
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test ='null != mid'>
+                #{mid},
+            </if>
+            <if test ='null != name'>
+                #{name},
+            </if>
+            <if test ='null != slug'>
+                #{slug},
+            </if>
+            <if test ='null != type'>
+                #{type},
+            </if>
+            <if test ='null != description'>
+                #{description},
+            </if>
+            <if test ='null != count'>
+                #{count},
+            </if>
+            <if test ='null != orderKey'>
+                #{orderKey},
+            </if>
+            <if test ='null != parent'>
+                #{parent}
+            </if>
+        </trim>
+    </insert>
+
+    <!-- 批量插入数据 -->
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO typecho_metas ( <include refid="Base_Column_List" /> ) VALUES
+        <foreach collection="list" item="curr" index="index" separator=",">
+            (
+                #{curr.mid},
+                #{curr.name},
+                #{curr.slug},
+                #{curr.type},
+                #{curr.description},
+                #{curr.count},
+                #{curr.orderKey},
+                #{curr.parent}
+            )
+        </foreach>
+    </insert>
+
+    <!-- 更新 -->
+    <update id="update" parameterType="com.RuleApi.entity.TypechoMetas">
+        UPDATE typecho_metas
+        <set>
+            <if test ='null != name'>`name` = #{name},</if>
+            <if test ='null != slug'>`slug` = #{slug},</if>
+            <if test ='null != type'>`type` = #{type},</if>
+            <if test ='null != description'>`description` = #{description},</if>
+            <if test ='null != count'>`count` = #{count},</if>
+            <if test ='null != orderKey'>`order` = #{orderKey},</if>
+            <if test ='null != parent'>`parent` = #{parent}</if>
+        </set>
+        WHERE `mid` = #{mid}
+    </update>
+
+    <!-- 删除 -->
+    <delete id="delete">
+        DELETE FROM typecho_metas
+        WHERE `mid` = #{key}
+    </delete>
+
+    <!-- 批量删除 -->
+    <delete id="batchDelete" parameterType = "java.util.List">
+        DELETE FROM typecho_metas WHERE mid IN
+        <foreach collection="list"  item="item" open="(" separator="," close=")"  >
+            #{item}
+        </foreach>
+    </delete>
+
+    <!-- 主键查询 -->
+    <select id="selectByKey" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM typecho_metas
+        WHERE `mid` = #{key}
+    </select>
+
+    <!-- 条件查询 -->
+    <select id="selectList" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM typecho_metas
+        <where>
+            <if test ='null != mid'>
+                and `mid` = #{mid}
+            </if>
+            <if test ='null != name'>
+                and `name` = #{name}
+            </if>
+            <if test ='null != slug'>
+                and `slug` = #{slug}
+            </if>
+            <if test ='null != type'>
+                and `type` = #{type}
+            </if>
+            <if test ='null != description'>
+                and `description` = #{description}
+            </if>
+            <if test ='null != count'>
+                and `count` = #{count}
+            </if>
+            <if test ='null != orderKey'>
+                and `order` = #{orderKey}
+            </if>
+            <if test ='null != parent'>
+                and `parent` = #{parent}
+            </if>
+        </where>
+    </select>
+
+    <!-- 分页条件查询 -->
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM typecho_metas
+        <where>
+            <if test ='null != typechoMetas.mid'>
+                and `mid` = #{typechoMetas.mid}
+            </if>
+            <if test ='null != typechoMetas.name'>
+                and `name` = #{typechoMetas.name}
+            </if>
+            <if test ='null != typechoMetas.slug'>
+                and `slug` = #{typechoMetas.slug}
+            </if>
+            <if test ='null != typechoMetas.type'>
+                and `type` = #{typechoMetas.type}
+            </if>
+            <if test ='null != typechoMetas.description'>
+                and `description` = #{typechoMetas.description}
+            </if>
+            <if test ='null != typechoMetas.count'>
+                and `count` = #{typechoMetas.count}
+            </if>
+            <if test ='null != typechoMetas.orderKey'>
+                and `order` = #{typechoMetas.orderKey}
+            </if>
+            <if test ='null != typechoMetas.parent'>
+                and `parent` = #{typechoMetas.parent}
+            </if>
+        </where>
+        limit #{page,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
+    </select>
+
+    <!-- 总量查询 -->
+    <select id="total" resultType="java.lang.Integer">
+        SELECT count(*) FROM typecho_metas
+        <where>
+            <if test ='null != mid'>
+                and `mid` = #{mid}
+            </if>
+            <if test ='null != name'>
+                and `name` = #{name}
+            </if>
+            <if test ='null != slug'>
+                and `slug` = #{slug}
+            </if>
+            <if test ='null != type'>
+                and `type` = #{type}
+            </if>
+            <if test ='null != description'>
+                and `description` = #{description}
+            </if>
+            <if test ='null != count'>
+                and `count` = #{count}
+            </if>
+            <if test ='null != orderKey'>
+                and `order` = #{orderKey}
+            </if>
+            <if test ='null != parent'>
+                and `parent` = #{parent}
+            </if>
+        </where>
+    </select>
+</mapper>

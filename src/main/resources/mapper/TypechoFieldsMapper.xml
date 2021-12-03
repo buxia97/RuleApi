@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.RuleApi.dao.TypechoFieldsDao">
+
+    <resultMap id="BaseResultMap" type="com.RuleApi.entity.TypechoFields" >
+        <result column="cid" property="cid" />
+        <result column="name" property="name" />
+        <result column="type" property="type" />
+        <result column="str_value" property="strValue" />
+        <result column="int_value" property="intValue" />
+        <result column="float_value" property="floatValue" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        `cid`,
+        `name`,
+        `type`,
+        `str_value`,
+        `int_value`,
+        `float_value`
+    </sql>
+
+    <!-- 插入数据 -->
+    <insert id="insert" parameterType="com.RuleApi.entity.TypechoFields">
+        INSERT INTO typecho_fields
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test ='null != cid'>
+                `cid`,
+            </if>
+            <if test ='null != name'>
+                `name`,
+            </if>
+            <if test ='null != type'>
+                `type`,
+            </if>
+            <if test ='null != strValue'>
+                `str_value`,
+            </if>
+            <if test ='null != intValue'>
+                `int_value`,
+            </if>
+            <if test ='null != floatValue'>
+                `float_value`
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test ='null != cid'>
+                #{cid},
+            </if>
+            <if test ='null != name'>
+                #{name},
+            </if>
+            <if test ='null != type'>
+                #{type},
+            </if>
+            <if test ='null != strValue'>
+                #{strValue},
+            </if>
+            <if test ='null != intValue'>
+                #{intValue},
+            </if>
+            <if test ='null != floatValue'>
+                #{floatValue}
+            </if>
+        </trim>
+    </insert>
+
+    <!-- 批量插入数据 -->
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO typecho_fields ( <include refid="Base_Column_List" /> ) VALUES
+        <foreach collection="list" item="curr" index="index" separator=",">
+            (
+                #{curr.cid},
+                #{curr.name},
+                #{curr.type},
+                #{curr.strValue},
+                #{curr.intValue},
+                #{curr.floatValue}
+            )
+        </foreach>
+    </insert>
+
+    <!-- 更新 -->
+    <update id="update" parameterType="com.RuleApi.entity.TypechoFields">
+        UPDATE typecho_fields
+        <set>
+            <if test ='null != name'>`name` = #{name},</if>
+            <if test ='null != type'>`type` = #{type},</if>
+            <if test ='null != strValue'>`str_value` = #{strValue},</if>
+            <if test ='null != intValue'>`int_value` = #{intValue},</if>
+            <if test ='null != floatValue'>`float_value` = #{floatValue}</if>
+        </set>
+        WHERE `cid` = #{cid}
+    </update>
+
+    <!-- 删除 -->
+    <delete id="delete">
+        DELETE FROM typecho_fields
+        WHERE `cid` = #{key}
+    </delete>
+
+    <!-- 批量删除 -->
+    <delete id="batchDelete" parameterType = "java.util.List">
+        DELETE FROM typecho_fields WHERE cid IN
+        <foreach collection="list"  item="item" open="(" separator="," close=")"  >
+            #{item}
+        </foreach>
+    </delete>
+
+    <!-- 主键查询 -->
+    <select id="selectByKey" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM typecho_fields
+        WHERE `cid` = #{key}
+    </select>
+
+    <!-- 条件查询 -->
+    <select id="selectList" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM typecho_fields
+        <where>
+            <if test ='null != cid'>
+                and `cid` = #{cid}
+            </if>
+            <if test ='null != name'>
+                and `name` = #{name}
+            </if>
+            <if test ='null != type'>
+                and `type` = #{type}
+            </if>
+            <if test ='null != strValue'>
+                and `str_value` = #{strValue}
+            </if>
+            <if test ='null != intValue'>
+                and `int_value` = #{intValue}
+            </if>
+            <if test ='null != floatValue'>
+                and `float_value` = #{floatValue}
+            </if>
+        </where>
+    </select>
+
+    <!-- 分页条件查询 -->
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM typecho_fields
+        <where>
+            <if test ='null != typechoFields.cid'>
+                and `cid` = #{typechoFields.cid}
+            </if>
+            <if test ='null != typechoFields.name'>
+                and `name` = #{typechoFields.name}
+            </if>
+            <if test ='null != typechoFields.type'>
+                and `type` = #{typechoFields.type}
+            </if>
+            <if test ='null != typechoFields.strValue'>
+                and `str_value` = #{typechoFields.strValue}
+            </if>
+            <if test ='null != typechoFields.intValue'>
+                and `int_value` = #{typechoFields.intValue}
+            </if>
+            <if test ='null != typechoFields.floatValue'>
+                and `float_value` = #{typechoFields.floatValue}
+            </if>
+        </where>
+        limit #{page,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
+    </select>
+
+    <!-- 总量查询 -->
+    <select id="total" resultType="java.lang.Integer">
+        SELECT count(*) FROM typecho_fields
+        <where>
+            <if test ='null != cid'>
+                and `cid` = #{cid}
+            </if>
+            <if test ='null != name'>
+                and `name` = #{name}
+            </if>
+            <if test ='null != type'>
+                and `type` = #{type}
+            </if>
+            <if test ='null != strValue'>
+                and `str_value` = #{strValue}
+            </if>
+            <if test ='null != intValue'>
+                and `int_value` = #{intValue}
+            </if>
+            <if test ='null != floatValue'>
+                and `float_value` = #{floatValue}
+            </if>
+        </where>
+    </select>
+</mapper>
