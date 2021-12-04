@@ -141,9 +141,18 @@ public class TypechoCommentsController {
             jsonToMap.put("status","approved");
 
             insert = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoComments.class);
+
+
         }
 
         int rows = service.insert(insert);
+
+        //更新文章评论数量
+        String cid = jsonToMap.get("cid").toString();
+        TypechoContents contents = contentsService.selectByKey(cid);
+        Integer cnum = contents.getCommentsNum()+1;
+        contents.setCommentsNum(cnum);
+        contentsService.update(contents);
 
         JSONObject response = new JSONObject();
         response.put("code" , rows);

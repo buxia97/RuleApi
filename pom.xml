@@ -14,7 +14,8 @@
     <artifactId>RuleApi</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <name>RuleApi</name>
-    <description>the Spring Boot Demo of Kerwin</description>
+    <description>RuleApi of buxia97</description>
+    <packaging>jar</packaging>
 
     <properties>
         <java.version>1.8</java.version>

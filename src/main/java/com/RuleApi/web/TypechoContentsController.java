@@ -65,10 +65,6 @@ public class TypechoContentsController {
     /**
      * 查询文章详情
      *
-     * {
-     *   "key":1
-     * }
-     * @return
      */
     @RequestMapping(value = "/contentsInfo")
     @ResponseBody
@@ -251,11 +247,11 @@ public class TypechoContentsController {
             //生成typecho数据库格式的创建时间戳
             Long date = System.currentTimeMillis();
             String userTime = String.valueOf(date).substring(0,10);
-            //验证文章类型
-            String type = jsonToMap.get("type").toString();
-            if(!type.equals("page")&&!type.equals("post")){
-                return Result.getResultJson(0,"请传入正确的文章类型",null);
-            }
+            //验证文章类型(只允许post)
+//            String type = jsonToMap.get("type").toString();
+//            if(!type.equals("page")&&!type.equals("post")){
+//                return Result.getResultJson(0,"请传入正确的文章类型",null);
+//            }
             //获取参数中的分类和标签
             category = jsonToMap.get("category").toString();
             tag = jsonToMap.get("tag").toString();
@@ -263,11 +259,16 @@ public class TypechoContentsController {
             //写入创建时间和作者
             jsonToMap.put("created",userTime);
             jsonToMap.put("authorId",uid);
+            //文章默认待审核
+            jsonToMap.put("status","waiting");
             //部分字段不允许定义
+            jsonToMap.put("type","post");
             jsonToMap.put("commentsNum",0);
             jsonToMap.put("allowPing",1);
             jsonToMap.put("allowFeed",1);
             jsonToMap.put("allowComment",1);
+            jsonToMap.put("orderKey",0);
+            jsonToMap.put("parent",0);
             jsonToMap.remove("password");
             insert = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoContents.class);
 
@@ -336,12 +337,12 @@ public class TypechoContentsController {
             Long date = System.currentTimeMillis();
             String userTime = String.valueOf(date).substring(0,10);
             jsonToMap.put("modified",userTime);
-            //验证文章类型
-            String type = jsonToMap.get("type").toString();
-            if(!type.equals("page")&&!type.equals("post")){
-                return Result.getResultJson(0,"请传入正确的文章类型",null);
-            }
-            //获取参数中的分类和标签
+            //验证文章类型(废除，普通用户无这个权限)
+//            String type = jsonToMap.get("type").toString();
+//            if(!type.equals("page")&&!type.equals("post")){
+//                return Result.getResultJson(0,"请传入正确的文章类型",null);
+//            }
+            //获取参数中的分类和标签（暂时不允许定义）
             category = jsonToMap.get("category").toString();
             tag = jsonToMap.get("tag").toString();
 
@@ -352,14 +353,21 @@ public class TypechoContentsController {
             jsonToMap.remove("allowFeed");
             jsonToMap.remove("allowComment");
             jsonToMap.remove("password");
+            jsonToMap.remove("orderKey");
+            jsonToMap.remove("parent");
+            jsonToMap.remove("status");
+            jsonToMap.remove("type");
             update = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoContents.class);
         }
 
         int rows = service.update(update);
         //处理标签和分类
         Integer cid = Integer.parseInt(jsonToMap.get("cid").toString());
+        //删除原本的分类标签映射，反正都会更新，那就一起更新
+        relationshipsService.delete(cid);
+
         //文章添加完成后，再处理分类和标签，只有文章能设置标签和分类
-        if(rows > 0&&jsonToMap.get("type").toString().equals("post")){
+        if(rows > 0){
             if(category!=""){
                 TypechoRelationships toCategory = new TypechoRelationships();
                 Integer mid = Integer.parseInt(category);
