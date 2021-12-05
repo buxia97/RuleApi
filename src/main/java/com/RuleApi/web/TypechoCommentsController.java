@@ -68,6 +68,8 @@ public class TypechoCommentsController {
 
         if (StringUtils.isNotBlank(searchParams)) {
             JSONObject object = JSON.parseObject(searchParams);
+            //只查询开放状态评论
+            object.put("status","approved");
             query = object.toJavaObject(TypechoComments.class);
         }
         List jsonList = new ArrayList();
@@ -84,6 +86,7 @@ public class TypechoCommentsController {
                     TypechoContents contentsInfo = contentsService.selectByKey(cid);
                     json.put("contenTitle",contentsInfo.getTitle());
                     jsonList.add(json);
+                    redisHelp.delete("contensList_"+page+"_"+limit+"_"+searchParams,redisTemplate);
                     redisHelp.setList("contensList_"+page+"_"+limit+"_"+searchParams,jsonList,this.CommentCache,redisTemplate);
                 }
             }
@@ -95,7 +98,7 @@ public class TypechoCommentsController {
 
 
         JSONObject response = new JSONObject();
-        response.put("code" , 0);
+        response.put("code" , 1);
         response.put("msg"  , "");
         response.put("data" , null != jsonList ? jsonList : new JSONArray());
         response.put("count", jsonList.size());
@@ -155,7 +158,8 @@ public class TypechoCommentsController {
         contentsService.update(contents);
 
         JSONObject response = new JSONObject();
-        response.put("code" , rows);
+        response.put("code" ,rows > 0 ? 1: 0 );
+        response.put("data" , rows);
         response.put("msg"  , rows > 0 ? "发布成功" : "发布失败");
         return response.toString();
     }

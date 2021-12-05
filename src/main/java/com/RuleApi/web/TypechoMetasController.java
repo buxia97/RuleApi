@@ -54,7 +54,7 @@ public class TypechoMetasController {
 
     RedisHelp redisHelp =new RedisHelp();
     ResultAll Result = new ResultAll();
-
+    baseFull baseFull = new baseFull();
 
     /***
      * 查询分类或标签下的文章
@@ -69,8 +69,8 @@ public class TypechoMetasController {
         TypechoRelationships query = new TypechoRelationships();
         if (StringUtils.isNotBlank(searchParams)) {
             JSONObject object = JSON.parseObject(searchParams);
-            object.remove("mid");
-            query = object.toJavaObject(TypechoRelationships.class);
+            Integer mid = Integer.parseInt(object.get("mid").toString());
+            query.setMid(mid);
         }
         List jsonList = new ArrayList();
         List cacheList = redisHelp.getList("selectContents_"+page+"_"+limit+"_"+searchParams,redisTemplate);
@@ -88,12 +88,16 @@ public class TypechoMetasController {
                     TypechoContents typechoContents = contentsService.selectByKey(cid);
                     Map contentsInfo = JSONObject.parseObject(JSONObject.toJSONString(typechoContents), Map.class);
                     //处理文章内容为简介
+
                     String text = contentsInfo.get("text").toString();
+                    List imgList = baseFull.getImageSrc(text);
                     text=text.replaceAll("(\\\r\\\n|\\\r|\\\n|\\\n\\\r)", "");
                     text=text.replaceAll("\\s*", "");
                     text=text.replaceAll("</?[^>]+>", "");
+                    //去掉文章开头的图片插入
+                    text=text.replaceAll("((!\\[)[\\s\\S]+?(\\]\\[)[\\s\\S]+?(\\]))+?","");
                     contentsInfo.put("text",text.length()>200 ? text.substring(0,200) : text);
-
+                    contentsInfo.put("images",imgList);
                     //加入自定义字段，分类和标签
                     //加入自定义字段信息，这里取消注释即可开启，但是数据库查询会消耗性能
                     List<TypechoFields> fields = fieldsService.selectByKey(cid);
@@ -126,6 +130,7 @@ public class TypechoMetasController {
                     contentsInfo.put("tag",tags);
                     jsonList.add(contentsInfo);
                     //存入redis
+                    redisHelp.delete("selectContents_"+page+"_"+limit+"_"+searchParams,redisTemplate);
                     redisHelp.setList("selectContents_"+page+"_"+limit+"_"+searchParams,jsonList,this.contentCache,redisTemplate);
                 }
 
@@ -137,7 +142,7 @@ public class TypechoMetasController {
         }
 
         JSONObject response = new JSONObject();
-        response.put("code" , 0);
+        response.put("code" , 1);
         response.put("msg"  , "");
         response.put("data" , null != jsonList ? jsonList : new JSONArray());
         response.put("count", jsonList.size());
@@ -164,7 +169,7 @@ public class TypechoMetasController {
 
         PageList<TypechoMetas> pageList = service.selectPage(query, page, limit);
         JSONObject response = new JSONObject();
-        response.put("code" , 0);
+        response.put("code" , 1);
         response.put("msg"  , "");
         response.put("data" , null != pageList.getList() ? pageList.getList() : new JSONArray());
         response.put("count", pageList.getTotalCount());

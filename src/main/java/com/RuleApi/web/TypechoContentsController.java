@@ -81,6 +81,7 @@ public class TypechoContentsController {
                     return Result.getResultJson(0,"该文章不存在",null);
                 }
                 String text = typechoContents.getText();
+                List imgList = baseFull.getImageSrc(text);
                 if(isMd==1){
                     //如果isMd等于1，则输出解析后的md代码
                     Parser parser = Parser.builder().build();
@@ -116,6 +117,7 @@ public class TypechoContentsController {
 
                 //转为map，再加入字段
                 contensjson.remove("password");
+                contensjson.put("images",imgList);
                 contensjson.put("fields",fields);
                 contensjson.put("category",metas);
                 contensjson.put("tag",tags);
@@ -127,7 +129,7 @@ public class TypechoContentsController {
                 contensjson = cacheInfo;
             }
         }
-
+        redisHelp.delete("contentsInfo_"+key,redisTemplate);
         redisHelp.setKey("contentsInfo_"+key,contensjson,this.contentInfoCache,redisTemplate);
         JSONObject concentInfo = JSON.parseObject(JSON.toJSONString(contensjson),JSONObject.class);
         return concentInfo.toJSONString();
@@ -151,7 +153,10 @@ public class TypechoContentsController {
         TypechoContents query = new TypechoContents();
         if (StringUtils.isNotBlank(searchParams)) {
             JSONObject object = JSON.parseObject(searchParams);
+            //只查询开放状态文章
+            object.put("status","publish");
             query = object.toJavaObject(TypechoContents.class);
+
         }
         List jsonList = new ArrayList();
 
@@ -194,9 +199,13 @@ public class TypechoContentsController {
 
 
                     String text = json.get("text").toString();
+                    List imgList = baseFull.getImageSrc(text);
                     text=text.replaceAll("(\\\r\\\n|\\\r|\\\n|\\\n\\\r)", "");
                     text=text.replaceAll("\\s*", "");
                     text=text.replaceAll("</?[^>]+>", "");
+                    //去掉文章开头的图片插入
+                    text=text.replaceAll("((!\\[)[\\s\\S]+?(\\]\\[)[\\s\\S]+?(\\]))+?","");
+                    json.put("images",imgList);
                     json.put("text",text.length()>200 ? text.substring(0,200) : text);
                     json.put("category",metas);
                     json.put("tag",tags);
@@ -205,6 +214,7 @@ public class TypechoContentsController {
 
 
                     jsonList.add(json);
+                    redisHelp.delete("contensList_"+page+"_"+limit+"_"+searchParams+"_"+order+"_"+searchKey,redisTemplate);
                     redisHelp.setList("contensList_"+page+"_"+limit+"_"+searchParams+"_"+order+"_"+searchKey,jsonList,this.contentCache,redisTemplate);
                 }
             }
@@ -217,7 +227,7 @@ public class TypechoContentsController {
         }
 
         JSONObject response = new JSONObject();
-        response.put("code" , 0);
+        response.put("code" , 1);
         response.put("msg"  , "");
         response.put("data" , null != jsonList ? jsonList : new JSONArray());
         response.put("count", jsonList.size());
@@ -311,7 +321,8 @@ public class TypechoContentsController {
             }
         }
         JSONObject response = new JSONObject();
-        response.put("code" , rows);
+        response.put("code" ,rows > 0 ? 1: 0 );
+        response.put("data" , rows);
         response.put("msg"  , rows > 0 ? "添加成功" : "添加失败");
         return response.toString();
     }
@@ -402,7 +413,8 @@ public class TypechoContentsController {
 
 
         JSONObject response = new JSONObject();
-        response.put("code" , rows);
+        response.put("code" ,rows > 0 ? 1: 0 );
+        response.put("data" , rows);
         response.put("msg"  , rows > 0 ? "修改成功" : "修改失败");
         return response.toString();
     }
@@ -427,7 +439,8 @@ public class TypechoContentsController {
         //删除与分类的映射
         int st = relationshipsService.delete(key);
         JSONObject response = new JSONObject();
-        response.put("code" , rows);
+        response.put("code" ,rows > 0 ? 1: 0 );
+        response.put("data" , rows);
         response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
         return response.toString();
     }

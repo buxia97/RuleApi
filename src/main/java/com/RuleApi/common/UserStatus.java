@@ -9,8 +9,6 @@ public class UserStatus {
     RedisHelp redisHelp =new RedisHelp();
     //默认用户状态，0未登录，1登陆状态，2禁用
     private Integer status = 1;
-    //token超时时间
-    private Integer time = 86400000;
     public Integer getStatus(String token, RedisTemplate redisTemplate){
         if(token==null){
             this.status=0;
@@ -22,14 +20,14 @@ public class UserStatus {
             this.status=0;
             return this.status;
         }
-        Long date = System.currentTimeMillis();
-        Long old_date = (Long) redisHelp.getValue("userInfo"+token,"time",redisTemplate);
-        //判断是否超时，则清除上次数据
-        if(date - old_date > this.time){
-            redisHelp.delete("userInfo"+token,redisTemplate);
-            this.status=0;
-            return this.status;
-        }
+//        Long date = System.currentTimeMillis();
+//        Long old_date = (Long) redisHelp.getValue("userInfo"+token,"time",redisTemplate);
+//        //清除上次数据
+//        if(date - old_date > this.time){
+//            redisHelp.delete("userInfo"+token,redisTemplate);
+//            this.status=0;
+//            return this.status;
+//        }
         this.status=1;
         return this.status;
     }

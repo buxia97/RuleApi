@@ -94,6 +94,7 @@ public class TypechoUsersController {
                     jsonList.add(json);
 
                 }
+                redisHelp.delete("userList_"+page+"_"+limit+"_"+searchParams+"_"+order+"_"+searchKey,redisTemplate);
                 redisHelp.setList("userList_"+page+"_"+limit+"_"+searchParams+"_"+order+"_"+searchKey,jsonList,this.userCache,redisTemplate);
             }
         }catch (Exception e){
@@ -106,7 +107,7 @@ public class TypechoUsersController {
 
         JSONObject response = new JSONObject();
 
-        response.put("code" , 0);
+        response.put("code" , 1);
         response.put("msg"  , "");
         response.put("data" , null != jsonList ? jsonList : new JSONArray());
         response.put("count", jsonList.size());
@@ -134,7 +135,7 @@ public class TypechoUsersController {
      */
     @RequestMapping(value = "/userLogin")
     @ResponseBody
-    public String userLogin(@RequestParam(value = "params", required = false) String  params,HttpServletRequest request) {
+    public String userLogin(@RequestParam(value = "params", required = false) String  params) {
         Map jsonToMap =null;
         String oldpw = null;
         if (StringUtils.isNotBlank(params)) {
@@ -194,7 +195,7 @@ public class TypechoUsersController {
             redisHelp.setKey("userInfo"+jsonToMap.get("name").toString()+DigestUtils.md5DigestAsHex(Token.getBytes()),jsonToMap,this.usertime,redisTemplate);
 
         }
-        return Result.getResultJson(0,rows.size() > 0 ? "登录成功" : "用户名或密码错误",jsonToMap);
+        return Result.getResultJson(rows.size() > 0 ? 1 : 0,rows.size() > 0 ? "登录成功" : "用户名或密码错误",jsonToMap);
     }
     /***
      * 注册用户
@@ -240,7 +241,8 @@ public class TypechoUsersController {
         int rows = service.insert(insert);
 
         JSONObject response = new JSONObject();
-        response.put("code" , rows);
+        response.put("code" ,rows > 0 ? 1: 0 );
+        response.put("data" , rows);
         response.put("msg"  , rows > 0 ? "添加成功" : "添加失败");
         return response.toString();
     }
@@ -335,7 +337,8 @@ public class TypechoUsersController {
         int rows = service.update(update);
 
         JSONObject response = new JSONObject();
-        response.put("code" , rows);
+        response.put("code" ,rows > 0 ? 1: 0 );
+        response.put("data" , rows);
         response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
         return response.toString();
     }
@@ -388,7 +391,8 @@ public class TypechoUsersController {
         }
 
         JSONObject response = new JSONObject();
-        response.put("code" , rows);
+        response.put("code" ,rows > 0 ? 1: 0 );
+        response.put("data" , rows);
         response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
         return response.toString();
     }
@@ -410,7 +414,8 @@ public class TypechoUsersController {
         }
         int rows = service.delete(key);
         JSONObject response = new JSONObject();
-        response.put("code" , rows);
+        response.put("code" ,rows > 0 ? 1: 0 );
+        response.put("data" , rows);
         response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
         return response.toString();
     }
