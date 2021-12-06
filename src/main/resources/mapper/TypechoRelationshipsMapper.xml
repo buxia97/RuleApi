@@ -6,11 +6,51 @@
     <resultMap id="BaseResultMap" type="com.RuleApi.entity.TypechoRelationships" >
         <result column="cid" property="cid" />
         <result column="mid" property="mid" />
+        <collection property="contents" ofType="com.RuleApi.entity.TypechoContents">
+            <id  property="cid"  column="cid" />
+            <result column="title" property="title" />
+            <result column="slug" property="slug" />
+            <result column="created" property="created" />
+            <result column="modified" property="modified" />
+            <result column="text" property="text" />
+            <result column="order" property="orderKey" />
+            <result column="authorId" property="authorId" />
+            <result column="template" property="template" />
+            <result column="type" property="type" />
+            <result column="status" property="status" />
+            <result column="password" property="password" />
+            <result column="commentsNum" property="commentsNum" />
+            <result column="allowComment" property="allowComment" />
+            <result column="allowPing" property="allowPing" />
+            <result column="allowFeed" property="allowFeed" />
+            <result column="parent" property="parent" />
+        </collection>
     </resultMap>
 
     <sql id="Base_Column_List">
         `cid`,
         `mid`
+    </sql>
+
+    <sql id="Contents_Column_List">
+        r.cid,
+        r.mid,
+        c.title,
+        c.slug,
+        c.created,
+        c.modified,
+        c.text,
+        c.order,
+        c.authorId,
+        c.template,
+        c.type,
+        c.status,
+        c.password,
+        c.commentsNum,
+        c.allowComment,
+        c.allowPing,
+        c.allowFeed,
+        c.parent
     </sql>
 
     <!-- 插入数据 -->
@@ -74,7 +114,10 @@
         FROM typecho_relationships
         WHERE `cid` = #{key}
     </select>
-
+<!--    <select id="selectByKey" resultMap="BaseResultMap">-->
+<!--        SELECT r.cid,r.mid FROM typecho_relationships r inner join typecho_contents c on r.cid = c.cid-->
+<!--        WHERE r.cid = #{key}-->
+<!--    </select>-->
     <!-- 条件查询 -->
     <select id="selectList" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List" />
@@ -91,16 +134,17 @@
 
     <!-- 分页条件查询 -->
     <select id="selectPage" resultMap="BaseResultMap">
-        SELECT <include refid="Base_Column_List" />
-        FROM typecho_relationships
+        SELECT <include refid="Contents_Column_List" />
+        FROM typecho_relationships r inner join typecho_contents c on r.cid = c.cid
         <where>
             <if test ='null != typechoRelationships.cid'>
-                and `cid` = #{typechoRelationships.cid}
+                and r.cid = #{typechoRelationships.cid}
             </if>
             <if test ='null != typechoRelationships.mid'>
-                and `mid` = #{typechoRelationships.mid}
+                and r.mid = #{typechoRelationships.mid}
             </if>
-            order by cid desc
+            and c.status = "publish"
+            order by r.cid desc
         </where>
         limit #{page,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
     </select>

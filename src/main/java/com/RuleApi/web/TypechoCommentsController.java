@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
+import org.springframework.util.DigestUtils;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -49,6 +50,9 @@ public class TypechoCommentsController {
     @Value("${webinfo.CommentCache}")
     private Integer CommentCache;
 
+    @Value("${webinfo.avatar}")
+    private String avatar;
+
     RedisHelp redisHelp =new RedisHelp();
     ResultAll Result = new ResultAll();
     UserStatus UStatus = new UserStatus();
@@ -84,6 +88,24 @@ public class TypechoCommentsController {
                     Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
                     String cid = json.get("cid").toString();
                     TypechoContents contentsInfo = contentsService.selectByKey(cid);
+                    //如果存在上级评论
+                    Map<String, String> parentComments = new HashMap<String, String>();
+                    if(Integer.parseInt(json.get("parent").toString())>0){
+                        String coid = json.get("parent").toString();
+                        TypechoComments parent = service.selectByKey(coid);
+                        if(parent.getStatus().equals("approved")){
+                            parentComments.put("author",parent.getAuthor());
+                            parentComments.put("text",parent.getText());
+                            parentComments.put("created",JSONObject.toJSONString(parent.getCreated()));
+
+                        }
+                    }
+                    if(json.get("mail")!=null){
+                        json.put("avatar",this.avatar+ DigestUtils.md5DigestAsHex(json.get("mail").toString().getBytes()));
+                    }else{
+                        json.put("avatar",this.avatar+"null");
+                    }
+                    json.put("parentComments",parentComments);
                     json.put("contenTitle",contentsInfo.getTitle());
                     jsonList.add(json);
                     redisHelp.delete("contensList_"+page+"_"+limit+"_"+searchParams,redisTemplate);
@@ -133,7 +155,12 @@ public class TypechoCommentsController {
             String created = String.valueOf(date).substring(0,10);
             //获取文章作者信息和填写其它不可定义的值
             jsonToMap.put("authorId",map.get("uid").toString());
-            jsonToMap.put("author",map.get("name").toString());
+            if(map.get("screenName").toString()!=""){
+                jsonToMap.put("author",map.get("screenName").toString());
+            }else{
+                jsonToMap.put("author",map.get("name").toString());
+            }
+
             jsonToMap.put("url",map.get("url").toString());
             jsonToMap.put("mail",map.get("mail").toString());
             jsonToMap.put("created",created);

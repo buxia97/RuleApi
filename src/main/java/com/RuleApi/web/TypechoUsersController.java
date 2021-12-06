@@ -54,6 +54,9 @@ public class TypechoUsersController {
     @Value("${webinfo.userCache}")
     private Integer userCache;
 
+    @Value("${webinfo.avatar}")
+    private String avatar;
+
 
     RedisHelp redisHelp =new RedisHelp();
     ResultAll Result = new ResultAll();
@@ -91,6 +94,13 @@ public class TypechoUsersController {
                 for (int i = 0; i < list.size(); i++) {
                     Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
                     json.remove("password");
+                    if(json.get("mail")!=null){
+                        json.put("avatar",this.avatar+DigestUtils.md5DigestAsHex(json.get("mail").toString().getBytes()));
+                    }else{
+                        json.put("avatar",this.avatar+"null");
+                    }
+
+
                     jsonList.add(json);
 
                 }
@@ -122,12 +132,23 @@ public class TypechoUsersController {
      */
     @RequestMapping(value = "/userInfo")
     @ResponseBody
-    public TypechoUsers userInfo(@RequestParam(value = "key", required = false) String  key) {
+    public String userInfo(@RequestParam(value = "key", required = false) String  key) {
         TypechoUsers info =  service.selectByKey(key);
         Map json = JSONObject.parseObject(JSONObject.toJSONString(info), Map.class);
         json.remove("password");
-        TypechoUsers userInfo = JSON.parseObject(JSON.toJSONString(json), TypechoUsers.class);
-        return userInfo;
+        if(json.get("mail")!=null){
+            json.put("avatar",this.avatar+DigestUtils.md5DigestAsHex(json.get("mail").toString().getBytes()));
+        }else{
+            json.put("avatar",this.avatar+"null");
+        }
+        //TypechoUsers userInfo = JSON.parseObject(JSON.toJSONString(json), TypechoUsers.class);
+        JSONObject response = new JSONObject();
+
+        response.put("code" , 1);
+        response.put("msg"  , "");
+        response.put("data" , json);
+
+        return response.toString();
     }
     /***
      * 登陆
@@ -172,7 +193,12 @@ public class TypechoUsersController {
             jsonToMap.put("group",rows.get(0).getGroupKey());
             jsonToMap.put("mail",rows.get(0).getMail());
             jsonToMap.put("url",rows.get(0).getUrl());
-
+            jsonToMap.put("screenName",rows.get(0).getScreenName());
+            if(rows.get(0).getMail()!=null){
+                jsonToMap.put("avatar",this.avatar+DigestUtils.md5DigestAsHex(rows.get(0).getMail().getBytes()));
+            }else{
+                jsonToMap.put("avatar",this.avatar+"null");
+            }
             //更新用户登录时间和第一次登陆时间（满足typecho要求）
             String userTime = String.valueOf(date).substring(0,10);
             Map updateLogin = new HashMap<String, String>();
@@ -235,6 +261,8 @@ public class TypechoUsersController {
             Long date = System.currentTimeMillis();
             String userTime = String.valueOf(date).substring(0,10);
             jsonToMap.put("created",userTime);
+            jsonToMap.put("group","contributor");
+
             jsonToMap.put("password", passwd.replaceAll("(\\\r\\\n|\\\r|\\\n|\\\n\\\r)", ""));
         }
         insert = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoUsers.class);

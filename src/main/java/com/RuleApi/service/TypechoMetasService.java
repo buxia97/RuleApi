@@ -51,7 +51,7 @@ public interface TypechoMetasService {
     /**
      * [分页条件查询]
      **/
-    PageList<TypechoMetas> selectPage (TypechoMetas typechoMetas, Integer page, Integer pageSize);
+    PageList<TypechoMetas> selectPage (TypechoMetas typechoMetas, Integer page, Integer pageSize,String order);
 
     /**
      * [总量查询]

@@ -85,55 +85,61 @@ public class TypechoMetasController {
 
                 for (int i = 0; i < list.size(); i++) {
                     Integer cid = list.get(i).getCid();
-                    TypechoContents typechoContents = contentsService.selectByKey(cid);
+                    TypechoContents typechoContents = list.get(i).getContents();
                     Map contentsInfo = JSONObject.parseObject(JSONObject.toJSONString(typechoContents), Map.class);
-                    //处理文章内容为简介
+                    //只有开放状态文章允许加入
+                    String status = contentsInfo.get("status").toString();
+                    if(status.equals("publish")){
+                        //处理文章内容为简介
 
-                    String text = contentsInfo.get("text").toString();
-                    List imgList = baseFull.getImageSrc(text);
-                    text=text.replaceAll("(\\\r\\\n|\\\r|\\\n|\\\n\\\r)", "");
-                    text=text.replaceAll("\\s*", "");
-                    text=text.replaceAll("</?[^>]+>", "");
-                    //去掉文章开头的图片插入
-                    text=text.replaceAll("((!\\[)[\\s\\S]+?(\\]\\[)[\\s\\S]+?(\\]))+?","");
-                    contentsInfo.put("text",text.length()>200 ? text.substring(0,200) : text);
-                    contentsInfo.put("images",imgList);
-                    //加入自定义字段，分类和标签
-                    //加入自定义字段信息，这里取消注释即可开启，但是数据库查询会消耗性能
-                    List<TypechoFields> fields = fieldsService.selectByKey(cid);
-                    contentsInfo.put("fields",fields);
+                        String text = contentsInfo.get("text").toString();
+                        List imgList = baseFull.getImageSrc(text);
+                        text=text.replaceAll("(\\\r\\\n|\\\r|\\\n|\\\n\\\r)", "");
+                        text=text.replaceAll("\\s*", "");
+                        text=text.replaceAll("</?[^>]+>", "");
+                        //去掉文章开头的图片插入
+                        text=text.replaceAll("((!\\[)[\\s\\S]+?(\\]\\[)[\\s\\S]+?(\\]))+?","");
+                        contentsInfo.put("text",text.length()>200 ? text.substring(0,200) : text);
+                        contentsInfo.put("images",imgList);
+                        //加入自定义字段，分类和标签
+                        //加入自定义字段信息，这里取消注释即可开启，但是数据库查询会消耗性能
+                        List<TypechoFields> fields = fieldsService.selectByKey(cid);
+                        contentsInfo.put("fields",fields);
 
-                    List<TypechoRelationships> relationships = relationshipsService.selectByKey(cid);
+                        List<TypechoRelationships> relationships = relationshipsService.selectByKey(cid);
 
-                    List metas = new ArrayList();
-                    List tags = new ArrayList();
-                    for (int j = 0; j < relationships.size(); j++) {
-                        Map info = JSONObject.parseObject(JSONObject.toJSONString(relationships.get(j)), Map.class);
-                        if(info!=null){
-                            String mid = info.get("mid").toString();
+                        List metas = new ArrayList();
+                        List tags = new ArrayList();
+                        for (int j = 0; j < relationships.size(); j++) {
+                            Map info = JSONObject.parseObject(JSONObject.toJSONString(relationships.get(j)), Map.class);
+                            if(info!=null){
+                                String mid = info.get("mid").toString();
 
-                            TypechoMetas metasList  = service.selectByKey(mid);
-                            Map metasInfo = JSONObject.parseObject(JSONObject.toJSONString(metasList), Map.class);
-                            String type = metasInfo.get("type").toString();
-                            if(type.equals("category")){
-                                metas.add(metasInfo);
+                                TypechoMetas metasList  = service.selectByKey(mid);
+                                Map metasInfo = JSONObject.parseObject(JSONObject.toJSONString(metasList), Map.class);
+                                String type = metasInfo.get("type").toString();
+                                if(type.equals("category")){
+                                    metas.add(metasInfo);
+                                }
+                                if(type.equals("tag")){
+                                    tags.add(metasInfo);
+                                }
                             }
-                            if(type.equals("tag")){
-                                tags.add(metasInfo);
-                            }
+
                         }
 
+                        contentsInfo.remove("password");
+                        contentsInfo.put("category",metas);
+                        contentsInfo.put("tag",tags);
+
+                        jsonList.add(contentsInfo);
                     }
 
-                    contentsInfo.remove("password");
-                    contentsInfo.put("category",metas);
-                    contentsInfo.put("tag",tags);
-                    jsonList.add(contentsInfo);
                     //存入redis
-                    redisHelp.delete("selectContents_"+page+"_"+limit+"_"+searchParams,redisTemplate);
-                    redisHelp.setList("selectContents_"+page+"_"+limit+"_"+searchParams,jsonList,this.contentCache,redisTemplate);
-                }
 
+                }
+                redisHelp.delete("selectContents_"+page+"_"+limit+"_"+searchParams,redisTemplate);
+                redisHelp.setList("selectContents_"+page+"_"+limit+"_"+searchParams,jsonList,this.contentCache,redisTemplate);
             }
         }catch (Exception e){
             if(cacheList.size()>0){
@@ -160,14 +166,15 @@ public class TypechoMetasController {
     @ResponseBody
     public String metasList (@RequestParam(value = "searchParams", required = false) String  searchParams,
                             @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
-                            @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit) {
+                            @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
+                             @RequestParam(value = "order"        , required = false, defaultValue = "") String order) {
         TypechoMetas query = new TypechoMetas();
         if (StringUtils.isNotBlank(searchParams)) {
             JSONObject object = JSON.parseObject(searchParams);
             query = object.toJavaObject(TypechoMetas.class);
         }
 
-        PageList<TypechoMetas> pageList = service.selectPage(query, page, limit);
+        PageList<TypechoMetas> pageList = service.selectPage(query, page, limit,order);
         JSONObject response = new JSONObject();
         response.put("code" , 1);
         response.put("msg"  , "");

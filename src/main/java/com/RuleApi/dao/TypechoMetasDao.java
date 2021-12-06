@@ -53,7 +53,7 @@ public interface TypechoMetasDao {
     /**
      * [分页条件查询]
      **/
-    List<TypechoMetas> selectPage (@Param("typechoMetas") TypechoMetas typechoMetas, @Param("page") Integer page, @Param("pageSize") Integer pageSize);
+    List<TypechoMetas> selectPage (@Param("typechoMetas") TypechoMetas typechoMetas, @Param("page") Integer page, @Param("pageSize") Integer pageSize, @Param("order") String order);
 
     /**
      * [总量查询]

@@ -39,4 +39,24 @@ public class baseFull {
         }
         return imageList;
     }
+    //获取markdown内图片引用
+    public List<String> getImageCode(String htmlCode) {
+        List<String> containedUrls = new ArrayList<String>();
+        String urlRegex = "((!\\[)[\\s\\S]+?(\\]\\[)[\\s\\S]+?(\\]))";
+        Pattern pattern = Pattern.compile(urlRegex, Pattern.CASE_INSENSITIVE);
+        Matcher urlMatcher = pattern.matcher(htmlCode);
+
+        while (urlMatcher.find())
+        {
+            containedUrls.add(htmlCode.substring(urlMatcher.start(0),
+                    urlMatcher.end(0)));
+        }
+        List<String> codeList = new ArrayList<String>();
+        for (int i = 0; i < containedUrls.size(); i++) {
+            String word = containedUrls.get(i);
+
+            codeList.add(word);
+        }
+        return codeList;
+    }
 }

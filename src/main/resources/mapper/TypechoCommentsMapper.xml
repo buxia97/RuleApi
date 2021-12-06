@@ -292,6 +292,7 @@
             <if test ='null != typechoComments.parent'>
                 and `parent` = #{typechoComments.parent}
             </if>
+            order by created desc
         </where>
         limit #{page,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
     </select>

@@ -23,4 +23,6 @@ public class TypechoRelationships implements Serializable {
      * mid  
      */
     private Integer mid;
+
+    private TypechoContents contents;
 }

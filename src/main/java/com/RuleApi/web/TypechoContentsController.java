@@ -81,7 +81,16 @@ public class TypechoContentsController {
                     return Result.getResultJson(0,"该文章不存在",null);
                 }
                 String text = typechoContents.getText();
+                //要做处理将typecho的图片插入格式变成markdown
                 List imgList = baseFull.getImageSrc(text);
+                List codeList = baseFull.getImageCode(text);
+                for(int c = 0; c < codeList.size(); c++){
+                    String codeimg = codeList.get(c).toString();
+                    String urlimg = imgList.get(c).toString();
+                    text=text.replace(codeimg,"![image"+c+"]("+urlimg+")");
+                }
+                text=text.replace("<!--markdown-->","");
+
                 if(isMd==1){
                     //如果isMd等于1，则输出解析后的md代码
                     Parser parser = Parser.builder().build();

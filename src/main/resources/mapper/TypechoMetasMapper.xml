@@ -197,6 +197,9 @@
                 and `parent` = #{typechoMetas.parent}
             </if>
         </where>
+        <if test ='"" != order'>
+            order by ${order} desc
+        </if>
         limit #{page,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
     </select>
 

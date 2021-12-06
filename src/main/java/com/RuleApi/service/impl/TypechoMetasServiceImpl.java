@@ -57,7 +57,7 @@ public class TypechoMetasServiceImpl implements TypechoMetasService {
 	}
 
 	@Override
-	public PageList<TypechoMetas> selectPage(TypechoMetas typechoMetas, Integer offset, Integer pageSize) {
+	public PageList<TypechoMetas> selectPage(TypechoMetas typechoMetas, Integer offset, Integer pageSize, String order) {
 		PageList<TypechoMetas> pageList = new PageList<>();
 
 		int total = this.total(typechoMetas);
@@ -71,7 +71,7 @@ public class TypechoMetasServiceImpl implements TypechoMetasService {
 
 		int page = (offset - 1) * pageSize;
 
-		List<TypechoMetas> list = dao.selectPage(typechoMetas, page, pageSize);
+		List<TypechoMetas> list = dao.selectPage(typechoMetas, page, pageSize,order);
 
 		pageList.setList(list);
 		pageList.setStartPageNo(offset);
