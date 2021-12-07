@@ -158,12 +158,21 @@ public class TypechoContentsController {
                             @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
                             @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
                             @RequestParam(value = "searchKey"        , required = false, defaultValue = "") String searchKey,
-                            @RequestParam(value = "order"        , required = false, defaultValue = "") String order) {
+                            @RequestParam(value = "order"        , required = false, defaultValue = "") String order,
+                               @RequestParam(value = "token"        , required = false, defaultValue = "") String token){
         TypechoContents query = new TypechoContents();
         if (StringUtils.isNotBlank(searchParams)) {
             JSONObject object = JSON.parseObject(searchParams);
-            //只查询开放状态文章
-            object.put("status","publish");
+            //如果不是登陆状态，那么只显示开放状态文章。如果是，则查询自己发布的文章
+            Integer uStatus = UStatus.getStatus(token,redisTemplate);
+            if(token==""||uStatus==0){
+
+                object.put("status","publish");
+            }else{
+                String aid = redisHelp.getValue("userInfo"+token,"uid",redisTemplate).toString();
+                object.put("authorId",aid);
+            }
+
             query = object.toJavaObject(TypechoContents.class);
 
         }
@@ -281,7 +290,7 @@ public class TypechoContentsController {
             //文章默认待审核
             jsonToMap.put("status","waiting");
             //部分字段不允许定义
-            jsonToMap.put("type","post");
+            //jsonToMap.put("type","post");
             jsonToMap.put("commentsNum",0);
             jsonToMap.put("allowPing",1);
             jsonToMap.put("allowFeed",1);
