@@ -71,7 +71,7 @@ public class TypechoContentsController {
     public String contentsInfo (@RequestParam(value = "key", required = false) String  key,@RequestParam(value = "isMd" , required = false, defaultValue = "0") Integer isMd) {
         TypechoContents typechoContents = null;
         Map contensjson = new HashMap<String, String>();
-        Map cacheInfo = redisHelp.getMapValue("contentsInfo_"+key,redisTemplate);
+        Map cacheInfo = redisHelp.getMapValue("contentsInfo_"+key+"_"+isMd,redisTemplate);
         try{
             if(cacheInfo.size()>0){
                 contensjson = cacheInfo;
@@ -84,13 +84,20 @@ public class TypechoContentsController {
                 //要做处理将typecho的图片插入格式变成markdown
                 List imgList = baseFull.getImageSrc(text);
                 List codeList = baseFull.getImageCode(text);
+
+
+
                 for(int c = 0; c < codeList.size(); c++){
                     String codeimg = codeList.get(c).toString();
                     String urlimg = imgList.get(c).toString();
                     text=text.replace(codeimg,"![image"+c+"]("+urlimg+")");
                 }
                 text=text.replace("<!--markdown-->","");
-
+                List codeImageMk = baseFull.getImageMk(text);
+                for(int d = 0; d < codeImageMk.size(); d++){
+                    String mk = codeImageMk.get(d).toString();
+                    text=text.replace(mk,"");
+                }
                 if(isMd==1){
                     //如果isMd等于1，则输出解析后的md代码
                     Parser parser = Parser.builder().build();
@@ -138,8 +145,8 @@ public class TypechoContentsController {
                 contensjson = cacheInfo;
             }
         }
-        redisHelp.delete("contentsInfo_"+key,redisTemplate);
-        redisHelp.setKey("contentsInfo_"+key,contensjson,this.contentInfoCache,redisTemplate);
+        redisHelp.delete("contentsInfo_"+key+"_"+isMd,redisTemplate);
+        redisHelp.setKey("contentsInfo_"+key+"_"+isMd,contensjson,this.contentInfoCache,redisTemplate);
         JSONObject concentInfo = JSON.parseObject(JSON.toJSONString(contensjson),JSONObject.class);
         return concentInfo.toJSONString();
         //return new ApiResult<>(ResultCode.success.getCode(), typechoContents, ResultCode.success.getDescr(), request.getRequestURI());
@@ -159,6 +166,7 @@ public class TypechoContentsController {
                             @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
                             @RequestParam(value = "searchKey"        , required = false, defaultValue = "") String searchKey,
                             @RequestParam(value = "order"        , required = false, defaultValue = "") String order,
+                               @RequestParam(value = "random"        , required = false, defaultValue = "0") Integer random,
                                @RequestParam(value = "token"        , required = false, defaultValue = "") String token){
         TypechoContents query = new TypechoContents();
         if (StringUtils.isNotBlank(searchParams)) {
@@ -178,13 +186,13 @@ public class TypechoContentsController {
         }
         List jsonList = new ArrayList();
 
-        List cacheList = redisHelp.getList("contensList_"+page+"_"+limit+"_"+searchParams+"_"+order+"_"+searchKey,redisTemplate);
+        List cacheList = redisHelp.getList("contensList_"+page+"_"+limit+"_"+searchParams+"_"+order+"_"+searchKey+"_"+random,redisTemplate);
         //监听异常，如果有异常则调用redis缓存中的list，如果无异常也调用redis，但是会更新数据
         try{
             if(cacheList.size()>0){
                 jsonList = cacheList;
             }else{
-                PageList<TypechoContents> pageList = service.selectPage(query, page, limit, searchKey,order);
+                PageList<TypechoContents> pageList = service.selectPage(query, page, limit, searchKey,order,random);
                 List list = pageList.getList();
                 for (int i = 0; i < list.size(); i++) {
                     Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
@@ -232,8 +240,8 @@ public class TypechoContentsController {
 
 
                     jsonList.add(json);
-                    redisHelp.delete("contensList_"+page+"_"+limit+"_"+searchParams+"_"+order+"_"+searchKey,redisTemplate);
-                    redisHelp.setList("contensList_"+page+"_"+limit+"_"+searchParams+"_"+order+"_"+searchKey,jsonList,this.contentCache,redisTemplate);
+                    redisHelp.delete("contensList_"+page+"_"+limit+"_"+searchParams+"_"+order+"_"+searchKey+"_"+random,redisTemplate);
+                    redisHelp.setList("contensList_"+page+"_"+limit+"_"+searchParams+"_"+order+"_"+searchKey+"_"+random,jsonList,this.contentCache,redisTemplate);
                 }
             }
         }catch (Exception e){
@@ -282,7 +290,10 @@ public class TypechoContentsController {
 //            }
             //获取参数中的分类和标签
             category = jsonToMap.get("category").toString();
-            tag = jsonToMap.get("tag").toString();
+            if(jsonToMap.get("tag")!=null){
+                tag = jsonToMap.get("tag").toString();
+            }
+
 
             //写入创建时间和作者
             jsonToMap.put("created",userTime);
@@ -290,7 +301,7 @@ public class TypechoContentsController {
             //文章默认待审核
             jsonToMap.put("status","waiting");
             //部分字段不允许定义
-            //jsonToMap.put("type","post");
+            jsonToMap.put("type","post");
             jsonToMap.put("commentsNum",0);
             jsonToMap.put("allowPing",1);
             jsonToMap.put("allowFeed",1);
@@ -373,7 +384,10 @@ public class TypechoContentsController {
 //            }
             //获取参数中的分类和标签（暂时不允许定义）
             category = jsonToMap.get("category").toString();
-            tag = jsonToMap.get("tag").toString();
+            if(jsonToMap.get("tag")!=null){
+                tag = jsonToMap.get("tag").toString();
+            }
+
 
             //部分字段不允许定义
             jsonToMap.remove("authorId");
@@ -384,8 +398,12 @@ public class TypechoContentsController {
             jsonToMap.remove("password");
             jsonToMap.remove("orderKey");
             jsonToMap.remove("parent");
-            jsonToMap.remove("status");
+            jsonToMap.remove("created");
+            jsonToMap.remove("slug");
+
             jsonToMap.remove("type");
+            //状态重新变成待审核
+            jsonToMap.put("status","waiting");
             update = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoContents.class);
         }
 

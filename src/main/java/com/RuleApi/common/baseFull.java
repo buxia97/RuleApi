@@ -34,7 +34,7 @@ public class baseFull {
         for (int i = 0; i < containedUrls.size(); i++) {
             String word = containedUrls.get(i);
             if(word.indexOf(".jpg") != -1||word.indexOf(".jpeg") != -1||word.indexOf(".png") != -1||word.indexOf(".bmp") != -1||word.indexOf(".gif") != -1){
-                imageList.add(word);
+                imageList.add(word.replaceAll("\\)",""));
             }
         }
         return imageList;
@@ -71,5 +71,27 @@ public class baseFull {
             return true;
         else
             return false;
+    }
+    //获取markdown引用的图片地址
+    public List<String> getImageMk(String htmlCode) {
+        List<String> containedUrls = new ArrayList<String>();
+       // String urlRegex = "\\\\[\\\\d\\\\]:\\\\s(https?|http):((//)|(\\\\\\\\))+[\\\\w\\\\d:#@%/;$()~_?\\\\+-=\\\\\\\\\\\\.&]*";
+        String urlRegex = "\\[\\d\\]:\\s(https?|http):((//)|(\\\\))+[\\w\\d:#@%/;$()~_?\\+-=\\\\\\.&]*";
+        Pattern pattern = Pattern.compile(urlRegex, Pattern.CASE_INSENSITIVE);
+        Matcher urlMatcher = pattern.matcher(htmlCode);
+
+        while (urlMatcher.find())
+        {
+            containedUrls.add(htmlCode.substring(urlMatcher.start(0),
+                    urlMatcher.end(0)));
+        }
+        List<String> imageCode = new ArrayList<String>();
+        for (int i = 0; i < containedUrls.size(); i++) {
+            String word = containedUrls.get(i);
+            if(word.indexOf(".jpg") != -1||word.indexOf(".jpeg") != -1||word.indexOf(".png") != -1||word.indexOf(".bmp") != -1||word.indexOf(".gif") != -1){
+                imageCode.add(word.replaceAll("\\)",""));
+            }
+        }
+        return imageCode;
     }
 }

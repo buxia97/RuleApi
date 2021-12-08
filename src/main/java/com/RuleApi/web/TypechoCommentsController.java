@@ -67,17 +67,34 @@ public class TypechoCommentsController {
     @ResponseBody
     public String commentsList (@RequestParam(value = "searchParams", required = false) String  searchParams,
                             @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
-                            @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit) {
+                            @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
+                                @RequestParam(value = "token"       , required = false, defaultValue = "") String token) {
         TypechoComments query = new TypechoComments();
-
+        Integer uStatus = UStatus.getStatus(token,redisTemplate);
+        Integer uid = 0;
         if (StringUtils.isNotBlank(searchParams)) {
             JSONObject object = JSON.parseObject(searchParams);
             //只查询开放状态评论
             object.put("status","approved");
+            //如果不是登陆状态，那么查询回复我的评论
+
+            if(uStatus!=0){
+                String aid = redisHelp.getValue("userInfo"+token,"uid",redisTemplate).toString();
+                uid = Integer.parseInt(aid);
+                object.put("ownerId",uid);
+            }else{
+                if(token!=""){
+                    return Result.getResultJson(0,"token验证失败或已超时",null);
+                }
+            }
             query = object.toJavaObject(TypechoComments.class);
         }
         List jsonList = new ArrayList();
         List cacheList = redisHelp.getList("searchParams_"+page+"_"+limit+"_"+searchParams,redisTemplate);
+        if(uStatus!=0){
+            cacheList = redisHelp.getList("searchParams_"+page+"_"+limit+"_"+searchParams+"_"+uid,redisTemplate);
+        }
+
         try{
             if(cacheList.size()>0){
                 jsonList = cacheList;
@@ -108,8 +125,14 @@ public class TypechoCommentsController {
                     json.put("parentComments",parentComments);
                     json.put("contenTitle",contentsInfo.getTitle());
                     jsonList.add(json);
-                    redisHelp.delete("contensList_"+page+"_"+limit+"_"+searchParams,redisTemplate);
-                    redisHelp.setList("contensList_"+page+"_"+limit+"_"+searchParams,jsonList,this.CommentCache,redisTemplate);
+                    if(uStatus!=0){
+                        redisHelp.delete("contensList_"+page+"_"+limit+"_"+searchParams+"_"+uid,redisTemplate);
+                        redisHelp.setList("contensList_"+page+"_"+limit+"_"+searchParams+"_"+uid,jsonList,this.CommentCache,redisTemplate);
+                    }else{
+                        redisHelp.delete("contensList_"+page+"_"+limit+"_"+searchParams,redisTemplate);
+                        redisHelp.setList("contensList_"+page+"_"+limit+"_"+searchParams,jsonList,this.CommentCache,redisTemplate);
+                    }
+
                 }
             }
         }catch (Exception e){
@@ -160,7 +183,13 @@ public class TypechoCommentsController {
             }else{
                 jsonToMap.put("author",map.get("name").toString());
             }
-
+            if(map.get("text")==null){
+                return Result.getResultJson(0,"评论不能为空",null);
+            }else{
+                if(map.get("text").toString().length()>1500){
+                    return Result.getResultJson(0,"超出最大评论长度",null);
+                }
+            }
             jsonToMap.put("url",map.get("url").toString());
             jsonToMap.put("mail",map.get("mail").toString());
             jsonToMap.put("created",created);

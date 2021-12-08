@@ -57,7 +57,7 @@ public class TypechoContentsServiceImpl implements TypechoContentsService {
 	}
 
 	@Override
-	public PageList<TypechoContents> selectPage(TypechoContents typechoContents, Integer offset, Integer pageSize ,String searchKey,String order) {
+	public PageList<TypechoContents> selectPage(TypechoContents typechoContents, Integer offset, Integer pageSize ,String searchKey,String order,Integer random) {
 		PageList<TypechoContents> pageList = new PageList<>();
 
 		int total = this.total(typechoContents);
@@ -71,7 +71,7 @@ public class TypechoContentsServiceImpl implements TypechoContentsService {
 
 		int page = (offset - 1) * pageSize;
 
-		List<TypechoContents> list = dao.selectPage(typechoContents, page, pageSize,searchKey,order);
+		List<TypechoContents> list = dao.selectPage(typechoContents, page, pageSize,searchKey,order,random);
 
 		pageList.setList(list);
 		pageList.setStartPageNo(offset);

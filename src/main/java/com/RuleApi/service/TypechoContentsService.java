@@ -51,7 +51,7 @@ public interface TypechoContentsService {
     /**
      * [分页条件查询]
      **/
-    PageList<TypechoContents> selectPage (TypechoContents typechoContents, Integer page, Integer pageSize,String searchKey,String order);
+    PageList<TypechoContents> selectPage (TypechoContents typechoContents, Integer page, Integer pageSize,String searchKey,String order,Integer random);
 
     /**
      * [总量查询]

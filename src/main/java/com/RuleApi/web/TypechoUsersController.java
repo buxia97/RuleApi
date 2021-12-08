@@ -434,6 +434,7 @@ public class TypechoUsersController {
     public String userEdit(@RequestParam(value = "params", required = false) String  params, @RequestParam(value = "token", required = false) String  token) {
         TypechoUsers update = null;
         Map jsonToMap =null;
+        String code = "";
         Integer uStatus = UStatus.getStatus(token,redisTemplate);
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
@@ -441,6 +442,23 @@ public class TypechoUsersController {
         if (StringUtils.isNotBlank(params)) {
 
             jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
+            //根据验证码判断是否要修改邮箱
+            if(jsonToMap.get("code")!=null&&jsonToMap.get("mail")!=null){
+
+                String email = jsonToMap.get("mail").toString();
+                if(redisHelp.getRedis("sendCode"+email,redisTemplate)!=null){
+                    String sendCode = redisHelp.getRedis("sendCode"+email,redisTemplate);
+                    code = jsonToMap.get("code").toString();
+                    if(!sendCode.equals(code)){
+                        return Result.getResultJson(0,"验证码不正确",null);
+                    }
+                }else{
+                    return Result.getResultJson(0,"验证码不正确或已失效",null);
+                }
+            }else{
+                jsonToMap.remove("mail");
+            }
+            jsonToMap.remove("code");
             if(jsonToMap.get("password")!=null){
                 String p = jsonToMap.get("password").toString();
                 String url = this.url+"/apiResult.php?pw="+p;
@@ -457,10 +475,12 @@ public class TypechoUsersController {
             if(isName.size() == 0){
                 return Result.getResultJson(0,"用户不存在",null);
             }
-            //部分字段不允许修改
+
+
             jsonToMap.remove("name");
             jsonToMap.remove("group");
-            jsonToMap.remove("mail");
+            //部分字段不允许修改
+
             jsonToMap.remove("created");
             jsonToMap.remove("activated");
             jsonToMap.remove("logged");
@@ -481,6 +501,22 @@ public class TypechoUsersController {
         response.put("data" , rows);
         response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
         return response.toString();
+    }
+    /***
+     * 用户状态检测
+     *
+     */
+    @RequestMapping(value = "/userStatus")
+    @ResponseBody
+    public String userStatus(@RequestParam(value = "token", required = false) String  token) {
+        TypechoUsers update = null;
+        Map jsonToMap =null;
+        Integer uStatus = UStatus.getStatus(token,redisTemplate);
+        if(uStatus==0){
+            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+        }else{
+            return Result.getResultJson(1,"状态正常",null);
+        }
     }
     /***
      * 用户删除

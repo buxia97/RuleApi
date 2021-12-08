@@ -53,7 +53,7 @@ public interface TypechoContentsDao {
     /**
      * [分页条件查询]
      **/
-    List<TypechoContents> selectPage (@Param("typechoContents") TypechoContents typechoContents, @Param("page") Integer page, @Param("pageSize") Integer pageSize, @Param("searchKey") String searchKey, @Param("order") String order);
+    List<TypechoContents> selectPage (@Param("typechoContents") TypechoContents typechoContents, @Param("page") Integer page, @Param("pageSize") Integer pageSize, @Param("searchKey") String searchKey, @Param("order") String order, @Param("random") Integer random);
 
     /**
      * [总量查询]
