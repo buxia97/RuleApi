@@ -78,14 +78,10 @@ public class TypechoCommentsController {
             object.put("status","approved");
             //如果不是登陆状态，那么查询回复我的评论
 
-            if(uStatus!=0){
+            if(uStatus!=0&&token!=""){
                 String aid = redisHelp.getValue("userInfo"+token,"uid",redisTemplate).toString();
                 uid = Integer.parseInt(aid);
                 object.put("ownerId",uid);
-            }else{
-                if(token!=""){
-                    return Result.getResultJson(0,"token验证失败或已超时",null);
-                }
             }
             query = object.toJavaObject(TypechoComments.class);
         }
@@ -183,10 +179,10 @@ public class TypechoCommentsController {
             }else{
                 jsonToMap.put("author",map.get("name").toString());
             }
-            if(map.get("text")==null){
+            if(jsonToMap.get("text")==null){
                 return Result.getResultJson(0,"评论不能为空",null);
             }else{
-                if(map.get("text").toString().length()>1500){
+                if(jsonToMap.get("text").toString().length()>1500){
                     return Result.getResultJson(0,"超出最大评论长度",null);
                 }
             }
@@ -197,7 +193,7 @@ public class TypechoCommentsController {
             jsonToMap.put("agent",agent);
             jsonToMap.put("ip",ip);
             //下面这个属性控制评论状态，默认是直接显示
-            jsonToMap.put("status","approved");
+            jsonToMap.put("status","waiting");
 
             insert = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoComments.class);
 
