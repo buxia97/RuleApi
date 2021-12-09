@@ -1,6 +1,7 @@
 package com.RuleApi.service.impl;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
@@ -18,7 +19,7 @@ import org.springframework.stereotype.Service;
 import com.RuleApi.service.MailService;
 
 @Service
-@PropertySource(value="classpath:mail.properties", encoding="utf-8", ignoreResourceNotFound = true)
+@PropertySource(value="classpath:application.properties", encoding="utf-8", ignoreResourceNotFound = true)
 public class MailServiceImpl implements MailService{
 
     private final Logger log = LoggerFactory.getLogger(MailServiceImpl.class);
@@ -35,7 +36,7 @@ public class MailServiceImpl implements MailService{
     @Value(value = "${spring.mail.username}")
     private String username;
 
-    @Value(value = "${email.from.name}")
+    @Value(value = "${webinfo.title}")
     private String emailFromName;
 
 
@@ -93,7 +94,7 @@ public class MailServiceImpl implements MailService{
 
         //设置发件人
         log.info("emailFromName = " + emailFromName);
-        //log.info("from = " + from);
+        //log.info("from = " + from);emailFromName
         mimeMessageHelper.setFrom(emailFromName + "<"+ username + ">");
 
         //设置邮件的主题

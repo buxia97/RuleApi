@@ -172,12 +172,12 @@ public class TypechoCommentsController {
             Map map =redisHelp.getMapValue("userInfo"+token,redisTemplate);
             Long date = System.currentTimeMillis();
             String created = String.valueOf(date).substring(0,10);
-            //获取文章作者信息和填写其它不可定义的值
+            //获取评论发布者信息和填写其它不可定义的值
             jsonToMap.put("authorId",map.get("uid").toString());
-            if(map.get("screenName").toString()!=""){
-                jsonToMap.put("author",map.get("screenName").toString());
-            }else{
+            if(map.get("screenName")==null){
                 jsonToMap.put("author",map.get("name").toString());
+            }else{
+                jsonToMap.put("author",map.get("screenName").toString());
             }
             if(jsonToMap.get("text")==null){
                 return Result.getResultJson(0,"评论不能为空",null);
@@ -186,28 +186,42 @@ public class TypechoCommentsController {
                     return Result.getResultJson(0,"超出最大评论长度",null);
                 }
             }
-            jsonToMap.put("url",map.get("url").toString());
-            jsonToMap.put("mail",map.get("mail").toString());
+            if(map.get("url")!=null){
+                jsonToMap.put("url",map.get("url").toString());
+            }
+            if(map.get("mail")!=null){
+                jsonToMap.put("mail",map.get("mail").toString());
+            }
+            //根据cid获取文章作者信息
+            String cid = jsonToMap.get("cid").toString();
+            TypechoContents contents = contentsService.selectByKey(cid);
+            jsonToMap.put("ownerId", contents.getAuthorId());
             jsonToMap.put("created",created);
             jsonToMap.put("type","comment");
             jsonToMap.put("agent",agent);
             jsonToMap.put("ip",ip);
-            //下面这个属性控制评论状态，默认是直接显示
-            jsonToMap.put("status","waiting");
+            //下面这个属性控制评论状态，判断是否已经有评论过审，有则直接通过审核，没有则默认审核状态
+
+            TypechoComments ucomment = new TypechoComments();
+            ucomment.setAuthorId(Integer.parseInt(map.get("uid").toString()));
+            ucomment.setStatus("approved");
+            List<TypechoComments> ucommentList = service.selectList(ucomment);
+            if(ucommentList.size()>0){
+                jsonToMap.put("status","approved");
+            }else{
+                jsonToMap.put("status","waiting");
+            }
 
             insert = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoComments.class);
-
-
+            //更新文章评论数量
+            Integer cnum = contents.getCommentsNum()+1;
+            contents.setCommentsNum(cnum);
+            contentsService.update(contents);
         }
 
         int rows = service.insert(insert);
 
-        //更新文章评论数量
-        String cid = jsonToMap.get("cid").toString();
-        TypechoContents contents = contentsService.selectByKey(cid);
-        Integer cnum = contents.getCommentsNum()+1;
-        contents.setCommentsNum(cnum);
-        contentsService.update(contents);
+
 
         JSONObject response = new JSONObject();
         response.put("code" ,rows > 0 ? 1: 0 );

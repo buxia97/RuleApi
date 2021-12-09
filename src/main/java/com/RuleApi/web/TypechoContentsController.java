@@ -57,10 +57,14 @@ public class TypechoContentsController {
     @Value("${webinfo.contentInfoCache}")
     private Integer contentInfoCache;
 
+    @Value("${webinfo.pexelsKey}")
+    private String pexelsKey;
+
     RedisHelp redisHelp =new RedisHelp();
     ResultAll Result = new ResultAll();
     baseFull baseFull = new baseFull();
     UserStatus UStatus = new UserStatus();
+    HttpClient HttpClient = new HttpClient();
 
     /**
      * 查询文章详情
@@ -479,5 +483,26 @@ public class TypechoContentsController {
         response.put("data" , rows);
         response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
         return response.toString();
+    }
+
+    /**
+     * pexels图库
+     * */
+    @RequestMapping(value = "/ImagePexels")
+    @ResponseBody
+    public String ImagePexels() {
+        String cacheImage = redisHelp.getRedis("ImagePexels",redisTemplate);
+        String imgList = "";
+        if(cacheImage==null){
+            imgList = HttpClient.doGetImg("https://api.pexels.com/v1/curated?per_page=40",this.pexelsKey);
+            if(imgList==null){
+                return Result.getResultJson(0,"图片接口异常",null);
+            }
+            redisHelp.delete("ImagePexels",redisTemplate);
+            redisHelp.setRedis("ImagePexels",imgList,43200,redisTemplate);
+        }else{
+            imgList = cacheImage;
+        }
+        return imgList;
     }
 }

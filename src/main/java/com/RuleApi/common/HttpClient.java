@@ -8,6 +8,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 
 public class HttpClient {
     public static String doGet(String httpurl) {
@@ -147,5 +148,29 @@ public class HttpClient {
             connection.disconnect();
         }
         return result;
+    }
+
+    public static String doGetImg(String httpurl,String pexelsKey) {
+        //HttpURLConnection神奇的无法传递Authorization，所以使用curl了
+        String[] cmds = {"curl", "-H", "Authorization:"+pexelsKey, "-H", "Cache-Control: max-age=0", "--compressed", httpurl};
+
+        ProcessBuilder process = new ProcessBuilder(cmds);
+        Process p;
+        try {
+            p = process.start();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
+            StringBuilder builder = new StringBuilder();
+            String line = null;
+            while ((line = reader.readLine()) != null) {
+                builder.append(line);
+                builder.append(System.getProperty("line.separator"));
+            }
+            return builder.toString();
+
+        } catch (IOException e) {
+            System.out.print("error");
+            e.printStackTrace();
+        }
+        return null;
     }
 }
