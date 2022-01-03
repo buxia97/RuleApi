@@ -89,7 +89,9 @@ public class TypechoMetasController {
                     Map contentsInfo = JSONObject.parseObject(JSONObject.toJSONString(typechoContents), Map.class);
                     //只有开放状态文章允许加入
                     String status = contentsInfo.get("status").toString();
-                    if(status.equals("publish")){
+                    String ctype = contentsInfo.get("type").toString();
+                    //应该判断类型和发布状态，而不是直接判断状态
+                    if(status.equals("publish")&&ctype.equals("post")){
                         //处理文章内容为简介
 
                         String text = contentsInfo.get("text").toString();

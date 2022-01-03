@@ -53,7 +53,7 @@ public interface TypechoCommentsDao {
     /**
      * [分页条件查询]
      **/
-    List<TypechoComments> selectPage (@Param("typechoComments") TypechoComments typechoComments, @Param("page") Integer page, @Param("pageSize") Integer pageSize);
+    List<TypechoComments> selectPage (@Param("typechoComments") TypechoComments typechoComments, @Param("page") Integer page, @Param("pageSize") Integer pageSize, @Param("searchKey") String searchKey);
 
     /**
      * [总量查询]

@@ -51,7 +51,7 @@ public interface TypechoCommentsService {
     /**
      * [分页条件查询]
      **/
-    PageList<TypechoComments> selectPage (TypechoComments typechoComments, Integer page, Integer pageSize);
+    PageList<TypechoComments> selectPage (TypechoComments typechoComments, Integer page, Integer pageSize,String searchKey);
 
     /**
      * [总量查询]

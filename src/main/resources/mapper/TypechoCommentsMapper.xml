@@ -292,6 +292,9 @@
             <if test ='null != typechoComments.parent'>
                 and `parent` = #{typechoComments.parent}
             </if>
+            <if test ='"" != searchKey'>
+                and CONCAT(IFNULL(`text`,'')) LIKE '%${searchKey}%'
+            </if>
             order by created desc
         </where>
         limit #{page,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
