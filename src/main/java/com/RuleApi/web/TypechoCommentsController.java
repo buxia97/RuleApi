@@ -56,6 +56,7 @@ public class TypechoCommentsController {
     RedisHelp redisHelp =new RedisHelp();
     ResultAll Result = new ResultAll();
     UserStatus UStatus = new UserStatus();
+    baseFull baseFull = new baseFull();
 
     /***
      * 查询评论
@@ -163,10 +164,12 @@ public class TypechoCommentsController {
         }
         TypechoComments insert = null;
         String  agent =  request.getHeader("User-Agent");
-        String  ip = request.getHeader("X-FORWARDED-FOR ");
-        if(ip==null){
-            ip = request.getRemoteAddr();
+        //部分机型在uniapp打包下长度大于200
+        if(agent.length()>200){
+            String[] arr = agent.split("uni-app");
+            agent = arr[0];
         }
+        String  ip = baseFull.getIpAddr(request);
         if (StringUtils.isNotBlank(params)) {
             jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
             //获取发布者信息

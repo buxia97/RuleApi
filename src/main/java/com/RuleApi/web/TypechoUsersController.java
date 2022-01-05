@@ -84,7 +84,7 @@ public class TypechoUsersController {
         }
         List jsonList = new ArrayList();
 
-        List cacheList = redisHelp.getList("userList_"+page+"_"+limit+"_"+searchParams+"_"+order,redisTemplate);
+        List cacheList = redisHelp.getList("userList_"+page+"_"+limit+"_"+searchParams+"_"+order+"_"+searchKey,redisTemplate);
         try{
             if(cacheList.size()>0){
                 jsonList = cacheList;
