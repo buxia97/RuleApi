@@ -99,5 +99,15 @@ public class TypechoContents implements Serializable {
      */
     private Integer parent;
 
+    /**
+     * views
+     */
+    private Integer views;
+
+    /**
+     * likes
+     */
+    private Integer likes;
+
 
 }

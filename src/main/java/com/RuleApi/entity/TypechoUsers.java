@@ -66,4 +66,14 @@ public class TypechoUsers implements Serializable {
      * authCode  
      */
     private String authCode;
+
+    /**
+     * introduce
+     */
+    private String introduce;
+
+    /**
+     * logged
+     */
+    private Integer account;
 }

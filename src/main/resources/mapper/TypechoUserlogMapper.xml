@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.RuleApi.dao.TypechoUserlogDao">
+
+    <resultMap id="BaseResultMap" type="com.RuleApi.entity.TypechoUserlog" >
+        <result column="id" property="id" />
+        <result column="uid" property="uid" />
+        <result column="cid" property="cid" />
+        <result column="type" property="type" />
+        <result column="num" property="num" />
+        <result column="created" property="created" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        `id`,
+        `uid`,
+        `cid`,
+        `type`,
+        `num`,
+        `created`
+    </sql>
+
+    <!-- 插入数据 -->
+    <insert id="insert" parameterType="com.RuleApi.entity.TypechoUserlog">
+        INSERT INTO typecho_userlog
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test ='null != id'>
+                `id`,
+            </if>
+            <if test ='null != uid'>
+                `uid`,
+            </if>
+            <if test ='null != cid'>
+                `cid`,
+            </if>
+            <if test ='null != type'>
+                `type`,
+            </if>
+            <if test ='null != num'>
+                `num`,
+            </if>
+            <if test ='null != created'>
+                `created`
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test ='null != id'>
+                #{id},
+            </if>
+            <if test ='null != uid'>
+                #{uid},
+            </if>
+            <if test ='null != cid'>
+                #{cid},
+            </if>
+            <if test ='null != type'>
+                #{type},
+            </if>
+            <if test ='null != num'>
+                #{num},
+            </if>
+            <if test ='null != created'>
+                #{created}
+            </if>
+        </trim>
+    </insert>
+
+    <!-- 批量插入数据 -->
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO typecho_userlog ( <include refid="Base_Column_List" /> ) VALUES
+        <foreach collection="list" item="curr" index="index" separator=",">
+            (
+                #{curr.id},
+                #{curr.uid},
+                #{curr.cid},
+                #{curr.type},
+                #{curr.num},
+                #{curr.created}
+            )
+        </foreach>
+    </insert>
+
+    <!-- 更新 -->
+    <update id="update" parameterType="com.RuleApi.entity.TypechoUserlog">
+        UPDATE typecho_userlog
+        <set>
+            <if test ='null != uid'>`uid` = #{uid},</if>
+            <if test ='null != cid'>`cid` = #{cid},</if>
+            <if test ='null != type'>`type` = #{type},</if>
+            <if test ='null != num'>`num` = #{num},</if>
+            <if test ='null != created'>`created` = #{created}</if>
+        </set>
+        WHERE `id` = #{id}
+    </update>
+
+    <!-- 删除 -->
+    <delete id="delete">
+        DELETE FROM typecho_userlog
+        WHERE `id` = #{key}
+    </delete>
+
+    <!-- 批量删除 -->
+    <delete id="batchDelete" parameterType = "java.util.List">
+        DELETE FROM typecho_userlog WHERE id IN
+        <foreach collection="list"  item="item" open="(" separator="," close=")"  >
+            #{item}
+        </foreach>
+    </delete>
+
+    <!-- 主键查询 -->
+    <select id="selectByKey" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM typecho_userlog
+        WHERE `id` = #{key}
+    </select>
+
+    <!-- 条件查询 -->
+    <select id="selectList" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM typecho_userlog
+        <where>
+            <if test ='null != id'>
+                and `id` = #{id}
+            </if>
+            <if test ='null != uid'>
+                and `uid` = #{uid}
+            </if>
+            <if test ='null != cid'>
+                and `cid` = #{cid}
+            </if>
+            <if test ='null != type'>
+                and `type` = #{type}
+            </if>
+            <if test ='null != num'>
+                and `num` = #{num}
+            </if>
+            <if test ='null != created'>
+                and `created` = #{created}
+            </if>
+        </where>
+        order by created desc
+    </select>
+
+    <!-- 分页条件查询 -->
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM typecho_userlog
+        <where>
+            <if test ='null != typechoUserlog.id'>
+                and `id` = #{typechoUserlog.id}
+            </if>
+            <if test ='null != typechoUserlog.uid'>
+                and `uid` = #{typechoUserlog.uid}
+            </if>
+            <if test ='null != typechoUserlog.cid'>
+                and `cid` = #{typechoUserlog.cid}
+            </if>
+            <if test ='null != typechoUserlog.type'>
+                and `type` = #{typechoUserlog.type}
+            </if>
+            <if test ='null != typechoUserlog.num'>
+                and `num` = #{typechoUserlog.num}
+            </if>
+            <if test ='null != typechoUserlog.created'>
+                and `created` = #{typechoUserlog.created}
+            </if>
+        </where>
+        order by created desc
+        limit #{page,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
+    </select>
+
+    <!-- 总量查询 -->
+    <select id="total" resultType="java.lang.Integer">
+        SELECT count(*) FROM typecho_userlog
+        <where>
+            <if test ='null != id'>
+                and `id` = #{id}
+            </if>
+            <if test ='null != uid'>
+                and `uid` = #{uid}
+            </if>
+            <if test ='null != cid'>
+                and `cid` = #{cid}
+            </if>
+            <if test ='null != type'>
+                and `type` = #{type}
+            </if>
+            <if test ='null != num'>
+                and `num` = #{num}
+            </if>
+            <if test ='null != created'>
+                and `created` = #{created}
+            </if>
+        </where>
+    </select>
+</mapper>

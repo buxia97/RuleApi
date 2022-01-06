@@ -386,6 +386,20 @@ public class TypechoContentsController {
 //            if(!type.equals("page")&&!type.equals("post")){
 //                return Result.getResultJson(0,"请传入正确的文章类型",null);
 //            }
+            //验证用户是否为作品的作者，以及权限
+            Map map =redisHelp.getMapValue("userInfo"+token,redisTemplate);
+            Integer uid =Integer.parseInt(map.get("uid").toString());
+            String group = map.get("group").toString();
+            if(!group.equals("administrator")){
+                TypechoContents info = service.selectByKey(jsonToMap.get("cid").toString());
+                Integer authorId = info.getAuthorId();
+                if(uid!=authorId){
+                    return Result.getResultJson(0,"你无权操作此文章",null);
+                }
+            }
+
+
+
             //获取参数中的分类和标签（暂时不允许定义）
             category = jsonToMap.get("category").toString();
             if(jsonToMap.get("tag")!=null){
@@ -404,10 +418,15 @@ public class TypechoContentsController {
             jsonToMap.remove("parent");
             jsonToMap.remove("created");
             jsonToMap.remove("slug");
+            jsonToMap.remove("views");
+            jsonToMap.remove("likes");
 
             jsonToMap.remove("type");
             //状态重新变成待审核
-            jsonToMap.put("status","waiting");
+            if(!group.equals("administrator")){
+                jsonToMap.put("status","waiting");
+            }
+
             update = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoContents.class);
         }
 
