@@ -274,6 +274,8 @@ public class TypechoUsersController {
             jsonToMap.put("group","subscriber");
 
             jsonToMap.put("password", passwd.replaceAll("(\\\r\\\n|\\\r|\\\n|\\\n\\\r)", ""));
+            jsonToMap.remove("introduce");
+            jsonToMap.remove("assets");
         }
         insert = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoUsers.class);
         int rows = service.insert(insert);
@@ -485,7 +487,8 @@ public class TypechoUsersController {
             jsonToMap.remove("activated");
             jsonToMap.remove("logged");
             jsonToMap.remove("authCode");
-
+            jsonToMap.remove("introduce");
+            jsonToMap.remove("assets");
             update = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoUsers.class);
         }
 

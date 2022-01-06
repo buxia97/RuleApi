@@ -16,10 +16,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 控制层
@@ -60,15 +57,13 @@ public class TypechoUserlogController {
 
     baseFull baseFull = new baseFull();
     /***
-     * 表单查询请求
-     * @param searchParams Bean对象JSON字符串
+     * 查询用户收藏列表
      * @param page         页码
      * @param limit        每页显示数量
      */
-    @RequestMapping(value = "/userlogList")
+    @RequestMapping(value = "/markList")
     @ResponseBody
-    public String userlogList (@RequestParam(value = "searchParams", required = false) String  searchParams,
-                            @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
+    public String markList (@RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
                             @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
                             @RequestParam(value = "token", required = false) String  token) {
 
@@ -81,14 +76,11 @@ public class TypechoUserlogController {
         Integer uid =Integer.parseInt(map.get("uid").toString());
 
         TypechoUserlog query = new TypechoUserlog();
-        if (StringUtils.isNotBlank(searchParams)) {
-            JSONObject object = JSON.parseObject(searchParams);
-            query = object.toJavaObject(TypechoUserlog.class);
-        }
-
+        query.setUid(uid);
+        query.setType("mark");
 
         List jsonList = new ArrayList();
-        List cacheList = redisHelp.getList("userlogList_"+page+"_"+limit+"_"+searchParams+"_"+uid,redisTemplate);
+        List cacheList = redisHelp.getList("markList_"+page+"_"+limit+"_"+uid,redisTemplate);
         try{
             if(cacheList.size()>0){
                 jsonList = cacheList;
@@ -152,8 +144,8 @@ public class TypechoUserlogController {
 
 
                 }
-                redisHelp.delete("userlogList_" + page + "_" + limit + "_" + searchParams + "_" + uid, redisTemplate);
-                redisHelp.setList("userlogList_" + page + "_" + limit + "_" + searchParams + "_" + uid, jsonList, 5, redisTemplate);
+                redisHelp.delete("markList_"+page+"_"+limit+"_"+uid, redisTemplate);
+                redisHelp.setList("markList_"+page+"_"+limit+"_"+uid, jsonList, 5, redisTemplate);
             }
         }catch (Exception e){
             if(cacheList.size()>0){
@@ -167,7 +159,36 @@ public class TypechoUserlogController {
         response.put("count", jsonList.size());
         return response.toString();
     }
+    /***
+     * 查询用户打赏历史
+     * @param page         页码
+     * @param limit        每页显示数量
+     */
+    @RequestMapping(value = "/rewardList")
+    @ResponseBody
+    public String rewardList (@RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
+                            @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
+                            @RequestParam(value = "token", required = false) String  token) {
+        Integer uStatus = UStatus.getStatus(token,redisTemplate);
+        if(uStatus==0){
+            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+        }
+        Map map =redisHelp.getMapValue("userInfo"+token,redisTemplate);
+        Integer uid =Integer.parseInt(map.get("uid").toString());
 
+        TypechoUserlog query = new TypechoUserlog();
+        query.setUid(uid);
+        query.setType("reward");
+        PageList<TypechoUserlog> pageList = service.selectPage(query, page, limit);
+
+
+        JSONObject response = new JSONObject();
+        response.put("code" , 1);
+        response.put("msg"  , "");
+        response.put("data" , null != pageList.getList() ? pageList.getList() : new JSONArray());
+        response.put("count", pageList.getList());
+        return response.toString();
+    }
 
     /***
      * 添加log
@@ -176,14 +197,16 @@ public class TypechoUserlogController {
     @RequestMapping(value = "/addLog")
     @ResponseBody
     public String addLog(@RequestParam(value = "params", required = false) String  params,@RequestParam(value = "token", required = false) String  token,HttpServletRequest request) {
-        Integer uStatus = UStatus.getStatus(token,redisTemplate);
-        if(uStatus==0){
-            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-        }
+
         Map jsonToMap =null;
         TypechoUserlog insert = null;
         String  agent =  request.getHeader("User-Agent");
         String  ip = baseFull.getIpAddr(request);
+
+        //生成随机积分
+        Random r = new Random();
+        int award = r.nextInt(8) + 1;
+        String clock = "";
 
         if (StringUtils.isNotBlank(params)) {
             Map map =redisHelp.getMapValue("userInfo"+token,redisTemplate);
@@ -196,17 +219,25 @@ public class TypechoUserlogController {
             String userTime = String.valueOf(date).substring(0,10);
             jsonToMap.put("created",userTime);
             String type = jsonToMap.get("type").toString();
+            //只有喜欢操作不需要登陆拦截
+            if(!type.equals("likes")){
+                Integer uStatus = UStatus.getStatus(token,redisTemplate);
+                if(uStatus==0){
+                    return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+                }
+            }
             //mark为收藏，reward为打赏，likes为奖励，clock为签到
             if(!type.equals("mark")&&!type.equals("reward")&&!type.equals("likes")&&!type.equals("clock")){
                 return Result.getResultJson(0,"错误的字段类型",null);
             }
             //如果是点赞，那么每天只能一次
             if(type.equals("likes")){
-                String isLikes = redisHelp.getRedis("userlikes"+"_"+ip+"_"+agent,redisTemplate);
+                String cid = jsonToMap.get("cid").toString();
+                String isLikes = redisHelp.getRedis("userlikes"+"_"+ip+"_"+agent+"_"+cid,redisTemplate);
                 if(isLikes!=null){
                     return Result.getResultJson(0,"距离上次操作不到24小时！",null);
                 }
-                redisHelp.setRedis("userlikes"+"_"+ip+"_"+agent,"yes",86400,redisTemplate);
+                redisHelp.setRedis("userlikes"+"_"+ip+"_"+agent+"_"+cid,"yes",86400,redisTemplate);
             }
             //签到，每天一次
             if(type.equals("clock")){
@@ -216,18 +247,32 @@ public class TypechoUserlogController {
                 List<TypechoUserlog> info = service.selectList(log);
 
                 //获取上次时间
-                Integer time = info.get(0).getCreated();
-                Integer timeStamp = time*1000;
-                SimpleDateFormat sdf=new SimpleDateFormat("yyyyMMdd");
-                String oldtime = sdf.format(new Date(Long.parseLong(String.valueOf(timeStamp))));
-                Integer old = Integer.parseInt(oldtime);
-                //获取本次时间
-                Long curStamp = System.currentTimeMillis();  //获取当前时间戳
-                String curtime = sdf.format(new Date(Long.parseLong(String.valueOf(curStamp))));
-                Integer cur = Integer.parseInt(curtime);
-                if(old>=cur){
-                    return Result.getResultJson(0,"你已经签到过了哦",null);
+                if (info.size()>0){
+                    Integer time = info.get(0).getCreated();
+                    String oldStamp = time+"000";
+                    SimpleDateFormat sdf=new SimpleDateFormat("yyyyMMdd");
+                    String oldtime = sdf.format(new Date(Long.parseLong(oldStamp)));
+                    Integer old = Integer.parseInt(oldtime);
+                    //获取本次时间
+                    Long curStamp = System.currentTimeMillis();  //获取当前时间戳
+                    String curtime = sdf.format(new Date(Long.parseLong(String.valueOf(curStamp))));
+                    Integer cur = Integer.parseInt(curtime);
+                    if(old>=cur){
+                        return Result.getResultJson(0,"你已经签到过了哦",null);
+                    }
                 }
+
+
+                TypechoUsers user = usersService.selectByKey(uid);
+                Integer account = user.getAssets();
+                Integer Assets = account + award;
+
+                TypechoUsers newUser = new TypechoUsers();
+                newUser.setUid(uid);
+                newUser.setAssets(Assets);
+                usersService.update(newUser);
+                jsonToMap.put("num",award);
+                clock = "，获得"+award+"积分奖励！";
             }
             //收藏，只能一次
             if(type.equals("mark")){
@@ -250,11 +295,21 @@ public class TypechoUserlogController {
                     return Result.getResultJson(0,"参数不正确",null);
                 }
                 Integer num = Integer.parseInt(jsonToMap.get("num").toString());
+                if(num<=0){
+                    return Result.getResultJson(0,"参数不正确",null);
+                }
                 TypechoUsers user = usersService.selectByKey(uid);
-                Integer account = user.getAccount();
+                Integer account = user.getAssets();
                 if(num>account){
                     return Result.getResultJson(0,"积分不足！",null);
                 }
+                Integer Assets = account - num;
+
+                TypechoUsers newUser = new TypechoUsers();
+                newUser.setUid(uid);
+                newUser.setAssets(Assets);
+                usersService.update(newUser);
+
             }
             insert = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoUserlog.class);
         }
@@ -263,7 +318,7 @@ public class TypechoUserlogController {
 
         JSONObject response = new JSONObject();
         response.put("code" , rows);
-        response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
+        response.put("msg"  , rows > 0 ? "操作成功"+clock : "操作失败");
         return response.toString();
     }
 

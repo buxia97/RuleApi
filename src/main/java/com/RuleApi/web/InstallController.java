@@ -23,31 +23,39 @@ public class InstallController {
     @RequestMapping(value = "/newInstall")
     @ResponseBody
     public String newInstall() {
-        String text = "执行信息 ||";
+        String text = "执行信息 ------";
         //查询文章表是否存在views字段
         Integer i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = 'typecho_contents' and column_name = 'views';", Integer.class);
         if (i == 0){
             //新增字段
             jdbcTemplate.execute("alter table typecho_contents ADD views integer(10) DEFAULT 0;");
-            text+="数据表typecho_contents，字段views添加完成。/";
+            text+="数据表typecho_contents，字段views添加完成。";
+        }else{
+            text+="数据表typecho_contents，字段views已经存在，无需添加。";
         }
         //查询文章表是否存在likes字段
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = 'typecho_contents' and column_name = 'likes';", Integer.class);
         if (i == 0){
             jdbcTemplate.execute("alter table typecho_contents ADD likes integer(10) DEFAULT 0;");
-            text+="数据表typecho_contents，字段likes添加完成。/";
+            text+="数据表typecho_contents，字段likes添加完成。";
+        }else{
+            text+="数据表typecho_contents，字段likes已经存在，无需添加。";
         }
         //查询用户表是否存在introduce字段
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = 'typecho_users' and column_name = 'introduce';", Integer.class);
         if (i == 0){
             jdbcTemplate.execute("alter table typecho_users ADD introduce varchar(255);");
-            text+="数据表typecho_users，字段introduce添加完成。/";
+            text+="数据表typecho_users，字段introduce添加完成。";
+        }else{
+            text+="数据表typecho_users，字段introduce已经存在，无需添加。";
         }
         //查询用户表是否存在account字段
-        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = 'typecho_users' and column_name = 'account';", Integer.class);
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = 'typecho_users' and column_name = 'assets';", Integer.class);
         if (i == 0){
-            jdbcTemplate.execute("alter table typecho_users ADD account integer(11) DEFAULT 0;");
-            text+="数据表typecho_users，字段account添加完成。/";
+            jdbcTemplate.execute("alter table typecho_users ADD assets integer(11) DEFAULT 0;");
+            text+="数据表typecho_users，字段assets添加完成。";
+        }else{
+            text+="数据表typecho_users，字段assets已经存在，无需添加。";
         }
         //判断用户日志表是否存在
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = 'typecho_userlog';", Integer.class);
@@ -61,12 +69,14 @@ public class InstallController {
                     "  `created` int(10) NOT NULL DEFAULT '0' COMMENT '时间'," +
                     "  PRIMARY KEY (`id`)" +
                     ") ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='用户日志（收藏，扩展等）';");
-            text+="数据表typecho_userlog创建完成。/";
+            text+="数据表typecho_userlog创建完成。";
+        }else{
+            text+="数据表typecho_userlog已经存在，无需添加。";
         }
         if (i == 0){
             text+="没有可执行的操作";
         }
-        text+="|| 执行结束，安装执行完成";
+        text+=" ------ 执行结束，安装执行完成";
         return text;
     }
 }

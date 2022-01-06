@@ -16,7 +16,7 @@
         <result column="group" property="groupKey" />
         <result column="authCode" property="authCode" />
         <result column="introduce" property="introduce" />
-        <result column="account" property="account" />
+        <result column="assets" property="assets" />
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -32,7 +32,7 @@
         `group`,
         `authCode`,
         `introduce`,
-        `account`
+        `assets`
     </sql>
 
     <!-- 插入数据 -->
@@ -144,6 +144,8 @@
             <if test ='null != logged'>`logged` = #{logged},</if>
             <if test ='null != groupKey'>`group` = #{groupKey},</if>
             <if test ='null != authCode'>`authCode` = #{authCode}</if>
+            <if test ='null != introduce'>`introduce` = #{introduce}</if>
+            <if test ='null != assets'>`assets` = #{assets}</if>
         </set>
         WHERE `uid` = #{uid}
     </update>
