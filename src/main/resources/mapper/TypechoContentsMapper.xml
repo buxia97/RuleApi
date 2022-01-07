@@ -203,7 +203,9 @@
             <if test ='null != allowComment'>`allowComment` = #{allowComment},</if>
             <if test ='null != allowPing'>`allowPing` = #{allowPing},</if>
             <if test ='null != allowFeed'>`allowFeed` = #{allowFeed},</if>
-            <if test ='null != parent'>`parent` = #{parent}</if>
+            <if test ='null != parent'>`parent` = #{parent},</if>
+            <if test ='null != views'>`views` = #{views},</if>
+            <if test ='null != likes'>`likes` = #{likes}</if>
         </set>
         WHERE `cid` = #{cid}
     </update>

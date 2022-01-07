@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import javax.mail.MessagingException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 import org.springframework.stereotype.Component;
@@ -38,6 +39,17 @@ public class TypechoUsersController {
 
     @Autowired
     TypechoUsersService service;
+
+    @Autowired
+    private TypechoContentsService contentsService;
+
+
+    @Autowired
+    private TypechoCommentsService commentsService;
+
+    @Autowired
+    private TypechoUserlogService userlogService;
+
 
     @Autowired
     MailService MailService;
@@ -124,8 +136,67 @@ public class TypechoUsersController {
 
         return response.toString();
     }
+    /***
+     * 用户数据
+     */
+    @RequestMapping(value = "/userData")
+    @ResponseBody
+    public String userData(@RequestParam(value = "token", required = false) String  token) {
+        Integer uStatus = UStatus.getStatus(token,redisTemplate);
+        if(uStatus==0){
+            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+        }
+        Map map =redisHelp.getMapValue("userInfo"+token,redisTemplate);
+        Integer uid =Integer.parseInt(map.get("uid").toString());
+        //用户文章数量
+        TypechoContents contents = new TypechoContents();
+        contents.setAuthorId(uid);
+        Integer contentsNum =  contentsService.total(contents);
+        //用户评论数量
+        TypechoComments comments = new TypechoComments();
+        comments.setAuthorId(uid);
+        Integer commentsNum =  commentsService.total(comments);
+        //用户资产和创建时间
+        TypechoUsers user = service.selectByKey(uid);
+        Integer assets = user.getAssets();
+        Integer created = user.getCreated();
+        //是否签到
+        TypechoUserlog log = new TypechoUserlog();
+        log.setType("clock");
+        log.setUid(uid);
+        List<TypechoUserlog> info = userlogService.selectList(log);
+        Integer isClock = 0;
+        //获取上次时间
+        if (info.size()>0){
+            Integer time = info.get(0).getCreated();
+            String oldStamp = time+"000";
+            SimpleDateFormat sdf=new SimpleDateFormat("yyyyMMdd");
+            String oldtime = sdf.format(new Date(Long.parseLong(oldStamp)));
+            Integer old = Integer.parseInt(oldtime);
+            //获取本次时间
+            Long curStamp = System.currentTimeMillis();  //获取当前时间戳
+            String curtime = sdf.format(new Date(Long.parseLong(String.valueOf(curStamp))));
+            Integer cur = Integer.parseInt(curtime);
+            if(old>=cur){
+                isClock=1;
+            }
+        }
 
+        Map json = new HashMap();
+        json.put("contentsNum",contentsNum);
+        json.put("commentsNum",commentsNum);
+        json.put("assets",assets);
+        json.put("created",created);
+        json.put("isClock",isClock);
 
+        JSONObject response = new JSONObject();
+
+        response.put("code" , 1);
+        response.put("msg"  , "");
+        response.put("data" , json);
+
+        return response.toString();
+    }
 
     /***
      * 表单查询

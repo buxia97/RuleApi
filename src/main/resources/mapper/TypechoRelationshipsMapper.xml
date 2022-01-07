@@ -24,6 +24,8 @@
             <result column="allowPing" property="allowPing" />
             <result column="allowFeed" property="allowFeed" />
             <result column="parent" property="parent" />
+            <result column="views" property="views" />
+            <result column="likes" property="likes" />
         </collection>
     </resultMap>
 
@@ -50,7 +52,9 @@
         c.allowComment,
         c.allowPing,
         c.allowFeed,
-        c.parent
+        c.parent,
+        c.views,
+        c.likes
     </sql>
 
     <!-- 插入数据 -->

@@ -71,7 +71,7 @@ public class TypechoContentsController {
      */
     @RequestMapping(value = "/contentsInfo")
     @ResponseBody
-    public String contentsInfo (@RequestParam(value = "key", required = false) String  key,@RequestParam(value = "isMd" , required = false, defaultValue = "0") Integer isMd) {
+    public String contentsInfo (@RequestParam(value = "key", required = false) String  key,@RequestParam(value = "isMd" , required = false, defaultValue = "0") Integer isMd,HttpServletRequest request) {
         TypechoContents typechoContents = null;
         Map contensjson = new HashMap<String, String>();
         Map cacheInfo = redisHelp.getMapValue("contentsInfo_"+key+"_"+isMd,redisTemplate);
@@ -141,6 +141,22 @@ public class TypechoContentsController {
                 contensjson.put("category",metas);
                 contensjson.put("tag",tags);
                 contensjson.put("text",text);
+
+                //文章阅读量增加
+                String  agent =  request.getHeader("User-Agent");
+                String  ip = baseFull.getIpAddr(request);
+                String isRead = redisHelp.getRedis("isRead"+"_"+ip+"_"+agent+"_"+key,redisTemplate);
+                if(isRead==null){
+                   //添加阅读量
+                    Integer views = Integer.parseInt(contensjson.get("views").toString());
+                    views = views + 1;
+                    TypechoContents toContents = new TypechoContents();
+                    toContents.setCid(Integer.parseInt(key));
+                    toContents.setViews(views);
+                    service.update(toContents);
+
+                }
+                redisHelp.setRedis("isRead"+"_"+ip+"_"+agent+"_"+key,"yes",900,redisTemplate);
             }
 
         }catch (Exception e){

@@ -58,6 +58,37 @@ public class TypechoUserlogController {
     baseFull baseFull = new baseFull();
     /***
      * 查询用户收藏列表
+     */
+    @RequestMapping(value = "/isMark")
+    @ResponseBody
+    public String isMark (@RequestParam(value = "cid", required = false) String  cid,
+                            @RequestParam(value = "token", required = false) String  token) {
+        Integer uStatus = UStatus.getStatus(token,redisTemplate);
+        if(uStatus==0){
+            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+        }
+        Map map =redisHelp.getMapValue("userInfo"+token,redisTemplate);
+        Integer uid =Integer.parseInt(map.get("uid").toString());
+        TypechoUserlog userlog = new TypechoUserlog();
+        userlog.setCid(Integer.parseInt(cid));
+        userlog.setUid(uid);
+        Integer isMark = service.total(userlog);
+        Integer logid = -1;
+        if(isMark>0){
+            List<TypechoUserlog> loglist = service.selectList(userlog);
+            logid = loglist.get(0).getId();
+        }
+        Map json = new HashMap();
+        json.put("isMark",isMark);
+        json.put("logid",logid);
+        JSONObject response = new JSONObject();
+        response.put("code" , 1);
+        response.put("msg"  , "");
+        response.put("data" , json);
+        return response.toString();
+    }
+    /***
+     * 查询用户收藏列表
      * @param page         页码
      * @param limit        每页显示数量
      */
@@ -237,6 +268,15 @@ public class TypechoUserlogController {
                 if(isLikes!=null){
                     return Result.getResultJson(0,"距离上次操作不到24小时！",null);
                 }
+                //添加点赞量
+                TypechoContents contensjson = contentsService.selectByKey(cid);
+                Integer likes = contensjson.getLikes();
+                likes = likes + 1;
+                TypechoContents toContents = new TypechoContents();
+                toContents.setCid(Integer.parseInt(cid));
+                toContents.setLikes(likes);
+                contentsService.update(toContents);
+
                 redisHelp.setRedis("userlikes"+"_"+ip+"_"+agent+"_"+cid,"yes",86400,redisTemplate);
             }
             //签到，每天一次
@@ -304,11 +344,22 @@ public class TypechoUserlogController {
                     return Result.getResultJson(0,"积分不足！",null);
                 }
                 Integer Assets = account - num;
-
+                //扣除自己的积分
                 TypechoUsers newUser = new TypechoUsers();
                 newUser.setUid(uid);
                 newUser.setAssets(Assets);
                 usersService.update(newUser);
+
+                //给文章的作者增加积分
+                Integer cid = Integer.parseInt(jsonToMap.get("cid").toString());
+                TypechoContents curContents = contentsService.selectByKey(cid);
+                Integer authorid = curContents.getAuthorId();
+                TypechoUsers toUser = usersService.selectByKey(authorid);
+                Integer toAssets = toUser.getAssets();
+                Integer curAssets = toAssets + num;
+                toUser.setAssets(curAssets);
+                usersService.update(toUser);
+
 
             }
             insert = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoUserlog.class);

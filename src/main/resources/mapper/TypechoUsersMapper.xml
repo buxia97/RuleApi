@@ -143,8 +143,8 @@
             <if test ='null != activated'>`activated` = #{activated},</if>
             <if test ='null != logged'>`logged` = #{logged},</if>
             <if test ='null != groupKey'>`group` = #{groupKey},</if>
-            <if test ='null != authCode'>`authCode` = #{authCode}</if>
-            <if test ='null != introduce'>`introduce` = #{introduce}</if>
+            <if test ='null != authCode'>`authCode` = #{authCode},</if>
+            <if test ='null != introduce'>`introduce` = #{introduce},</if>
             <if test ='null != assets'>`assets` = #{assets}</if>
         </set>
         WHERE `uid` = #{uid}
