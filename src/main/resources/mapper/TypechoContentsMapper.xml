@@ -49,7 +49,7 @@
 
     <!-- 插入数据 -->
     <insert id="insert" parameterType="com.RuleApi.entity.TypechoContents"  keyProperty="cid" useGeneratedKeys="true">
-        INSERT INTO typecho_contents
+        INSERT INTO ${prefix}_contents
         <trim prefix="(" suffix=")" suffixOverrides=",">
             <if test ='null != cid'>
                 `cid`,
@@ -160,7 +160,7 @@
 
     <!-- 批量插入数据 -->
     <insert id="batchInsert" parameterType="java.util.List">
-        INSERT INTO typecho_contents ( <include refid="Base_Column_List" /> ) VALUES
+        INSERT INTO ${prefix}_contents ( <include refid="Base_Column_List" /> ) VALUES
         <foreach collection="list" item="curr" index="index" separator=",">
             (
                 #{curr.cid},
@@ -186,7 +186,7 @@
 
     <!-- 更新 -->
     <update id="update" parameterType="com.RuleApi.entity.TypechoContents">
-        UPDATE typecho_contents
+        UPDATE ${prefix}_contents
         <set>
             <if test ='null != title'>`title` = #{title},</if>
             <if test ='null != slug'>`slug` = #{slug},</if>
@@ -212,13 +212,13 @@
 
     <!-- 删除 -->
     <delete id="delete">
-        DELETE FROM typecho_contents
+        DELETE FROM ${prefix}_contents
         WHERE `cid` = #{key}
     </delete>
 
     <!-- 批量删除 -->
     <delete id="batchDelete" parameterType = "java.util.List">
-        DELETE FROM typecho_contents WHERE cid IN
+        DELETE FROM ${prefix}_contents WHERE cid IN
         <foreach collection="list"  item="item" open="(" separator="," close=")"  >
             #{item}
         </foreach>
@@ -227,14 +227,14 @@
     <!-- 主键查询 -->
     <select id="selectByKey" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List" />
-        FROM typecho_contents
+        FROM ${prefix}_contents
         WHERE `cid` = #{key}
     </select>
 
     <!-- 条件查询 -->
     <select id="selectList" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List" />
-        FROM typecho_contents
+        FROM ${prefix}_contents
         <where>
             <if test ='null != cid'>
                 and `cid` = #{cid}
@@ -299,7 +299,7 @@
     <!-- 分页条件查询 -->
     <select id="selectPage" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List" />
-        FROM typecho_contents
+        FROM ${prefix}_contents
         <where>
             <if test ='null != typechoContents.cid'>
                 and `cid` = #{typechoContents.cid}
@@ -362,7 +362,7 @@
                 and CONCAT(IFNULL(`title`,''),IFNULL(`text`,'')) LIKE '%${searchKey}%'
             </if>
             <if test ='0 != random'>
-                and cid >= (SELECT FLOOR( MAX(cid) * RAND()) FROM `typecho_contents` )
+                and cid >= (SELECT FLOOR( MAX(cid) * RAND()) FROM `${prefix}_contents` )
             </if>
         </where>
         <if test ='"" != order'>
@@ -373,7 +373,7 @@
 
     <!-- 总量查询 -->
     <select id="total" resultType="java.lang.Integer">
-        SELECT count(*) FROM typecho_contents
+        SELECT count(*) FROM ${prefix}_contents
         <where>
             <if test ='null != cid'>
                 and `cid` = #{cid}

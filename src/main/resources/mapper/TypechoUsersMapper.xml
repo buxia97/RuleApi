@@ -37,7 +37,7 @@
 
     <!-- 插入数据 -->
     <insert id="insert" parameterType="com.RuleApi.entity.TypechoUsers">
-        INSERT INTO typecho_users
+        INSERT INTO ${prefix}_users
         <trim prefix="(" suffix=")" suffixOverrides=",">
             <if test ='null != uid'>
                 `uid`,
@@ -112,7 +112,7 @@
 
     <!-- 批量插入数据 -->
     <insert id="batchInsert" parameterType="java.util.List">
-        INSERT INTO typecho_users ( <include refid="Base_Column_List" /> ) VALUES
+        INSERT INTO ${prefix}_users ( <include refid="Base_Column_List" /> ) VALUES
         <foreach collection="list" item="curr" index="index" separator=",">
             (
                 #{curr.uid},
@@ -132,7 +132,7 @@
 
     <!-- 更新 -->
     <update id="update" parameterType="com.RuleApi.entity.TypechoUsers">
-        UPDATE typecho_users
+        UPDATE ${prefix}_users
         <set>
             <if test ='null != name'>`name` = #{name},</if>
             <if test ='null != password'>`password` = #{password},</if>
@@ -152,13 +152,13 @@
 
     <!-- 删除 -->
     <delete id="delete">
-        DELETE FROM typecho_users
+        DELETE FROM ${prefix}_users
         WHERE `uid` = #{key}
     </delete>
 
     <!-- 批量删除 -->
     <delete id="batchDelete" parameterType = "java.util.List">
-        DELETE FROM typecho_users WHERE uid IN
+        DELETE FROM ${prefix}_users WHERE uid IN
         <foreach collection="list"  item="item" open="(" separator="," close=")"  >
             #{item}
         </foreach>
@@ -167,14 +167,14 @@
     <!-- 主键查询 -->
     <select id="selectByKey" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List" />
-        FROM typecho_users
+        FROM ${prefix}_users
         WHERE `uid` = #{key}
     </select>
 
     <!-- 条件查询 -->
     <select id="selectList" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List" />
-        FROM typecho_users
+        FROM ${prefix}_users
         <where>
             <if test ='null != uid'>
                 and `uid` = #{uid}
@@ -215,7 +215,7 @@
     <!-- 分页条件查询 -->
     <select id="selectPage" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List" />
-        FROM typecho_users
+        FROM ${prefix}_users
         <where>
             <if test ='null != typechoUsers.uid'>
                 and `uid` = #{typechoUsers.uid}
@@ -265,7 +265,7 @@
 
     <!-- 总量查询 -->
     <select id="total" resultType="java.lang.Integer">
-        SELECT count(*) FROM typecho_users
+        SELECT count(*) FROM ${prefix}_users
         <where>
             <if test ='null != uid'>
                 and `uid` = #{uid}
