@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.RuleApi.dao.TypechoUserapiDao">
+
+    <resultMap id="BaseResultMap" type="com.RuleApi.entity.TypechoUserapi" >
+        <result column="id" property="id" />
+        <result column="headImgUrl" property="headImgUrl" />
+        <result column="openId" property="openId" />
+        <result column="access_token" property="accessToken" />
+        <result column="appLoginType" property="appLoginType" />
+        <result column="uid" property="uid" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        `id`,
+        `headImgUrl`,
+        `openId`,
+        `access_token`,
+        `appLoginType`,
+        `uid`
+    </sql>
+
+    <!-- 插入数据 -->
+    <insert id="insert" parameterType="com.RuleApi.entity.TypechoUserapi">
+        INSERT INTO ${prefix}_userapi
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test ='null != id'>
+                `id`,
+            </if>
+            <if test ='null != headImgUrl'>
+                `headImgUrl`,
+            </if>
+            <if test ='null != openId'>
+                `openId`,
+            </if>
+            <if test ='null != accessToken'>
+                `access_token`,
+            </if>
+            <if test ='null != appLoginType'>
+                `appLoginType`,
+            </if>
+            <if test ='null != uid'>
+                `uid`
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test ='null != id'>
+                #{id},
+            </if>
+            <if test ='null != headImgUrl'>
+                #{headImgUrl},
+            </if>
+            <if test ='null != openId'>
+                #{openId},
+            </if>
+            <if test ='null != accessToken'>
+                #{accessToken},
+            </if>
+            <if test ='null != appLoginType'>
+                #{appLoginType},
+            </if>
+            <if test ='null != uid'>
+                #{uid}
+            </if>
+        </trim>
+    </insert>
+
+    <!-- 批量插入数据 -->
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO ${prefix}_userapi ( <include refid="Base_Column_List" /> ) VALUES
+        <foreach collection="list" item="curr" index="index" separator=",">
+            (
+                #{curr.id},
+                #{curr.headImgUrl},
+                #{curr.openId},
+                #{curr.accessToken},
+                #{curr.appLoginType},
+                #{curr.uid}
+            )
+        </foreach>
+    </insert>
+
+    <!-- 更新 -->
+    <update id="update" parameterType="com.RuleApi.entity.TypechoUserapi">
+        UPDATE ${prefix}_userapi
+        <set>
+            <if test ='null != headImgUrl'>`headImgUrl` = #{headImgUrl},</if>
+            <if test ='null != openId'>`openId` = #{openId},</if>
+            <if test ='null != accessToken'>`access_token` = #{accessToken},</if>
+            <if test ='null != appLoginType'>`appLoginType` = #{appLoginType},</if>
+            <if test ='null != uid'>`uid` = #{uid}</if>
+        </set>
+        WHERE `id` = #{id}
+    </update>
+
+    <!-- 删除 -->
+    <delete id="delete">
+        DELETE FROM typecho_userapi
+        WHERE `id` = #{key}
+    </delete>
+
+    <!-- 批量删除 -->
+    <delete id="batchDelete" parameterType = "java.util.List">
+        DELETE FROM ${prefix}_userapi WHERE id IN
+        <foreach collection="list"  item="item" open="(" separator="," close=")"  >
+            #{item}
+        </foreach>
+    </delete>
+
+    <!-- 主键查询 -->
+    <select id="selectByKey" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM ${prefix}_userapi
+        WHERE `id` = #{key}
+    </select>
+
+    <!-- 条件查询 -->
+    <select id="selectList" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM ${prefix}_userapi
+        <where>
+            <if test ='null != id'>
+                and `id` = #{id}
+            </if>
+            <if test ='null != headImgUrl'>
+                and `headImgUrl` = #{headImgUrl}
+            </if>
+            <if test ='null != openId'>
+                and `openId` = #{openId}
+            </if>
+            <if test ='null != accessToken'>
+                and `access_token` = #{accessToken}
+            </if>
+            <if test ='null != appLoginType'>
+                and `appLoginType` = #{appLoginType}
+            </if>
+            <if test ='null != uid'>
+                and `uid` = #{uid}
+            </if>
+        </where>
+    </select>
+
+    <!-- 分页条件查询 -->
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM ${prefix}_userapi
+        <where>
+            <if test ='null != typechoUserapi.id'>
+                and `id` = #{typechoUserapi.id}
+            </if>
+            <if test ='null != typechoUserapi.headImgUrl'>
+                and `headImgUrl` = #{typechoUserapi.headImgUrl}
+            </if>
+            <if test ='null != typechoUserapi.openId'>
+                and `openId` = #{typechoUserapi.openId}
+            </if>
+            <if test ='null != typechoUserapi.accessToken'>
+                and `access_token` = #{typechoUserapi.accessToken}
+            </if>
+            <if test ='null != typechoUserapi.appLoginType'>
+                and `appLoginType` = #{typechoUserapi.appLoginType}
+            </if>
+            <if test ='null != typechoUserapi.uid'>
+                and `uid` = #{typechoUserapi.uid}
+            </if>
+        </where>
+        limit #{page,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
+    </select>
+
+    <!-- 总量查询 -->
+    <select id="total" resultType="java.lang.Integer">
+        SELECT count(*) FROM ${prefix}_userapi
+        <where>
+            <if test ='null != id'>
+                and `id` = #{id}
+            </if>
+            <if test ='null != headImgUrl'>
+                and `headImgUrl` = #{headImgUrl}
+            </if>
+            <if test ='null != openId'>
+                and `openId` = #{openId}
+            </if>
+            <if test ='null != accessToken'>
+                and `access_token` = #{accessToken}
+            </if>
+            <if test ='null != appLoginType'>
+                and `appLoginType` = #{appLoginType}
+            </if>
+        </where>
+    </select>
+</mapper>

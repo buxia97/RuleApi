@@ -7,6 +7,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -134,5 +135,24 @@ public class baseFull {
         // ipAddress = this.getRequest().getRemoteAddr();
 
         return ipAddress;
+    }
+
+    //生成随机英文字符串
+    public static String createRandomStr(int length){
+        String str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        Random random = new Random();
+        StringBuffer stringBuffer = new StringBuffer();
+        for (int i = 0; i < length; i++) {
+            int number = random.nextInt(62);
+            stringBuffer.append(str.charAt(number));
+        }
+        return stringBuffer.toString();
+    }
+    //随机数
+    protected long generateRandomNumber(int n){
+        if(n<1){
+            throw new IllegalArgumentException("随机数位数必须大于0");
+        }
+        return (long)(Math.random()*9*Math.pow(10,n-1)) + (long)Math.pow(10,n-1);
     }
 }

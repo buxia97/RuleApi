@@ -36,7 +36,7 @@
     </sql>
 
     <!-- 插入数据 -->
-    <insert id="insert" parameterType="com.RuleApi.entity.TypechoUsers">
+    <insert id="insert" parameterType="com.RuleApi.entity.TypechoUsers"  keyProperty="uid" useGeneratedKeys="true">
         INSERT INTO ${prefix}_users
         <trim prefix="(" suffix=")" suffixOverrides=",">
             <if test ='null != uid'>

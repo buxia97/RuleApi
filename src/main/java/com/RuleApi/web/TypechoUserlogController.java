@@ -240,11 +240,10 @@ public class TypechoUserlogController {
         String clock = "";
 
         if (StringUtils.isNotBlank(params)) {
-            Map map =redisHelp.getMapValue("userInfo"+token,redisTemplate);
-            Integer uid =Integer.parseInt(map.get("uid").toString());
+
 
             jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
-            jsonToMap.put("uid",uid);
+
             //生成typecho数据库格式的修改时间戳
             Long date = System.currentTimeMillis();
             String userTime = String.valueOf(date).substring(0,10);
@@ -254,9 +253,17 @@ public class TypechoUserlogController {
             if(!type.equals("likes")){
                 Integer uStatus = UStatus.getStatus(token,redisTemplate);
                 if(uStatus==0){
-                    return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+                    return Result.getResultJson(0,"请先登录哦",null);
                 }
             }
+            Map map =redisHelp.getMapValue("userInfo"+token,redisTemplate);
+            Integer uid = 0;
+            if(map.get("uid")!=null){
+                uid =Integer.parseInt(map.get("uid").toString());
+                jsonToMap.put("uid",uid);
+            }
+
+
             //mark为收藏，reward为打赏，likes为奖励，clock为签到
             if(!type.equals("mark")&&!type.equals("reward")&&!type.equals("likes")&&!type.equals("clock")){
                 return Result.getResultJson(0,"错误的字段类型",null);

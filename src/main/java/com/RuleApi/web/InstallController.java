@@ -98,6 +98,22 @@ public class InstallController {
         }else{
             text+="数据表typecho_userlog已经存在，无需添加。";
         }
+        //判断用户社会化API表是否存在
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_userapi';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("CREATE TABLE `"+prefix+"_userapi` (" +
+                    "  `id` int(11) NOT NULL AUTO_INCREMENT," +
+                    "  `headImgUrl` varchar(255) DEFAULT NULL COMMENT '头像，可能用不上'," +
+                    "  `openId` varchar(255) DEFAULT NULL COMMENT '开放平台ID'," +
+                    "  `access_token` varchar(255) DEFAULT NULL COMMENT '唯一值'," +
+                    "  `appLoginType` varchar(255) DEFAULT NULL COMMENT '渠道类型'," +
+                    "  `uid` int(11) DEFAULT '0' COMMENT '用户ID'," +
+                    "  PRIMARY KEY (`id`)" +
+                    ") ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='社会化登陆';");
+            text+="数据表typecho_userapi创建完成。";
+        }else{
+            text+="数据表typecho_userapi已经存在，无需添加。";
+        }
         text+=" ------ 执行结束，安装执行完成";
 
         redisHelp.setRedis("isInstall","1",600,redisTemplate);
