@@ -328,6 +328,7 @@ public class TypechoUsersController {
             String Token = date + user.getName();
             jsonToMap.put("uid",user.getUid());
             //生成唯一性token用于验证
+            jsonToMap.put("name",user.getName());
             jsonToMap.put("token",user.getName()+DigestUtils.md5DigestAsHex(Token.getBytes()));
             jsonToMap.put("time",date);
             jsonToMap.put("group",user.getGroupKey());
@@ -377,8 +378,9 @@ public class TypechoUsersController {
             regUser.setGroupKey("subscriber");
             regUser.setScreenName(userapi.getNickName());
             regUser.setPassword(passwd.replaceAll("(\\\r\\\n|\\\r|\\\n|\\\n\\\r)", ""));
-            Integer uid = service.insert(regUser);
+            Integer to = service.insert(regUser);
             //注册完成后，增加绑定
+            Integer uid = regUser.getUid();
             userapi.setUid(uid);
             int rows = userapiService.insert(userapi);
             //返回token
@@ -386,6 +388,7 @@ public class TypechoUsersController {
             String Token = regdate + name;
             jsonToMap.put("uid",uid);
             //生成唯一性token用于验证
+            jsonToMap.put("name",name);
             jsonToMap.put("token",name+DigestUtils.md5DigestAsHex(Token.getBytes()));
             jsonToMap.put("time",regdate);
             jsonToMap.put("group","subscriber");
@@ -396,7 +399,7 @@ public class TypechoUsersController {
 
 
             //删除之前的token后，存入redis(防止积累导致内存溢出，超时时间默认是24小时)
-            String oldToken = redisHelp.getRedis("userkey"+jsonToMap.get("name").toString(),redisTemplate);
+            String oldToken = redisHelp.getRedis("userkey"+name,redisTemplate);
             if(oldToken!=null){
                 redisHelp.delete("userInfo"+oldToken,redisTemplate);
             }
@@ -683,7 +686,10 @@ public class TypechoUsersController {
             //执行成功后，如果密码发生了改变，需要重新登陆
             redisHelp.delete("userInfo"+token,redisTemplate);
         }
-
+        if(rows>0&&jsonToMap.get("mail")!=null) {
+            //执行成功后，如果邮箱发生了改变，则重新登陆
+            redisHelp.delete("userInfo"+token,redisTemplate);
+        }
         JSONObject response = new JSONObject();
         response.put("code" ,rows > 0 ? 1: 0 );
         response.put("data" , rows);
