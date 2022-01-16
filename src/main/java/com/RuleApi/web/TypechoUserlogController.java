@@ -394,13 +394,20 @@ public class TypechoUserlogController {
         Map map =redisHelp.getMapValue("userInfo"+token,redisTemplate);
         Integer uid =Integer.parseInt(map.get("uid").toString());
         String group = map.get("group").toString();
+
+
+        TypechoUserlog info = service.selectByKey(key);
+        Integer userId = info.getUid();
+        String type = info.getType();
         if(!group.equals("administrator")){
-            TypechoUserlog info = service.selectByKey(key);
-            Integer userId = info.getUid();
-            if(uid!=userId){
+            if(!userId.equals(uid)){
                 return Result.getResultJson(0,"你无权进行此操作",null);
             }
+            if(!type.equals("mark")){
+                return Result.getResultJson(0,"该类型数据不允许删除",null);
+            }
         }
+
 
         Integer rows =  service.delete(key);
         JSONObject response = new JSONObject();
