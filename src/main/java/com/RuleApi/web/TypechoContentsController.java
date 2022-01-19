@@ -59,6 +59,9 @@ public class TypechoContentsController {
     @Value("${webinfo.pexelsKey}")
     private String pexelsKey;
 
+    @Value("${web.prefix}")
+    private String dataprefix;
+
     RedisHelp redisHelp =new RedisHelp();
     ResultAll Result = new ResultAll();
     baseFull baseFull = new baseFull();
@@ -74,7 +77,7 @@ public class TypechoContentsController {
     public String contentsInfo (@RequestParam(value = "key", required = false) String  key,@RequestParam(value = "isMd" , required = false, defaultValue = "0") Integer isMd,HttpServletRequest request) {
         TypechoContents typechoContents = null;
         Map contensjson = new HashMap<String, String>();
-        Map cacheInfo = redisHelp.getMapValue("contentsInfo_"+key+"_"+isMd,redisTemplate);
+        Map cacheInfo = redisHelp.getMapValue(this.dataprefix+"_"+"contentsInfo_"+key+"_"+isMd,redisTemplate);
         try{
             if(cacheInfo.size()>0){
                 contensjson = cacheInfo;
@@ -145,7 +148,7 @@ public class TypechoContentsController {
                 //文章阅读量增加
                 String  agent =  request.getHeader("User-Agent");
                 String  ip = baseFull.getIpAddr(request);
-                String isRead = redisHelp.getRedis("isRead"+"_"+ip+"_"+agent+"_"+key,redisTemplate);
+                String isRead = redisHelp.getRedis(this.dataprefix+"_"+"isRead"+"_"+ip+"_"+agent+"_"+key,redisTemplate);
                 if(isRead==null){
                    //添加阅读量
                     Integer views = Integer.parseInt(contensjson.get("views").toString());
@@ -156,7 +159,7 @@ public class TypechoContentsController {
                     service.update(toContents);
 
                 }
-                redisHelp.setRedis("isRead"+"_"+ip+"_"+agent+"_"+key,"yes",900,redisTemplate);
+                redisHelp.setRedis(this.dataprefix+"_"+"isRead"+"_"+ip+"_"+agent+"_"+key,"yes",900,redisTemplate);
             }
 
         }catch (Exception e){
@@ -164,8 +167,8 @@ public class TypechoContentsController {
                 contensjson = cacheInfo;
             }
         }
-        redisHelp.delete("contentsInfo_"+key+"_"+isMd,redisTemplate);
-        redisHelp.setKey("contentsInfo_"+key+"_"+isMd,contensjson,this.contentInfoCache,redisTemplate);
+        redisHelp.delete(this.dataprefix+"_"+"contentsInfo_"+key+"_"+isMd,redisTemplate);
+        redisHelp.setKey(this.dataprefix+"_"+"contentsInfo_"+key+"_"+isMd,contensjson,this.contentInfoCache,redisTemplate);
         JSONObject concentInfo = JSON.parseObject(JSON.toJSONString(contensjson),JSONObject.class);
         return concentInfo.toJSONString();
         //return new ApiResult<>(ResultCode.success.getCode(), typechoContents, ResultCode.success.getDescr(), request.getRequestURI());
@@ -196,7 +199,7 @@ public class TypechoContentsController {
 
                 object.put("status","publish");
             }else{
-                String aid = redisHelp.getValue("userInfo"+token,"uid",redisTemplate).toString();
+                String aid = redisHelp.getValue(this.dataprefix+"_"+"userInfo"+token,"uid",redisTemplate).toString();
                 object.put("authorId",aid);
             }
 
@@ -205,7 +208,7 @@ public class TypechoContentsController {
         }
         List jsonList = new ArrayList();
 
-        List cacheList = redisHelp.getList("contensList_"+page+"_"+limit+"_"+searchParams+"_"+order+"_"+searchKey+"_"+random,redisTemplate);
+        List cacheList = redisHelp.getList(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchParams+"_"+order+"_"+searchKey+"_"+random,redisTemplate);
         //监听异常，如果有异常则调用redis缓存中的list，如果无异常也调用redis，但是会更新数据
         try{
             if(cacheList.size()>0){
@@ -259,8 +262,8 @@ public class TypechoContentsController {
 
 
                     jsonList.add(json);
-                    redisHelp.delete("contensList_"+page+"_"+limit+"_"+searchParams+"_"+order+"_"+searchKey+"_"+random,redisTemplate);
-                    redisHelp.setList("contensList_"+page+"_"+limit+"_"+searchParams+"_"+order+"_"+searchKey+"_"+random,jsonList,this.contentCache,redisTemplate);
+                    redisHelp.delete(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchParams+"_"+order+"_"+searchKey+"_"+random,redisTemplate);
+                    redisHelp.setList(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchParams+"_"+order+"_"+searchKey+"_"+random,jsonList,this.contentCache,redisTemplate);
                 }
             }
         }catch (Exception e){
@@ -297,7 +300,7 @@ public class TypechoContentsController {
         if (StringUtils.isNotBlank(params)) {
             jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
             //获取发布者信息
-            Map map =redisHelp.getMapValue("userInfo"+token,redisTemplate);
+            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             String uid = map.get("uid").toString();
             //生成typecho数据库格式的创建时间戳
             Long date = System.currentTimeMillis();
@@ -402,7 +405,7 @@ public class TypechoContentsController {
 //                return Result.getResultJson(0,"请传入正确的文章类型",null);
 //            }
             //验证用户是否为作品的作者，以及权限
-            Map map =redisHelp.getMapValue("userInfo"+token,redisTemplate);
+            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer uid =Integer.parseInt(map.get("uid").toString());
             String group = map.get("group").toString();
             if(!group.equals("administrator")){
@@ -504,7 +507,7 @@ public class TypechoContentsController {
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
         }
         //String group = (String) redisHelp.getValue("userInfo"+token,"group",redisTemplate);
-        Map map =redisHelp.getMapValue("userInfo"+token,redisTemplate);
+        Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         String group = map.get("group").toString();
         if(!group.equals("administrator")){
             return Result.getResultJson(0,"你没有操作权限",null);
@@ -525,15 +528,15 @@ public class TypechoContentsController {
     @RequestMapping(value = "/ImagePexels")
     @ResponseBody
     public String ImagePexels() {
-        String cacheImage = redisHelp.getRedis("ImagePexels",redisTemplate);
+        String cacheImage = redisHelp.getRedis(this.dataprefix+"_"+"ImagePexels",redisTemplate);
         String imgList = "";
         if(cacheImage==null){
             imgList = HttpClient.doGetImg("https://api.pexels.com/v1/curated?per_page=40",this.pexelsKey);
             if(imgList==null){
                 return Result.getResultJson(0,"图片接口异常",null);
             }
-            redisHelp.delete("ImagePexels",redisTemplate);
-            redisHelp.setRedis("ImagePexels",imgList,43200,redisTemplate);
+            redisHelp.delete(this.dataprefix+"_"+"ImagePexels",redisTemplate);
+            redisHelp.setRedis(this.dataprefix+"_"+"ImagePexels",imgList,43200,redisTemplate);
         }else{
             imgList = cacheImage;
         }

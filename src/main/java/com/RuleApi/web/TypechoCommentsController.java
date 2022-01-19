@@ -53,6 +53,9 @@ public class TypechoCommentsController {
     @Value("${webinfo.avatar}")
     private String avatar;
 
+    @Value("${web.prefix}")
+    private String dataprefix;
+
     RedisHelp redisHelp =new RedisHelp();
     ResultAll Result = new ResultAll();
     UserStatus UStatus = new UserStatus();
@@ -81,16 +84,16 @@ public class TypechoCommentsController {
             //如果不是登陆状态，那么查询回复我的评论
 
             if(uStatus!=0&&token!=""){
-                String aid = redisHelp.getValue("userInfo"+token,"uid",redisTemplate).toString();
+                String aid = redisHelp.getValue(this.dataprefix+"_"+"userInfo"+token,"uid",redisTemplate).toString();
                 uid = Integer.parseInt(aid);
                 object.put("ownerId",uid);
             }
             query = object.toJavaObject(TypechoComments.class);
         }
         List jsonList = new ArrayList();
-        List cacheList = redisHelp.getList("searchParams_"+page+"_"+limit+"_"+searchKey+"_"+searchParams,redisTemplate);
+        List cacheList = redisHelp.getList(this.dataprefix+"_"+"searchParams_"+page+"_"+limit+"_"+searchKey+"_"+searchParams,redisTemplate);
         if(uStatus!=0){
-            cacheList = redisHelp.getList("searchParams_"+page+"_"+limit+"_"+searchKey+"_"+searchParams+"_"+uid,redisTemplate);
+            cacheList = redisHelp.getList(this.dataprefix+"_"+"searchParams_"+page+"_"+limit+"_"+searchKey+"_"+searchParams+"_"+uid,redisTemplate);
         }
 
         try{
@@ -124,11 +127,11 @@ public class TypechoCommentsController {
                     json.put("contenTitle",contentsInfo.getTitle());
                     jsonList.add(json);
                     if(uStatus!=0){
-                        redisHelp.delete("contensList_"+page+"_"+limit+"_"+searchKey+"_"+searchParams+"_"+uid,redisTemplate);
-                        redisHelp.setList("contensList_"+page+"_"+limit+"_"+searchKey+"_"+searchParams+"_"+uid,jsonList,this.CommentCache,redisTemplate);
+                        redisHelp.delete(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchKey+"_"+searchParams+"_"+uid,redisTemplate);
+                        redisHelp.setList(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchKey+"_"+searchParams+"_"+uid,jsonList,this.CommentCache,redisTemplate);
                     }else{
-                        redisHelp.delete("contensList_"+page+"_"+limit+"_"+searchKey+"_"+searchParams,redisTemplate);
-                        redisHelp.setList("contensList_"+page+"_"+limit+"_"+searchKey+"_"+searchParams,jsonList,this.CommentCache,redisTemplate);
+                        redisHelp.delete(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchKey+"_"+searchParams,redisTemplate);
+                        redisHelp.setList(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchKey+"_"+searchParams,jsonList,this.CommentCache,redisTemplate);
                     }
 
                 }
@@ -173,7 +176,7 @@ public class TypechoCommentsController {
         if (StringUtils.isNotBlank(params)) {
             jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
             //获取发布者信息
-            Map map =redisHelp.getMapValue("userInfo"+token,redisTemplate);
+            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Long date = System.currentTimeMillis();
             String created = String.valueOf(date).substring(0,10);
             //获取评论发布者信息和填写其它不可定义的值

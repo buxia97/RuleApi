@@ -51,6 +51,9 @@ public class TypechoMetasController {
     @Value("${webinfo.contentCache}")
     private Integer contentCache;
 
+    @Value("${web.prefix}")
+    private String dataprefix;
+
 
     RedisHelp redisHelp =new RedisHelp();
     ResultAll Result = new ResultAll();
@@ -73,7 +76,7 @@ public class TypechoMetasController {
             query.setMid(mid);
         }
         List jsonList = new ArrayList();
-        List cacheList = redisHelp.getList("selectContents_"+page+"_"+limit+"_"+searchParams,redisTemplate);
+        List cacheList = redisHelp.getList(this.dataprefix+"_"+"selectContents_"+page+"_"+limit+"_"+searchParams,redisTemplate);
 
         try{
             if(cacheList.size()>0){
@@ -140,8 +143,8 @@ public class TypechoMetasController {
                     //存入redis
 
                 }
-                redisHelp.delete("selectContents_"+page+"_"+limit+"_"+searchParams,redisTemplate);
-                redisHelp.setList("selectContents_"+page+"_"+limit+"_"+searchParams,jsonList,this.contentCache,redisTemplate);
+                redisHelp.delete(this.dataprefix+"_"+"selectContents_"+page+"_"+limit+"_"+searchParams,redisTemplate);
+                redisHelp.setList(this.dataprefix+"_"+"selectContents_"+page+"_"+limit+"_"+searchParams,jsonList,this.contentCache,redisTemplate);
             }
         }catch (Exception e){
             if(cacheList.size()>0){

@@ -71,6 +71,9 @@ public class TypechoUsersController {
     @Value("${webinfo.avatar}")
     private String avatar;
 
+    @Value("${web.prefix}")
+    private String dataprefix;
+
 
     RedisHelp redisHelp =new RedisHelp();
     ResultAll Result = new ResultAll();
@@ -98,7 +101,7 @@ public class TypechoUsersController {
         }
         List jsonList = new ArrayList();
 
-        List cacheList = redisHelp.getList("userList_"+page+"_"+limit+"_"+searchParams+"_"+order+"_"+searchKey,redisTemplate);
+        List cacheList = redisHelp.getList(this.dataprefix+"_"+"userList_"+page+"_"+limit+"_"+searchParams+"_"+order+"_"+searchKey,redisTemplate);
         try{
             if(cacheList.size()>0){
                 jsonList = cacheList;
@@ -118,8 +121,8 @@ public class TypechoUsersController {
                     jsonList.add(json);
 
                 }
-                redisHelp.delete("userList_"+page+"_"+limit+"_"+searchParams+"_"+order+"_"+searchKey,redisTemplate);
-                redisHelp.setList("userList_"+page+"_"+limit+"_"+searchParams+"_"+order+"_"+searchKey,jsonList,this.userCache,redisTemplate);
+                redisHelp.delete(this.dataprefix+"_"+"userList_"+page+"_"+limit+"_"+searchParams+"_"+order+"_"+searchKey,redisTemplate);
+                redisHelp.setList(this.dataprefix+"_"+"userList_"+page+"_"+limit+"_"+searchParams+"_"+order+"_"+searchKey,jsonList,this.userCache,redisTemplate);
             }
         }catch (Exception e){
 
@@ -148,7 +151,7 @@ public class TypechoUsersController {
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
         }
-        Map map =redisHelp.getMapValue("userInfo"+token,redisTemplate);
+        Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         Integer uid =Integer.parseInt(map.get("uid").toString());
         //用户文章数量
         TypechoContents contents = new TypechoContents();
@@ -285,13 +288,13 @@ public class TypechoUsersController {
 
 
             //删除之前的token后，存入redis(防止积累导致内存溢出，超时时间默认是24小时)
-            String oldToken = redisHelp.getRedis("userkey"+jsonToMap.get("name").toString(),redisTemplate);
+            String oldToken = redisHelp.getRedis(this.dataprefix+"_"+"userkey"+jsonToMap.get("name").toString(),redisTemplate);
             if(oldToken!=null){
-                redisHelp.delete("userInfo"+oldToken,redisTemplate);
+                redisHelp.delete(this.dataprefix+"_"+"userInfo"+oldToken,redisTemplate);
             }
             //redisHelp.deleteByPrex("userInfo"+jsonToMap.get("name").toString()+":*",redisTemplate);
-            redisHelp.setRedis("userkey"+jsonToMap.get("name").toString(),jsonToMap.get("token").toString(),this.usertime,redisTemplate);
-            redisHelp.setKey("userInfo"+jsonToMap.get("name").toString()+DigestUtils.md5DigestAsHex(Token.getBytes()),jsonToMap,this.usertime,redisTemplate);
+            redisHelp.setRedis(this.dataprefix+"_"+"userkey"+jsonToMap.get("name").toString(),jsonToMap.get("token").toString(),this.usertime,redisTemplate);
+            redisHelp.setKey(this.dataprefix+"_"+"userInfo"+jsonToMap.get("name").toString()+DigestUtils.md5DigestAsHex(Token.getBytes()),jsonToMap,this.usertime,redisTemplate);
 
         }
         return Result.getResultJson(rows.size() > 0 ? 1 : 0,rows.size() > 0 ? "登录成功" : "用户名或密码错误",jsonToMap);
@@ -352,12 +355,12 @@ public class TypechoUsersController {
             Integer rows = service.update(updateuser);
 
             //删除之前的token后，存入redis(防止积累导致内存溢出，超时时间默认是24小时)
-            String oldToken = redisHelp.getRedis("userkey"+jsonToMap.get("name").toString(),redisTemplate);
+            String oldToken = redisHelp.getRedis(this.dataprefix+"_"+"userkey"+jsonToMap.get("name").toString(),redisTemplate);
             if(oldToken!=null){
-                redisHelp.delete("userInfo"+oldToken,redisTemplate);
+                redisHelp.delete(this.dataprefix+"_"+"userInfo"+oldToken,redisTemplate);
             }
-            redisHelp.setRedis("userkey"+jsonToMap.get("name").toString(),jsonToMap.get("token").toString(),this.usertime,redisTemplate);
-            redisHelp.setKey("userInfo"+jsonToMap.get("name").toString()+DigestUtils.md5DigestAsHex(Token.getBytes()),jsonToMap,this.usertime,redisTemplate);
+            redisHelp.setRedis(this.dataprefix+"_"+"userkey"+jsonToMap.get("name").toString(),jsonToMap.get("token").toString(),this.usertime,redisTemplate);
+            redisHelp.setKey(this.dataprefix+"_"+"userInfo"+jsonToMap.get("name").toString()+DigestUtils.md5DigestAsHex(Token.getBytes()),jsonToMap,this.usertime,redisTemplate);
 
             return Result.getResultJson(rows > 0 ? 1 : 0,rows > 0 ? "登录成功" : "登陆失败",jsonToMap);
 
@@ -399,12 +402,12 @@ public class TypechoUsersController {
 
 
             //删除之前的token后，存入redis(防止积累导致内存溢出，超时时间默认是24小时)
-            String oldToken = redisHelp.getRedis("userkey"+name,redisTemplate);
+            String oldToken = redisHelp.getRedis(this.dataprefix+"_"+"userkey"+name,redisTemplate);
             if(oldToken!=null){
-                redisHelp.delete("userInfo"+oldToken,redisTemplate);
+                redisHelp.delete(this.dataprefix+"_"+"userInfo"+oldToken,redisTemplate);
             }
-            redisHelp.setRedis("userkey"+jsonToMap.get("name").toString(),jsonToMap.get("token").toString(),this.usertime,redisTemplate);
-            redisHelp.setKey("userInfo"+jsonToMap.get("name").toString()+DigestUtils.md5DigestAsHex(Token.getBytes()),jsonToMap,this.usertime,redisTemplate);
+            redisHelp.setRedis(this.dataprefix+"_"+"userkey"+jsonToMap.get("name").toString(),jsonToMap.get("token").toString(),this.usertime,redisTemplate);
+            redisHelp.setKey(this.dataprefix+"_"+"userInfo"+jsonToMap.get("name").toString()+DigestUtils.md5DigestAsHex(Token.getBytes()),jsonToMap,this.usertime,redisTemplate);
 
             return Result.getResultJson(rows > 0 ? 1 : 0,rows > 0 ? "登录成功" : "登陆失败",jsonToMap);
 
@@ -443,7 +446,7 @@ public class TypechoUsersController {
             //验证邮箱验证码
             String email = jsonToMap.get("mail").toString();
             String code = jsonToMap.get("code").toString();
-            String cur_code = redisHelp.getRedis("sendCode"+email,redisTemplate);
+            String cur_code = redisHelp.getRedis(this.dataprefix+"_"+"sendCode"+email,redisTemplate);
             if(cur_code==null){
                 return Result.getResultJson(0,"请先发送验证码",null);
             }
@@ -501,8 +504,8 @@ public class TypechoUsersController {
                 //存入redis并发送邮件
                 String name = isName.get(0).getName();
                 String email = isName.get(0).getMail();
-                redisHelp.delete("sendCode"+name,redisTemplate);
-                redisHelp.setRedis("sendCode"+name,code,1800,redisTemplate);
+                redisHelp.delete(this.dataprefix+"_"+"sendCode"+name,redisTemplate);
+                redisHelp.setRedis(this.dataprefix+"_"+"sendCode"+name,code,1800,redisTemplate);
                 MailService.send("你本次的验证码为"+code, "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><title></title><meta charset=\"utf-8\" /><style>*{padding:0px;margin:0px;box-sizing:border-box;}html{box-sizing:border-box;}body{font-size:15px;background:#fff}.main{margin:20px auto;max-width:500px;border:solid 1px #20a4ab;border-radius:8px;overflow:hidden;}.main h1{display:block;width:100%;background:#20a4ab;font-size:18px;color:#fff;text-align:center;padding:15px;}.text{padding:30px;}.text p{margin:10px 0px;line-height:25px;}.text p span{color:#20a4ab;font-weight:bold;font-size:22px;margin-left:5px;}</style></head><body><div class=\"main\"><h1>用户验证码</h1><div class=\"text\"><p>用户 "+name+"，你本次的验证码为<span>"+code+"</span>。</p><p>出于安全原因，该验证码将于30分钟后失效。请勿将验证码透露给他人。</p></div></div></body></html>",
                         new String[] {email}, new String[] {});
                 return Result.getResultJson(1,"邮件发送成功",null);
@@ -546,8 +549,8 @@ public class TypechoUsersController {
                 code += random.nextInt(10);
             }
             //存入redis并发送邮件
-            redisHelp.delete("sendCode"+email,redisTemplate);
-            redisHelp.setRedis("sendCode"+email,code,1800,redisTemplate);
+            redisHelp.delete(this.dataprefix+"_"+"sendCode"+email,redisTemplate);
+            redisHelp.setRedis(this.dataprefix+"_"+"sendCode"+email,code,1800,redisTemplate);
             MailService.send("你本次的验证码为"+code, "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><title></title><meta charset=\"utf-8\" /><style>*{padding:0px;margin:0px;box-sizing:border-box;}html{box-sizing:border-box;}body{font-size:15px;background:#fff}.main{margin:20px auto;max-width:500px;border:solid 1px #20a4ab;border-radius:8px;overflow:hidden;}.main h1{display:block;width:100%;background:#20a4ab;font-size:18px;color:#fff;text-align:center;padding:15px;}.text{padding:30px;}.text p{margin:10px 0px;line-height:25px;}.text p span{color:#20a4ab;font-weight:bold;font-size:22px;margin-left:5px;}</style></head><body><div class=\"main\"><h1>用户验证码</h1><div class=\"text\"><p>你本次的验证码为<span>"+code+"</span>。</p><p>出于安全原因，该验证码将于30分钟后失效。请勿将验证码透露给他人。</p></div></div></body></html>",
                     new String[] {email}, new String[] {});
             return Result.getResultJson(1,"邮件发送成功",null);
@@ -572,15 +575,15 @@ public class TypechoUsersController {
             String name = jsonToMap.get("name").toString();
             //从redis获取验证码
             String sendCode = null;
-            if(redisHelp.getRedis("sendCode"+name,redisTemplate)!=null){
-                sendCode =redisHelp.getRedis("sendCode"+name,redisTemplate);
+            if(redisHelp.getRedis(this.dataprefix+"_"+"sendCode"+name,redisTemplate)!=null){
+                sendCode =redisHelp.getRedis(this.dataprefix+"_"+"sendCode"+name,redisTemplate);
             }else{
                 return Result.getResultJson(0,"验证码已超时或未发送",null);
             }
             if(!sendCode.equals(code)){
                 return Result.getResultJson(0,"验证码不正确",null);
             }
-            redisHelp.delete("sendCode"+name,redisTemplate);
+            redisHelp.delete(this.dataprefix+"_"+"sendCode"+name,redisTemplate);
             String p = jsonToMap.get("password").toString();
             String url = this.url+"/apiResult.php?pw="+p;
             String passwd = HttpClient.doGet(url);
@@ -636,8 +639,8 @@ public class TypechoUsersController {
             if(jsonToMap.get("code")!=null&&jsonToMap.get("mail")!=null){
 
                 String email = jsonToMap.get("mail").toString();
-                if(redisHelp.getRedis("sendCode"+email,redisTemplate)!=null){
-                    String sendCode = redisHelp.getRedis("sendCode"+email,redisTemplate);
+                if(redisHelp.getRedis(this.dataprefix+"_"+"sendCode"+email,redisTemplate)!=null){
+                    String sendCode = redisHelp.getRedis(this.dataprefix+"_"+"sendCode"+email,redisTemplate);
                     code = jsonToMap.get("code").toString();
                     if(!sendCode.equals(code)){
                         return Result.getResultJson(0,"验证码不正确",null);
@@ -684,11 +687,11 @@ public class TypechoUsersController {
 
         if(rows>0&&jsonToMap.get("password")!=null) {
             //执行成功后，如果密码发生了改变，需要重新登陆
-            redisHelp.delete("userInfo"+token,redisTemplate);
+            redisHelp.delete(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         }
         if(rows>0&&jsonToMap.get("mail")!=null) {
             //执行成功后，如果邮箱发生了改变，则重新登陆
-            redisHelp.delete("userInfo"+token,redisTemplate);
+            redisHelp.delete(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         }
         JSONObject response = new JSONObject();
         response.put("code" ,rows > 0 ? 1: 0 );
@@ -723,7 +726,7 @@ public class TypechoUsersController {
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
         }
         //String group = (String) redisHelp.getValue("userInfo"+token,"group",redisTemplate);
-        Map map =redisHelp.getMapValue("userInfo"+token,redisTemplate);
+        Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         String group = map.get("group").toString();
         if(!group.equals("administrator")){
             return Result.getResultJson(0,"你没有操作权限",null);

@@ -8,6 +8,7 @@ import com.RuleApi.entity.*;
 import com.RuleApi.service.*;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -50,6 +51,9 @@ public class TypechoUserlogController {
     @Autowired
     private TypechoUsersService usersService;
 
+    @Value("${web.prefix}")
+    private String dataprefix;
+
     RedisHelp redisHelp =new RedisHelp();
     ResultAll Result = new ResultAll();
     HttpClient HttpClient = new HttpClient();
@@ -67,7 +71,7 @@ public class TypechoUserlogController {
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
         }
-        Map map =redisHelp.getMapValue("userInfo"+token,redisTemplate);
+        Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         Integer uid =Integer.parseInt(map.get("uid").toString());
         TypechoUserlog userlog = new TypechoUserlog();
         userlog.setCid(Integer.parseInt(cid));
@@ -103,7 +107,7 @@ public class TypechoUserlogController {
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
         }
-        Map map =redisHelp.getMapValue("userInfo"+token,redisTemplate);
+        Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         Integer uid =Integer.parseInt(map.get("uid").toString());
 
         TypechoUserlog query = new TypechoUserlog();
@@ -111,7 +115,7 @@ public class TypechoUserlogController {
         query.setType("mark");
 
         List jsonList = new ArrayList();
-        List cacheList = redisHelp.getList("markList_"+page+"_"+limit+"_"+uid,redisTemplate);
+        List cacheList = redisHelp.getList(this.dataprefix+"_"+"markList_"+page+"_"+limit+"_"+uid,redisTemplate);
         try{
             if(cacheList.size()>0){
                 jsonList = cacheList;
@@ -175,8 +179,8 @@ public class TypechoUserlogController {
 
 
                 }
-                redisHelp.delete("markList_"+page+"_"+limit+"_"+uid, redisTemplate);
-                redisHelp.setList("markList_"+page+"_"+limit+"_"+uid, jsonList, 5, redisTemplate);
+                redisHelp.delete(this.dataprefix+"_"+"markList_"+page+"_"+limit+"_"+uid, redisTemplate);
+                redisHelp.setList(this.dataprefix+"_"+"markList_"+page+"_"+limit+"_"+uid, jsonList, 5, redisTemplate);
             }
         }catch (Exception e){
             if(cacheList.size()>0){
@@ -204,7 +208,7 @@ public class TypechoUserlogController {
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
         }
-        Map map =redisHelp.getMapValue("userInfo"+token,redisTemplate);
+        Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         Integer uid =Integer.parseInt(map.get("uid").toString());
 
         TypechoUserlog query = new TypechoUserlog();
@@ -256,7 +260,7 @@ public class TypechoUserlogController {
                     return Result.getResultJson(0,"请先登录哦",null);
                 }
             }
-            Map map =redisHelp.getMapValue("userInfo"+token,redisTemplate);
+            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer uid = 0;
             if(map.get("uid")!=null){
                 uid =Integer.parseInt(map.get("uid").toString());
@@ -271,7 +275,7 @@ public class TypechoUserlogController {
             //如果是点赞，那么每天只能一次
             if(type.equals("likes")){
                 String cid = jsonToMap.get("cid").toString();
-                String isLikes = redisHelp.getRedis("userlikes"+"_"+ip+"_"+agent+"_"+cid,redisTemplate);
+                String isLikes = redisHelp.getRedis(this.dataprefix+"_"+"userlikes"+"_"+ip+"_"+agent+"_"+cid,redisTemplate);
                 if(isLikes!=null){
                     return Result.getResultJson(0,"距离上次操作不到24小时！",null);
                 }
@@ -284,7 +288,7 @@ public class TypechoUserlogController {
                 toContents.setLikes(likes);
                 contentsService.update(toContents);
 
-                redisHelp.setRedis("userlikes"+"_"+ip+"_"+agent+"_"+cid,"yes",86400,redisTemplate);
+                redisHelp.setRedis(this.dataprefix+"_"+"userlikes"+"_"+ip+"_"+agent+"_"+cid,"yes",86400,redisTemplate);
             }
             //签到，每天一次
             if(type.equals("clock")){
@@ -391,7 +395,7 @@ public class TypechoUserlogController {
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
         }
         //验证用户权限
-        Map map =redisHelp.getMapValue("userInfo"+token,redisTemplate);
+        Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         Integer uid =Integer.parseInt(map.get("uid").toString());
         String group = map.get("group").toString();
 
