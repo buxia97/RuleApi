@@ -12,14 +12,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.DigestUtils;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.mail.MessagingException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -79,6 +76,7 @@ public class TypechoUsersController {
     ResultAll Result = new ResultAll();
     HttpClient HttpClient = new HttpClient();
     UserStatus UStatus = new UserStatus();
+    PHPass phpass = new PHPass(8);
 
     /***
      * 用户查询
@@ -250,16 +248,13 @@ public class TypechoUsersController {
         if(rows.size() > 0){
             //查询出用户信息后，通过接口验证用户密码
             String newpw = rows.get(0).getPassword();
-            String url = this.url+"/apiResult.php?oldpw="+oldpw+"&newpw="+newpw;
-            String passwd = HttpClient.doGet(url);
-            if(passwd==null){
-                return Result.getResultJson(0,"用户接口异常",null);
-            }
-            passwd = passwd.replaceAll("(\\\r\\\n|\\\r|\\\n|\\\n\\\r)", "");
-            if(!passwd.equals(newpw)){
+            //通过内置验证
+            boolean isPass  = phpass.CheckPassword(oldpw,newpw);
+
+            if(!isPass){
                 return Result.getResultJson(0,"用户密码错误",null);
             }
-
+            //内置验证结束
             Long date = System.currentTimeMillis();
             String Token = date + jsonToMap.get("name").toString();
             jsonToMap.put("uid",rows.get(0).getUid());
@@ -369,11 +364,12 @@ public class TypechoUsersController {
             TypechoUsers regUser = new TypechoUsers();
             String name =  baseFull.createRandomStr(5)+baseFull.createRandomStr(4);
             String p = baseFull.createRandomStr(9);
-            String url = this.url+"/apiResult.php?pw="+p;
-            String passwd = HttpClient.doGet(url);
-            if(passwd==null){
-                return Result.getResultJson(0,"用户接口异常",null);
-            }
+//            String url = this.url+"/apiResult.php?pw="+p;
+//            String passwd = HttpClient.doGet(url);
+//            if(passwd==null){
+//                return Result.getResultJson(0,"用户接口异常",null);
+//            }
+            String passwd = phpass.HashPassword(p);
             Long date = System.currentTimeMillis();
             String userTime = String.valueOf(date).substring(0,10);
             regUser.setName(name);
@@ -454,11 +450,12 @@ public class TypechoUsersController {
                 return Result.getResultJson(0,"验证码不正确",null);
             }
             String p = jsonToMap.get("password").toString();
-            String url = this.url+"/apiResult.php?pw="+p;
-            String passwd = HttpClient.doGet(url);
-            if(passwd==null){
-                return Result.getResultJson(0,"用户接口异常",null);
-            }
+//            String url = this.url+"/apiResult.php?pw="+p;
+//            String passwd = HttpClient.doGet(url);
+//            if(passwd==null){
+//                return Result.getResultJson(0,"用户接口异常",null);
+//            }
+            String passwd = phpass.HashPassword(p);
             Long date = System.currentTimeMillis();
             String userTime = String.valueOf(date).substring(0,10);
             jsonToMap.put("created",userTime);
