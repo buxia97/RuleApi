@@ -67,7 +67,7 @@ public class TypechoUserlogController {
     @ResponseBody
     public String isMark (@RequestParam(value = "cid", required = false) String  cid,
                             @RequestParam(value = "token", required = false) String  token) {
-        Integer uStatus = UStatus.getStatus(token,redisTemplate);
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
         }
@@ -103,7 +103,7 @@ public class TypechoUserlogController {
                             @RequestParam(value = "token", required = false) String  token) {
 
 
-        Integer uStatus = UStatus.getStatus(token,redisTemplate);
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
         }
@@ -204,7 +204,7 @@ public class TypechoUserlogController {
     public String rewardList (@RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
                             @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
                             @RequestParam(value = "token", required = false) String  token) {
-        Integer uStatus = UStatus.getStatus(token,redisTemplate);
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
         }
@@ -255,7 +255,7 @@ public class TypechoUserlogController {
             String type = jsonToMap.get("type").toString();
             //只有喜欢操作不需要登陆拦截
             if(!type.equals("likes")){
-                Integer uStatus = UStatus.getStatus(token,redisTemplate);
+                Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
                 if(uStatus==0){
                     return Result.getResultJson(0,"请先登录哦",null);
                 }
@@ -390,7 +390,7 @@ public class TypechoUserlogController {
     @RequestMapping(value = "/removeLog")
     @ResponseBody
     public String removeLog(@RequestParam(value = "key", required = false) String  key,@RequestParam(value = "token", required = false) String  token) {
-        Integer uStatus = UStatus.getStatus(token,redisTemplate);
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
         }

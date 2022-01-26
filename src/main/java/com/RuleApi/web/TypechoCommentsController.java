@@ -75,7 +75,7 @@ public class TypechoCommentsController {
                             @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
                                 @RequestParam(value = "token"       , required = false, defaultValue = "") String token) {
         TypechoComments query = new TypechoComments();
-        Integer uStatus = UStatus.getStatus(token,redisTemplate);
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
         Integer uid = 0;
         if (StringUtils.isNotBlank(searchParams)) {
             JSONObject object = JSON.parseObject(searchParams);
@@ -159,7 +159,7 @@ public class TypechoCommentsController {
     @RequestMapping(value = "/commentsAdd")
     @ResponseBody
     public String commentsAdd(@RequestParam(value = "params", required = false) String  params, @RequestParam(value = "token", required = false) String  token,HttpServletRequest request) {
-        Integer uStatus = UStatus.getStatus(token,redisTemplate);
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
         Map jsonToMap =null;
 
         if(uStatus==0){

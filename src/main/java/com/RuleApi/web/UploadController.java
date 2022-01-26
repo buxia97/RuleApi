@@ -71,6 +71,9 @@ public class UploadController {
     @Value("${spring.aliyun.urlPrefix}")
     private String urlPrefix;
 
+    @Value("${web.prefix}")
+    private String dataprefix;
+
     //获取本地上传相关配置
     @Value("${webinfo.uploadUrl}")
     private String localUrl;
@@ -88,7 +91,7 @@ public class UploadController {
     @RequestMapping(value = "/cosUpload",method = RequestMethod.POST)
     @ResponseBody
     public Object cosUpload(@RequestParam(value = "file") MultipartFile file, @RequestParam(value = "token", required = false) String  token) throws IOException {
-        Integer uStatus = UStatus.getStatus(token,redisTemplate);
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
         }
@@ -161,7 +164,7 @@ public class UploadController {
     @RequestMapping(value = "/localUpload",method = RequestMethod.POST)
     @ResponseBody
     public String localUpload(@RequestParam("file") MultipartFile file, @RequestParam(value = "token", required = false) String  token) throws IOException {
-        Integer uStatus = UStatus.getStatus(token,redisTemplate);
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
         }
@@ -208,7 +211,7 @@ public class UploadController {
     @RequestMapping(value = "/ossUpload",method = RequestMethod.POST)
     @ResponseBody
     public String uploadOssFile(@RequestParam("file") MultipartFile file, @RequestParam(value = "token", required = false) String  token) throws IOException {
-        Integer uStatus = UStatus.getStatus(token,redisTemplate);
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
         }

@@ -194,7 +194,7 @@ public class TypechoContentsController {
         if (StringUtils.isNotBlank(searchParams)) {
             JSONObject object = JSON.parseObject(searchParams);
             //如果不是登陆状态，那么只显示开放状态文章。如果是，则查询自己发布的文章
-            Integer uStatus = UStatus.getStatus(token,redisTemplate);
+            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
             if(token==""||uStatus==0){
 
                 object.put("status","publish");
@@ -290,7 +290,7 @@ public class TypechoContentsController {
     @ResponseBody
     public String contensAdd(@RequestParam(value = "params", required = false) String  params, @RequestParam(value = "token", required = false) String  token) {
         TypechoContents insert = null;
-        Integer uStatus = UStatus.getStatus(token,redisTemplate);
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
         Map jsonToMap =null;
         String category = "";
         String tag = "";
@@ -389,7 +389,7 @@ public class TypechoContentsController {
         Map jsonToMap =null;
         String category = "";
         String tag = "";
-        Integer uStatus = UStatus.getStatus(token,redisTemplate);
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
         }
@@ -502,7 +502,7 @@ public class TypechoContentsController {
     @RequestMapping(value = "/contensDelete")
     @ResponseBody
     public String formDelete(@RequestParam(value = "key", required = false) String  key, @RequestParam(value = "token", required = false) String  token) {
-        Integer uStatus = UStatus.getStatus(token,redisTemplate);
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
         }

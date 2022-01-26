@@ -145,7 +145,7 @@ public class TypechoUsersController {
     @RequestMapping(value = "/userData")
     @ResponseBody
     public String userData(@RequestParam(value = "token", required = false) String  token) {
-        Integer uStatus = UStatus.getStatus(token,redisTemplate);
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
         }
@@ -625,7 +625,7 @@ public class TypechoUsersController {
         TypechoUsers update = null;
         Map jsonToMap =null;
         String code = "";
-        Integer uStatus = UStatus.getStatus(token,redisTemplate);
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
         }
@@ -705,7 +705,7 @@ public class TypechoUsersController {
     public String userStatus(@RequestParam(value = "token", required = false) String  token) {
         TypechoUsers update = null;
         Map jsonToMap =null;
-        Integer uStatus = UStatus.getStatus(token,redisTemplate);
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
         }else{
@@ -718,7 +718,7 @@ public class TypechoUsersController {
     @RequestMapping(value = "/userDelete")
     @ResponseBody
     public String userDelete(@RequestParam(value = "key", required = false) String  key, @RequestParam(value = "token", required = false) String  token) {
-        Integer uStatus = UStatus.getStatus(token,redisTemplate);
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
         }
