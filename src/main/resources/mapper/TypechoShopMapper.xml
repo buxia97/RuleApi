@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.RuleApi.dao.TypechoShopDao">
+
+    <resultMap id="BaseResultMap" type="com.RuleApi.entity.TypechoShop" >
+        <result column="id" property="id" />
+        <result column="title" property="title" />
+        <result column="imgurl" property="imgurl" />
+        <result column="text" property="text" />
+        <result column="price" property="price" />
+        <result column="num" property="num" />
+        <result column="type" property="type" />
+        <result column="value" property="value" />
+        <result column="cid" property="cid" />
+        <result column="uid" property="uid" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        `id`,
+        `title`,
+        `imgurl`,
+        `text`,
+        `price`,
+        `num`,
+        `type`,
+        `value`,
+        `cid`,
+        `uid`
+    </sql>
+
+    <!-- 插入数据 -->
+    <insert id="insert" parameterType="com.RuleApi.entity.TypechoShop">
+        INSERT INTO typecho_shop
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test ='null != id'>
+                `id`,
+            </if>
+            <if test ='null != title'>
+                `title`,
+            </if>
+            <if test ='null != imgurl'>
+                `imgurl`,
+            </if>
+            <if test ='null != text'>
+                `text`,
+            </if>
+            <if test ='null != price'>
+                `price`,
+            </if>
+            <if test ='null != num'>
+                `num`,
+            </if>
+            <if test ='null != type'>
+                `type`,
+            </if>
+            <if test ='null != value'>
+                `value`,
+            </if>
+            <if test ='null != cid'>
+                `cid`,
+            </if>
+            <if test ='null != uid'>
+                `uid`
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test ='null != id'>
+                #{id},
+            </if>
+            <if test ='null != title'>
+                #{title},
+            </if>
+            <if test ='null != imgurl'>
+                #{imgurl},
+            </if>
+            <if test ='null != text'>
+                #{text},
+            </if>
+            <if test ='null != price'>
+                #{price},
+            </if>
+            <if test ='null != num'>
+                #{num},
+            </if>
+            <if test ='null != type'>
+                #{type},
+            </if>
+            <if test ='null != value'>
+                #{value},
+            </if>
+            <if test ='null != cid'>
+                #{cid},
+            </if>
+            <if test ='null != uid'>
+                #{uid}
+            </if>
+        </trim>
+    </insert>
+
+    <!-- 批量插入数据 -->
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO typecho_shop ( <include refid="Base_Column_List" /> ) VALUES
+        <foreach collection="list" item="curr" index="index" separator=",">
+            (
+                #{curr.id},
+                #{curr.title},
+                #{curr.imgurl},
+                #{curr.text},
+                #{curr.price},
+                #{curr.num},
+                #{curr.type},
+                #{curr.value},
+                #{curr.cid},
+                #{curr.uid}
+            )
+        </foreach>
+    </insert>
+
+    <!-- 更新 -->
+    <update id="update" parameterType="com.RuleApi.entity.TypechoShop">
+        UPDATE typecho_shop
+        <set>
+            <if test ='null != title'>`title` = #{title},</if>
+            <if test ='null != imgurl'>`imgurl` = #{imgurl},</if>
+            <if test ='null != text'>`text` = #{text},</if>
+            <if test ='null != price'>`price` = #{price},</if>
+            <if test ='null != num'>`num` = #{num},</if>
+            <if test ='null != type'>`type` = #{type},</if>
+            <if test ='null != value'>`value` = #{value},</if>
+            <if test ='null != cid'>`cid` = #{cid},</if>
+            <if test ='null != uid'>`uid` = #{uid}</if>
+        </set>
+        WHERE `id` = #{id}
+    </update>
+
+    <!-- 删除 -->
+    <delete id="delete">
+        DELETE FROM typecho_shop
+        WHERE `id` = #{key}
+    </delete>
+
+    <!-- 批量删除 -->
+    <delete id="batchDelete" parameterType = "java.util.List">
+        DELETE FROM typecho_shop WHERE id IN
+        <foreach collection="list"  item="item" open="(" separator="," close=")"  >
+            #{item}
+        </foreach>
+    </delete>
+
+    <!-- 主键查询 -->
+    <select id="selectByKey" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM typecho_shop
+        WHERE `id` = #{key}
+    </select>
+
+    <!-- 条件查询 -->
+    <select id="selectList" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM typecho_shop
+        <where>
+            <if test ='null != id'>
+                and `id` = #{id}
+            </if>
+            <if test ='null != title'>
+                and `title` = #{title}
+            </if>
+            <if test ='null != imgurl'>
+                and `imgurl` = #{imgurl}
+            </if>
+            <if test ='null != text'>
+                and `text` = #{text}
+            </if>
+            <if test ='null != price'>
+                and `price` = #{price}
+            </if>
+            <if test ='null != num'>
+                and `num` = #{num}
+            </if>
+            <if test ='null != type'>
+                and `type` = #{type}
+            </if>
+            <if test ='null != value'>
+                and `value` = #{value}
+            </if>
+            <if test ='null != cid'>
+                and `cid` = #{cid}
+            </if>
+            <if test ='null != uid'>
+                and `uid` = #{uid}
+            </if>
+        </where>
+    </select>
+
+    <!-- 分页条件查询 -->
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM typecho_shop
+        <where>
+            <if test ='null != typechoShop.id'>
+                and `id` = #{typechoShop.id}
+            </if>
+            <if test ='null != typechoShop.title'>
+                and `title` = #{typechoShop.title}
+            </if>
+            <if test ='null != typechoShop.imgurl'>
+                and `imgurl` = #{typechoShop.imgurl}
+            </if>
+            <if test ='null != typechoShop.text'>
+                and `text` = #{typechoShop.text}
+            </if>
+            <if test ='null != typechoShop.price'>
+                and `price` = #{typechoShop.price}
+            </if>
+            <if test ='null != typechoShop.num'>
+                and `num` = #{typechoShop.num}
+            </if>
+            <if test ='null != typechoShop.type'>
+                and `type` = #{typechoShop.type}
+            </if>
+            <if test ='null != typechoShop.value'>
+                and `value` = #{typechoShop.value}
+            </if>
+            <if test ='null != typechoShop.cid'>
+                and `cid` = #{typechoShop.cid}
+            </if>
+            <if test ='null != typechoShop.uid'>
+                and `uid` = #{typechoShop.uid}
+            </if>
+        </where>
+        limit #{page,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
+    </select>
+
+    <!-- 总量查询 -->
+    <select id="total" resultType="java.lang.Integer">
+        SELECT count(*) FROM typecho_shop
+        <where>
+            <if test ='null != id'>
+                and `id` = #{id}
+            </if>
+            <if test ='null != title'>
+                and `title` = #{title}
+            </if>
+            <if test ='null != imgurl'>
+                and `imgurl` = #{imgurl}
+            </if>
+            <if test ='null != text'>
+                and `text` = #{text}
+            </if>
+            <if test ='null != price'>
+                and `price` = #{price}
+            </if>
+            <if test ='null != num'>
+                and `num` = #{num}
+            </if>
+            <if test ='null != type'>
+                and `type` = #{type}
+            </if>
+            <if test ='null != value'>
+                and `value` = #{value}
+            </if>
+            <if test ='null != cid'>
+                and `cid` = #{cid}
+            </if>
+            <if test ='null != uid'>
+                and `uid` = #{uid}
+            </if>
+        </where>
+    </select>
+</mapper>

@@ -193,10 +193,10 @@ public class TypechoCommentsController {
                     return Result.getResultJson(0,"超出最大评论长度",null);
                 }
             }
-            if(map.get("url").toString().length()>0){
+            if(map.get("url")!=null){
                 jsonToMap.put("url",map.get("url").toString());
             }
-            if(map.get("mail").toString().length()>0){
+            if(map.get("mail")!=null){
                 jsonToMap.put("mail",map.get("mail").toString());
             }else{
                 return Result.getResultJson(0,"请先绑定邮箱！",null);

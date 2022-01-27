@@ -461,7 +461,7 @@ public class TypechoUsersController {
             jsonToMap.put("created",userTime);
             jsonToMap.put("group","subscriber");
 
-            jsonToMap.put("password", passwd.replaceAll("(\\\r\\\n|\\\r|\\\n|\\\n\\\r)", ""));
+            jsonToMap.put("password", passwd);
             jsonToMap.remove("introduce");
             jsonToMap.remove("assets");
         }
@@ -582,12 +582,8 @@ public class TypechoUsersController {
             }
             redisHelp.delete(this.dataprefix+"_"+"sendCode"+name,redisTemplate);
             String p = jsonToMap.get("password").toString();
-            String url = this.url+"/apiResult.php?pw="+p;
-            String passwd = HttpClient.doGet(url);
-            if(passwd==null){
-                return Result.getResultJson(0,"用户接口异常",null);
-            }
-            jsonToMap.put("password", passwd.replaceAll("(\\\r\\\n|\\\r|\\\n|\\\n\\\r)", ""));
+            String passwd = phpass.HashPassword(p);
+            jsonToMap.put("password", passwd);
             jsonToMap.remove("code");
 
             Map keyName = new HashMap<String, String>();
@@ -651,12 +647,8 @@ public class TypechoUsersController {
             jsonToMap.remove("code");
             if(jsonToMap.get("password")!=null){
                 String p = jsonToMap.get("password").toString();
-                String url = this.url+"/apiResult.php?pw="+p;
-                String passwd = HttpClient.doGet(url);
-                if(passwd==null){
-                    return Result.getResultJson(0,"用户接口异常",null);
-                }
-                jsonToMap.put("password", passwd.replaceAll("(\\\r\\\n|\\\r|\\\n|\\\n\\\r)", ""));
+                String passwd = phpass.HashPassword(p);
+                jsonToMap.put("password", passwd);
             }
             Map keyName = new HashMap<String, String>();
             keyName.put("name",jsonToMap.get("name").toString());

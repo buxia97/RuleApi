@@ -117,6 +117,29 @@ public class InstallController {
         }else{
             text+="数据表typecho_userapi已经存在，无需添加。";
         }
+
+
+        //积分商品&积分阅读模块
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_shop';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("CREATE TABLE `"+prefix+"_shop` (" +
+                    "  `id` int(11) NOT NULL AUTO_INCREMENT," +
+                    "  `title` varchar(300) DEFAULT NULL COMMENT '商品标题'," +
+                    "  `imgurl` varchar(500) DEFAULT NULL COMMENT '商品图片'," +
+                    "  `text` text COMMENT '商品内容'," +
+                    "  `price` int(11) DEFAULT '0' COMMENT '商品价格'," +
+                    "  `num` int(11) DEFAULT '0' COMMENT '商品数量'," +
+                    "  `type` int(11) DEFAULT '1' COMMENT '商品类型（实体，源码，工具，教程）'," +
+                    "  `value` text COMMENT '收费显示（除实体外，这个字段购买后显示）'," +
+                    "  `cid` int(11) DEFAULT '-1' COMMENT '所属文章'," +
+                    "  `uid` int(11) DEFAULT '0' COMMENT '发布人'," +
+                    "  PRIMARY KEY (`id`)" +
+                    ") ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='商品表';");
+            text+="数据表typecho_shop创建完成。";
+        }else{
+            text+="数据表typecho_shop已经存在，无需添加。";
+        }
+
         text+=" ------ 执行结束，安装执行完成";
 
         redisHelp.setRedis(this.dataprefix+"_"+"isInstall","1",600,redisTemplate);
