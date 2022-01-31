@@ -42,12 +42,12 @@ public class TypechoShop implements Serializable {
     /**
      * num  商品数量
      */
-    private String num;
+    private Integer num;
 
     /**
      * type  商品类型（实体，源码，工具，教程）
      */
-    private String type;
+    private Integer type;
 
     /**
      * value  收费显示（除实体外，这个字段购买后显示）

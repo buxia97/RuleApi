@@ -311,11 +311,16 @@ public class TypechoContentsController {
 //                return Result.getResultJson(0,"请传入正确的文章类型",null);
 //            }
             //获取参数中的分类和标签
+            if(jsonToMap.get("category")==null){
+                jsonToMap.put("category","0");
+            }
             category = jsonToMap.get("category").toString();
             if(jsonToMap.get("tag")!=null){
                 tag = jsonToMap.get("tag").toString();
             }
-
+            if(jsonToMap.get("text")==null){
+                jsonToMap.put("text","暂无内容");
+            }
 
             //写入创建时间和作者
             jsonToMap.put("created",userTime);
@@ -419,9 +424,15 @@ public class TypechoContentsController {
 
 
             //获取参数中的分类和标签（暂时不允许定义）
+            if(jsonToMap.get("category")==null){
+                jsonToMap.put("category","0");
+            }
             category = jsonToMap.get("category").toString();
             if(jsonToMap.get("tag")!=null){
                 tag = jsonToMap.get("tag").toString();
+            }
+            if(jsonToMap.get("text")==null){
+                jsonToMap.put("text","暂无内容");
             }
 
 

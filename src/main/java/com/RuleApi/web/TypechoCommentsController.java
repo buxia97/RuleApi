@@ -223,7 +223,9 @@ public class TypechoCommentsController {
 
             insert = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoComments.class);
             //更新文章评论数量
-            Integer cnum = contents.getCommentsNum()+1;
+            TypechoComments suminfo = new TypechoComments();
+            suminfo.setCid(Integer.parseInt(cid));
+            Integer cnum = service.total(suminfo);
             contents.setCommentsNum(cnum);
             contentsService.update(contents);
         }

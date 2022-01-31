@@ -52,6 +52,8 @@ public class InstallController {
         }else{
             text+="Typecho程序确认安装。";
         }
+        //修改请求头
+        jdbcTemplate.execute("ALTER TABLE "+prefix+"_comments MODIFY agent varchar(500);");
         //查询文章表是否存在views字段
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_contents' and column_name = 'views';", Integer.class);
         if (i == 0){
@@ -84,6 +86,22 @@ public class InstallController {
             text+="数据表typecho_users，字段assets添加完成。";
         }else{
             text+="数据表typecho_users，字段assets已经存在，无需添加。";
+        }
+        //查询用户表是否存在address字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_users' and column_name = 'address';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table typecho_users ADD address text;");
+            text+="数据表typecho_users，字段address添加完成。";
+        }else{
+            text+="数据表typecho_users，字段address已经存在，无需添加。";
+        }
+        //查询用户表是否存在address字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_users' and column_name = 'pay';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table typecho_users ADD pay text;");
+            text+="数据表typecho_users，字段pay添加完成。";
+        }else{
+            text+="数据表typecho_users，字段pay已经存在，无需添加。";
         }
         //判断用户日志表是否存在
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_userlog';", Integer.class);

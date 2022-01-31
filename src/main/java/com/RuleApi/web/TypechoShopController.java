@@ -34,6 +34,12 @@ public class TypechoShopController {
     TypechoShopService service;
 
     @Autowired
+    private TypechoUsersService usersService;
+
+    @Autowired
+    private TypechoUserlogService userlogService;
+
+    @Autowired
     private RedisTemplate redisTemplate;
 
     @Value("${web.prefix}")
@@ -181,5 +187,61 @@ public class TypechoShopController {
         response.put("code" , rows);
         response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
         return response.toString();
+    }
+    /***
+     * 购买商品
+     */
+    @RequestMapping(value = "/buyshop")
+    @ResponseBody
+    public String buyshop(@RequestParam(value = "sid", required = false) String  sid,@RequestParam(value = "token", required = false) String  token) {
+
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+        if(uStatus==0){
+            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+        }
+        Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+        Integer uid  = Integer.parseInt(map.get("uid").toString());
+        TypechoShop shopinfo = service.selectByKey(sid);
+        TypechoUsers usersinfo =usersService.selectByKey(uid.toString());
+        Integer price = shopinfo.getPrice();
+        Integer oldAssets =usersinfo.getAssets();
+        if(price>oldAssets){
+            return Result.getResultJson(0,"积分余额不足",null);
+        }
+        Integer Assets = oldAssets - price;
+        usersinfo.setAssets(Assets);
+
+        //生成用户日志，判断是否购买，这里的cid用于商品id
+        TypechoUserlog log = new TypechoUserlog();
+        log.setType("buy");
+        log.setUid(uid);
+        log.setCid(Integer.parseInt(sid));
+        Integer isBuy = userlogService.total(log);
+        if(isBuy > 0){
+            return Result.getResultJson(0,"你已经购买过了",null);
+        }
+        log.setNum(Assets);
+
+        try {
+            userlogService.insert(log);
+            //修改用户账户
+            usersService.update(usersinfo);
+            //修改商品剩余数量
+            Integer shopnum = shopinfo.getNum();
+            shopnum = shopnum - 1;
+            shopinfo.setNum(shopnum);
+            service.update(shopinfo);
+            JSONObject response = new JSONObject();
+            response.put("code" , 1);
+            response.put("msg"  , "操作成功");
+            return response.toString();
+        }catch (Exception e){
+            JSONObject response = new JSONObject();
+            response.put("code" , 0);
+            response.put("msg"  , "操作失败");
+            return response.toString();
+        }
+
+
     }
 }
