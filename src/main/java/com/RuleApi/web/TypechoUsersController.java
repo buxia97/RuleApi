@@ -109,6 +109,9 @@ public class TypechoUsersController {
                 for (int i = 0; i < list.size(); i++) {
                     Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
                     json.remove("password");
+                    json.remove("address");
+                    json.remove("pay");
+                    json.remove("assets");
                     if(json.get("mail")!=null){
                         json.put("avatar",this.avatar+DigestUtils.md5DigestAsHex(json.get("mail").toString().getBytes()));
                     }else{
@@ -210,6 +213,9 @@ public class TypechoUsersController {
         TypechoUsers info =  service.selectByKey(key);
         Map json = JSONObject.parseObject(JSONObject.toJSONString(info), Map.class);
         json.remove("password");
+        json.remove("address");
+        json.remove("pay");
+        json.remove("assets");
         if(json.get("mail")!=null){
             json.put("avatar",this.avatar+DigestUtils.md5DigestAsHex(json.get("mail").toString().getBytes()));
         }else{
@@ -310,6 +316,9 @@ public class TypechoUsersController {
             jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
         }else{
             return Result.getResultJson(0,"请输入正确的参数",null);
+        }
+        if(jsonToMap.get("accessToken")==null){
+            return Result.getResultJson(0,"登录配置异常，请检查相关设置",null);
         }
         TypechoUserapi userapi = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoUserapi.class);
         String accessToken = userapi.getAccessToken();
@@ -695,13 +704,23 @@ public class TypechoUsersController {
     @RequestMapping(value = "/userStatus")
     @ResponseBody
     public String userStatus(@RequestParam(value = "token", required = false) String  token) {
-        TypechoUsers update = null;
         Map jsonToMap =null;
         Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
         }else{
-            return Result.getResultJson(1,"状态正常",null);
+            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            Integer uid  = Integer.parseInt(map.get("uid").toString());
+            TypechoUsers users = service.selectByKey(uid);
+            Map json = JSONObject.parseObject(JSONObject.toJSONString(users), Map.class);
+            JSONObject response = new JSONObject();
+
+            response.put("code" , 1);
+            response.put("msg"  , "");
+            response.put("data" , json);
+
+            return response.toString();
         }
     }
     /***

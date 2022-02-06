@@ -52,9 +52,9 @@ public class TypechoShopController {
     /***
      * 商品列表
      */
-    @RequestMapping(value = "/shoplist")
+    @RequestMapping(value = "/shopList")
     @ResponseBody
-    public String shoplist (@RequestParam(value = "searchParams", required = false) String  searchParams,
+    public String shopList (@RequestParam(value = "searchParams", required = false) String  searchParams,
                             @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
                             @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit) {
         TypechoShop query = new TypechoShop();
@@ -65,7 +65,7 @@ public class TypechoShopController {
 
         PageList<TypechoShop> pageList = service.selectPage(query, page, limit);
         JSONObject response = new JSONObject();
-        response.put("code" , 0);
+        response.put("code" , 1);
         response.put("msg"  , "");
         response.put("data" , null != pageList.getList() ? pageList.getList() : new JSONArray());
         response.put("count", pageList.getTotalCount());
@@ -75,18 +75,41 @@ public class TypechoShopController {
     /**
      * 查询商品详情
      */
-    @RequestMapping(value = "/shopinfo")
+    @RequestMapping(value = "/shopInfo")
     @ResponseBody
-    public TypechoShop shopinfo(@RequestParam(value = "key", required = false) String  key) {
-        return service.selectByKey(key);
+    public String shopInfo(@RequestParam(value = "key", required = false) String  key,@RequestParam(value = "token", required = false) String  token) {
+        TypechoShop info =  service.selectByKey(key);
+        Map shopinfo = JSONObject.parseObject(JSONObject.toJSONString(info), Map.class);
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+
+        if(uStatus==0){
+            shopinfo.remove("value");
+        }else{
+            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            Integer uid  = Integer.parseInt(map.get("uid").toString());
+            //如果登陆，判断是否购买过
+            TypechoUserlog log = new TypechoUserlog();
+            log.setType("buy");
+            log.setUid(uid);
+            log.setCid(Integer.parseInt(key));
+            Integer isBuy = userlogService.total(log);
+            //判断自己是不是发布者
+            Integer aid = info.getUid();
+            if(!uid.equals(aid)&&isBuy <= 0){
+                shopinfo.remove("value");
+            }
+        }
+        JSONObject JsonMap = JSON.parseObject(JSON.toJSONString(shopinfo),JSONObject.class);
+        return JsonMap.toJSONString();
+
     }
 
     /***
      * 添加商品
      */
-    @RequestMapping(value = "/addshop")
+    @RequestMapping(value = "/addShop")
     @ResponseBody
-    public String addshop(@RequestParam(value = "params", required = false) String  params,@RequestParam(value = "token", required = false) String  token) {
+    public String addShop(@RequestParam(value = "params", required = false) String  params,@RequestParam(value = "token", required = false) String  token) {
         Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
@@ -116,9 +139,9 @@ public class TypechoShopController {
     /***
      * 修改商品
      */
-    @RequestMapping(value = "/editshop")
+    @RequestMapping(value = "/editShop")
     @ResponseBody
-    public String editshop(@RequestParam(value = "params", required = false) String  params,@RequestParam(value = "token", required = false) String  token) {
+    public String editShop(@RequestParam(value = "params", required = false) String  params,@RequestParam(value = "token", required = false) String  token) {
         Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
@@ -161,9 +184,9 @@ public class TypechoShopController {
     /***
      * 删除商品
      */
-    @RequestMapping(value = "/deleteshop")
+    @RequestMapping(value = "/deleteShop")
     @ResponseBody
-    public String formDelete(@RequestParam(value = "key", required = false) String  key,@RequestParam(value = "token", required = false) String  token) {
+    public String deleteShop(@RequestParam(value = "key", required = false) String  key,@RequestParam(value = "token", required = false) String  token) {
 
         Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
         if(uStatus==0){
@@ -191,9 +214,9 @@ public class TypechoShopController {
     /***
      * 购买商品
      */
-    @RequestMapping(value = "/buyshop")
+    @RequestMapping(value = "/buyShop")
     @ResponseBody
-    public String buyshop(@RequestParam(value = "sid", required = false) String  sid,@RequestParam(value = "token", required = false) String  token) {
+    public String buyShop(@RequestParam(value = "sid", required = false) String  sid,@RequestParam(value = "token", required = false) String  token) {
 
         Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
         if(uStatus==0){
@@ -202,6 +225,10 @@ public class TypechoShopController {
         Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         Integer uid  = Integer.parseInt(map.get("uid").toString());
         TypechoShop shopinfo = service.selectByKey(sid);
+        Integer aid = shopinfo.getUid();
+        if(uid.equals(aid)){
+            return Result.getResultJson(0,"你不可以买自己的商品",null);
+        }
         TypechoUsers usersinfo =usersService.selectByKey(uid.toString());
         Integer price = shopinfo.getPrice();
         Integer oldAssets =usersinfo.getAssets();
@@ -210,6 +237,13 @@ public class TypechoShopController {
         }
         Integer Assets = oldAssets - price;
         usersinfo.setAssets(Assets);
+        //判断商品类型，如果是实体商品需要设置收货地址
+        Integer type = shopinfo.getType();
+        String address = usersinfo.getAddress();
+        if(type==1&&address==""){
+            return Result.getResultJson(0,"购买实体商品前，需要先设置收货地址",null);
+        }
+
 
         //生成用户日志，判断是否购买，这里的cid用于商品id
         TypechoUserlog log = new TypechoUserlog();
@@ -221,7 +255,10 @@ public class TypechoShopController {
             return Result.getResultJson(0,"你已经购买过了",null);
         }
         log.setNum(Assets);
-
+        log.setToid(aid);
+        Long date = System.currentTimeMillis();
+        String userTime = String.valueOf(date).substring(0,10);
+        log.setCreated(Integer.parseInt(userTime));
         try {
             userlogService.insert(log);
             //修改用户账户
@@ -243,5 +280,33 @@ public class TypechoShopController {
         }
 
 
+    }
+    /**
+     * 文章挂载商品
+     * */
+    @RequestMapping(value = "/mountShop")
+    @ResponseBody
+    public String mountShop(@RequestParam(value = "cid", required = false) String  cid,@RequestParam(value = "sid", required = false) String  sid,@RequestParam(value = "token", required = false) String  token) {
+
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+        if(uStatus==0){
+            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+        }
+        Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+        Integer uid  = Integer.parseInt(map.get("uid").toString());
+        //判断商品是不是自己的
+        TypechoShop shop = new TypechoShop();
+        shop.setUid(uid);
+        shop.setId(Integer.parseInt(sid));
+        Integer num  = service.total(shop);
+        if(num < 1){
+            return Result.getResultJson(0,"你无权限添加他人的商品",null);
+        }
+        shop.setCid(Integer.parseInt(cid));
+        int rows =  service.update(shop);
+        JSONObject response = new JSONObject();
+        response.put("code" , rows);
+        response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
+        return response.toString();
     }
 }

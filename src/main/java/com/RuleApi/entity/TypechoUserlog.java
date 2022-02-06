@@ -43,4 +43,9 @@ public class TypechoUserlog implements Serializable {
      * created  时间
      */
     private Integer created;
+
+    /**
+     * created  指向用户
+     */
+    private Integer toid;
 }

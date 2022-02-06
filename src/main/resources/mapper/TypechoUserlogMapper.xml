@@ -18,7 +18,8 @@
         `cid`,
         `type`,
         `num`,
-        `created`
+        `created`,
+        `toid`
     </sql>
 
     <!-- 插入数据 -->
@@ -41,7 +42,10 @@
                 `num`,
             </if>
             <if test ='null != created'>
-                `created`
+                `created`,
+            </if>
+            <if test ='null != created'>
+                `toid`
             </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
@@ -61,24 +65,12 @@
                 #{num},
             </if>
             <if test ='null != created'>
-                #{created}
+                #{created},
+            </if>
+            <if test ='null != created'>
+                #{toid},
             </if>
         </trim>
-    </insert>
-
-    <!-- 批量插入数据 -->
-    <insert id="batchInsert" parameterType="java.util.List">
-        INSERT INTO ${prefix}_userlog ( <include refid="Base_Column_List" /> ) VALUES
-        <foreach collection="list" item="curr" index="index" separator=",">
-            (
-                #{curr.id},
-                #{curr.uid},
-                #{curr.cid},
-                #{curr.type},
-                #{curr.num},
-                #{curr.created}
-            )
-        </foreach>
     </insert>
 
     <!-- 更新 -->
@@ -138,6 +130,9 @@
             <if test ='null != created'>
                 and `created` = #{created}
             </if>
+            <if test ='null != toid'>
+                and `toid` = #{toid}
+            </if>
         </where>
         order by created desc
     </select>
@@ -165,6 +160,9 @@
             <if test ='null != typechoUserlog.created'>
                 and `created` = #{typechoUserlog.created}
             </if>
+            <if test ='null != typechoUserlog.toid'>
+                and `toid` = #{typechoUserlog.toid}
+            </if>
         </where>
         order by created desc
         limit #{page,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
@@ -191,6 +189,9 @@
             </if>
             <if test ='null != created'>
                 and `created` = #{created}
+            </if>
+            <if test ='null != toid'>
+                and `toid` = #{toid}
             </if>
         </where>
     </select>

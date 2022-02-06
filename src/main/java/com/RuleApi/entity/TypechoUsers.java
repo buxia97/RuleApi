@@ -76,4 +76,14 @@ public class TypechoUsers implements Serializable {
      * logged
      */
     private Integer assets;
+
+    /**
+     * address
+     */
+    private String address;
+
+    /**
+     * address
+     */
+    private String pay;
 }

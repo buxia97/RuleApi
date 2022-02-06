@@ -26,7 +26,9 @@
         `type`,
         `value`,
         `cid`,
-        `uid`
+        `uid`,
+        `created`,
+        `status`
     </sql>
 
     <!-- 插入数据 -->
@@ -61,7 +63,13 @@
                 `cid`,
             </if>
             <if test ='null != uid'>
-                `uid`
+                `uid`,
+            </if>
+            <if test ='null != created'>
+                `created`,
+            </if>
+            <if test ='null != status'>
+                `status`
             </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
@@ -92,29 +100,13 @@
             <if test ='null != cid'>
                 #{cid},
             </if>
-            <if test ='null != uid'>
-                #{uid}
+            <if test ='null != created'>
+                #{created},
+            </if>
+            <if test ='null != status'>
+                #{status}
             </if>
         </trim>
-    </insert>
-
-    <!-- 批量插入数据 -->
-    <insert id="batchInsert" parameterType="java.util.List">
-        INSERT INTO typecho_shop ( <include refid="Base_Column_List" /> ) VALUES
-        <foreach collection="list" item="curr" index="index" separator=",">
-            (
-                #{curr.id},
-                #{curr.title},
-                #{curr.imgurl},
-                #{curr.text},
-                #{curr.price},
-                #{curr.num},
-                #{curr.type},
-                #{curr.value},
-                #{curr.cid},
-                #{curr.uid}
-            )
-        </foreach>
     </insert>
 
     <!-- 更新 -->
@@ -129,7 +121,9 @@
             <if test ='null != type'>`type` = #{type},</if>
             <if test ='null != value'>`value` = #{value},</if>
             <if test ='null != cid'>`cid` = #{cid},</if>
-            <if test ='null != uid'>`uid` = #{uid}</if>
+            <if test ='null != uid'>`uid` = #{uid},</if>
+            <if test ='null != created'>`created` = #{created},</if>
+            <if test ='null != status'>`uid` = #{status}</if>
         </set>
         WHERE `id` = #{id}
     </update>
@@ -190,7 +184,11 @@
             <if test ='null != uid'>
                 and `uid` = #{uid}
             </if>
+            <if test ='null != status'>
+                and `status` = #{status}
+            </if>
         </where>
+        order by created desc
     </select>
 
     <!-- 分页条件查询 -->
@@ -228,7 +226,11 @@
             <if test ='null != typechoShop.uid'>
                 and `uid` = #{typechoShop.uid}
             </if>
+            <if test ='null != typechoShop.status'>
+                and `status` = #{typechoShop.status}
+            </if>
         </where>
+        order by created desc
         limit #{page,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
     </select>
 

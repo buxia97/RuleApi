@@ -46,6 +46,9 @@ public class TypechoUserlogController {
     private TypechoContentsService contentsService;
 
     @Autowired
+    private TypechoShopService shopService;
+
+    @Autowired
     private TypechoFieldsService fieldsService;
 
     @Autowired
@@ -324,6 +327,7 @@ public class TypechoUserlogController {
                 TypechoUserlog log = new TypechoUserlog();
                 log.setType("clock");
                 log.setUid(uid);
+
                 List<TypechoUserlog> info = service.selectList(log);
 
                 //获取上次时间
@@ -350,9 +354,12 @@ public class TypechoUserlogController {
                 TypechoUsers newUser = new TypechoUsers();
                 newUser.setUid(uid);
                 newUser.setAssets(Assets);
+
                 usersService.update(newUser);
                 jsonToMap.put("num",award);
                 clock = "，获得"+award+"积分奖励！";
+
+                jsonToMap.put("toid",uid);
             }
             //收藏，只能一次
             if(type.equals("mark")){
@@ -371,6 +378,7 @@ public class TypechoUserlogController {
             }
             //打赏，要扣余额
             if(type.equals("reward")){
+
                 if(jsonToMap.get("num")==null){
                     return Result.getResultJson(0,"参数不正确",null);
                 }
@@ -400,6 +408,7 @@ public class TypechoUserlogController {
                 toUser.setAssets(curAssets);
                 usersService.update(toUser);
 
+                jsonToMap.put("toid",authorid);
 
             }
             insert = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoUserlog.class);
@@ -448,5 +457,63 @@ public class TypechoUserlogController {
         response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
         return response.toString();
 
+    }
+    /***
+     * 查询用户收藏列表
+     * @param page         页码
+     * @param limit        每页显示数量
+     */
+    @RequestMapping(value = "/orderList")
+    @ResponseBody
+    public String orderList (@RequestParam(value = "token", required = false) String  token) {
+
+        String page = "1";
+        String limit = "30";
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+        if(uStatus==0){
+            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+        }
+        Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+        Integer uid =Integer.parseInt(map.get("uid").toString());
+
+        TypechoUserlog query = new TypechoUserlog();
+        query.setUid(uid);
+        query.setType("buy");
+
+        List jsonList = new ArrayList();
+        List cacheList = redisHelp.getList(this.dataprefix+"_"+"orderList_"+page+"_"+limit+"_"+uid,redisTemplate);
+        try{
+            if(cacheList.size()>0){
+                jsonList = cacheList;
+            }else {
+                PageList<TypechoUserlog> pageList = service.selectPage(query, Integer.parseInt(page), Integer.parseInt(limit));
+                List<TypechoUserlog> list = pageList.getList();
+                for (int i = 0; i < list.size(); i++) {
+                    Integer cid = list.get(i).getCid();
+                    //这里cid是商品id
+                    TypechoShop shop = shopService.selectByKey(cid);
+                    Map shopInfo = JSONObject.parseObject(JSONObject.toJSONString(shop), Map.class);
+                    Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
+                    json.put("shopInfo",shopInfo);
+
+
+                    jsonList.add(json);
+
+
+                }
+                redisHelp.delete(this.dataprefix+"_"+"orderList_"+page+"_"+limit+"_"+uid, redisTemplate);
+                redisHelp.setList(this.dataprefix+"_"+"orderList_"+page+"_"+limit+"_"+uid, jsonList, 5, redisTemplate);
+            }
+        }catch (Exception e){
+            if(cacheList.size()>0){
+                jsonList = cacheList;
+            }
+        }
+        JSONObject response = new JSONObject();
+        response.put("code" , 1);
+        response.put("msg"  , "");
+        response.put("data" , null != jsonList ? jsonList : new JSONArray());
+        response.put("count", jsonList.size());
+        return response.toString();
     }
 }

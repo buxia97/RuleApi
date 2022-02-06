@@ -60,7 +60,17 @@ public class TypechoShop implements Serializable {
     private Integer cid;
 
     /**
-     * cid  发布人
+     * uid  发布人
      */
     private Integer uid;
+
+    /**
+     * created  创建时间
+     */
+    private Integer created;
+
+    /**
+     * status  审核状态
+     */
+    private Integer status;
 }
