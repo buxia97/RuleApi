@@ -75,8 +75,8 @@ public class TypechoShopController {
         JSONObject response = new JSONObject();
         response.put("code" , 1);
         response.put("msg"  , "");
-        response.put("data" , null != pageList.getList() ? pageList.getList() : new JSONArray());
-        response.put("count", pageList.getList().size());
+        response.put("data" , null != jsonList ? jsonList : new JSONArray());
+        response.put("count", jsonList.size());
         return response.toString();
     }
 

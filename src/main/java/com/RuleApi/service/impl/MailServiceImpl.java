@@ -1,10 +1,12 @@
 package com.RuleApi.service.impl;
 
 import java.io.File;
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
+import javax.mail.internet.MimeUtility;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -93,9 +95,15 @@ public class MailServiceImpl implements MailService{
         MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, true, defaultEncoding);
 
         //设置发件人
-        log.info("emailFromName = " + emailFromName);
+        String newEmailFromName = emailFromName;
+        try {
+            newEmailFromName =  MimeUtility.encodeWord(emailFromName,"utf-8","B");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        log.info("emailFromName = " + newEmailFromName);
         //log.info("from = " + from);emailFromName
-        mimeMessageHelper.setFrom(emailFromName + "<"+ username + ">");
+        mimeMessageHelper.setFrom(newEmailFromName + "<"+ username + ">");
 
         //设置邮件的主题
         log.info("subject = " + subject);

@@ -173,6 +173,27 @@ public class InstallController {
         }else{
             text+="数据表typecho_shop，字段created已经存在，无需添加。";
         }
+
+        //判断充值记录表是否存在
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_paylog';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("CREATE TABLE `"+prefix+"_paylog` (" +
+                    "  `pid` int(11) NOT NULL AUTO_INCREMENT," +
+                    "  `subject` varchar(255) DEFAULT NULL," +
+                    "  `total_amount` varchar(255) DEFAULT NULL," +
+                    "  `out_trade_no` varchar(255) DEFAULT NULL," +
+                    "  `trade_no` varchar(255) DEFAULT NULL," +
+                    "  `paytype` varchar(255) DEFAULT '' COMMENT '支付类型'," +
+                    "  `uid` int(11) DEFAULT '-1' COMMENT '充值人ID'," +
+                    "  `created` int(10) DEFAULT NULL," +
+                    "  `status` int(11) DEFAULT '0' COMMENT '支付状态（0未支付，1已支付）'," +
+                    "  PRIMARY KEY (`pid`)" +
+                    ") ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='支付渠道充值记录';");
+            text+="数据表typecho_paylog创建完成。";
+        }else{
+            text+="数据表typecho_paylog已经存在，无需添加。";
+        }
+
         text+=" ------ 执行结束，安装执行完成";
 
         redisHelp.setRedis(this.dataprefix+"_"+"isInstall","1",600,redisTemplate);

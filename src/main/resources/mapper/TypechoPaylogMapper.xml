@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.RuleApi.dao.TypechoPaylogDao">
+
+    <resultMap id="BaseResultMap" type="com.RuleApi.entity.TypechoPaylog" >
+        <result column="pid" property="pid" />
+        <result column="subject" property="subject" />
+        <result column="total_amount" property="totalAmount" />
+        <result column="out_trade_no" property="outTradeNo" />
+        <result column="trade_no" property="tradeNo" />
+        <result column="paytype" property="paytype" />
+        <result column="uid" property="uid" />
+        <result column="created" property="created" />
+        <result column="status" property="status" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        `pid`,
+        `subject`,
+        `total_amount`,
+        `out_trade_no`,
+        `trade_no`,
+        `paytype`,
+        `uid`,
+        `created`,
+        `status`
+    </sql>
+
+    <!-- 插入数据 -->
+    <insert id="insert" parameterType="com.RuleApi.entity.TypechoPaylog">
+        INSERT INTO typecho_paylog
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test ='null != pid'>
+                `pid`,
+            </if>
+            <if test ='null != subject'>
+                `subject`,
+            </if>
+            <if test ='null != totalAmount'>
+                `total_amount`,
+            </if>
+            <if test ='null != outTradeNo'>
+                `out_trade_no`,
+            </if>
+            <if test ='null != tradeNo'>
+                `trade_no`,
+            </if>
+            <if test ='null != paytype'>
+                `paytype`,
+            </if>
+            <if test ='null != uid'>
+                `uid`,
+            </if>
+            <if test ='null != created'>
+                `created`,
+            </if>
+            <if test ='null != status'>
+                `status`
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test ='null != pid'>
+                #{pid},
+            </if>
+            <if test ='null != subject'>
+                #{subject},
+            </if>
+            <if test ='null != totalAmount'>
+                #{totalAmount},
+            </if>
+            <if test ='null != outTradeNo'>
+                #{outTradeNo},
+            </if>
+            <if test ='null != tradeNo'>
+                #{tradeNo},
+            </if>
+            <if test ='null != paytype'>
+                #{paytype},
+            </if>
+            <if test ='null != uid'>
+                #{uid},
+            </if>
+            <if test ='null != created'>
+                #{created},
+            </if>
+            <if test ='null != status'>
+                #{status}
+            </if>
+        </trim>
+    </insert>
+
+    <!-- 批量插入数据 -->
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO typecho_paylog ( <include refid="Base_Column_List" /> ) VALUES
+        <foreach collection="list" item="curr" index="index" separator=",">
+            (
+                #{curr.pid},
+                #{curr.subject},
+                #{curr.totalAmount},
+                #{curr.outTradeNo},
+                #{curr.tradeNo},
+                #{curr.paytype},
+                #{curr.uid},
+                #{curr.created},
+                #{curr.status}
+            )
+        </foreach>
+    </insert>
+
+    <!-- 更新 -->
+    <update id="update" parameterType="com.RuleApi.entity.TypechoPaylog">
+        UPDATE typecho_paylog
+        <set>
+            <if test ='null != subject'>`subject` = #{subject},</if>
+            <if test ='null != totalAmount'>`total_amount` = #{totalAmount},</if>
+            <if test ='null != outTradeNo'>`out_trade_no` = #{outTradeNo},</if>
+            <if test ='null != tradeNo'>`trade_no` = #{tradeNo},</if>
+            <if test ='null != paytype'>`paytype` = #{paytype},</if>
+            <if test ='null != uid'>`uid` = #{uid},</if>
+            <if test ='null != created'>`created` = #{created},</if>
+            <if test ='null != status'>`status` = #{status}</if>
+        </set>
+        WHERE `pid` = #{pid}
+    </update>
+
+    <!-- 删除 -->
+    <delete id="delete">
+        DELETE FROM typecho_paylog
+        WHERE `pid` = #{key}
+    </delete>
+
+    <!-- 批量删除 -->
+    <delete id="batchDelete" parameterType = "java.util.List">
+        DELETE FROM typecho_paylog WHERE pid IN
+        <foreach collection="list"  item="item" open="(" separator="," close=")"  >
+            #{item}
+        </foreach>
+    </delete>
+
+    <!-- 主键查询 -->
+    <select id="selectByKey" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM typecho_paylog
+        WHERE `pid` = #{key}
+    </select>
+
+    <!-- 条件查询 -->
+    <select id="selectList" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM typecho_paylog
+        <where>
+            <if test ='null != pid'>
+                and `pid` = #{pid}
+            </if>
+            <if test ='null != subject'>
+                and `subject` = #{subject}
+            </if>
+            <if test ='null != totalAmount'>
+                and `total_amount` = #{totalAmount}
+            </if>
+            <if test ='null != outTradeNo'>
+                and `out_trade_no` = #{outTradeNo}
+            </if>
+            <if test ='null != tradeNo'>
+                and `trade_no` = #{tradeNo}
+            </if>
+            <if test ='null != paytype'>
+                and `paytype` = #{paytype}
+            </if>
+            <if test ='null != uid'>
+                and `uid` = #{uid}
+            </if>
+            <if test ='null != created'>
+                and `created` = #{created}
+            </if>
+            <if test ='null != status'>
+                and `status` = #{status}
+            </if>
+        </where>
+        order by created desc
+    </select>
+
+    <!-- 分页条件查询 -->
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM typecho_paylog
+        <where>
+            <if test ='null != typechoPaylog.pid'>
+                and `pid` = #{typechoPaylog.pid}
+            </if>
+            <if test ='null != typechoPaylog.subject'>
+                and `subject` = #{typechoPaylog.subject}
+            </if>
+            <if test ='null != typechoPaylog.totalAmount'>
+                and `total_amount` = #{typechoPaylog.totalAmount}
+            </if>
+            <if test ='null != typechoPaylog.outTradeNo'>
+                and `out_trade_no` = #{typechoPaylog.outTradeNo}
+            </if>
+            <if test ='null != typechoPaylog.tradeNo'>
+                and `trade_no` = #{typechoPaylog.tradeNo}
+            </if>
+            <if test ='null != typechoPaylog.paytype'>
+                and `paytype` = #{typechoPaylog.paytype}
+            </if>
+            <if test ='null != typechoPaylog.uid'>
+                and `uid` = #{typechoPaylog.uid}
+            </if>
+            <if test ='null != typechoPaylog.created'>
+                and `created` = #{typechoPaylog.created}
+            </if>
+            <if test ='null != typechoPaylog.status'>
+                and `status` = #{typechoPaylog.status}
+            </if>
+        </where>
+        order by created desc
+        limit #{page,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
+    </select>
+
+    <!-- 总量查询 -->
+    <select id="total" resultType="java.lang.Integer">
+        SELECT count(*) FROM typecho_paylog
+        <where>
+            <if test ='null != pid'>
+                and `pid` = #{pid}
+            </if>
+            <if test ='null != subject'>
+                and `subject` = #{subject}
+            </if>
+            <if test ='null != totalAmount'>
+                and `total_amount` = #{totalAmount}
+            </if>
+            <if test ='null != outTradeNo'>
+                and `out_trade_no` = #{outTradeNo}
+            </if>
+            <if test ='null != tradeNo'>
+                and `trade_no` = #{tradeNo}
+            </if>
+            <if test ='null != paytype'>
+                and `paytype` = #{paytype}
+            </if>
+            <if test ='null != uid'>
+                and `uid` = #{uid}
+            </if>
+            <if test ='null != created'>
+                and `created` = #{created}
+            </if>
+            <if test ='null != status'>
+                and `status` = #{status}
+            </if>
+        </where>
+    </select>
+</mapper>

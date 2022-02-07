@@ -747,11 +747,139 @@ public class TypechoUsersController {
         return response.toString();
     }
     /***
-     * 管理员手动充值
+     * 发起提现
+     */
+    @RequestMapping(value = "/userWithdraw")
+    @ResponseBody
+    public String userWithdraw(@RequestParam(value = "num", required = false) Integer  num, @RequestParam(value = "token", required = false) String  token) {
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+        if(uStatus==0){
+            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+        }
+        Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+        Integer uid  = Integer.parseInt(map.get("uid").toString());
+        //查询用户是否设置pay
+        TypechoUsers user = service.selectByKey(uid);
+        if(user.getPay()==null){
+            return Result.getResultJson(0,"请先设置收款信息",null);
+        }
+        Long date = System.currentTimeMillis();
+        String userTime = String.valueOf(date).substring(0,10);
+        TypechoUserlog userlog = new TypechoUserlog();
+        userlog.setUid(uid);
+        userlog.setType("withdraw");
+        userlog.setNum(num);
+        userlog.setCid(-1);
+        userlog.setToid(uid);
+        userlog.setCreated(Integer.parseInt(userTime));
+        Integer rows = userlogService.insert(userlog);
+        JSONObject response = new JSONObject();
+        response.put("code" ,rows > 0 ? 1: 0 );
+        response.put("data" , rows);
+        response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
+        return response.toString();
+    }
+    /***
+     * 提现列表
+     */
+    @RequestMapping(value = "/withdrawList")
+    @ResponseBody
+    public String withdrawList (@RequestParam(value = "searchParams", required = false) String  searchParams,
+                            @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
+                            @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
+                            @RequestParam(value = "token", required = false) String  token) {
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+        if(uStatus==0){
+            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+        }
+        TypechoUserlog query = new TypechoUserlog();
+        if (StringUtils.isNotBlank(searchParams)) {
+
+            JSONObject object = JSON.parseObject(searchParams);
+            query.setType("withdraw");
+            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            Integer uid  = Integer.parseInt(map.get("uid").toString());
+            String group = map.get("group").toString();
+            //不是管理员就只能看自己的提现记录
+            if(!group.equals("administrator")){
+                object.put("uid",uid);
+
+            }
+            if(object.get("uid")!=null){
+
+                query.setUid(Integer.parseInt(object.get("uid").toString()));
+            }
+            if(object.get("cid")!=null){
+
+                query.setCid(Integer.parseInt(object.get("cid").toString()));
+            }
+
+
+        }
+
+        PageList<TypechoUserlog> pageList = userlogService.selectPage(query, page, limit);
+        List jsonList = new ArrayList();
+        List<TypechoUserlog> list = pageList.getList();
+        for (int i = 0; i < list.size(); i++) {
+            Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
+            Integer uuid = list.get(i).getUid();
+            TypechoUsers userinfo = service.selectByKey(uuid);
+            String pay = userinfo.getPay();
+            json.put("pay",pay);
+            jsonList.add(json);
+        }
+        JSONObject response = new JSONObject();
+        response.put("code" , 1);
+        response.put("msg"  , "");
+        response.put("data" , null != jsonList ? jsonList : new JSONArray());
+        response.put("count", jsonList.size());
+        return response.toString();
+    }
+    /***
+     * 提现审核
+     */
+    @RequestMapping(value = "/withdrawStatus")
+    @ResponseBody
+    public String withdrawStatus(@RequestParam(value = "key", required = false) Integer  key,@RequestParam(value = "type", required = false) Integer type, @RequestParam(value = "token", required = false) String  token) {
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+        if(uStatus==0){
+            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+        }
+        //String group = (String) redisHelp.getValue("userInfo"+token,"group",redisTemplate);
+        Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+        String group = map.get("group").toString();
+        if(!group.equals("administrator")){
+            return Result.getResultJson(0,"你没有操作权限",null);
+        }
+
+        TypechoUserlog userlog = userlogService.selectByKey(key);
+        //审核通过，则开始扣费和改状态
+        if(type.equals(1)){
+            Integer num = userlog.getNum();
+            Integer uid = userlog.getUid();
+            TypechoUsers user = service.selectByKey(uid);
+            Integer oldAssets = user.getAssets();
+
+            Integer assets = oldAssets - num;
+            user.setAssets(assets);
+            service.update(user);
+            userlog.setCid(0);
+        }else{
+            userlog.setCid(-2);
+        }
+        Integer rows = userlogService.update(userlog);
+        JSONObject response = new JSONObject();
+        response.put("code" ,rows > 0 ? 1: 0 );
+        response.put("data" , rows);
+        response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
+        return response.toString();
+    }
+    /***
+     * 管理员手动充扣
      */
     @RequestMapping(value = "/userRecharge")
     @ResponseBody
-    public String userRecharge(@RequestParam(value = "key", required = false) Integer  key,@RequestParam(value = "num", required = false) Integer  num, @RequestParam(value = "token", required = false) String  token) {
+    public String userRecharge(@RequestParam(value = "key", required = false) Integer  key,@RequestParam(value = "num", required = false) Integer  num,@RequestParam(value = "type", required = false) Integer type, @RequestParam(value = "token", required = false) String  token) {
         Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
@@ -765,9 +893,15 @@ public class TypechoUsersController {
         TypechoUsers user = service.selectByKey(key);
         Integer oldAssets = user.getAssets();
         if(num <= 0){
-            return Result.getResultJson(0,"充值金额不正确",null);
+            return Result.getResultJson(0,"金额不正确",null);
         }
-        Integer assets = oldAssets + num;
+        Integer assets;
+        if(type.equals(0)){
+            assets = oldAssets + num;
+        }else{
+            assets = oldAssets - num;
+        }
+
         user.setAssets(assets);
         Integer rows = service.update(user);
         JSONObject response = new JSONObject();

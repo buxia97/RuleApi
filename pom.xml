@@ -123,12 +123,29 @@
             <version>9.0.40</version>
         </dependency>
         <!-- fastJson -->
+        <!-- 支付宝 -->
+        <dependency>
+            <groupId>com.alipay.sdk</groupId>
+            <artifactId>alipay-sdk-java</artifactId>
+            <version>4.10.170.ALL</version>
+        </dependency>
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
             <version>1.2.70</version>
         </dependency>
+        <!-- zxing生成二维码 -->
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>core</artifactId>
+            <version>3.3.3</version>
+        </dependency>
 
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>javase</artifactId>
+            <version>3.3.3</version>
+        </dependency>
         <!-- mysql -->
         <dependency>
             <groupId>mysql</groupId>
