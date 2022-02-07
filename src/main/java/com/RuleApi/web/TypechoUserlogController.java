@@ -460,8 +460,6 @@ public class TypechoUserlogController {
     }
     /***
      * 查询用户收藏列表
-     * @param page         页码
-     * @param limit        每页显示数量
      */
     @RequestMapping(value = "/orderList")
     @ResponseBody
@@ -503,6 +501,66 @@ public class TypechoUserlogController {
                 }
                 redisHelp.delete(this.dataprefix+"_"+"orderList_"+page+"_"+limit+"_"+uid, redisTemplate);
                 redisHelp.setList(this.dataprefix+"_"+"orderList_"+page+"_"+limit+"_"+uid, jsonList, 5, redisTemplate);
+            }
+        }catch (Exception e){
+            if(cacheList.size()>0){
+                jsonList = cacheList;
+            }
+        }
+        JSONObject response = new JSONObject();
+        response.put("code" , 1);
+        response.put("msg"  , "");
+        response.put("data" , null != jsonList ? jsonList : new JSONArray());
+        response.put("count", jsonList.size());
+        return response.toString();
+    }
+    /***
+     * 查询售出订单列表
+     */
+    @RequestMapping(value = "/orderSellList")
+    @ResponseBody
+    public String orderSellList (@RequestParam(value = "token", required = false) String  token) {
+
+        String page = "1";
+        String limit = "30";
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+        if(uStatus==0){
+            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+        }
+        Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+        Integer uid =Integer.parseInt(map.get("uid").toString());
+
+        TypechoUserlog query = new TypechoUserlog();
+        query.setToid(uid);
+        query.setType("buy");
+
+        List jsonList = new ArrayList();
+        List cacheList = redisHelp.getList(this.dataprefix+"_"+"orderSellList_"+page+"_"+limit+"_"+uid,redisTemplate);
+        try{
+            if(cacheList.size()>0){
+                jsonList = cacheList;
+            }else {
+                PageList<TypechoUserlog> pageList = service.selectPage(query, Integer.parseInt(page), Integer.parseInt(limit));
+                List<TypechoUserlog> list = pageList.getList();
+                for (int i = 0; i < list.size(); i++) {
+                    Integer cid = list.get(i).getCid();
+                    Integer touid = list.get(i).getUid();
+                    //这里cid是商品id
+                    TypechoShop shop = shopService.selectByKey(cid);
+                    Map shopInfo = JSONObject.parseObject(JSONObject.toJSONString(shop), Map.class);
+                    Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
+                    json.put("shopInfo",shopInfo);
+                    //获取用户地址
+                    TypechoUsers user = usersService.selectByKey(touid);
+                    String address = user.getAddress();
+                    json.put("address",address);
+
+                    jsonList.add(json);
+
+
+                }
+                redisHelp.delete(this.dataprefix+"_"+"orderSellList_"+page+"_"+limit+"_"+uid, redisTemplate);
+                redisHelp.setList(this.dataprefix+"_"+"orderSellList_"+page+"_"+limit+"_"+uid, jsonList, 5, redisTemplate);
             }
         }catch (Exception e){
             if(cacheList.size()>0){

@@ -123,7 +123,7 @@
             <if test ='null != cid'>`cid` = #{cid},</if>
             <if test ='null != uid'>`uid` = #{uid},</if>
             <if test ='null != created'>`created` = #{created},</if>
-            <if test ='null != status'>`uid` = #{status}</if>
+            <if test ='null != status'>`status` = #{status}</if>
         </set>
         WHERE `id` = #{id}
     </update>

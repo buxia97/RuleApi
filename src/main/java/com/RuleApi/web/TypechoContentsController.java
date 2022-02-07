@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
+import org.springframework.util.DigestUtils;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -46,6 +47,15 @@ public class TypechoContentsController {
 
     @Autowired
     private TypechoMetasService metasService;
+
+    @Autowired
+    private TypechoUsersService usersService;
+
+    @Autowired
+    private TypechoCommentsService commentsService;
+
+    @Autowired
+    private TypechoShopService shopService;
 
     @Autowired
     private RedisTemplate redisTemplate;
@@ -200,7 +210,12 @@ public class TypechoContentsController {
                 object.put("status","publish");
             }else{
                 String aid = redisHelp.getValue(this.dataprefix+"_"+"userInfo"+token,"uid",redisTemplate).toString();
-                object.put("authorId",aid);
+                Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+                String group = map.get("group").toString();
+                if(!group.equals("administrator")){
+                    object.put("authorId",aid);
+                }
+
             }
 
             query = object.toJavaObject(TypechoContents.class);
@@ -294,6 +309,7 @@ public class TypechoContentsController {
         Map jsonToMap =null;
         String category = "";
         String tag = "";
+        Integer sid = -1;
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
         }
@@ -305,11 +321,12 @@ public class TypechoContentsController {
             //生成typecho数据库格式的创建时间戳
             Long date = System.currentTimeMillis();
             String userTime = String.valueOf(date).substring(0,10);
-            //验证文章类型(只允许post)
-//            String type = jsonToMap.get("type").toString();
-//            if(!type.equals("page")&&!type.equals("post")){
-//                return Result.getResultJson(0,"请传入正确的文章类型",null);
-//            }
+            //获取商品id
+            if(jsonToMap.get("sid")!=null){
+                sid = Integer.parseInt(jsonToMap.get("sid").toString());
+            }
+
+
             //获取参数中的分类和标签
             if(jsonToMap.get("category")==null){
                 jsonToMap.put("category","0");
@@ -325,8 +342,15 @@ public class TypechoContentsController {
             //写入创建时间和作者
             jsonToMap.put("created",userTime);
             jsonToMap.put("authorId",uid);
-            //文章默认待审核
-            jsonToMap.put("status","waiting");
+            //除管理员外，文章默认待审核
+            Map userMap =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            String group = userMap.get("group").toString();
+            if(!group.equals("administrator")){
+                jsonToMap.put("status","waiting");
+            }else{
+                jsonToMap.put("status","publish");
+            }
+
             //部分字段不允许定义
             jsonToMap.put("type","post");
             jsonToMap.put("commentsNum",0);
@@ -336,6 +360,7 @@ public class TypechoContentsController {
             jsonToMap.put("orderKey",0);
             jsonToMap.put("parent",0);
             jsonToMap.remove("password");
+            jsonToMap.remove("sid");
             insert = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoContents.class);
 
         }
@@ -343,7 +368,7 @@ public class TypechoContentsController {
         int rows = service.insert(insert);
 
         Integer cid = insert.getCid();
-        //文章添加完成后，再处理分类和标签
+        //文章添加完成后，再处理分类和标签还有挂载商品
         if(rows > 0) {
             if (category != "") {
                 TypechoRelationships toCategory = new TypechoRelationships();
@@ -375,7 +400,27 @@ public class TypechoContentsController {
                     }
                 }
             }
+
+
+            //处理完分类标签后，处理挂载的商品
+            if(sid>-1){
+                Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+                Integer uid  = Integer.parseInt(map.get("uid").toString());
+                //判断商品是不是自己的
+                TypechoShop shop = new TypechoShop();
+                shop.setUid(uid);
+                shop.setId(sid);
+                Integer num  = shopService.total(shop);
+                if(num >= 1){
+                    shop.setCid(cid);
+                    shopService.update(shop);
+                }
+            }
+
+
         }
+
+
         JSONObject response = new JSONObject();
         response.put("code" ,rows > 0 ? 1: 0 );
         response.put("data" , rows);
@@ -394,6 +439,7 @@ public class TypechoContentsController {
         Map jsonToMap =null;
         String category = "";
         String tag = "";
+        Integer sid = -1;
         Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
@@ -404,11 +450,11 @@ public class TypechoContentsController {
             Long date = System.currentTimeMillis();
             String userTime = String.valueOf(date).substring(0,10);
             jsonToMap.put("modified",userTime);
-            //验证文章类型(废除，普通用户无这个权限)
-//            String type = jsonToMap.get("type").toString();
-//            if(!type.equals("page")&&!type.equals("post")){
-//                return Result.getResultJson(0,"请传入正确的文章类型",null);
-//            }
+            //获取商品id
+            if(jsonToMap.get("sid")!=null){
+                sid = Integer.parseInt(jsonToMap.get("sid").toString());
+            }
+
             //验证用户是否为作品的作者，以及权限
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer uid =Integer.parseInt(map.get("uid").toString());
@@ -449,7 +495,7 @@ public class TypechoContentsController {
             jsonToMap.remove("slug");
             jsonToMap.remove("views");
             jsonToMap.remove("likes");
-
+            jsonToMap.remove("sid");
             jsonToMap.remove("type");
             //状态重新变成待审核
             if(!group.equals("administrator")){
@@ -497,6 +543,21 @@ public class TypechoContentsController {
                     }
                 }
             }
+
+            //处理完分类标签后，处理挂载的商品
+            if(sid>-1){
+                Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+                Integer uid  = Integer.parseInt(map.get("uid").toString());
+                //判断商品是不是自己的
+                TypechoShop shop = new TypechoShop();
+                shop.setUid(uid);
+                shop.setId(sid);
+                Integer num  = shopService.total(shop);
+                if(num >= 1){
+                    shop.setCid(cid);
+                    shopService.update(shop);
+                }
+            }
         }
 
 
@@ -510,7 +571,7 @@ public class TypechoContentsController {
     /***
      * 文章删除
      */
-    @RequestMapping(value = "/contensDelete")
+    @RequestMapping(value = "/contentsDelete")
     @ResponseBody
     public String formDelete(@RequestParam(value = "key", required = false) String  key, @RequestParam(value = "token", required = false) String  token) {
         Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
@@ -529,10 +590,35 @@ public class TypechoContentsController {
         JSONObject response = new JSONObject();
         response.put("code" ,rows > 0 ? 1: 0 );
         response.put("data" , rows);
-        response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
+        response.put("msg"  , rows > 0 ? "操作成功，缓存缘故，数据可能存在延迟" : "操作失败");
         return response.toString();
     }
-
+    /***
+     * 全站统计
+     */
+    @RequestMapping(value = "/contentsAudit")
+    @ResponseBody
+    public String contensAudit(@RequestParam(value = "key", required = false) String  key, @RequestParam(value = "token", required = false) String  token) {
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+        if(uStatus==0){
+            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+        }
+        //String group = (String) redisHelp.getValue("userInfo"+token,"group",redisTemplate);
+        Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+        String group = map.get("group").toString();
+        if(!group.equals("administrator")){
+            return Result.getResultJson(0,"你没有操作权限",null);
+        }
+        TypechoContents info = new TypechoContents();
+        info.setCid(Integer.parseInt(key));
+        info.setStatus("publish");
+        Integer rows = service.update(info);
+        JSONObject response = new JSONObject();
+        response.put("code" ,rows > 0 ? 1: 0 );
+        response.put("data" , rows);
+        response.put("msg"  , rows > 0 ? "操作成功，缓存缘故，数据可能存在延迟" : "操作失败");
+        return response.toString();
+    }
     /**
      * pexels图库
      * */
@@ -552,5 +638,34 @@ public class TypechoContentsController {
             imgList = cacheImage;
         }
         return imgList;
+    }
+
+    /***
+     * 全站统计
+     */
+    @RequestMapping(value = "/allData")
+    @ResponseBody
+    public String allData() {
+        JSONObject data = new JSONObject();
+        TypechoContents contents = new TypechoContents();
+        Integer allContents = service.total(contents);
+        TypechoComments comments = new TypechoComments();
+        Integer allComments = commentsService.total(comments);
+        TypechoUsers users = new TypechoUsers();
+        Integer allUsers = usersService.total(users);
+        JSONObject response = new JSONObject();
+        TypechoShop shop = new TypechoShop();
+        Integer allShop = shopService.total(shop);
+
+        data.put("allContents",allContents);
+        data.put("allComments",allComments);
+        data.put("allUsers",allUsers);
+        data.put("allShop",allShop);
+
+        response.put("code" , 1);
+        response.put("msg"  , "");
+        response.put("data" , data);
+
+        return response.toString();
     }
 }

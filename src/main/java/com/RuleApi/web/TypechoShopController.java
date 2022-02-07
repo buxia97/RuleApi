@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -64,11 +65,18 @@ public class TypechoShopController {
         }
 
         PageList<TypechoShop> pageList = service.selectPage(query, page, limit);
+        List jsonList = new ArrayList();
+        List list = pageList.getList();
+        for (int i = 0; i < list.size(); i++) {
+            Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
+            json.remove("value");
+            jsonList.add(json);
+        }
         JSONObject response = new JSONObject();
         response.put("code" , 1);
         response.put("msg"  , "");
         response.put("data" , null != pageList.getList() ? pageList.getList() : new JSONArray());
-        response.put("count", pageList.getTotalCount());
+        response.put("count", pageList.getList().size());
         return response.toString();
     }
 
@@ -125,6 +133,8 @@ public class TypechoShopController {
                     return Result.getResultJson(0,"请输入正确的参数",null);
                 }
             }
+            jsonToMap.remove("status");
+            jsonToMap.remove("created");
             insert = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoShop.class);
         }
 
@@ -169,7 +179,8 @@ public class TypechoShopController {
                     return Result.getResultJson(0,"你无权进行此操作",null);
                 }
             }
-
+            jsonToMap.put("status","0");
+            jsonToMap.remove("created");
             update = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoShop.class);
         }
 
@@ -212,6 +223,39 @@ public class TypechoShopController {
         return response.toString();
     }
     /***
+     * 审核商品
+     */
+    @RequestMapping(value = "/auditShop")
+    @ResponseBody
+    public String auditShop(@RequestParam(value = "key", required = false) String  key,@RequestParam(value = "token", required = false) String  token) {
+
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+        if(uStatus==0){
+            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+        }
+        // 查询发布者是不是自己，如果是管理员则跳过
+        Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+        Integer uid  = Integer.parseInt(map.get("uid").toString());
+        String group = map.get("group").toString();
+        if(!group.equals("administrator")){
+            Integer sid = Integer.parseInt(key);
+            TypechoShop info = service.selectByKey(sid);
+            Integer aid = info.getUid();
+            if(!aid.equals(uid)){
+                return Result.getResultJson(0,"你无权进行此操作",null);
+            }
+        }
+        TypechoShop shop = new TypechoShop();
+        shop.setId(Integer.parseInt(key));
+        shop.setStatus(1);
+        Integer rows = service.update(shop);
+
+        JSONObject response = new JSONObject();
+        response.put("code" , rows);
+        response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
+        return response.toString();
+    }
+    /***
      * 购买商品
      */
     @RequestMapping(value = "/buyShop")
@@ -226,6 +270,7 @@ public class TypechoShopController {
         Integer uid  = Integer.parseInt(map.get("uid").toString());
         TypechoShop shopinfo = service.selectByKey(sid);
         Integer aid = shopinfo.getUid();
+
         if(uid.equals(aid)){
             return Result.getResultJson(0,"你不可以买自己的商品",null);
         }
@@ -235,12 +280,18 @@ public class TypechoShopController {
         if(price>oldAssets){
             return Result.getResultJson(0,"积分余额不足",null);
         }
+
+        Integer status = shopinfo.getStatus();
+        if(!status.equals(1)){
+            return Result.getResultJson(0,"该商品已下架",null);
+        }
+
         Integer Assets = oldAssets - price;
         usersinfo.setAssets(Assets);
         //判断商品类型，如果是实体商品需要设置收货地址
         Integer type = shopinfo.getType();
         String address = usersinfo.getAddress();
-        if(type==1&&address==""){
+        if(type.equals(1)&&address==""){
             return Result.getResultJson(0,"购买实体商品前，需要先设置收货地址",null);
         }
 
@@ -307,6 +358,30 @@ public class TypechoShopController {
         JSONObject response = new JSONObject();
         response.put("code" , rows);
         response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
+        return response.toString();
+    }
+    /***
+     * 查询商品是否已经购买过
+     */
+    @RequestMapping(value = "/isBuyShop")
+    @ResponseBody
+    public String isBuyShop(@RequestParam(value = "sid", required = false) String  sid,@RequestParam(value = "token", required = false) String  token) {
+
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+        if(uStatus==0){
+            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+        }
+        Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+        Integer uid  = Integer.parseInt(map.get("uid").toString());
+
+        TypechoUserlog log = new TypechoUserlog();
+        log.setType("buy");
+        log.setUid(uid);
+        log.setCid(Integer.parseInt(sid));
+        int rows =  userlogService.total(log);
+        JSONObject response = new JSONObject();
+        response.put("code" , rows > 0 ? 1 : 0);
+        response.put("msg"  , rows > 0 ? "已购买" : "未购买");
         return response.toString();
     }
 }

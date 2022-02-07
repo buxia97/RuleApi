@@ -240,6 +240,28 @@ public class TypechoCommentsController {
         response.put("msg"  , rows > 0 ? "发布成功" : "发布失败");
         return response.toString();
     }
-
+    /***
+     * 用户删除
+     */
+    @RequestMapping(value = "/commentsDelete")
+    @ResponseBody
+    public String commentsDelete(@RequestParam(value = "key", required = false) String  key, @RequestParam(value = "token", required = false) String  token) {
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+        if(uStatus==0){
+            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+        }
+        //String group = (String) redisHelp.getValue("userInfo"+token,"group",redisTemplate);
+        Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+        String group = map.get("group").toString();
+        if(!group.equals("administrator")){
+            return Result.getResultJson(0,"你没有操作权限",null);
+        }
+        int rows = service.delete(key);
+        JSONObject response = new JSONObject();
+        response.put("code" ,rows > 0 ? 1: 0 );
+        response.put("data" , rows);
+        response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
+        return response.toString();
+    }
 
 }

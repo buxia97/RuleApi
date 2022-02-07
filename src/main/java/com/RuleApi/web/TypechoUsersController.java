@@ -746,4 +746,35 @@ public class TypechoUsersController {
         response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
         return response.toString();
     }
+    /***
+     * 管理员手动充值
+     */
+    @RequestMapping(value = "/userRecharge")
+    @ResponseBody
+    public String userRecharge(@RequestParam(value = "key", required = false) Integer  key,@RequestParam(value = "num", required = false) Integer  num, @RequestParam(value = "token", required = false) String  token) {
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+        if(uStatus==0){
+            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+        }
+        //String group = (String) redisHelp.getValue("userInfo"+token,"group",redisTemplate);
+        Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+        String group = map.get("group").toString();
+        if(!group.equals("administrator")){
+            return Result.getResultJson(0,"你没有操作权限",null);
+        }
+        TypechoUsers user = service.selectByKey(key);
+        Integer oldAssets = user.getAssets();
+        if(num <= 0){
+            return Result.getResultJson(0,"充值金额不正确",null);
+        }
+        Integer assets = oldAssets + num;
+        user.setAssets(assets);
+        Integer rows = service.update(user);
+        JSONObject response = new JSONObject();
+        response.put("code" ,rows > 0 ? 1: 0 );
+        response.put("data" , rows);
+        response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
+        return response.toString();
+    }
+
 }
