@@ -79,14 +79,17 @@ public class TypechoCommentsController {
         Integer uid = 0;
         if (StringUtils.isNotBlank(searchParams)) {
             JSONObject object = JSON.parseObject(searchParams);
-            //只查询开放状态评论
-            object.put("status","approved");
-            //如果不是登陆状态，那么查询回复我的评论
-
+            //如果不是管理员，则只查询开放状态评论
             if(uStatus!=0&&token!=""){
-                String aid = redisHelp.getValue(this.dataprefix+"_"+"userInfo"+token,"uid",redisTemplate).toString();
-                uid = Integer.parseInt(aid);
-                object.put("ownerId",uid);
+                Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+                String group = map.get("group").toString();
+                if(!group.equals("administrator")){
+                    object.put("status","approved");
+                    //如果是登陆状态，那么查询回复我的评论
+                    String aid = redisHelp.getValue(this.dataprefix+"_"+"userInfo"+token,"uid",redisTemplate).toString();
+                    uid = Integer.parseInt(aid);
+                    object.put("ownerId",uid);
+                }
             }
             query = object.toJavaObject(TypechoComments.class);
         }
@@ -241,7 +244,32 @@ public class TypechoCommentsController {
         return response.toString();
     }
     /***
-     * 用户删除
+     * 评论审核
+     */
+    @RequestMapping(value = "/commentsAudit")
+    @ResponseBody
+    public String Audit(@RequestParam(value = "key", required = false) String  key, @RequestParam(value = "token", required = false) String  token) {
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+        if(uStatus==0){
+            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+        }
+        //String group = (String) redisHelp.getValue("userInfo"+token,"group",redisTemplate);
+        Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+        String group = map.get("group").toString();
+        if(!group.equals("administrator")){
+            return Result.getResultJson(0,"你没有操作权限",null);
+        }
+        TypechoComments comments = service.selectByKey(key);
+        comments.setStatus("approved");
+        Integer rows = service.update(comments);
+        JSONObject response = new JSONObject();
+        response.put("code" ,rows > 0 ? 1: 0 );
+        response.put("data" , rows);
+        response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
+        return response.toString();
+    }
+    /***
+     * 评论删除
      */
     @RequestMapping(value = "/commentsDelete")
     @ResponseBody
