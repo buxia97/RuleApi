@@ -173,7 +173,14 @@ public class InstallController {
         }else{
             text+="数据表typecho_shop，字段created已经存在，无需添加。";
         }
-
+        //查询商品表是否存在created字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_shop' and column_name = 'status';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_shop ADD status integer(10) DEFAULT 0;");
+            text+="数据表typecho_shop，字段status添加完成。";
+        }else{
+            text+="数据表typecho_shop，字段status已经存在，无需添加。";
+        }
         //判断充值记录表是否存在
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_paylog';", Integer.class);
         if (i == 0){

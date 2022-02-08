@@ -91,6 +91,7 @@ public class TypechoShopController {
         Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
 
         if(uStatus==0){
+
             shopinfo.remove("value");
         }else{
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
@@ -103,7 +104,7 @@ public class TypechoShopController {
             Integer isBuy = userlogService.total(log);
             //判断自己是不是发布者
             Integer aid = info.getUid();
-            if(!uid.equals(aid)&&isBuy <= 0){
+            if(!uid.equals(aid)&&isBuy < 1){
                 shopinfo.remove("value");
             }
         }
@@ -136,6 +137,9 @@ public class TypechoShopController {
             jsonToMap.remove("status");
             jsonToMap.remove("created");
             insert = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoShop.class);
+            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            Integer uid  = Integer.parseInt(map.get("uid").toString());
+            insert.setUid(uid);
         }
 
         int rows = service.insert(insert);
