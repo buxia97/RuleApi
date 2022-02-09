@@ -14,6 +14,7 @@
         <result column="value" property="value" />
         <result column="cid" property="cid" />
         <result column="uid" property="uid" />
+        <result column="status" property="status" />
     </resultMap>
 
     <sql id="Base_Column_List">

@@ -8,6 +8,10 @@ RuleApi，基于typecho1.1正式版数据库，使用JAVA语言Springboot框架�
 
 https://www.ruletree.club/archives/2661/
 
+## 更新教程
+
+https://www.ruletree.club/archives/2824/
+
 ## 更新记录
 
 2022/02/07：新增积分商城，收费阅读，支付宝充值，订单，提现。实现了简易后台管理即可，完善第三方登陆
