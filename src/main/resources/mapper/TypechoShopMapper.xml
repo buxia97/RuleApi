@@ -101,6 +101,9 @@
             <if test ='null != cid'>
                 #{cid},
             </if>
+            <if test ='null != uid'>
+                #{uid},
+            </if>
             <if test ='null != created'>
                 #{created},
             </if>

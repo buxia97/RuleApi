@@ -139,6 +139,12 @@ public class TypechoShopController {
             insert = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoShop.class);
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer uid  = Integer.parseInt(map.get("uid").toString());
+            //判断用户是否绑定了邮箱
+            TypechoUsers users = usersService.selectByKey(uid);
+            if(users.getMail()==null){
+                return Result.getResultJson(0,"发布商品前，请先绑定邮箱",null);
+            }
+
             insert.setUid(uid);
         }
 
@@ -289,7 +295,10 @@ public class TypechoShopController {
         if(!status.equals(1)){
             return Result.getResultJson(0,"该商品已下架",null);
         }
-
+        Integer num = shopinfo.getNum();
+        if(num<1){
+            return Result.getResultJson(0,"该商品已售完",null);
+        }
         Integer Assets = oldAssets - price;
         usersinfo.setAssets(Assets);
         //判断商品类型，如果是实体商品需要设置收货地址

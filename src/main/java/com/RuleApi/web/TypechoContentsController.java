@@ -201,6 +201,7 @@ public class TypechoContentsController {
                                @RequestParam(value = "random"        , required = false, defaultValue = "0") Integer random,
                                @RequestParam(value = "token"        , required = false, defaultValue = "") String token){
         TypechoContents query = new TypechoContents();
+        String aid = "null";
         if (StringUtils.isNotBlank(searchParams)) {
             JSONObject object = JSON.parseObject(searchParams);
             //如果不是登陆状态，那么只显示开放状态文章。如果是，则查询自己发布的文章
@@ -209,7 +210,7 @@ public class TypechoContentsController {
 
                 object.put("status","publish");
             }else{
-                String aid = redisHelp.getValue(this.dataprefix+"_"+"userInfo"+token,"uid",redisTemplate).toString();
+                aid = redisHelp.getValue(this.dataprefix+"_"+"userInfo"+token,"uid",redisTemplate).toString();
                 Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
                 String group = map.get("group").toString();
                 if(!group.equals("administrator")){
@@ -223,7 +224,7 @@ public class TypechoContentsController {
         }
         List jsonList = new ArrayList();
 
-        List cacheList = redisHelp.getList(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchParams+"_"+order+"_"+searchKey+"_"+random,redisTemplate);
+        List cacheList = redisHelp.getList(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchParams+"_"+order+"_"+searchKey+"_"+random+"_"+aid,redisTemplate);
         //监听异常，如果有异常则调用redis缓存中的list，如果无异常也调用redis，但是会更新数据
         try{
             if(cacheList.size()>0){
@@ -277,8 +278,8 @@ public class TypechoContentsController {
 
 
                     jsonList.add(json);
-                    redisHelp.delete(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchParams+"_"+order+"_"+searchKey+"_"+random,redisTemplate);
-                    redisHelp.setList(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchParams+"_"+order+"_"+searchKey+"_"+random,jsonList,this.contentCache,redisTemplate);
+                    redisHelp.delete(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchParams+"_"+order+"_"+searchKey+"_"+random+"_"+aid,redisTemplate);
+                    redisHelp.setList(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchParams+"_"+order+"_"+searchKey+"_"+random+"_"+aid,jsonList,this.contentCache,redisTemplate);
                 }
             }
         }catch (Exception e){
@@ -318,6 +319,11 @@ public class TypechoContentsController {
             //获取发布者信息
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             String uid = map.get("uid").toString();
+            //判断用户是否绑定了邮箱
+            TypechoUsers users = usersService.selectByKey(uid);
+            if(users.getMail()==null){
+                return Result.getResultJson(0,"发布文章前，请先绑定邮箱",null);
+            }
             //生成typecho数据库格式的创建时间戳
             Long date = System.currentTimeMillis();
             String userTime = String.valueOf(date).substring(0,10);
