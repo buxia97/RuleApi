@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.Pattern;
 
 @Controller
 @RequestMapping(value = "/pay")
@@ -78,6 +79,10 @@ public class PayController {
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
         }
+        Pattern pattern = Pattern.compile("[0-9]*");
+        if(!pattern.matcher(num).matches()){
+            return Result.getResultJson(0,"充值金额必须为正整数",null);
+        }
         if(Integer.parseInt(num) <= 0){
             return Result.getResultJson(0,"充值金额不正确",null);
         }
@@ -91,6 +96,7 @@ public class PayController {
         String timeID = dateFormat.format(now);
         String order_no=timeID+"scancodealipay";
         String body = "";
+
 
         String total_fee=num;  //真实金钱
 
@@ -171,7 +177,7 @@ public class PayController {
                 String trade_no = params.get("trade_no");
                 String out_trade_no = params.get("out_trade_no");
                 String total_amount = params.get("total_amount");
-                Integer integral = Integer.parseInt(total_amount) * 100;
+                Integer integral = Double.valueOf(total_amount).intValue() * 100;
 
                 Long date = System.currentTimeMillis();
                 String created = String.valueOf(date).substring(0,10);

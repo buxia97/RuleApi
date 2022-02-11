@@ -697,6 +697,68 @@ public class TypechoUsersController {
         response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
         return response.toString();
     }
+
+    /***
+     * 用户修改（管理员）
+     * @param params Bean对象JSON字符串
+     */
+    @RequestMapping(value = "/manageUserEdit")
+    @ResponseBody
+    public String manageUserEdit(@RequestParam(value = "params", required = false) String  params, @RequestParam(value = "token", required = false) String  token) {
+        TypechoUsers update = null;
+        Map jsonToMap =null;
+        String code = "";
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+        if(uStatus==0){
+            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+        }
+        if (StringUtils.isNotBlank(params)) {
+
+            jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
+            if(jsonToMap.get("password")!=null){
+                String p = jsonToMap.get("password").toString();
+                String passwd = phpass.HashPassword(p);
+                jsonToMap.put("password", passwd);
+            }
+            Map keyName = new HashMap<String, String>();
+            keyName.put("name",jsonToMap.get("name").toString());
+            TypechoUsers toKey1 = JSON.parseObject(JSON.toJSONString(keyName), TypechoUsers.class);
+            List<TypechoUsers> isName = service.selectList(toKey1);
+            if(isName.size() == 0){
+                return Result.getResultJson(0,"用户不存在",null);
+            }
+
+
+            jsonToMap.remove("name");
+            jsonToMap.remove("group");
+            //部分字段不允许修改
+
+            jsonToMap.remove("created");
+            jsonToMap.remove("activated");
+            jsonToMap.remove("logged");
+            jsonToMap.remove("authCode");
+            jsonToMap.remove("introduce");
+            jsonToMap.remove("assets");
+            update = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoUsers.class);
+        }
+
+        int rows = service.update(update);
+        //修改后让用户强制重新登陆
+        String name = update.getName();
+        String oldToken = null;
+        if(redisHelp.getRedis(this.dataprefix+"_"+"userkey"+name,redisTemplate)!=null){
+            oldToken = redisHelp.getRedis(this.dataprefix+"_"+"userkey"+name,redisTemplate);
+        }
+        if(oldToken!=null){
+            redisHelp.delete(this.dataprefix+"_"+"userInfo"+oldToken,redisTemplate);
+            redisHelp.delete(this.dataprefix+"_"+"userkey"+name,redisTemplate);
+        }
+        JSONObject response = new JSONObject();
+        response.put("code" ,rows > 0 ? 1: 0 );
+        response.put("data" , rows);
+        response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
+        return response.toString();
+    }
     /***
      * 用户状态检测
      *

@@ -228,36 +228,6 @@ public class TypechoUserlogController {
         return response.toString();
     }
     /***
-     * 查询用户购买订单
-     * @param page         页码
-     * @param limit        每页显示数量
-     */
-    @RequestMapping(value = "/buyList")
-    @ResponseBody
-    public String buyList (@RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
-                              @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
-                              @RequestParam(value = "token", required = false) String  token) {
-        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-        if(uStatus==0){
-            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-        }
-        Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
-        Integer uid =Integer.parseInt(map.get("uid").toString());
-
-        TypechoUserlog query = new TypechoUserlog();
-        query.setUid(uid);
-        query.setType("buy");
-        PageList<TypechoUserlog> pageList = service.selectPage(query, page, limit);
-
-
-        JSONObject response = new JSONObject();
-        response.put("code" , 1);
-        response.put("msg"  , "");
-        response.put("data" , null != pageList.getList() ? pageList.getList() : new JSONArray());
-        response.put("count", pageList.getList());
-        return response.toString();
-    }
-    /***
      * 添加log
      * @param params Bean对象JSON字符串
      */
@@ -459,7 +429,7 @@ public class TypechoUserlogController {
 
     }
     /***
-     * 查询用户收藏列表
+     * 查询用户购买订单
      */
     @RequestMapping(value = "/orderList")
     @ResponseBody
