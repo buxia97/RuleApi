@@ -72,6 +72,7 @@ public class TypechoCommentsController {
     public String commentsList (@RequestParam(value = "searchParams", required = false) String  searchParams,
                             @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
                                 @RequestParam(value = "searchKey"        , required = false, defaultValue = "") String searchKey,
+                                @RequestParam(value = "order"        , required = false, defaultValue = "created") String order,
                             @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
                                 @RequestParam(value = "token"       , required = false, defaultValue = "") String token) {
         TypechoComments query = new TypechoComments();
@@ -94,16 +95,16 @@ public class TypechoCommentsController {
             query = object.toJavaObject(TypechoComments.class);
         }
         List jsonList = new ArrayList();
-        List cacheList = redisHelp.getList(this.dataprefix+"_"+"searchParams_"+page+"_"+limit+"_"+searchKey+"_"+searchParams,redisTemplate);
+        List cacheList = redisHelp.getList(this.dataprefix+"_"+"searchParams_"+page+"_"+limit+"_"+searchKey+"_"+searchParams+"_"+uid+"_"+order,redisTemplate);
         if(uStatus!=0){
-            cacheList = redisHelp.getList(this.dataprefix+"_"+"searchParams_"+page+"_"+limit+"_"+searchKey+"_"+searchParams+"_"+uid,redisTemplate);
+            cacheList = redisHelp.getList(this.dataprefix+"_"+"searchParams_"+page+"_"+limit+"_"+searchKey+"_"+searchParams+"_"+order,redisTemplate);
         }
 
         try{
             if(cacheList.size()>0){
                 jsonList = cacheList;
             }else{
-                PageList<TypechoComments> pageList = service.selectPage(query, page, limit,searchKey);
+                PageList<TypechoComments> pageList = service.selectPage(query, page, limit,searchKey,order);
                 List list = pageList.getList();
                 for (int i = 0; i < list.size(); i++) {
                     Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
@@ -130,11 +131,11 @@ public class TypechoCommentsController {
                     json.put("contenTitle",contentsInfo.getTitle());
                     jsonList.add(json);
                     if(uStatus!=0){
-                        redisHelp.delete(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchKey+"_"+searchParams+"_"+uid,redisTemplate);
-                        redisHelp.setList(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchKey+"_"+searchParams+"_"+uid,jsonList,this.CommentCache,redisTemplate);
+                        redisHelp.delete(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchKey+"_"+searchParams+"_"+uid+"_"+order,redisTemplate);
+                        redisHelp.setList(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchKey+"_"+searchParams+"_"+uid+"_"+order,jsonList,this.CommentCache,redisTemplate);
                     }else{
-                        redisHelp.delete(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchKey+"_"+searchParams,redisTemplate);
-                        redisHelp.setList(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchKey+"_"+searchParams,jsonList,this.CommentCache,redisTemplate);
+                        redisHelp.delete(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchKey+"_"+searchParams+"_"+order,redisTemplate);
+                        redisHelp.setList(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchKey+"_"+searchParams+"_"+order,jsonList,this.CommentCache,redisTemplate);
                     }
 
                 }

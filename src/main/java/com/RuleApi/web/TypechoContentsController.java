@@ -651,7 +651,17 @@ public class TypechoContentsController {
      */
     @RequestMapping(value = "/allData")
     @ResponseBody
-    public String allData() {
+    public String allData( @RequestParam(value = "token", required = false) String  token) {
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+        if(uStatus==0){
+            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+        }
+        //String group = (String) redisHelp.getValue("userInfo"+token,"group",redisTemplate);
+        Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+        String group = map.get("group").toString();
+        if(!group.equals("administrator")){
+            return Result.getResultJson(0,"你没有操作权限",null);
+        }
         JSONObject data = new JSONObject();
         TypechoContents contents = new TypechoContents();
         Integer allContents = service.total(contents);

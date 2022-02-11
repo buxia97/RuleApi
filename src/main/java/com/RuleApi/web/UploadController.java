@@ -70,6 +70,8 @@ public class UploadController {
     private String ossBucketName;
     @Value("${spring.aliyun.urlPrefix}")
     private String urlPrefix;
+    @Value("${oss.filePrefix}")
+    private String filePrefix;
 
     @Value("${web.prefix}")
     private String dataprefix;
@@ -247,7 +249,7 @@ public class UploadController {
         //2.把文件按日期分类
 //        String datePath = new DateTime().toString("yyyy/MM/dd");
 //        filename = datePath +"/"+filename;
-        String key = "/"+this.prefix+"/"+year+"/"+month+"/"+day+"/"+filename;
+        String key = this.filePrefix+"/"+year+"/"+month+"/"+day+"/"+filename;
         //调用OSS方法实现上传
         ossClient.putObject(this.ossBucketName, key, inputStream);
         ossClient.shutdown();

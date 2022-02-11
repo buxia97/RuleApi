@@ -712,9 +712,11 @@ public class TypechoUsersController {
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
         }
+        String name = "";
         if (StringUtils.isNotBlank(params)) {
 
             jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
+            name = jsonToMap.get("name").toString();
             if(jsonToMap.get("password")!=null){
                 String p = jsonToMap.get("password").toString();
                 String passwd = phpass.HashPassword(p);
@@ -744,7 +746,7 @@ public class TypechoUsersController {
 
         int rows = service.update(update);
         //修改后让用户强制重新登陆
-        String name = update.getName();
+
         String oldToken = null;
         if(redisHelp.getRedis(this.dataprefix+"_"+"userkey"+name,redisTemplate)!=null){
             oldToken = redisHelp.getRedis(this.dataprefix+"_"+"userkey"+name,redisTemplate);

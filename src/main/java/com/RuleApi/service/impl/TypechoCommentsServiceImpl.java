@@ -57,7 +57,7 @@ public class TypechoCommentsServiceImpl implements TypechoCommentsService {
 	}
 
 	@Override
-	public PageList<TypechoComments> selectPage(TypechoComments typechoComments, Integer offset, Integer pageSize,String searchKey) {
+	public PageList<TypechoComments> selectPage(TypechoComments typechoComments, Integer offset, Integer pageSize,String searchKey,String order) {
 		PageList<TypechoComments> pageList = new PageList<>();
 
 		int total = this.total(typechoComments);
@@ -71,7 +71,7 @@ public class TypechoCommentsServiceImpl implements TypechoCommentsService {
 
 		int page = (offset - 1) * pageSize;
 
-		List<TypechoComments> list = dao.selectPage(typechoComments, page, pageSize,searchKey);
+		List<TypechoComments> list = dao.selectPage(typechoComments, page, pageSize,searchKey,order);
 
 		pageList.setList(list);
 		pageList.setStartPageNo(offset);
