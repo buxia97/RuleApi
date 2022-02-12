@@ -146,7 +146,6 @@ public class PayController {
 
     }
 
-    @SuppressWarnings("rawtypes")
     @RequestMapping(value = "/notify", method = RequestMethod.POST)
     @ResponseBody
     public String notify(HttpServletRequest request,

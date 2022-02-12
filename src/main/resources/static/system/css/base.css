@@ -1,0 +1,150 @@
+@charset "utf-8";
+/* CSS Document */
+*{
+	padding:0;
+	margin:0;
+	box-sizing:border-box;
+}
+html{
+	box-sizing:border-box;
+}
+body{
+	font-size:15px;
+	color: #6c6c6c;
+}
+.wrap{
+	max-width:1000px;
+	margin:0 auto
+}
+a{
+	color: #1276c1;
+	outline:none;
+	text-decoration:none;
+}
+
+.header{
+	text-align:center;
+	widows:100%
+}
+.header h1{
+	font-size:50px;
+	line-height:100px;
+	margin-bottom:5px;
+}
+.header h1 span{
+	color:#e61f19;
+}
+
+.menu{
+	height: 45px;
+	width: 100%;
+	border-radius: 5px;
+	border: solid #6c6c6c 1px;
+	overflow: hidden;
+	box-shadow: 0px 0px 2px rgba(0,0,0,0.5);
+}
+.menu-box{
+	float: left;
+	line-height: 45px;
+	
+	border-right: 1px #6c6c6c solid;
+	
+}
+.menu-box a{
+	color: #6c6c6c;
+	padding: 0px 20px;
+	display: block;
+	width: 100%;
+	height: 45px;
+	transition:0.2s all;
+	-webkit-transition:0.2s all;
+	-moz-transition:0.2s all;
+	-o-transition:0.2s all;
+	-ms-transition:0.2s all;
+}
+.menu-box a:hover,.menu-box.active a{
+	background: #6c6c6c;
+	color: #fff;
+}
+.form{
+	margin: 30px 0px;
+}
+.form-main{
+	max-width: 600px;
+	margin: 0 auto;
+}
+.form-box{
+	width: 100%;
+	padding: 5px 10px;
+	margin-bottom: 15px;
+}
+.form-box p{
+	font-weight: bold;
+	font-size: 16px;
+	margin-bottom: 10px;
+}
+.form-box input{
+	display:inline-block;
+	width: 100%;
+	height: 40px;
+	border-radius: 5px;
+	border: solid #6c6c6c 1px;
+	padding:0px 10px;
+}
+.form-box textarea{
+	display:inline-block;
+	width: 100%;
+	height: 100px;
+	border-radius: 5px;
+	border: solid #6c6c6c 1px;
+	padding:10px;
+}
+.text-red{
+	color: #E61F19;
+}
+.text-gray{
+	color: #999;
+	font-size: 13px;
+	margin-left: 10px;
+	font-weight: normal;
+}
+.text-important{
+	color: #E61F19;
+	font-size: 13px;
+	margin-left: 10px;
+	font-weight: normal;
+}
+.form-btn{
+	width: 100%;
+	padding: 15px 0px;
+	text-align: center;
+}
+.form-btn button{
+	border:#1276c1 solid 1px;
+	background:#1276c1;
+	color: #fff;
+	border-radius: 5px;
+	padding: 10px 25px;
+	box-shadow: 0px 0px 2px #1276c1;
+}
+.form-btn button:active{
+	background-color: #0f6bac;
+}
+.code{
+	width: 100%;
+	background-color: #f3f3f3;
+	padding: 20px 20px;
+	margin: 10px 0px;
+	border-radius: 8px;
+}
+.code p{
+	line-height: 30px;
+	color: #333;
+}
+.footer .wrap{
+	margin-top: 30px;
+	border-top: #f3f3f3 solid 1px;
+	padding-top: 20px;
+	line-height: 35px;
+	padding-bottom: 40px;
+}

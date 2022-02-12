@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>系统设置中心 - RuleApi</title>
+<link href="css/base.css" rel="stylesheet"/>
+</head>
+
+<body>
+<div id="app">
+	<div class="header">
+		<div class="wrap">
+			<h1>Rule<span>Api</span></h1>
+			<div class="menu">
+				<div class="menu-box" @click="toPage(1)" :class="page=='1'?'active':''">
+					<a href="javascript:;">基本设置</a>
+				</div>
+				<div class="menu-box" @click="toPage(2)" :class="page=='2'?'active':''">
+					<a href="javascript:;">邮箱配置</a>
+				</div>
+				<div class="menu-box" @click="toPage(3)" :class="page=='3'?'active':''">
+					<a href="javascript:;">Mysql设置</a>
+				</div>
+				<div class="menu-box" @click="toPage(4)" :class="page=='4'?'active':''">
+					<a href="javascript:;">Redis设置</a>
+				</div>
+				<div class="menu-box" @click="toPage(5)" :class="page=='5'?'active':''">
+					<a href="javascript:;">COS设置</a>
+				</div>
+				<div class="menu-box" @click="toPage(6)" :class="page=='6'?'active':''">
+					<a href="javascript:;">OSS设置</a>
+				</div>
+				<div class="menu-box" @click="toPage(7)" :class="page=='7'?'active':''">
+					<a href="javascript:;">当面付设置</a>
+				</div>
+				<div class="menu-box" @click="toPage(8)" :class="page=='8'?'active':''">
+					<a href="javascript:;">编辑配置文件<font class="text-red">*</font></a>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="form">
+		<div class="wrap">
+			<!--基本设置-->
+			<div class="form-main" v-if="page==1">
+				<div class="form-box">
+					<p>网站名称<span class="text-gray">用于邮件发送</span></p>
+					<input type="text" class="input-text" v-model="webinfoTitle" placeholder="请输入网站名称"/>
+				</div>
+				<div class="form-box">
+					<p>网站地址</p>
+					<input type="text" class="input-text" v-model="webinfoUrl" placeholder="请输入网站地址"/>
+				</div>
+				<div class="form-box">
+					<p>系统管理key<span class="text-important">重要，用于访问此系统设置页面</span></p>
+					<input type="text" class="input-text" v-model="webinfoKey" placeholder="请输入系统管理key"/>
+				</div>
+				<div class="form-box">
+					<p>用户登录状态持续时间<span class="text-gray">默认10天</span></p>
+					<input type="text" class="input-text" v-model="webinfoUsertime" placeholder="请输入用户登录状态持续时间"/>
+				</div>
+				<div class="form-box">
+					<p>本地图片访问地址<span class="text-gray">这里指通过本地上传接口上传后的访问地址，具体需要看配置教程</span></p>
+					<input type="text" class="input-text" v-model="webinfoUploadUrl" placeholder="请输入本地图片访问地址"/>
+				</div>
+				<div class="form-box">
+					<p>头像源avatar<span class="text-gray">公共头像库的源</span></p>
+					<input type="text" class="input-text" v-model="webinfoAvatar" placeholder="请输入公共头像库的源"/>
+				</div>
+				<div class="form-btn">
+					<button type="button" class="input-text" class="btn" @click="saveWebinfo()">保存数据</button>
+				</div>
+			</div>
+			<!--基本设置结束-->
+		</div>
+	</div>
+	<div class="update">
+		<div class="wrap">
+			<p>修改上方的配置后，需要重启RuleApi才会生效，可前往服务器控制台，执行如下指令。</p>
+			<div class="code">
+				<p>screen -S 窗口名称（英文，随意就好）</p>
+				<p>sh /opt/ruleapi.sh restart</p>
+			</div>
+			<p>或者到官网网站<a href="https://www.ruletree.club/tag/RuleApi/" target="_blank">查看更多信息</a></p>
+		</div>
+	</div>
+	<div class="footer">
+		<div class="wrap">
+			<p>官方网站：<a href="https://www.ruletree.club" target="_blank">规则之树</a></p>
+			<p>欢迎加入QQ交流群，获取帮助或参与新版本测试：776176904</p>
+			<p>开源不易，如果觉得好用的话，欢迎 <a href="https://www.ruletree.club/sponsor.html" style="color:#f37b1d;font-weight: bold;" target="_blank">赞助开发者</a></p>
+		</div>
+	</div>
+</div>
+<script src="js/vue.js"></script>
+<script src="js/axios.js"></script>
+<script src="js/all.js"></script>
+</body>
+</html>
