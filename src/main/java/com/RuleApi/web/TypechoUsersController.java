@@ -420,6 +420,92 @@ public class TypechoUsersController {
 
     }
     /***
+     * 社会化登陆绑定
+     * @param params Bean对象JSON字符串
+     */
+    @RequestMapping(value = "/apiBind")
+    @ResponseBody
+    public String apiBind(@RequestParam(value = "params", required = false) String  params,@RequestParam(value = "token", required = false) String  token) {
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+        if(uStatus==0){
+            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+        }
+        Map jsonToMap = null;
+        String oldpw = null;
+        if (StringUtils.isNotBlank(params)) {
+            jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
+        }else{
+            return Result.getResultJson(0,"请输入正确的参数",null);
+        }
+        if(jsonToMap.get("accessToken")==null){
+            return Result.getResultJson(0,"登录配置异常，请检查相关设置",null);
+        }
+        TypechoUserapi userapi = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoUserapi.class);
+        Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+        Integer uid  = Integer.parseInt(map.get("uid").toString());
+        userapi.setUid(uid);
+        String accessToken = userapi.getAccessToken();
+        String loginType = userapi.getAppLoginType();
+        TypechoUserapi isApi = new TypechoUserapi();
+        isApi.setAccessToken(accessToken);
+        isApi.setAppLoginType(loginType);
+        List<TypechoUserapi> apiBind = userapiService.selectList(isApi);
+        if(apiBind.size()>0){
+            //如果已经绑定，删除之前的绑定
+            Integer id = apiBind.get(0).getId();
+            userapiService.delete(id);
+        }
+        int rows = userapiService.insert(userapi);
+        JSONObject response = new JSONObject();
+        response.put("code" ,rows > 0 ? 1: 0 );
+        response.put("data" , rows);
+        response.put("msg"  , rows > 0 ? "绑定成功" : "绑定失败");
+        return response.toString();
+
+
+    }
+    /**
+     * 用户绑定查询
+     * */
+    @RequestMapping(value = "/userBindStatus")
+    @ResponseBody
+    public String userBindStatus(@RequestParam(value = "token", required = false) String  token) {
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+        if(uStatus==0){
+            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+        }
+        JSONObject response = new JSONObject();
+        try{
+            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            Integer uid  = Integer.parseInt(map.get("uid").toString());
+            TypechoUserapi userapi = new TypechoUserapi();
+            userapi.setUid(uid);
+            userapi.setAppLoginType("qq");
+            Integer qqBind = userapiService.total(userapi);
+            userapi.setAppLoginType("weixin");
+            Integer weixinBind = userapiService.total(userapi);
+            userapi.setAppLoginType("sinaweibo");
+            Integer weiboBind = userapiService.total(userapi);
+            Map jsonToMap = new HashMap();
+
+            jsonToMap.put("qqBind",qqBind);
+            jsonToMap.put("weixinBind",weixinBind);
+            jsonToMap.put("weiboBind",weiboBind);
+
+            response.put("code" ,1);
+            response.put("data" , jsonToMap);
+            response.put("msg"  , "");
+            return response.toString();
+        }catch (Exception e){
+            response.put("code" ,0);
+            response.put("data" , "");
+            response.put("msg"  , "数据异常");
+            return response.toString();
+        }
+
+    }
+
+    /***
      * 注册用户
      * @param params Bean对象JSON字符串
      */

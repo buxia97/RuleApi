@@ -175,6 +175,9 @@
             <if test ='null != id'>
                 and `id` = #{id}
             </if>
+            <if test ='null != uid'>
+                and `uid` = #{uid}
+            </if>
             <if test ='null != headImgUrl'>
                 and `headImgUrl` = #{headImgUrl}
             </if>
