@@ -373,11 +373,6 @@ public class TypechoUsersController {
             TypechoUsers regUser = new TypechoUsers();
             String name =  baseFull.createRandomStr(5)+baseFull.createRandomStr(4);
             String p = baseFull.createRandomStr(9);
-//            String url = this.url+"/apiResult.php?pw="+p;
-//            String passwd = HttpClient.doGet(url);
-//            if(passwd==null){
-//                return Result.getResultJson(0,"用户接口异常",null);
-//            }
             String passwd = phpass.HashPassword(p);
             Long date = System.currentTimeMillis();
             String userTime = String.valueOf(date).substring(0,10);
@@ -545,11 +540,6 @@ public class TypechoUsersController {
                 return Result.getResultJson(0,"验证码不正确",null);
             }
             String p = jsonToMap.get("password").toString();
-//            String url = this.url+"/apiResult.php?pw="+p;
-//            String passwd = HttpClient.doGet(url);
-//            if(passwd==null){
-//                return Result.getResultJson(0,"用户接口异常",null);
-//            }
             String passwd = phpass.HashPassword(p);
             Long date = System.currentTimeMillis();
             String userTime = String.valueOf(date).substring(0,10);

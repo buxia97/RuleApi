@@ -163,86 +163,130 @@ public class TypechoCommentsController {
     @RequestMapping(value = "/commentsAdd")
     @ResponseBody
     public String commentsAdd(@RequestParam(value = "params", required = false) String  params, @RequestParam(value = "token", required = false) String  token,HttpServletRequest request) {
-        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-        Map jsonToMap =null;
+        try {
+            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+            Map jsonToMap =null;
 
-        if(uStatus==0){
-            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-        }
-        TypechoComments insert = null;
-        String  agent =  request.getHeader("User-Agent");
-        //部分机型在uniapp打包下长度大于200
-        if(agent.length()>200){
-            String[] arr = agent.split("uni-app");
-            agent = arr[0];
-        }
-        String  ip = baseFull.getIpAddr(request);
-        if (StringUtils.isNotBlank(params)) {
-            jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
-            //获取发布者信息
-            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
-            Long date = System.currentTimeMillis();
-            String created = String.valueOf(date).substring(0,10);
-            //获取评论发布者信息和填写其它不可定义的值
-            jsonToMap.put("authorId",map.get("uid").toString());
-            if(map.get("screenName")==null){
-                jsonToMap.put("author",map.get("name").toString());
-            }else{
-                jsonToMap.put("author",map.get("screenName").toString());
+            if(uStatus==0){
+                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
             }
-            if(jsonToMap.get("text")==null){
-                return Result.getResultJson(0,"评论不能为空",null);
-            }else{
-                if(jsonToMap.get("text").toString().length()>1500){
-                    return Result.getResultJson(0,"超出最大评论长度",null);
+            TypechoComments insert = null;
+            String  agent =  request.getHeader("User-Agent");
+            //部分机型在uniapp打包下长度大于200
+            if(agent.length()>200){
+                String[] arr = agent.split("uni-app");
+                agent = arr[0];
+            }
+            String  ip = baseFull.getIpAddr(request);
+            if (StringUtils.isNotBlank(params)) {
+                jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
+                //获取发布者信息
+                Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+                Long date = System.currentTimeMillis();
+                String created = String.valueOf(date).substring(0,10);
+                //获取评论发布者信息和填写其它不可定义的值
+                jsonToMap.put("authorId",map.get("uid").toString());
+                if(map.get("screenName")==null){
+                    jsonToMap.put("author",map.get("name").toString());
+                }else{
+                    jsonToMap.put("author",map.get("screenName").toString());
                 }
-            }
-            if(map.get("url")!=null){
-                jsonToMap.put("url",map.get("url").toString());
-            }
-            if(map.get("mail")!=null){
-                jsonToMap.put("mail",map.get("mail").toString());
-            }else{
-                return Result.getResultJson(0,"请先绑定邮箱！",null);
-            }
-            //根据cid获取文章作者信息
-            String cid = jsonToMap.get("cid").toString();
-            TypechoContents contents = contentsService.selectByKey(cid);
-            jsonToMap.put("ownerId", contents.getAuthorId());
-            jsonToMap.put("created",created);
-            jsonToMap.put("type","comment");
-            jsonToMap.put("agent",agent);
-            jsonToMap.put("ip",ip);
-            //下面这个属性控制评论状态，判断是否已经有评论过审，有则直接通过审核，没有则默认审核状态
+                if(jsonToMap.get("text")==null){
+                    return Result.getResultJson(0,"评论不能为空",null);
+                }else{
+                    if(jsonToMap.get("text").toString().length()>1500){
+                        return Result.getResultJson(0,"超出最大评论长度",null);
+                    }
+                }
+                if(map.get("url")!=null){
+                    jsonToMap.put("url",map.get("url").toString());
+                }
+                if(map.get("mail")!=null){
+                    jsonToMap.put("mail",map.get("mail").toString());
+                }else{
+                    return Result.getResultJson(0,"请先绑定邮箱！",null);
+                }
+                //根据cid获取文章作者信息
+                String cid = jsonToMap.get("cid").toString();
+                TypechoContents contents = contentsService.selectByKey(cid);
+                jsonToMap.put("ownerId", contents.getAuthorId());
+                jsonToMap.put("created",created);
+                jsonToMap.put("type","comment");
+                jsonToMap.put("agent",agent);
+                jsonToMap.put("ip",ip);
+                //下面这个属性控制评论状态，判断是否已经有评论过审，有则直接通过审核，没有则默认审核状态
 
-            TypechoComments ucomment = new TypechoComments();
-            ucomment.setAuthorId(Integer.parseInt(map.get("uid").toString()));
-            ucomment.setStatus("approved");
-            List<TypechoComments> ucommentList = service.selectList(ucomment);
-            if(ucommentList.size()>0){
-                jsonToMap.put("status","approved");
-            }else{
-                jsonToMap.put("status","waiting");
+                TypechoComments ucomment = new TypechoComments();
+                ucomment.setAuthorId(Integer.parseInt(map.get("uid").toString()));
+                ucomment.setStatus("approved");
+                List<TypechoComments> ucommentList = service.selectList(ucomment);
+                if(ucommentList.size()>0){
+                    jsonToMap.put("status","approved");
+                }else{
+                    jsonToMap.put("status","waiting");
+                }
+
+                insert = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoComments.class);
+                //更新文章评论数量
+                TypechoComments suminfo = new TypechoComments();
+                suminfo.setCid(Integer.parseInt(cid));
+                Integer cnum = service.total(suminfo);
+                contents.setCommentsNum(cnum);
+                contentsService.update(contents);
             }
 
-            insert = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoComments.class);
-            //更新文章评论数量
-            TypechoComments suminfo = new TypechoComments();
-            suminfo.setCid(Integer.parseInt(cid));
-            Integer cnum = service.total(suminfo);
-            contents.setCommentsNum(cnum);
-            contentsService.update(contents);
+            int rows = service.insert(insert);
+            JSONObject response = new JSONObject();
+            response.put("code" ,rows > 0 ? 1: 0 );
+            response.put("data" , rows);
+            response.put("msg"  , rows > 0 ? "发布成功" : "发布失败");
+            return response.toString();
+        }catch (Exception e){
+            return Result.getResultJson(0,"发布失败",null);
         }
 
-        int rows = service.insert(insert);
+    }
+    /***
+     * 编辑
+     */
+    @RequestMapping(value = "/commentsEdit")
+    @ResponseBody
+    public String commentsEdit(@RequestParam(value = "params", required = false) String  params, @RequestParam(value = "token", required = false) String  token) {
+        try {
+            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+            if(uStatus==0){
+                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+            }
 
-
-
-        JSONObject response = new JSONObject();
-        response.put("code" ,rows > 0 ? 1: 0 );
-        response.put("data" , rows);
-        response.put("msg"  , rows > 0 ? "发布成功" : "发布失败");
-        return response.toString();
+            //只有管理员允许修改
+            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            String group = map.get("group").toString();
+            if(!group.equals("administrator")){
+                return Result.getResultJson(0,"你没有操作权限",null);
+            }
+            Map jsonToMap =new HashMap();
+            //String group = (String) redisHelp.getValue("userInfo"+token,"group",redisTemplate);
+            if (StringUtils.isNotBlank(params)) {
+                jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
+                if(jsonToMap.get("coid")==null){
+                    return Result.getResultJson(0,"请传入评论id",null);
+                }
+                jsonToMap.remove("ownerId");
+                jsonToMap.remove("created");
+                jsonToMap.remove("type");
+                jsonToMap.remove("agent");
+                jsonToMap.remove("ip");
+            }
+            TypechoComments comments = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoComments.class);
+            Integer rows = service.update(comments);
+            JSONObject response = new JSONObject();
+            response.put("code" ,rows > 0 ? 1: 0 );
+            response.put("data" , rows);
+            response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
+            return response.toString();
+        }catch (Exception e){
+            return Result.getResultJson(0,"操作失败",null);
+        }
     }
     /***
      * 评论审核
@@ -250,24 +294,28 @@ public class TypechoCommentsController {
     @RequestMapping(value = "/commentsAudit")
     @ResponseBody
     public String Audit(@RequestParam(value = "key", required = false) String  key, @RequestParam(value = "token", required = false) String  token) {
-        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-        if(uStatus==0){
-            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+        try {
+            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+            if(uStatus==0){
+                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+            }
+            //String group = (String) redisHelp.getValue("userInfo"+token,"group",redisTemplate);
+            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            String group = map.get("group").toString();
+            if(!group.equals("administrator")){
+                return Result.getResultJson(0,"你没有操作权限",null);
+            }
+            TypechoComments comments = service.selectByKey(key);
+            comments.setStatus("approved");
+            Integer rows = service.update(comments);
+            JSONObject response = new JSONObject();
+            response.put("code" ,rows > 0 ? 1: 0 );
+            response.put("data" , rows);
+            response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
+            return response.toString();
+        }catch (Exception e){
+            return Result.getResultJson(0,"操作失败",null);
         }
-        //String group = (String) redisHelp.getValue("userInfo"+token,"group",redisTemplate);
-        Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
-        String group = map.get("group").toString();
-        if(!group.equals("administrator")){
-            return Result.getResultJson(0,"你没有操作权限",null);
-        }
-        TypechoComments comments = service.selectByKey(key);
-        comments.setStatus("approved");
-        Integer rows = service.update(comments);
-        JSONObject response = new JSONObject();
-        response.put("code" ,rows > 0 ? 1: 0 );
-        response.put("data" , rows);
-        response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
-        return response.toString();
     }
     /***
      * 评论删除
@@ -275,22 +323,26 @@ public class TypechoCommentsController {
     @RequestMapping(value = "/commentsDelete")
     @ResponseBody
     public String commentsDelete(@RequestParam(value = "key", required = false) String  key, @RequestParam(value = "token", required = false) String  token) {
-        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-        if(uStatus==0){
-            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+        try {
+            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+            if(uStatus==0){
+                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+            }
+            //String group = (String) redisHelp.getValue("userInfo"+token,"group",redisTemplate);
+            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            String group = map.get("group").toString();
+            if(!group.equals("administrator")){
+                return Result.getResultJson(0,"你没有操作权限",null);
+            }
+            int rows = service.delete(key);
+            JSONObject response = new JSONObject();
+            response.put("code" ,rows > 0 ? 1: 0 );
+            response.put("data" , rows);
+            response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
+            return response.toString();
+        }catch (Exception e){
+            return Result.getResultJson(0,"操作失败",null);
         }
-        //String group = (String) redisHelp.getValue("userInfo"+token,"group",redisTemplate);
-        Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
-        String group = map.get("group").toString();
-        if(!group.equals("administrator")){
-            return Result.getResultJson(0,"你没有操作权限",null);
-        }
-        int rows = service.delete(key);
-        JSONObject response = new JSONObject();
-        response.put("code" ,rows > 0 ? 1: 0 );
-        response.put("data" , rows);
-        response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
-        return response.toString();
     }
 
 }
