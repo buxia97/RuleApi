@@ -57,6 +57,7 @@ public class TypechoShopController {
     @ResponseBody
     public String shopList (@RequestParam(value = "searchParams", required = false) String  searchParams,
                             @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
+                            @RequestParam(value = "searchKey"        , required = false, defaultValue = "") String searchKey,
                             @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit) {
         TypechoShop query = new TypechoShop();
         if (StringUtils.isNotBlank(searchParams)) {
@@ -64,7 +65,7 @@ public class TypechoShopController {
             query = object.toJavaObject(TypechoShop.class);
         }
 
-        PageList<TypechoShop> pageList = service.selectPage(query, page, limit);
+        PageList<TypechoShop> pageList = service.selectPage(query, page, limit,searchKey);
         List jsonList = new ArrayList();
         List list = pageList.getList();
         for (int i = 0; i < list.size(); i++) {

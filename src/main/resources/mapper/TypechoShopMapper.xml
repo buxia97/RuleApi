@@ -233,6 +233,9 @@
             <if test ='null != typechoShop.status'>
                 and `status` = #{typechoShop.status}
             </if>
+            <if test ='"" != searchKey'>
+                and CONCAT(IFNULL(`title`,''),IFNULL(`text`,'')) LIKE '%${searchKey}%'
+            </if>
         </where>
         order by created desc
         limit #{page,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
