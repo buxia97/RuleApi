@@ -2,12 +2,10 @@ package com.RuleApi.web;
 
 import com.RuleApi.common.*;
 import com.RuleApi.entity.TypechoPaylog;
-import com.RuleApi.entity.TypechoShop;
-import com.RuleApi.entity.TypechoUserlog;
 import com.RuleApi.entity.TypechoUsers;
 import com.RuleApi.service.TypechoPaylogService;
-import com.RuleApi.service.TypechoUserlogService;
 import com.RuleApi.service.TypechoUsersService;
+import com.RuleApi.service.WxPayService;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alipay.api.AlipayApiException;
@@ -16,6 +14,9 @@ import com.alipay.api.DefaultAlipayClient;
 import com.alipay.api.internal.util.AlipaySignature;
 import com.alipay.api.request.AlipayTradePrecreateRequest;
 import com.alipay.api.response.AlipayTradePrecreateResponse;
+import com.github.wxpay.sdk.WXPay;
+import com.github.wxpay.sdk.WXPayConstants;
+import com.github.wxpay.sdk.WXPayUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -27,7 +28,10 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -36,6 +40,8 @@ import java.util.regex.Pattern;
 @Controller
 @RequestMapping(value = "/pay")
 public class PayController {
+    /**支付宝**/
+
     /** 创建的应用ID */
     @Value("${fastboot.pay.alipay.app-id}")
     private String appId;
@@ -49,6 +55,16 @@ public class PayController {
     @Value("${fastboot.pay.alipay.notify-url}")
     private String notifyUrl;
 
+    /**微信支付**/
+    @Value("${gzh.appid}")
+    private String wxappid;
+    @Value("${wxPay.key}")
+    private String wxkey;
+    @Value("${wxPay.mchId}")
+    private String mchId;
+    @Value("${wxPay.notifyUrl}")
+    private String wxnotifyUrl;
+
     @Autowired
     private RedisTemplate redisTemplate;
 
@@ -58,6 +74,9 @@ public class PayController {
 
     @Autowired
     private TypechoPaylogService paylogService;
+
+    @Autowired(required = false)
+    private WxPayService wxpayService;
 
     @Value("${web.prefix}")
     private String dataprefix;
@@ -270,5 +289,160 @@ public class PayController {
         response.put("data" , null != list ? list : new JSONArray());
         response.put("count", list.size());
         return response.toString();
+    }
+    /**
+     * 微信支付
+     * */
+    @RequestMapping(value = "/WxPay")
+    @ResponseBody
+    public String wxAdd(HttpServletRequest request,@RequestParam(value = "price", required = false) Integer price,@RequestParam(value = "token", required = false) String  token) throws Exception {
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+        if(uStatus==0){
+            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+        }
+        Pattern pattern = Pattern.compile("[0-9]*");
+        if(!pattern.matcher(price.toString()).matches()){
+            return Result.getResultJson(0,"充值金额必须为正整数",null);
+        }
+        if(price <= 0){
+            return Result.getResultJson(0,"充值金额不正确",null);
+        }
+        WXConfigUtil config = new WXConfigUtil();
+        WXPay wxpay = new WXPay(config);
+        Map<String, String> data = new HashMap<>();
+        //生成商户订单号，不可重复
+        data.put("appid", this.wxappid);
+        data.put("mch_id", this.mchId);
+        data.put("nonce_str", WXPayUtil.generateNonceStr());
+        String body = "订单支付";
+        data.put("body", body);
+        data.put("out_trade_no", System.currentTimeMillis()+ "");
+        data.put("total_fee", String.valueOf((int)(price)));
+        //自己的服务器IP地址
+        data.put("spbill_create_ip", request.getRemoteAddr());
+        //异步通知地址（请注意必须是外网）
+        data.put("notify_url", wxnotifyUrl);
+        //交易类型
+        data.put("trade_type", "APP");
+        //附加数据，在查询API和支付通知中原样返回，该字段主要用于商户携带订单的自定义数据
+        data.put("attach", "");
+        data.put("sign", WXPayUtil.generateSignature(data, this.wxkey,
+                WXPayConstants.SignType.MD5));
+        //使用官方API请求预付订单
+        Map<String, String> response = wxpay.unifiedOrder(data);
+        System.out.println(response);
+        if ("SUCCESS".equals(response.get("return_code"))) {
+            //主要返回以下5个参数
+            Map<String, String> param = new HashMap<>();
+            param.put("appid",this.wxappid);
+            param.put("partnerid", response.get("mch_id"));
+            param.put("prepayid", response.get("prepay_id"));
+            param.put("package", "Sign=WXPay");
+            param.put("noncestr", WXPayUtil.generateNonceStr());
+            param.put("timestamp", System.currentTimeMillis() / 1000 + "");
+            param.put("sign", WXPayUtil.generateSignature(param, config.getKey(),
+                    WXPayConstants.SignType.MD5));
+            System.out.println(param);
+            //先生成订单
+            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            Integer uid  = Integer.parseInt(map.get("uid").toString());
+            Long date = System.currentTimeMillis();
+            String created = String.valueOf(date).substring(0,10);
+            TypechoPaylog paylog = new TypechoPaylog();
+            paylog.setStatus(0);
+            paylog.setCreated(Integer.parseInt(created));
+            paylog.setUid(uid);
+            paylog.setOutTradeNo(response.get("out_trade_no"));
+            paylog.setTotalAmount(price.toString());
+            paylog.setPaytype("WXPay");
+            paylog.setSubject("微信APP支付");
+            paylogService.insert(paylog);
+
+
+            JSONObject res = new JSONObject();
+            res.put("code" , 1);
+            res.put("msg"  , "");
+            res.put("data" , param);
+            return response.toString();
+        }else {
+            return Result.getResultJson(0,"支付失败",null);
+        }
+    }
+    /**
+     * 微信回调
+     * */
+    @RequestMapping(value = "/wxPayNotify")
+    @ResponseBody
+    public String wxPayNotify(HttpServletRequest request) {
+
+        String resXml = "";
+        try {
+
+            InputStream inputStream = request.getInputStream();
+            //将InputStream转换成xmlString
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+            StringBuilder sb = new StringBuilder();
+            String line = null;
+            try {
+
+                while ((line = reader.readLine()) != null) {
+
+                    sb.append(line + "\n");
+                }
+            } catch (IOException e) {
+
+                System.out.println(e.getMessage());
+            } finally {
+
+                try {
+
+                    inputStream.close();
+                } catch (IOException e) {
+
+                    e.printStackTrace();
+                }
+            }
+            resXml = sb.toString();
+
+            //支付完成后，写入充值日志
+            String out_trade_no = request.getParameter("out_trade_no");
+            String total_amount = request.getParameter("total_fee");
+            Integer integral = Double.valueOf(total_amount).intValue() * 100;
+
+            Long date = System.currentTimeMillis();
+            String created = String.valueOf(date).substring(0,10);
+            TypechoPaylog paylog = new TypechoPaylog();
+            //根据订单和发起人，是否有数据库对应，来是否充值成功
+            paylog.setOutTradeNo(out_trade_no);
+            List<TypechoPaylog> logList= paylogService.selectList(paylog);
+            if(logList.size() > 0){
+                Integer pid = logList.get(0).getPid();
+                Integer uid = logList.get(0).getUid();
+                paylog.setStatus(1);
+                paylog.setTradeNo(out_trade_no);
+                paylog.setPid(pid);
+                paylog.setCreated(Integer.parseInt(created));
+                paylogService.update(paylog);
+                //订单修改后，插入用户表
+                TypechoUsers users = usersService.selectByKey(uid);
+                Integer oldAssets = users.getAssets();
+                Integer assets = oldAssets + integral;
+                users.setAssets(assets);
+                usersService.update(users);
+            }else{
+                System.out.println("数据库不存在订单");
+                String result = "<xml>" + "<return_code><![CDATA[FAIL]]></return_code>" + "<return_msg><![CDATA[报文为空]]></return_msg>" + "</xml> ";
+                return result;
+            }
+
+            //写入本地方法
+            String result = wxpayService.payBack(resXml);
+            return result;
+        } catch (Exception e) {
+
+            System.out.println("微信手机支付失败:" + e.getMessage());
+            String result = "<xml>" + "<return_code><![CDATA[FAIL]]></return_code>" + "<return_msg><![CDATA[报文为空]]></return_msg>" + "</xml> ";
+            return result;
+        }
     }
 }
