@@ -6,6 +6,7 @@ var vm = new Vue({
 		isLogin:0,
 		alert:0,
 		alertText:"",
+		isMenu:false,
 
 		//基本信息
 		webinfoTitle:"",
@@ -48,6 +49,11 @@ var vm = new Vue({
 		alipayPrivateKey:'',
 		alipayPublicKey:'',
 		alipayNotifyUrl:'',
+		//微信支付
+		wxpayAppId:'',
+		wxpayMchId:'',
+		wxpayKey:'',
+		wxpayNotifyUrl:'',
 		//配置信息
 		applicationText:"",
 	},
@@ -69,6 +75,10 @@ var vm = new Vue({
 		var that = this;
 	},
 	methods: {
+		toMenu(){
+			var that = this;
+			that.isMenu = !that.isMenu;
+		},
 		toAlert(text){
 			var that = this;
 			if(that.alert==1){
@@ -176,6 +186,12 @@ var vm = new Vue({
 					that.alipayPrivateKey=res.data.data.alipayPrivateKey;
 					that.alipayPublicKey=res.data.data.alipayPublicKey;
 					that.alipayNotifyUrl=res.data.data.alipayNotifyUrl;
+
+					//微信支付
+					that.wxpayAppId=res.data.data.wxpayAppId;
+					that.wxpayMchId=res.data.data.wxpayMchId;
+					that.wxpayKey=res.data.data.wxpayKey;
+					that.wxpayNotifyUrl=res.data.data.wxpayNotifyUrl;
 				}else{
 					that.outSystem();
 				}
@@ -364,6 +380,31 @@ var vm = new Vue({
 				alipayPrivateKey:that.alipayPrivateKey,
 				alipayPublicKey:that.alipayPublicKey,
 				alipayNotifyUrl:that.alipayNotifyUrl,
+			}
+			axios.get(url,{
+				params:{
+					"webkey":that.webkey,
+					"params":JSON.stringify(that.removeObjectEmptyKey(data))
+				}
+			}).then(function(res){
+				that.toAlert(res.data.msg);
+				if(res.data.code==1){
+					that.getAll();
+				}else{
+					that.outSystem();
+				}
+			}).catch(function (error) {
+				console.log(error);
+			});
+		},
+		saveWxpay(){
+			var that = this;
+			var url = "/system/setupWxpay"
+			var data={
+				wxpayAppId:that.wxpayAppId,
+				wxpayMchId:that.wxpayMchId,
+				wxpayKey:that.wxpayKey,
+				wxpayNotifyUrl:that.wxpayNotifyUrl,
 			}
 			axios.get(url,{
 				params:{

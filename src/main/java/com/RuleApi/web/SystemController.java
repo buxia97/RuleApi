@@ -89,6 +89,15 @@ public class SystemController {
     private String alipayPrivateKey;
     private String alipayPublicKey;
     private String alipayNotifyUrl;
+
+
+    /**
+     * wxpay
+     * */
+    private String wxpayAppId;
+    private String wxpayMchId;
+    private String wxpayKey;
+    private String wxpayNotifyUrl;
     /**
      * 验证Key
      * */
@@ -649,6 +658,72 @@ public class SystemController {
         }
     }
     /***
+     * 支付宝当面付配置
+     */
+    @RequestMapping(value = "/setupWxpay")
+    @ResponseBody
+    public String setupWxpay(@RequestParam(value = "webkey", required = false) String  webkey,@RequestParam(value = "params", required = false) String  params) {
+        if(!webkey.equals(this.key)){
+            return Result.getResultJson(0,"请输入正确的访问key",null);
+        }
+        Map jsonToMap = new HashMap();
+        try {
+            //读取参数，开始写入
+            if (StringUtils.isNotBlank(params)) {
+                jsonToMap = JSONObject.parseObject(JSON.parseObject(params).toString());
+                //新的配置
+
+            }
+            String new_wxpayAppId = "";
+            String new_wxpayMchId = "";
+            String new_wxpayKey = "";
+            String new_wxpayNotifyUrl = "";
+
+            String wxpayAppId = "gzh.appid=";
+            String wxpayMchId = "wxPay.mchId=";
+            String wxpayKey = "wxPay.key=";
+            String wxpayNotifyUrl = "wxPay.notifyUrl=";
+
+            //老的配置
+            String old_wxpayAppId = wxpayAppId+this.wxpayAppId;
+            String old_wxpayMchId = wxpayMchId+this.wxpayMchId;
+            String old_wxpayKey = wxpayKey+this.wxpayKey;
+            String old_wxpayNotifyUrl = wxpayNotifyUrl+this.wxpayNotifyUrl;
+
+            //新的配置
+            if(jsonToMap.get("wxpayAppId")!=null){
+                new_wxpayAppId = wxpayAppId+jsonToMap.get("wxpayAppId").toString();
+            }else {
+                new_wxpayAppId = wxpayAppId;
+            }
+            editFile.replacTextContent(old_wxpayAppId,new_wxpayAppId);
+            if(jsonToMap.get("wxpayMchId")!=null){
+                new_wxpayMchId = wxpayMchId+jsonToMap.get("wxpayMchId").toString();
+            }else {
+                new_wxpayMchId = wxpayMchId;
+            }
+            editFile.replacTextContent(old_wxpayMchId,new_wxpayMchId);
+            if(jsonToMap.get("wxpayKey")!=null){
+                new_wxpayKey = wxpayKey+jsonToMap.get("wxpayKey").toString();
+            }else {
+                new_wxpayKey = wxpayKey;
+            }
+            editFile.replacTextContent(old_wxpayKey,new_wxpayKey);
+
+            if(jsonToMap.get("wxpayNotifyUrl")!=null){
+                new_wxpayNotifyUrl = wxpayNotifyUrl+jsonToMap.get("wxpayNotifyUrl").toString();
+            }else {
+                new_wxpayNotifyUrl = wxpayNotifyUrl;
+            }
+            editFile.replacTextContent(old_wxpayNotifyUrl,new_wxpayNotifyUrl);
+
+            return Result.getResultJson(1,"修改成功，手动重启后生效",null);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Result.getResultJson(1,"修改失败，请确认参数是否正确",null);
+        }
+    }
+    /***
      * 编辑配置文件
      */
     @RequestMapping(value = "/setupConfig")
@@ -719,7 +794,11 @@ public class SystemController {
         String alipayPrivateKey = "fastboot.pay.alipay.private-key=";
         String alipayPublicKey = "fastboot.pay.alipay.alipay-public-key=";
         String alipayNotifyUrl = "fastboot.pay.alipay.notify-url=";
-
+        //weixinPay
+        String wxpayAppId = "gzh.appid=";
+        String wxpayMchId = "wxPay.mchId=";
+        String wxpayKey = "wxPay.key=";
+        String wxpayNotifyUrl = "wxPay.notifyUrl=";
 
 
 
@@ -849,6 +928,20 @@ public class SystemController {
                     if (line.contains(alipayNotifyUrl)){
                         this.alipayNotifyUrl = line.replace(alipayNotifyUrl,"");
                     }
+
+                    //wxpay
+                    if (line.contains(wxpayAppId)){
+                        this.wxpayAppId = line.replace(wxpayAppId,"");
+                    }
+                    if (line.contains(wxpayMchId)){
+                        this.wxpayMchId = line.replace(wxpayMchId,"");
+                    }
+                    if (line.contains(wxpayKey)){
+                        this.wxpayKey = line.replace(wxpayKey,"");
+                    }
+                    if (line.contains(wxpayNotifyUrl)){
+                        this.wxpayNotifyUrl = line.replace(wxpayNotifyUrl,"");
+                    }
                 }
 
             }
@@ -898,6 +991,12 @@ public class SystemController {
         data.put("alipayPrivateKey",this.alipayPrivateKey);
         data.put("alipayPublicKey",this.alipayPublicKey);
         data.put("alipayNotifyUrl",this.alipayNotifyUrl);
+        //微信支付
+        data.put("wxpayAppId",this.wxpayAppId);
+        data.put("wxpayMchId",this.wxpayMchId);
+        data.put("wxpayKey",this.wxpayKey);
+        data.put("wxpayNotifyUrl",this.wxpayNotifyUrl);
+
 
         JSONObject response = new JSONObject();
         response.put("code" , 1);

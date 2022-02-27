@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>系统设置中心 - RuleApi</title>
-<link href="css/base.css" rel="stylesheet"/>
+<link href="css/base.css?v=20220227" rel="stylesheet"/>
 </head>
 
 <body>
@@ -12,7 +12,7 @@
 	<div class="header">
 		<div class="wrap">
 			<h1>Rule<span>Api</span></h1>
-			<div class="menu">
+			<div class="menu"  :class="isMenu?'wapshow':''">
 				<div class="menu-box" @click="toPage(1)" :class="page=='1'?'active':''">
 					<a href="javascript:;">基本设置</a>
 				</div>
@@ -25,14 +25,20 @@
 				<div class="menu-box" @click="toPage(4)" :class="page=='4'?'active':''">
 					<a href="javascript:;">Redis设置</a>
 				</div>
-				<div class="menu-box" @click="toPage(5)" :class="page=='5'?'active':''">
-					<a href="javascript:;">COS设置</a>
+				<div class="menu-box">
+					<a href="javascript:;">对象存储设置</a>
+					<div class="menu-box-sub">
+						<a href="javascript:;" @click="toPage(5)" :class="page=='5'?'active':''">COS设置</a>
+						<a href="javascript:;" @click="toPage(6)" :class="page=='6'?'active':''">OSS设置</a>
+					</div>
 				</div>
-				<div class="menu-box" @click="toPage(6)" :class="page=='6'?'active':''">
-					<a href="javascript:;">OSS设置</a>
-				</div>
-				<div class="menu-box" @click="toPage(7)" :class="page=='7'?'active':''">
-					<a href="javascript:;">当面付设置</a>
+
+				<div class="menu-box">
+					<a href="javascript:;">支付设置</a>
+					<div class="menu-box-sub">
+						<a href="javascript:;" @click="toPage(7)" :class="page=='7'?'active':''">支付宝</a>
+						<a href="javascript:;" @click="toPage(9)" :class="page=='9'?'active':''">微信</a>
+					</div>
 				</div>
 				<div class="menu-box" @click="toPage(8)" :class="page=='8'?'active':''">
 					<a href="javascript:;">编辑配置文件<font class="text-red">*</font></a>
@@ -239,6 +245,32 @@
 				</div>
 			</div>
 			<!--当面付设置结束-->
+			<!--微信支付设置-->
+			<div class="form-main" v-if="page==9">
+				<div class="form-box">
+					微信支付是微信官方提供的支付接口，<span class="text-red">证书文件apiclient_cert.p12请放在服务器/opt/weixin/文件夹</span>
+				</div>
+				<div class="form-box">
+					<p>公众号APP Id</p>
+					<input type="text" class="input-text" v-model="wxpayAppId" placeholder="请输入APP ID"/>
+				</div>
+				<div class="form-box">
+					<p>商户号</p>
+					<input type="text" class="input-text" v-model="wxpayMchId" placeholder="请输入商户号"/>
+				</div>
+				<div class="form-box">
+					<p>支付密钥</p>
+					<input type="text" class="input-text" v-model="wxpayKey" placeholder="请输入支付密钥"/>
+				</div>
+				<div class="form-box">
+					<p>回调地址</p>
+					<input type="text" class="input-text" v-model="wxpayNotifyUrl" placeholder="请输入回调地址"/>
+				</div>
+				<div class="form-btn">
+					<button type="button" class="input-text" class="btn" @click="saveWxpay()">保存数据</button>
+				</div>
+			</div>
+			<!--微信支付设置结束-->
 			<!--配置文件更新-->
 			<div class="form-text" v-if="page==8">
 				<div class="form-box">
@@ -286,9 +318,15 @@
 			</div>
 		</div>
 	</div>
+	<div class="tomenu">
+		<a href="javascript:;" @click="toMenu">拉出菜单</a>
+	</div>
+	<div class="bg-tomenu" @click="toMenu" :class="isMenu?'wapshow':''">
+	</div>
 </div>
+
 <script src="js/vue.js"></script>
 <script src="js/axios.js"></script>
-<script src="js/all.js"></script>
+<script src="js/all.js?v=20220227"></script>
 </body>
 </html>
