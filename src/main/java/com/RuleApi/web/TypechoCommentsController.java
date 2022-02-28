@@ -47,11 +47,21 @@ public class TypechoCommentsController {
     @Autowired
     private RedisTemplate redisTemplate;
 
+    @Autowired
+    private MailService MailService;
+
     @Value("${webinfo.CommentCache}")
     private Integer CommentCache;
 
     @Value("${webinfo.avatar}")
     private String avatar;
+
+    @Value("${webinfo.title}")
+    private String webTitle;
+
+    @Value("${webinfo.url}")
+    private String webUrl;
+
 
     @Value("${web.prefix}")
     private String dataprefix;
@@ -186,10 +196,13 @@ public class TypechoCommentsController {
                 String created = String.valueOf(date).substring(0,10);
                 //获取评论发布者信息和填写其它不可定义的值
                 jsonToMap.put("authorId",map.get("uid").toString());
+                String postName = "";
                 if(map.get("screenName")==null){
                     jsonToMap.put("author",map.get("name").toString());
+                    postName = map.get("name").toString();
                 }else{
                     jsonToMap.put("author",map.get("screenName").toString());
+                    postName = map.get("screenName").toString();
                 }
                 if(jsonToMap.get("text")==null){
                     return Result.getResultJson(0,"评论不能为空",null);
@@ -222,6 +235,37 @@ public class TypechoCommentsController {
                 List<TypechoComments> ucommentList = service.selectList(ucomment);
                 if(ucommentList.size()>0){
                     jsonToMap.put("status","approved");
+                    //给文章作者发送消息
+                    TypechoUsers author = usersService.selectByKey(contents.getAuthorId());
+
+                    Integer uid = author.getUid();
+                    if(author.getMail()!=null){
+                        String email = author.getMail();
+                        MailService.send("用户："+uid+",您的文章有新的评论", "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><title></title>" +
+                                        "<meta charset=\"utf-8\" /><style>*{padding:0px;margin:0px;box-sizing:border-box;}html{box-sizing:border-box;}body{font-size:15px;background:#fff}.main{margin:20px auto;max-width:500px;border:solid 1px #2299dd;overflow:hidden;}.main h1{display:block;width:100%;background:#2299dd;font-size:18px;color:#fff;text-align:center;padding:15px;}.text{padding:30px;}.text p{margin:10px 0px;line-height:25px;}.text p span{color:#2299dd;font-weight:bold;font-size:22px;margin-left:5px;}</style></head>" +
+                                        "<body><div class=\"main\"><h1>文章评论</h1>" +
+                                        "<div class=\"text\"><p>用户 "+uid+"，你的文章有新的评论：</p><p>”"+postName+"："+jsonToMap.get("text")+"“</p>" +
+                                        "<p>可前往<a href=\""+this.webUrl+"\">"+this.webTitle+"</a>查看详情</p>" +
+                                        "</div></div></body></html>",
+                                new String[] {email}, new String[] {});
+                    }
+                    //给回复者发送信息
+                    if(jsonToMap.get("parent")!=null&&!jsonToMap.get("parent").toString().equals(0)){
+                        String parent = jsonToMap.get("parent").toString();
+                        TypechoComments pComments = service.selectByKey(parent);
+                        if(pComments.getMail()!=null){
+                            String pemail = pComments.getMail();
+                            MailService.send("您的评论有了新的回复！", "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><title></title>" +
+                                            "<meta charset=\"utf-8\" /><style>*{padding:0px;margin:0px;box-sizing:border-box;}html{box-sizing:border-box;}body{font-size:15px;background:#fff}.main{margin:20px auto;max-width:500px;border:solid 1px #2299dd;overflow:hidden;}.main h1{display:block;width:100%;background:#2299dd;font-size:18px;color:#fff;text-align:center;padding:15px;}.text{padding:30px;}.text p{margin:10px 0px;line-height:25px;}.text p span{color:#2299dd;font-weight:bold;font-size:22px;margin-left:5px;}</style></head>" +
+                                            "<body><div class=\"main\"><h1>文章评论</h1>" +
+                                            "<div class=\"text\"><p>您的评论有了新的回复：</p><p>”"+postName+"："+jsonToMap.get("text")+"“</p>" +
+                                            "<p>可前往<a href=\""+this.webUrl+"\">"+this.webTitle+"</a>查看详情</p>" +
+                                            "</div></div></body></html>",
+                                    new String[] {pemail}, new String[] {});
+                        }
+
+                    }
+
                 }else{
                     jsonToMap.put("status","waiting");
                 }
@@ -308,6 +352,46 @@ public class TypechoCommentsController {
             TypechoComments comments = service.selectByKey(key);
             comments.setStatus("approved");
             Integer rows = service.update(comments);
+            //给评论者发送邮件
+
+            Integer uid = comments.getAuthorId();
+            if(comments.getMail()!=null){
+                String email = comments.getMail();
+                MailService.send("用户："+uid+",您的评论已审核通过", "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><title></title><meta charset=\"utf-8\" /><style>*{padding:0px;margin:0px;box-sizing:border-box;}html{box-sizing:border-box;}body{font-size:15px;background:#fff}.main{margin:20px auto;max-width:500px;border:solid 1px #2299dd;overflow:hidden;}.main h1{display:block;width:100%;background:#2299dd;font-size:18px;color:#fff;text-align:center;padding:15px;}.text{padding:30px;}.text p{margin:10px 0px;line-height:25px;}.text p span{color:#2299dd;font-weight:bold;font-size:22px;margin-left:5px;}</style></head><body><div class=\"main\"><h1>商品订单</h1><div class=\"text\"><p>用户 "+uid+"，你的评论已经审核通过！</p><p>可前往<a href=\""+this.webUrl+"\">"+this.webTitle+"</a>查看详情</p></div></div></body></html>",
+                        new String[] {email}, new String[] {});
+            }
+            //给相关人员发送评论
+            TypechoUsers author = usersService.selectByKey(comments.getOwnerId());
+            String postName = comments.getAuthor();
+            String text = comments.getText();
+            Integer authorUid = author.getUid();
+            Integer parent = comments.getParent();
+            if(author.getMail()!=null){
+                String aemail = author.getMail();
+                MailService.send("用户："+authorUid+",您的文章有新的评论", "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><title></title>" +
+                                "<meta charset=\"utf-8\" /><style>*{padding:0px;margin:0px;box-sizing:border-box;}html{box-sizing:border-box;}body{font-size:15px;background:#fff}.main{margin:20px auto;max-width:500px;border:solid 1px #2299dd;overflow:hidden;}.main h1{display:block;width:100%;background:#2299dd;font-size:18px;color:#fff;text-align:center;padding:15px;}.text{padding:30px;}.text p{margin:10px 0px;line-height:25px;}.text p span{color:#2299dd;font-weight:bold;font-size:22px;margin-left:5px;}</style></head>" +
+                                "<body><div class=\"main\"><h1>文章评论</h1>" +
+                                "<div class=\"text\"><p>用户 "+authorUid+"，你的文章有新的评论：</p><p>”"+postName+"："+text+"“</p>" +
+                                "<p>可前往<a href=\""+this.webUrl+"\">"+this.webTitle+"</a>查看详情</p>" +
+                                "</div></div></body></html>",
+                        new String[] {aemail}, new String[] {});
+            }
+            //给回复者发送信息
+            if(parent>0){
+                TypechoComments pComments = service.selectByKey(parent);
+                if(pComments.getMail()!=null){
+                    String pemail = pComments.getMail();
+                    MailService.send("您的评论有了新的回复！", "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><title></title>" +
+                                    "<meta charset=\"utf-8\" /><style>*{padding:0px;margin:0px;box-sizing:border-box;}html{box-sizing:border-box;}body{font-size:15px;background:#fff}.main{margin:20px auto;max-width:500px;border:solid 1px #2299dd;overflow:hidden;}.main h1{display:block;width:100%;background:#2299dd;font-size:18px;color:#fff;text-align:center;padding:15px;}.text{padding:30px;}.text p{margin:10px 0px;line-height:25px;}.text p span{color:#2299dd;font-weight:bold;font-size:22px;margin-left:5px;}</style></head>" +
+                                    "<body><div class=\"main\"><h1>文章评论</h1>" +
+                                    "<div class=\"text\"><p>您的评论有了新的回复：</p><p>”"+postName+"："+text+"“</p>" +
+                                    "<p>可前往<a href=\""+this.webUrl+"\">"+this.webTitle+"</a>查看详情</p>" +
+                                    "</div></div></body></html>",
+                            new String[] {pemail}, new String[] {});
+                }
+
+            }
+
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );
             response.put("data" , rows);

@@ -43,6 +43,9 @@ public class TypechoShopController {
     @Autowired
     private RedisTemplate redisTemplate;
 
+    @Autowired
+    private MailService MailService;
+
     @Value("${web.prefix}")
     private String dataprefix;
 
@@ -333,6 +336,16 @@ public class TypechoShopController {
             shopnum = shopnum - 1;
             shopinfo.setNum(shopnum);
             service.update(shopinfo);
+            //给店家发送邮件
+            Integer bid = usersinfo.getUid();
+            TypechoUsers minfo = usersService.selectByKey(aid);
+            String email = minfo.getMail();
+            String name = minfo.getName();
+            String title = shopinfo.getTitle();
+            MailService.send("您有新的商品订单，用户ID"+bid, "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><title></title><meta charset=\"utf-8\" /><style>*{padding:0px;margin:0px;box-sizing:border-box;}html{box-sizing:border-box;}body{font-size:15px;background:#fff}.main{margin:20px auto;max-width:500px;border:solid 1px #2299dd;overflow:hidden;}.main h1{display:block;width:100%;background:#2299dd;font-size:18px;color:#fff;text-align:center;padding:15px;}.text{padding:30px;}.text p{margin:10px 0px;line-height:25px;}.text p span{color:#2299dd;font-weight:bold;font-size:22px;margin-left:5px;}</style></head><body><div class=\"main\"><h1>商品订单</h1><div class=\"text\"><p>用户 "+name+"，你的商品<"+title+">有一个新的订单。</p><p>请及时打开APP进行处理！</p></div></div></body></html>",
+                    new String[] {email}, new String[] {});
+
+
             JSONObject response = new JSONObject();
             response.put("code" , 1);
             response.put("msg"  , "操作成功");

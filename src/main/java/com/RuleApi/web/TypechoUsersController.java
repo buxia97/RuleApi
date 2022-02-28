@@ -210,25 +210,35 @@ public class TypechoUsersController {
     @RequestMapping(value = "/userInfo")
     @ResponseBody
     public String userInfo(@RequestParam(value = "key", required = false) String  key) {
-        TypechoUsers info =  service.selectByKey(key);
-        Map json = JSONObject.parseObject(JSONObject.toJSONString(info), Map.class);
-        json.remove("password");
-        json.remove("address");
-        json.remove("pay");
-        json.remove("assets");
-        if(json.get("mail")!=null){
-            json.put("avatar",this.avatar+DigestUtils.md5DigestAsHex(json.get("mail").toString().getBytes()));
-        }else{
-            json.put("avatar",this.avatar+"null");
+        try {
+            TypechoUsers info =  service.selectByKey(key);
+            Map json = JSONObject.parseObject(JSONObject.toJSONString(info), Map.class);
+            json.remove("password");
+            json.remove("address");
+            json.remove("pay");
+            json.remove("assets");
+            if(json.get("mail")!=null){
+                json.put("avatar",this.avatar+DigestUtils.md5DigestAsHex(json.get("mail").toString().getBytes()));
+            }else{
+                json.put("avatar",this.avatar+"null");
+            }
+            JSONObject response = new JSONObject();
+
+            response.put("code" , 1);
+            response.put("msg"  , "");
+            response.put("data" , json);
+
+            return response.toString();
+        }catch (Exception e){
+            JSONObject response = new JSONObject();
+
+            response.put("code" , 0);
+            response.put("msg"  , "用户信息获取失败");
+            response.put("data" , null);
+
+            return response.toString();
         }
-        //TypechoUsers userInfo = JSON.parseObject(JSON.toJSONString(json), TypechoUsers.class);
-        JSONObject response = new JSONObject();
 
-        response.put("code" , 1);
-        response.put("msg"  , "");
-        response.put("data" , json);
-
-        return response.toString();
     }
     /***
      * 登陆
@@ -239,66 +249,76 @@ public class TypechoUsersController {
     public String userLogin(@RequestParam(value = "params", required = false) String  params) {
         Map jsonToMap =null;
         String oldpw = null;
-        if (StringUtils.isNotBlank(params)) {
-            jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
-            if(jsonToMap.get("name")==null||jsonToMap.get("password")==null){
+        try {
+            if (StringUtils.isNotBlank(params)) {
+                jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
+                if(jsonToMap.get("name")==null||jsonToMap.get("password")==null){
+                    return Result.getResultJson(0,"请输入正确的参数",null);
+                }
+                oldpw = jsonToMap.get("password").toString();
+            }else{
                 return Result.getResultJson(0,"请输入正确的参数",null);
             }
-            oldpw = jsonToMap.get("password").toString();
-        }else{
-            return Result.getResultJson(0,"请输入正确的参数",null);
+            jsonToMap.remove("password");
+            TypechoUsers Users = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoUsers.class);
+            List<TypechoUsers> rows = service.selectList(Users);
+            if(rows.size() > 0){
+                //查询出用户信息后，通过接口验证用户密码
+                String newpw = rows.get(0).getPassword();
+                //通过内置验证
+                boolean isPass  = phpass.CheckPassword(oldpw,newpw);
+
+                if(!isPass){
+                    return Result.getResultJson(0,"用户密码错误",null);
+                }
+                //内置验证结束
+                Long date = System.currentTimeMillis();
+                String Token = date + jsonToMap.get("name").toString();
+                jsonToMap.put("uid",rows.get(0).getUid());
+                //生成唯一性token用于验证
+                jsonToMap.put("token",jsonToMap.get("name").toString()+DigestUtils.md5DigestAsHex(Token.getBytes()));
+                jsonToMap.put("time",date);
+                jsonToMap.put("group",rows.get(0).getGroupKey());
+                jsonToMap.put("mail",rows.get(0).getMail());
+                jsonToMap.put("url",rows.get(0).getUrl());
+                jsonToMap.put("screenName",rows.get(0).getScreenName());
+                if(rows.get(0).getMail()!=null){
+                    jsonToMap.put("avatar",this.avatar+DigestUtils.md5DigestAsHex(rows.get(0).getMail().getBytes()));
+                }else{
+                    jsonToMap.put("avatar",this.avatar+"null");
+                }
+                //更新用户登录时间和第一次登陆时间（满足typecho要求）
+                String userTime = String.valueOf(date).substring(0,10);
+                Map updateLogin = new HashMap<String, String>();
+                updateLogin.put("uid",rows.get(0).getUid());
+                updateLogin.put("logged",userTime);
+                if(rows.get(0).getLogged()==0){
+                    updateLogin.put("activated",userTime);
+                }
+                TypechoUsers updateuser = JSON.parseObject(JSON.toJSONString(updateLogin), TypechoUsers.class);
+                service.update(updateuser);
+
+
+                //删除之前的token后，存入redis(防止积累导致内存溢出，超时时间默认是24小时)
+                String oldToken = redisHelp.getRedis(this.dataprefix+"_"+"userkey"+jsonToMap.get("name").toString(),redisTemplate);
+                if(oldToken!=null){
+                    redisHelp.delete(this.dataprefix+"_"+"userInfo"+oldToken,redisTemplate);
+                }
+                //redisHelp.deleteByPrex("userInfo"+jsonToMap.get("name").toString()+":*",redisTemplate);
+                redisHelp.setRedis(this.dataprefix+"_"+"userkey"+jsonToMap.get("name").toString(),jsonToMap.get("token").toString(),this.usertime,redisTemplate);
+                redisHelp.setKey(this.dataprefix+"_"+"userInfo"+jsonToMap.get("name").toString()+DigestUtils.md5DigestAsHex(Token.getBytes()),jsonToMap,this.usertime,redisTemplate);
+
+            }
+            return Result.getResultJson(rows.size() > 0 ? 1 : 0,rows.size() > 0 ? "登录成功" : "用户名或密码错误",jsonToMap);
+        }catch (Exception e){
+            JSONObject response = new JSONObject();
+
+            response.put("code" , 0);
+            response.put("msg"  , "登陆失败，请联系管理员");
+            response.put("data" , null);
+
+            return response.toString();
         }
-        jsonToMap.remove("password");
-        TypechoUsers Users = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoUsers.class);
-        List<TypechoUsers> rows = service.selectList(Users);
-        if(rows.size() > 0){
-            //查询出用户信息后，通过接口验证用户密码
-            String newpw = rows.get(0).getPassword();
-            //通过内置验证
-            boolean isPass  = phpass.CheckPassword(oldpw,newpw);
-
-            if(!isPass){
-                return Result.getResultJson(0,"用户密码错误",null);
-            }
-            //内置验证结束
-            Long date = System.currentTimeMillis();
-            String Token = date + jsonToMap.get("name").toString();
-            jsonToMap.put("uid",rows.get(0).getUid());
-            //生成唯一性token用于验证
-            jsonToMap.put("token",jsonToMap.get("name").toString()+DigestUtils.md5DigestAsHex(Token.getBytes()));
-            jsonToMap.put("time",date);
-            jsonToMap.put("group",rows.get(0).getGroupKey());
-            jsonToMap.put("mail",rows.get(0).getMail());
-            jsonToMap.put("url",rows.get(0).getUrl());
-            jsonToMap.put("screenName",rows.get(0).getScreenName());
-            if(rows.get(0).getMail()!=null){
-                jsonToMap.put("avatar",this.avatar+DigestUtils.md5DigestAsHex(rows.get(0).getMail().getBytes()));
-            }else{
-                jsonToMap.put("avatar",this.avatar+"null");
-            }
-            //更新用户登录时间和第一次登陆时间（满足typecho要求）
-            String userTime = String.valueOf(date).substring(0,10);
-            Map updateLogin = new HashMap<String, String>();
-            updateLogin.put("uid",rows.get(0).getUid());
-            updateLogin.put("logged",userTime);
-            if(rows.get(0).getLogged()==0){
-                updateLogin.put("activated",userTime);
-            }
-            TypechoUsers updateuser = JSON.parseObject(JSON.toJSONString(updateLogin), TypechoUsers.class);
-            service.update(updateuser);
-
-
-            //删除之前的token后，存入redis(防止积累导致内存溢出，超时时间默认是24小时)
-            String oldToken = redisHelp.getRedis(this.dataprefix+"_"+"userkey"+jsonToMap.get("name").toString(),redisTemplate);
-            if(oldToken!=null){
-                redisHelp.delete(this.dataprefix+"_"+"userInfo"+oldToken,redisTemplate);
-            }
-            //redisHelp.deleteByPrex("userInfo"+jsonToMap.get("name").toString()+":*",redisTemplate);
-            redisHelp.setRedis(this.dataprefix+"_"+"userkey"+jsonToMap.get("name").toString(),jsonToMap.get("token").toString(),this.usertime,redisTemplate);
-            redisHelp.setKey(this.dataprefix+"_"+"userInfo"+jsonToMap.get("name").toString()+DigestUtils.md5DigestAsHex(Token.getBytes()),jsonToMap,this.usertime,redisTemplate);
-
-        }
-        return Result.getResultJson(rows.size() > 0 ? 1 : 0,rows.size() > 0 ? "登录成功" : "用户名或密码错误",jsonToMap);
     }
     /***
      * 社会化登陆
@@ -312,105 +332,115 @@ public class TypechoUsersController {
 
         Map jsonToMap = null;
         String oldpw = null;
-        if (StringUtils.isNotBlank(params)) {
-            jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
-        }else{
-            return Result.getResultJson(0,"请输入正确的参数",null);
-        }
-        if(jsonToMap.get("accessToken")==null){
-            return Result.getResultJson(0,"登录配置异常，请检查相关设置",null);
-        }
-        TypechoUserapi userapi = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoUserapi.class);
-        String accessToken = userapi.getAccessToken();
-        String loginType = userapi.getAppLoginType();
-        TypechoUserapi isApi = new TypechoUserapi();
-        isApi.setAccessToken(accessToken);
-        isApi.setAppLoginType(loginType);
-        List<TypechoUserapi> apiList = userapiService.selectList(isApi);
-        //大于0则走向登陆，小于0则进行注册
-        if(apiList.size()>0){
-            TypechoUserapi apiInfo = apiList.get(0);
-            TypechoUsers user = service.selectByKey(apiInfo.getUid().toString());
-            Long date = System.currentTimeMillis();
-            String Token = date + user.getName();
-            jsonToMap.put("uid",user.getUid());
-            //生成唯一性token用于验证
-            jsonToMap.put("name",user.getName());
-            jsonToMap.put("token",user.getName()+DigestUtils.md5DigestAsHex(Token.getBytes()));
-            jsonToMap.put("time",date);
-            jsonToMap.put("group",user.getGroupKey());
-            jsonToMap.put("mail",user.getMail());
-            jsonToMap.put("url",user.getUrl());
-            jsonToMap.put("screenName",user.getScreenName());
-            if(user.getMail()!=null){
-                jsonToMap.put("avatar",this.avatar+DigestUtils.md5DigestAsHex(user.getMail().getBytes()));
+        try {
+            if (StringUtils.isNotBlank(params)) {
+                jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
             }else{
-                jsonToMap.put("avatar",this.avatar+"null");
+                return Result.getResultJson(0,"请输入正确的参数",null);
             }
-            //更新用户登录时间和第一次登陆时间（满足typecho要求）
-            String userTime = String.valueOf(date).substring(0,10);
-            Map updateLogin = new HashMap<String, String>();
-            updateLogin.put("uid",user.getUid());
-            updateLogin.put("logged",userTime);
-            if(user.getLogged()==0){
-                updateLogin.put("activated",userTime);
+            if(jsonToMap.get("accessToken")==null){
+                return Result.getResultJson(0,"登录配置异常，请检查相关设置",null);
             }
-            TypechoUsers updateuser = JSON.parseObject(JSON.toJSONString(updateLogin), TypechoUsers.class);
-            Integer rows = service.update(updateuser);
+            TypechoUserapi userapi = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoUserapi.class);
+            String accessToken = userapi.getAccessToken();
+            String loginType = userapi.getAppLoginType();
+            TypechoUserapi isApi = new TypechoUserapi();
+            isApi.setAccessToken(accessToken);
+            isApi.setAppLoginType(loginType);
+            List<TypechoUserapi> apiList = userapiService.selectList(isApi);
+            //大于0则走向登陆，小于0则进行注册
+            if(apiList.size()>0){
+                TypechoUserapi apiInfo = apiList.get(0);
+                TypechoUsers user = service.selectByKey(apiInfo.getUid().toString());
+                Long date = System.currentTimeMillis();
+                String Token = date + user.getName();
+                jsonToMap.put("uid",user.getUid());
+                //生成唯一性token用于验证
+                jsonToMap.put("name",user.getName());
+                jsonToMap.put("token",user.getName()+DigestUtils.md5DigestAsHex(Token.getBytes()));
+                jsonToMap.put("time",date);
+                jsonToMap.put("group",user.getGroupKey());
+                jsonToMap.put("mail",user.getMail());
+                jsonToMap.put("url",user.getUrl());
+                jsonToMap.put("screenName",user.getScreenName());
+                if(user.getMail()!=null){
+                    jsonToMap.put("avatar",this.avatar+DigestUtils.md5DigestAsHex(user.getMail().getBytes()));
+                }else{
+                    jsonToMap.put("avatar",this.avatar+"null");
+                }
+                //更新用户登录时间和第一次登陆时间（满足typecho要求）
+                String userTime = String.valueOf(date).substring(0,10);
+                Map updateLogin = new HashMap<String, String>();
+                updateLogin.put("uid",user.getUid());
+                updateLogin.put("logged",userTime);
+                if(user.getLogged()==0){
+                    updateLogin.put("activated",userTime);
+                }
+                TypechoUsers updateuser = JSON.parseObject(JSON.toJSONString(updateLogin), TypechoUsers.class);
+                Integer rows = service.update(updateuser);
 
-            //删除之前的token后，存入redis(防止积累导致内存溢出，超时时间默认是24小时)
-            String oldToken = redisHelp.getRedis(this.dataprefix+"_"+"userkey"+jsonToMap.get("name").toString(),redisTemplate);
-            if(oldToken!=null){
-                redisHelp.delete(this.dataprefix+"_"+"userInfo"+oldToken,redisTemplate);
+                //删除之前的token后，存入redis(防止积累导致内存溢出，超时时间默认是24小时)
+                String oldToken = redisHelp.getRedis(this.dataprefix+"_"+"userkey"+jsonToMap.get("name").toString(),redisTemplate);
+                if(oldToken!=null){
+                    redisHelp.delete(this.dataprefix+"_"+"userInfo"+oldToken,redisTemplate);
+                }
+                redisHelp.setRedis(this.dataprefix+"_"+"userkey"+jsonToMap.get("name").toString(),jsonToMap.get("token").toString(),this.usertime,redisTemplate);
+                redisHelp.setKey(this.dataprefix+"_"+"userInfo"+jsonToMap.get("name").toString()+DigestUtils.md5DigestAsHex(Token.getBytes()),jsonToMap,this.usertime,redisTemplate);
+
+                return Result.getResultJson(rows > 0 ? 1 : 0,rows > 0 ? "登录成功" : "登陆失败",jsonToMap);
+
+            }else{
+                //注册
+                TypechoUsers regUser = new TypechoUsers();
+                String name =  baseFull.createRandomStr(5)+baseFull.createRandomStr(4);
+                String p = baseFull.createRandomStr(9);
+                String passwd = phpass.HashPassword(p);
+                Long date = System.currentTimeMillis();
+                String userTime = String.valueOf(date).substring(0,10);
+                regUser.setName(name);
+                regUser.setCreated(Integer.parseInt(userTime));
+                regUser.setGroupKey("subscriber");
+                regUser.setScreenName(userapi.getNickName());
+                regUser.setPassword(passwd.replaceAll("(\\\r\\\n|\\\r|\\\n|\\\n\\\r)", ""));
+                Integer to = service.insert(regUser);
+                //注册完成后，增加绑定
+                Integer uid = regUser.getUid();
+                userapi.setUid(uid);
+                int rows = userapiService.insert(userapi);
+                //返回token
+                Long regdate = System.currentTimeMillis();
+                String Token = regdate + name;
+                jsonToMap.put("uid",uid);
+                //生成唯一性token用于验证
+                jsonToMap.put("name",name);
+                jsonToMap.put("token",name+DigestUtils.md5DigestAsHex(Token.getBytes()));
+                jsonToMap.put("time",regdate);
+                jsonToMap.put("group","subscriber");
+                jsonToMap.put("mail","");
+                jsonToMap.put("url","");
+                jsonToMap.put("screenName",userapi.getNickName());
+                jsonToMap.put("avatar",userapi.getHeadImgUrl());
+
+
+                //删除之前的token后，存入redis(防止积累导致内存溢出，超时时间默认是24小时)
+                String oldToken = redisHelp.getRedis(this.dataprefix+"_"+"userkey"+name,redisTemplate);
+                if(oldToken!=null){
+                    redisHelp.delete(this.dataprefix+"_"+"userInfo"+oldToken,redisTemplate);
+                }
+                redisHelp.setRedis(this.dataprefix+"_"+"userkey"+jsonToMap.get("name").toString(),jsonToMap.get("token").toString(),this.usertime,redisTemplate);
+                redisHelp.setKey(this.dataprefix+"_"+"userInfo"+jsonToMap.get("name").toString()+DigestUtils.md5DigestAsHex(Token.getBytes()),jsonToMap,this.usertime,redisTemplate);
+
+                return Result.getResultJson(rows > 0 ? 1 : 0,rows > 0 ? "登录成功" : "登陆失败",jsonToMap);
+
             }
-            redisHelp.setRedis(this.dataprefix+"_"+"userkey"+jsonToMap.get("name").toString(),jsonToMap.get("token").toString(),this.usertime,redisTemplate);
-            redisHelp.setKey(this.dataprefix+"_"+"userInfo"+jsonToMap.get("name").toString()+DigestUtils.md5DigestAsHex(Token.getBytes()),jsonToMap,this.usertime,redisTemplate);
+        }catch (Exception e){
+            JSONObject response = new JSONObject();
 
-            return Result.getResultJson(rows > 0 ? 1 : 0,rows > 0 ? "登录成功" : "登陆失败",jsonToMap);
+            response.put("code" , 0);
+            response.put("msg"  , "登陆失败，请联系管理员");
+            response.put("data" , null);
 
-        }else{
-            //注册
-            TypechoUsers regUser = new TypechoUsers();
-            String name =  baseFull.createRandomStr(5)+baseFull.createRandomStr(4);
-            String p = baseFull.createRandomStr(9);
-            String passwd = phpass.HashPassword(p);
-            Long date = System.currentTimeMillis();
-            String userTime = String.valueOf(date).substring(0,10);
-            regUser.setName(name);
-            regUser.setCreated(Integer.parseInt(userTime));
-            regUser.setGroupKey("subscriber");
-            regUser.setScreenName(userapi.getNickName());
-            regUser.setPassword(passwd.replaceAll("(\\\r\\\n|\\\r|\\\n|\\\n\\\r)", ""));
-            Integer to = service.insert(regUser);
-            //注册完成后，增加绑定
-            Integer uid = regUser.getUid();
-            userapi.setUid(uid);
-            int rows = userapiService.insert(userapi);
-            //返回token
-            Long regdate = System.currentTimeMillis();
-            String Token = regdate + name;
-            jsonToMap.put("uid",uid);
-            //生成唯一性token用于验证
-            jsonToMap.put("name",name);
-            jsonToMap.put("token",name+DigestUtils.md5DigestAsHex(Token.getBytes()));
-            jsonToMap.put("time",regdate);
-            jsonToMap.put("group","subscriber");
-            jsonToMap.put("mail","");
-            jsonToMap.put("url","");
-            jsonToMap.put("screenName",userapi.getNickName());
-            jsonToMap.put("avatar",userapi.getHeadImgUrl());
-
-
-            //删除之前的token后，存入redis(防止积累导致内存溢出，超时时间默认是24小时)
-            String oldToken = redisHelp.getRedis(this.dataprefix+"_"+"userkey"+name,redisTemplate);
-            if(oldToken!=null){
-                redisHelp.delete(this.dataprefix+"_"+"userInfo"+oldToken,redisTemplate);
-            }
-            redisHelp.setRedis(this.dataprefix+"_"+"userkey"+jsonToMap.get("name").toString(),jsonToMap.get("token").toString(),this.usertime,redisTemplate);
-            redisHelp.setKey(this.dataprefix+"_"+"userInfo"+jsonToMap.get("name").toString()+DigestUtils.md5DigestAsHex(Token.getBytes()),jsonToMap,this.usertime,redisTemplate);
-
-            return Result.getResultJson(rows > 0 ? 1 : 0,rows > 0 ? "登录成功" : "登陆失败",jsonToMap);
-
+            return response.toString();
         }
 
     }
@@ -421,56 +451,71 @@ public class TypechoUsersController {
     @RequestMapping(value = "/apiBind")
     @ResponseBody
     public String apiBind(@RequestParam(value = "params", required = false) String  params,@RequestParam(value = "token", required = false) String  token) {
-        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-        if(uStatus==0){
-            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-        }
+
         Map jsonToMap = null;
         String oldpw = null;
-        if (StringUtils.isNotBlank(params)) {
-            jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
-        }else{
-            return Result.getResultJson(0,"请输入正确的参数",null);
-        }
-        if(jsonToMap.get("accessToken")==null){
-            return Result.getResultJson(0,"登录配置异常，请检查相关设置",null);
-        }
-        TypechoUserapi userapi = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoUserapi.class);
-        Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
-        Integer uid  = Integer.parseInt(map.get("uid").toString());
-        userapi.setUid(uid);
-        String accessToken = userapi.getAccessToken();
-        String loginType = userapi.getAppLoginType();
-        TypechoUserapi isApi = new TypechoUserapi();
-        isApi.setAccessToken(accessToken);
-        isApi.setAppLoginType(loginType);
-        List<TypechoUserapi> apiBind = userapiService.selectList(isApi);
-        if(apiBind.size()>0){
-            //如果已经绑定，删除之前的绑定
-            Integer id = apiBind.get(0).getId();
-            userapiService.delete(id);
-        }
-        int rows = userapiService.insert(userapi);
-        JSONObject response = new JSONObject();
-        response.put("code" ,rows > 0 ? 1: 0 );
-        response.put("data" , rows);
-        response.put("msg"  , rows > 0 ? "绑定成功" : "绑定失败");
-        return response.toString();
+        try {
+            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+            if(uStatus==0){
+                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+            }
+            if (StringUtils.isNotBlank(params)) {
+                jsonToMap = JSONObject.parseObject(JSON.parseObject(params).toString());
+            } else {
+                return Result.getResultJson(0, "请输入正确的参数", null);
+            }
+            if (jsonToMap.get("accessToken") == null) {
+                return Result.getResultJson(0, "登录配置异常，请检查相关设置", null);
+            }
+            TypechoUserapi userapi = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoUserapi.class);
+            Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+            Integer uid = Integer.parseInt(map.get("uid").toString());
+            userapi.setUid(uid);
+            String accessToken = userapi.getAccessToken();
+            String loginType = userapi.getAppLoginType();
+            TypechoUserapi isApi = new TypechoUserapi();
+            isApi.setAccessToken(accessToken);
+            isApi.setAppLoginType(loginType);
+            List<TypechoUserapi> apiBind = userapiService.selectList(isApi);
+            if (apiBind.size() > 0) {
+                //如果已经绑定，删除之前的绑定
+                Integer id = apiBind.get(0).getId();
+                userapiService.delete(id);
+            }
+            int rows = userapiService.insert(userapi);
+            JSONObject response = new JSONObject();
+            response.put("code", rows > 0 ? 1 : 0);
+            response.put("data", rows);
+            response.put("msg", rows > 0 ? "绑定成功" : "绑定失败");
+            return response.toString();
+        }catch (Exception e){
+                JSONObject response = new JSONObject();
 
+                response.put("code" , 0);
+                response.put("msg"  , "未知错误，请联系管理员");
+                response.put("data" , null);
+
+                return response.toString();
+            }
 
     }
+
+
+
+
     /**
      * 用户绑定查询
      * */
     @RequestMapping(value = "/userBindStatus")
     @ResponseBody
     public String userBindStatus(@RequestParam(value = "token", required = false) String  token) {
-        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-        if(uStatus==0){
-            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-        }
+
         JSONObject response = new JSONObject();
         try{
+            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+            if(uStatus==0){
+                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+            }
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer uid  = Integer.parseInt(map.get("uid").toString());
             TypechoUserapi userapi = new TypechoUserapi();
@@ -588,7 +633,7 @@ public class TypechoUsersController {
                 String email = isName.get(0).getMail();
                 redisHelp.delete(this.dataprefix+"_"+"sendCode"+name,redisTemplate);
                 redisHelp.setRedis(this.dataprefix+"_"+"sendCode"+name,code,1800,redisTemplate);
-                MailService.send("你本次的验证码为"+code, "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><title></title><meta charset=\"utf-8\" /><style>*{padding:0px;margin:0px;box-sizing:border-box;}html{box-sizing:border-box;}body{font-size:15px;background:#fff}.main{margin:20px auto;max-width:500px;border:solid 1px #20a4ab;border-radius:8px;overflow:hidden;}.main h1{display:block;width:100%;background:#20a4ab;font-size:18px;color:#fff;text-align:center;padding:15px;}.text{padding:30px;}.text p{margin:10px 0px;line-height:25px;}.text p span{color:#20a4ab;font-weight:bold;font-size:22px;margin-left:5px;}</style></head><body><div class=\"main\"><h1>用户验证码</h1><div class=\"text\"><p>用户 "+name+"，你本次的验证码为<span>"+code+"</span>。</p><p>出于安全原因，该验证码将于30分钟后失效。请勿将验证码透露给他人。</p></div></div></body></html>",
+                MailService.send("你本次的验证码为"+code, "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><title></title><meta charset=\"utf-8\" /><style>*{padding:0px;margin:0px;box-sizing:border-box;}html{box-sizing:border-box;}body{font-size:15px;background:#fff}.main{margin:20px auto;max-width:500px;border:solid 1px #2299dd;overflow:hidden;}.main h1{display:block;width:100%;background:#2299dd;font-size:18px;color:#fff;text-align:center;padding:15px;}.text{padding:30px;}.text p{margin:10px 0px;line-height:25px;}.text p span{color:#2299dd;font-weight:bold;font-size:22px;margin-left:5px;}</style></head><body><div class=\"main\"><h1>用户验证码</h1><div class=\"text\"><p>用户 "+name+"，你本次的验证码为<span>"+code+"</span>。</p><p>出于安全原因，该验证码将于30分钟后失效。请勿将验证码透露给他人。</p></div></div></body></html>",
                         new String[] {email}, new String[] {});
                 return Result.getResultJson(1,"邮件发送成功",null);
             }else{
@@ -633,7 +678,7 @@ public class TypechoUsersController {
             //存入redis并发送邮件
             redisHelp.delete(this.dataprefix+"_"+"sendCode"+email,redisTemplate);
             redisHelp.setRedis(this.dataprefix+"_"+"sendCode"+email,code,1800,redisTemplate);
-            MailService.send("你本次的验证码为"+code, "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><title></title><meta charset=\"utf-8\" /><style>*{padding:0px;margin:0px;box-sizing:border-box;}html{box-sizing:border-box;}body{font-size:15px;background:#fff}.main{margin:20px auto;max-width:500px;border:solid 1px #20a4ab;border-radius:8px;overflow:hidden;}.main h1{display:block;width:100%;background:#20a4ab;font-size:18px;color:#fff;text-align:center;padding:15px;}.text{padding:30px;}.text p{margin:10px 0px;line-height:25px;}.text p span{color:#20a4ab;font-weight:bold;font-size:22px;margin-left:5px;}</style></head><body><div class=\"main\"><h1>用户验证码</h1><div class=\"text\"><p>你本次的验证码为<span>"+code+"</span>。</p><p>出于安全原因，该验证码将于30分钟后失效。请勿将验证码透露给他人。</p></div></div></body></html>",
+            MailService.send("你本次的验证码为"+code, "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><title></title><meta charset=\"utf-8\" /><style>*{padding:0px;margin:0px;box-sizing:border-box;}html{box-sizing:border-box;}body{font-size:15px;background:#fff}.main{margin:20px auto;max-width:500px;border:solid 1px #2299dd;overflow:hidden;}.main h1{display:block;width:100%;background:#2299dd;font-size:18px;color:#fff;text-align:center;padding:15px;}.text{padding:30px;}.text p{margin:10px 0px;line-height:25px;}.text p span{color:#2299dd;font-weight:bold;font-size:22px;margin-left:5px;}</style></head><body><div class=\"main\"><h1>用户验证码</h1><div class=\"text\"><p>你本次的验证码为<span>"+code+"</span>。</p><p>出于安全原因，该验证码将于30分钟后失效。请勿将验证码透露给他人。</p></div></div></body></html>",
                     new String[] {email}, new String[] {});
             return Result.getResultJson(1,"邮件发送成功",null);
         }else{
