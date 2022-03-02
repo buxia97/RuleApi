@@ -93,12 +93,21 @@ public class TypechoContentsController {
      */
     @RequestMapping(value = "/contentsInfo")
     @ResponseBody
-    public String contentsInfo (@RequestParam(value = "key", required = false) String  key,@RequestParam(value = "isMd" , required = false, defaultValue = "0") Integer isMd,HttpServletRequest request) {
+    public String contentsInfo (@RequestParam(value = "key", required = false) String  key,@RequestParam(value = "isMd" , required = false, defaultValue = "0") Integer isMd,@RequestParam(value = "token", required = false) String  token,HttpServletRequest request) {
         TypechoContents typechoContents = null;
         Map contensjson = new HashMap<String, String>();
         Map cacheInfo = redisHelp.getMapValue(this.dataprefix+"_"+"contentsInfo_"+key+"_"+isMd,redisTemplate);
+
         try{
-            if(cacheInfo.size()>0){
+            Integer isLogin;
+            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+            if(uStatus==0){
+                isLogin=0;
+            }else{
+                isLogin=1;
+            }
+            //如果是登录用户，且传入了token，就不缓存
+            if(cacheInfo.size()>0&isLogin==0){
                 contensjson = cacheInfo;
             }else{
                 typechoContents = service.selectByKey(key);
@@ -387,15 +396,24 @@ public class TypechoContentsController {
             //文章添加完成后，再处理分类和标签还有挂载商品
             if(rows > 0) {
                 if (category != "") {
-                    TypechoRelationships toCategory = new TypechoRelationships();
-                    Integer mid = Integer.parseInt(category);
-                    toCategory.setCid(cid);
-                    toCategory.setMid(mid);
-                    List<TypechoRelationships> mList = relationshipsService.selectList(toCategory);
-                    if (mList.size() == 0) {
-                        relationshipsService.insert(toCategory);
+                    Integer result = category.indexOf(",");
+                    if (result != -1) {
+                        String[] categoryList = category.split(",");
+                        List list = Arrays.asList(baseFull.threeClear(categoryList));
+                        for (int v = 0; v < list.size(); v++) {
+                            TypechoRelationships toCategory = new TypechoRelationships();
+                            String id = list.get(v).toString();
+                            if(!id.equals("")){
+                                Integer mid = Integer.parseInt(id);
+                                toCategory.setCid(cid);
+                                toCategory.setMid(mid);
+                                List<TypechoRelationships> cList = relationshipsService.selectList(toCategory);
+                                if (cList.size() == 0) {
+                                    relationshipsService.insert(toCategory);
+                                }
+                            }
+                        }
                     }
-
                 }
                 if (tag != "") {
                     Integer result = tag.indexOf(",");
@@ -405,14 +423,15 @@ public class TypechoContentsController {
                         for (int v = 0; v < list.size(); v++) {
                             TypechoRelationships toTag = new TypechoRelationships();
                             String id = list.get(v).toString();
-                            Integer mid = Integer.parseInt(id);
-                            toTag.setCid(cid);
-                            toTag.setMid(mid);
-                            List<TypechoRelationships> mList = relationshipsService.selectList(toTag);
-                            if (mList.size() == 0) {
-                                relationshipsService.insert(toTag);
+                            if(!id.equals("")){
+                                Integer mid = Integer.parseInt(id);
+                                toTag.setCid(cid);
+                                toTag.setMid(mid);
+                                List<TypechoRelationships> mList = relationshipsService.selectList(toTag);
+                                if (mList.size() == 0) {
+                                    relationshipsService.insert(toTag);
+                                }
                             }
-
                         }
                     }
                 }
@@ -492,7 +511,7 @@ public class TypechoContentsController {
 
                 //获取参数中的分类和标签（暂时不允许定义）
                 if(jsonToMap.get("category")==null){
-                    jsonToMap.put("category","0");
+                    jsonToMap.put("category","0,");
                 }
                 category = jsonToMap.get("category").toString();
                 if(jsonToMap.get("tag")!=null){
@@ -534,33 +553,38 @@ public class TypechoContentsController {
 
             //文章添加完成后，再处理分类和标签，只有文章能设置标签和分类
             if(rows > 0){
-                if(category!=""){
-                    TypechoRelationships toCategory = new TypechoRelationships();
-                    Integer mid = Integer.parseInt(category);
-                    toCategory.setCid(cid);
-                    toCategory.setMid(mid);
-                    List<TypechoRelationships> mList =  relationshipsService.selectList(toCategory);
-                    if (mList.size()==0){
-                        relationshipsService.insert(toCategory);
+                if (category != "") {
+                    Integer result = category.indexOf(",");
+                    if (result != -1) {
+                        String[] categoryList = category.split(",");
+                        List list = Arrays.asList(baseFull.threeClear(categoryList));
+                        for (int v = 0; v < list.size(); v++) {
+                            TypechoRelationships toCategory = new TypechoRelationships();
+                            String id = list.get(v).toString();
+                            if(!id.equals("")){
+                                //如果不存在就添加
+                                Integer mid = Integer.parseInt(id);
+                                toCategory.setCid(cid);
+                                toCategory.setMid(mid);
+                                relationshipsService.insert(toCategory);
+                            }
+                        }
                     }
-
                 }
-                if(tag!=""){
+                if (tag != "") {
                     Integer result = tag.indexOf(",");
-                    if(result != -1){
+                    if (result != -1) {
                         String[] tagList = tag.split(",");
                         List list = Arrays.asList(baseFull.threeClear(tagList));
                         for (int v = 0; v < list.size(); v++) {
                             TypechoRelationships toTag = new TypechoRelationships();
                             String id = list.get(v).toString();
-                            Integer mid = Integer.parseInt(id);
-                            toTag.setCid(cid);
-                            toTag.setMid(mid);
-                            List<TypechoRelationships> mList =  relationshipsService.selectList(toTag);
-                            if (mList.size()==0){
+                            if(!id.equals("")){
+                                Integer mid = Integer.parseInt(id);
+                                toTag.setCid(cid);
+                                toTag.setMid(mid);
                                 relationshipsService.insert(toTag);
                             }
-
                         }
                     }
                 }
@@ -664,6 +688,41 @@ public class TypechoContentsController {
             return response.toString();
         }catch (Exception e){
             return Result.getResultJson(0,"操作失败",null);
+        }
+    }
+    /**
+     * 文章是否评论过（用于回复可见）
+     * */
+    @RequestMapping(value = "/isCommnet")
+    @ResponseBody
+    public String isCommnet(@RequestParam(value = "key", required = false) String  key, @RequestParam(value = "token", required = false) String  token) {
+        try {
+            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+            if(uStatus==0){
+                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+            }
+            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            Integer uid  = Integer.parseInt(map.get("uid").toString());
+            //首先判断是否为作者自己
+            TypechoContents contents = new TypechoContents();
+            contents.setCid(Integer.parseInt(key));
+            contents.setAuthorId(uid);
+            Integer isAuthor = service.total(contents);
+            if(isAuthor>0){
+                return Result.getResultJson(1,"",null);
+            }
+            TypechoComments comments = new TypechoComments();
+            comments.setCid(Integer.parseInt(key));
+            comments.setAuthorId(uid);
+            Integer isCommnet = commentsService.total(comments);
+            if(isCommnet>0){
+                return Result.getResultJson(1,"",null);
+            }else{
+                return Result.getResultJson(0,"",null);
+            }
+
+        }catch (Exception e){
+            return Result.getResultJson(0,"",null);
         }
     }
     /**
