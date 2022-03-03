@@ -74,7 +74,7 @@ public class TypechoUsersController {
 
     RedisHelp redisHelp =new RedisHelp();
     ResultAll Result = new ResultAll();
-    HttpClient HttpClient = new HttpClient();
+    baseFull baseFull = new baseFull();
     UserStatus UStatus = new UserStatus();
     PHPass phpass = new PHPass(8);
 
@@ -113,7 +113,7 @@ public class TypechoUsersController {
                     json.remove("pay");
                     json.remove("assets");
                     if(json.get("mail")!=null){
-                        json.put("avatar",this.avatar+DigestUtils.md5DigestAsHex(json.get("mail").toString().getBytes()));
+                        json.put("avatar",baseFull.getAvatar(this.avatar,json.get("mail").toString()));
                     }else{
                         json.put("avatar",this.avatar+"null");
                     }
@@ -218,7 +218,8 @@ public class TypechoUsersController {
             json.remove("pay");
             json.remove("assets");
             if(json.get("mail")!=null){
-                json.put("avatar",this.avatar+DigestUtils.md5DigestAsHex(json.get("mail").toString().getBytes()));
+                json.put("avatar",baseFull.getAvatar(this.avatar,json.get("mail").toString()));
+
             }else{
                 json.put("avatar",this.avatar+"null");
             }
@@ -283,7 +284,7 @@ public class TypechoUsersController {
                 jsonToMap.put("url",rows.get(0).getUrl());
                 jsonToMap.put("screenName",rows.get(0).getScreenName());
                 if(rows.get(0).getMail()!=null){
-                    jsonToMap.put("avatar",this.avatar+DigestUtils.md5DigestAsHex(rows.get(0).getMail().getBytes()));
+                    jsonToMap.put("avatar",baseFull.getAvatar(this.avatar,rows.get(0).getMail()));
                 }else{
                     jsonToMap.put("avatar",this.avatar+"null");
                 }
@@ -364,7 +365,7 @@ public class TypechoUsersController {
                 jsonToMap.put("url",user.getUrl());
                 jsonToMap.put("screenName",user.getScreenName());
                 if(user.getMail()!=null){
-                    jsonToMap.put("avatar",this.avatar+DigestUtils.md5DigestAsHex(user.getMail().getBytes()));
+                    jsonToMap.put("avatar",baseFull.getAvatar(this.avatar,user.getMail()));
                 }else{
                     jsonToMap.put("avatar",this.avatar+"null");
                 }
@@ -415,11 +416,11 @@ public class TypechoUsersController {
                 jsonToMap.put("name",name);
                 jsonToMap.put("token",name+DigestUtils.md5DigestAsHex(Token.getBytes()));
                 jsonToMap.put("time",regdate);
-                jsonToMap.put("group","subscriber");
+                jsonToMap.put("group","contributor");
                 jsonToMap.put("mail","");
                 jsonToMap.put("url","");
                 jsonToMap.put("screenName",userapi.getNickName());
-                jsonToMap.put("avatar",userapi.getHeadImgUrl());
+                jsonToMap.put("avatar",this.avatar+"null");
 
 
                 //删除之前的token后，存入redis(防止积累导致内存溢出，超时时间默认是24小时)
@@ -589,7 +590,7 @@ public class TypechoUsersController {
             Long date = System.currentTimeMillis();
             String userTime = String.valueOf(date).substring(0,10);
             jsonToMap.put("created",userTime);
-            jsonToMap.put("group","subscriber");
+            jsonToMap.put("group","contributor");
 
             jsonToMap.put("password", passwd);
             jsonToMap.remove("introduce");

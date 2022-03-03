@@ -2,6 +2,8 @@ package com.RuleApi.common;
 
 //常用数据处理类
 
+import org.springframework.util.DigestUtils;
+
 import javax.servlet.http.HttpServletRequest;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -154,5 +156,20 @@ public class baseFull {
             throw new IllegalArgumentException("随机数位数必须大于0");
         }
         return (long)(Math.random()*9*Math.pow(10,n-1)) + (long)Math.pow(10,n-1);
+    }
+    //头像获取
+    public static String getAvatar(String url,String email){
+        String avatar = "";
+        String qqUrl = "https://thirdqq.qlogo.cn/g?b=qq&nk=";
+        String regex = "[1-9][0-9]{8,10}\\@[q][q]\\.[c][o][m]";
+        if(email.matches(regex)){
+            String[] qqArr = email.split("@");
+            String qq = qqArr[0];
+            avatar = qqUrl+ qq+"&s=100";
+        }else {
+            avatar = url+ DigestUtils.md5DigestAsHex(email.getBytes());
+        }
+        return avatar;
+
     }
 }

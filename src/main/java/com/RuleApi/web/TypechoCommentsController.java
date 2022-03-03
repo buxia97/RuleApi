@@ -133,7 +133,7 @@ public class TypechoCommentsController {
                         }
                     }
                     if(json.get("mail")!=null){
-                        json.put("avatar",this.avatar+ DigestUtils.md5DigestAsHex(json.get("mail").toString().getBytes()));
+                        json.put("avatar",baseFull.getAvatar(this.avatar,json.get("mail").toString()));
                     }else{
                         json.put("avatar",this.avatar+"null");
                     }

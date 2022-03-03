@@ -6,6 +6,7 @@ import com.aliyun.oss.OSS;
 import com.aliyun.oss.OSSClientBuilder;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.system.ApplicationHome;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.ClassUtils;
@@ -181,8 +182,12 @@ public class UploadController {
             return Result.getResultJson(0,"请上传图片文件",null);
         }
 
-        String classespath = ClassUtils.getDefaultClassLoader().getResource("").getPath();
         /*解决文件路径中的空格问题*/
+        ApplicationHome h = new ApplicationHome(getClass());
+        File jarF = h.getSource();
+        /* 配置文件路径 */
+        String classespath = jarF.getParentFile().toString()+"/files";
+
         String decodeClassespath = URLDecoder.decode(classespath,"utf-8");
         //System.out.println(decodeClassespath);
 
