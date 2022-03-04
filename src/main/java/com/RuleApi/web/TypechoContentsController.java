@@ -745,7 +745,29 @@ public class TypechoContentsController {
         }
         return imgList;
     }
+    /**
+     * 十年之约
+     * https://www.foreverblog.cn/
+     * */
+    @RequestMapping(value = "/foreverblog")
+    @ResponseBody
+    public String foreverblog(@RequestParam(value = "page", required = false) String  page) {
+        String cacheForeverblog = redisHelp.getRedis(this.dataprefix+"_"+"foreverblog_"+page,redisTemplate);
+        String res = "";
+        if(cacheForeverblog==null){
+            String url = "https://www.foreverblog.cn/api/v1/blog/feeds?page="+page;
+            res = HttpClient.doGet(url);
+            if(res==null){
+                return Result.getResultJson(0,"接口异常",null);
+            }
+            redisHelp.delete(this.dataprefix+"_"+"foreverblog_"+page,redisTemplate);
+            redisHelp.setRedis(this.dataprefix+"_"+"foreverblog_"+page,res,120,redisTemplate);
+        }else{
+            res = cacheForeverblog;
+        }
+        return res;
 
+    }
     /***
      * 全站统计
      */

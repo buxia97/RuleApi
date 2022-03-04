@@ -260,7 +260,7 @@
 				</div>
 				<div class="form-box">
 					<p>支付密钥</p>
-					<input type="text" class="input-text" v-model="wxpayKey" placeholder="请输入支付密钥"/>
+					<textarea type="text" class="text" v-model="wxpayKey" placeholder="请输入支付密钥"></textarea>
 				</div>
 				<div class="form-box">
 					<p>回调地址<span class="text-gray">请将127.0.0.1:8081部分替换为自己的API域名</span></p>
@@ -288,7 +288,10 @@
 	</div>
 	<div class="update">
 		<div class="wrap">
-			<p>修改上方的配置后，需要重启RuleApi才会生效，可前往服务器控制台，执行如下指令。如指令不可用，可<a href="https://www.ruletree.club/ruleapi.sh" target="_blank">点击此处</a>，下载最新sh文件，上传到/opt目录下。</p>
+			<p>修改上方的配置后，需要重启RuleApi才会生效，可前往服务器控制台，执行如下指令。如指令不可用，可从下方获取最新的sh文件覆盖/opt原有的ruleapi.sh。</p>
+			<p>
+				<a href="https://www.ruletree.club/ruleapi.sh" target="_blank">国内服务器专用</a> | <a href="https://www.ruletree.club/api/ruleapi.sh" target="_blank">香港及海外专用（国内用不了也可以用这个替代）</a>
+			</p>
 			<div class="code">
 				<p>screen -S 窗口名称（英文，随意就好）</p>
 				<p>sh /opt/ruleapi.sh restart</p>

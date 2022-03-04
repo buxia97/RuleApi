@@ -94,12 +94,16 @@ public class MailServiceImpl implements MailService{
         MimeMessage mimeMessage = mailSender.createMimeMessage();
         MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, true, defaultEncoding);
 
-        //设置发件人
-        String newEmailFromName = emailFromName;
+        //设置发件人，中文乱码处理
+        String newEmailFromName;
         try {
-            newEmailFromName =  MimeUtility.encodeWord(emailFromName,"utf-8","B");
+            byte[] byteName=emailFromName.getBytes("UTF-8");
+            String str=new String(byteName,"ISO-8859-1");
+            byte[] byteName2=str.getBytes("ISO-8859-1");
+            String newStr=new String(byteName2,"UTF-8");
+            newEmailFromName = newStr;
         } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+            newEmailFromName = emailFromName;
         }
         log.info("emailFromName = " + newEmailFromName);
         //log.info("from = " + from);emailFromName
