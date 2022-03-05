@@ -103,7 +103,9 @@ public class TypechoMetasController {
                         text=text.replaceAll("\\s*", "");
                         text=text.replaceAll("</?[^>]+>", "");
                         //去掉文章开头的图片插入
-                        text=text.replaceAll("((!\\[)[\\s\\S]+?(\\]\\[)[\\s\\S]+?(\\]))+?","");
+                        text=text.replaceAll("((https?|http):((//)|(\\\\))+[\\w\\d:#@%/;$()~_?\\+-=\\\\\\.&]*)","");
+                        text=text.replaceAll("((!\\[)[\\s\\S]+?(\\]\\[)[\\s\\S]+?(\\]))", "");
+                        text=text.replaceAll("((!\\[)[\\s\\S]+?(\\]))", "");
                         contentsInfo.put("text",text.length()>200 ? text.substring(0,200) : text);
                         contentsInfo.put("images",imgList);
                         //加入自定义字段，分类和标签

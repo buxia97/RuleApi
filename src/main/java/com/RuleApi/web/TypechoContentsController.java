@@ -286,7 +286,10 @@ public class TypechoContentsController {
                     text=text.replaceAll("\\s*", "");
                     text=text.replaceAll("</?[^>]+>", "");
                     //去掉文章开头的图片插入
-                    text=text.replaceAll("((!\\[)[\\s\\S]+?(\\]\\[)[\\s\\S]+?(\\]))+?","");
+
+                    text=text.replaceAll("((https?|http):((//)|(\\\\))+[\\w\\d:#@%/;$()~_?\\+-=\\\\\\.&]*)","");
+                    text=text.replaceAll("((!\\[)[\\s\\S]+?(\\]\\[)[\\s\\S]+?(\\]))", "");
+                    text=text.replaceAll("((!\\[)[\\s\\S]+?(\\]))", "");
                     json.put("images",imgList);
                     json.put("text",text.length()>200 ? text.substring(0,200) : text);
                     json.put("category",metas);
