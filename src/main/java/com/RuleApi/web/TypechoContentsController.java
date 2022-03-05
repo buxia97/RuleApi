@@ -465,6 +465,7 @@ public class TypechoContentsController {
             response.put("msg"  , rows > 0 ? "添加成功" : "添加失败");
             return response.toString();
         }catch (Exception e){
+            System.out.println(e);
             return Result.getResultJson(0,"添加失败",null);
         }
     }
@@ -615,6 +616,7 @@ public class TypechoContentsController {
             response.put("msg"  , rows > 0 ? "修改成功" : "修改失败");
             return response.toString();
         }catch (Exception e){
+            System.out.println(e);
             return Result.getResultJson(0,"修改失败",null);
         }
     }
@@ -659,6 +661,12 @@ public class TypechoContentsController {
             if(uStatus==0){
                 return Result.getResultJson(0,"用户未登录或Token验证失败",null);
             }
+            String webTitle = this.webTitle;
+            byte[] byteName=webTitle.getBytes("UTF-8");
+            String str=new String(byteName,"ISO-8859-1");
+            byte[] byteName2=str.getBytes("ISO-8859-1");
+            String newStr=new String(byteName2,"UTF-8");
+            String newtitle = newStr;
             //String group = (String) redisHelp.getValue("userInfo"+token,"group",redisTemplate);
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             String group = map.get("group").toString();
@@ -678,7 +686,7 @@ public class TypechoContentsController {
                 String email = ainfo.getMail();
                 MailService.send("用户："+uid+",您的文章已审核通过", "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><title></title><meta charset=\"utf-8\" /><style>*{padding:0px;margin:0px;box-sizing:border-box;}html{box-sizing:border-box;}body{font-size:15px;background:#fff}.main{margin:20px auto;max-width:500px;border:solid 1px #2299dd;overflow:hidden;}.main h1{display:block;width:100%;background:#2299dd;font-size:18px;color:#fff;text-align:center;padding:15px;}.text{padding:30px;}.text p{margin:10px 0px;line-height:25px;}.text p span{color:#2299dd;font-weight:bold;font-size:22px;margin-left:5px;}</style></head>" +
                                 "<body><div class=\"main\"><h1>文章审核</h1><div class=\"text\"><p>用户 "+uid+"，你的文章<"+title+">已经审核通过！</p>" +
-                                "<p>可前往<a href=\""+this.webUrl+"\">"+this.webTitle+"</a>查看详情</p></div></div></body></html>",
+                                "<p>可前往<a href=\""+this.webUrl+"\">"+newtitle+"</a>查看详情</p></div></div></body></html>",
                         new String[] {email}, new String[] {});
             }
 
@@ -725,6 +733,7 @@ public class TypechoContentsController {
             }
 
         }catch (Exception e){
+            System.out.println(e);
             return Result.getResultJson(0,"",null);
         }
     }

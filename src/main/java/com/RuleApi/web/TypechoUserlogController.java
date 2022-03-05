@@ -234,162 +234,167 @@ public class TypechoUserlogController {
     @RequestMapping(value = "/addLog")
     @ResponseBody
     public String addLog(@RequestParam(value = "params", required = false) String  params,@RequestParam(value = "token", required = false) String  token,HttpServletRequest request) {
+        try {
+            Map jsonToMap =null;
+            TypechoUserlog insert = null;
+            String  agent =  request.getHeader("User-Agent");
+            String  ip = baseFull.getIpAddr(request);
 
-        Map jsonToMap =null;
-        TypechoUserlog insert = null;
-        String  agent =  request.getHeader("User-Agent");
-        String  ip = baseFull.getIpAddr(request);
+            //生成随机积分
+            Random r = new Random();
+            int award = r.nextInt(8) + 1;
+            String clock = "";
 
-        //生成随机积分
-        Random r = new Random();
-        int award = r.nextInt(8) + 1;
-        String clock = "";
-
-        if (StringUtils.isNotBlank(params)) {
-
-
-            jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
-
-            //生成typecho数据库格式的修改时间戳
-            Long date = System.currentTimeMillis();
-            String userTime = String.valueOf(date).substring(0,10);
-            jsonToMap.put("created",userTime);
-            String type = jsonToMap.get("type").toString();
-            //只有喜欢操作不需要登陆拦截
-            if(!type.equals("likes")){
-                Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-                if(uStatus==0){
-                    return Result.getResultJson(0,"请先登录哦",null);
-                }
-            }
-            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
-            Integer uid = 0;
-            if(map.get("uid")!=null){
-                uid =Integer.parseInt(map.get("uid").toString());
-                jsonToMap.put("uid",uid);
-            }
+            if (StringUtils.isNotBlank(params)) {
 
 
-            //mark为收藏，reward为打赏，likes为奖励，clock为签到
-            if(!type.equals("mark")&&!type.equals("reward")&&!type.equals("likes")&&!type.equals("clock")){
-                return Result.getResultJson(0,"错误的字段类型",null);
-            }
-            //如果是点赞，那么每天只能一次
-            if(type.equals("likes")){
-                String cid = jsonToMap.get("cid").toString();
-                String isLikes = redisHelp.getRedis(this.dataprefix+"_"+"userlikes"+"_"+ip+"_"+agent+"_"+cid,redisTemplate);
-                if(isLikes!=null){
-                    return Result.getResultJson(0,"距离上次操作不到24小时！",null);
-                }
-                //添加点赞量
-                TypechoContents contensjson = contentsService.selectByKey(cid);
-                Integer likes = contensjson.getLikes();
-                likes = likes + 1;
-                TypechoContents toContents = new TypechoContents();
-                toContents.setCid(Integer.parseInt(cid));
-                toContents.setLikes(likes);
-                contentsService.update(toContents);
+                jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
 
-                redisHelp.setRedis(this.dataprefix+"_"+"userlikes"+"_"+ip+"_"+agent+"_"+cid,"yes",86400,redisTemplate);
-            }
-            //签到，每天一次
-            if(type.equals("clock")){
-                TypechoUserlog log = new TypechoUserlog();
-                log.setType("clock");
-                log.setUid(uid);
-
-                List<TypechoUserlog> info = service.selectList(log);
-
-                //获取上次时间
-                if (info.size()>0){
-                    Integer time = info.get(0).getCreated();
-                    String oldStamp = time+"000";
-                    SimpleDateFormat sdf=new SimpleDateFormat("yyyyMMdd");
-                    String oldtime = sdf.format(new Date(Long.parseLong(oldStamp)));
-                    Integer old = Integer.parseInt(oldtime);
-                    //获取本次时间
-                    Long curStamp = System.currentTimeMillis();  //获取当前时间戳
-                    String curtime = sdf.format(new Date(Long.parseLong(String.valueOf(curStamp))));
-                    Integer cur = Integer.parseInt(curtime);
-                    if(old>=cur){
-                        return Result.getResultJson(0,"你已经签到过了哦",null);
+                //生成typecho数据库格式的修改时间戳
+                Long date = System.currentTimeMillis();
+                String userTime = String.valueOf(date).substring(0,10);
+                jsonToMap.put("created",userTime);
+                String type = jsonToMap.get("type").toString();
+                //只有喜欢操作不需要登陆拦截
+                if(!type.equals("likes")){
+                    Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+                    if(uStatus==0){
+                        return Result.getResultJson(0,"请先登录哦",null);
                     }
                 }
+                Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+                Integer uid = 0;
+                if(map.get("uid")!=null){
+                    uid =Integer.parseInt(map.get("uid").toString());
+                    jsonToMap.put("uid",uid);
+                }
 
 
-                TypechoUsers user = usersService.selectByKey(uid);
-                Integer account = user.getAssets();
-                Integer Assets = account + award;
+                //mark为收藏，reward为打赏，likes为奖励，clock为签到
+                if(!type.equals("mark")&&!type.equals("reward")&&!type.equals("likes")&&!type.equals("clock")){
+                    return Result.getResultJson(0,"错误的字段类型",null);
+                }
+                //如果是点赞，那么每天只能一次
+                if(type.equals("likes")){
+                    String cid = jsonToMap.get("cid").toString();
+                    String isLikes = redisHelp.getRedis(this.dataprefix+"_"+"userlikes"+"_"+ip+"_"+agent+"_"+cid,redisTemplate);
+                    if(isLikes!=null){
+                        return Result.getResultJson(0,"距离上次操作不到24小时！",null);
+                    }
+                    //添加点赞量
+                    TypechoContents contensjson = contentsService.selectByKey(cid);
+                    Integer likes = contensjson.getLikes();
+                    likes = likes + 1;
+                    TypechoContents toContents = new TypechoContents();
+                    toContents.setCid(Integer.parseInt(cid));
+                    toContents.setLikes(likes);
+                    contentsService.update(toContents);
 
-                TypechoUsers newUser = new TypechoUsers();
-                newUser.setUid(uid);
-                newUser.setAssets(Assets);
+                    redisHelp.setRedis(this.dataprefix+"_"+"userlikes"+"_"+ip+"_"+agent+"_"+cid,"yes",86400,redisTemplate);
+                }
+                //签到，每天一次
+                if(type.equals("clock")){
+                    TypechoUserlog log = new TypechoUserlog();
+                    log.setType("clock");
+                    log.setUid(uid);
 
-                usersService.update(newUser);
-                jsonToMap.put("num",award);
-                clock = "，获得"+award+"积分奖励！";
+                    List<TypechoUserlog> info = service.selectList(log);
 
-                jsonToMap.put("toid",uid);
+                    //获取上次时间
+                    if (info.size()>0){
+                        Integer time = info.get(0).getCreated();
+                        String oldStamp = time+"000";
+                        SimpleDateFormat sdf=new SimpleDateFormat("yyyyMMdd");
+                        String oldtime = sdf.format(new Date(Long.parseLong(oldStamp)));
+                        Integer old = Integer.parseInt(oldtime);
+                        //获取本次时间
+                        Long curStamp = System.currentTimeMillis();  //获取当前时间戳
+                        String curtime = sdf.format(new Date(Long.parseLong(String.valueOf(curStamp))));
+                        Integer cur = Integer.parseInt(curtime);
+                        if(old>=cur){
+                            return Result.getResultJson(0,"你已经签到过了哦",null);
+                        }
+                    }
+
+
+                    TypechoUsers user = usersService.selectByKey(uid);
+                    Integer account = user.getAssets();
+                    Integer Assets = account + award;
+
+                    TypechoUsers newUser = new TypechoUsers();
+                    newUser.setUid(uid);
+                    newUser.setAssets(Assets);
+
+                    usersService.update(newUser);
+                    jsonToMap.put("num",award);
+                    clock = "，获得"+award+"积分奖励！";
+
+                    jsonToMap.put("toid",uid);
+                }
+                //收藏，只能一次
+                if(type.equals("mark")){
+                    if(jsonToMap.get("cid")==null){
+                        return Result.getResultJson(0,"参数不正确",null);
+                    }
+                    Integer cid = Integer.parseInt(jsonToMap.get("cid").toString());
+                    TypechoUserlog log = new TypechoUserlog();
+                    log.setType("mark");
+                    log.setUid(uid);
+                    log.setCid(cid);
+                    List<TypechoUserlog> info = service.selectList(log);
+                    if(info.size()>0){
+                        return Result.getResultJson(0,"已在你的收藏中！",null);
+                    }
+                }
+                //打赏，要扣余额
+                if(type.equals("reward")){
+
+                    if(jsonToMap.get("num")==null){
+                        return Result.getResultJson(0,"参数不正确",null);
+                    }
+                    Integer num = Integer.parseInt(jsonToMap.get("num").toString());
+                    if(num<=0){
+                        return Result.getResultJson(0,"参数不正确",null);
+                    }
+                    TypechoUsers user = usersService.selectByKey(uid);
+                    Integer account = user.getAssets();
+                    if(num>account){
+                        return Result.getResultJson(0,"积分不足！",null);
+                    }
+                    Integer Assets = account - num;
+                    //扣除自己的积分
+                    TypechoUsers newUser = new TypechoUsers();
+                    newUser.setUid(uid);
+                    newUser.setAssets(Assets);
+                    usersService.update(newUser);
+
+                    //给文章的作者增加积分
+                    Integer cid = Integer.parseInt(jsonToMap.get("cid").toString());
+                    TypechoContents curContents = contentsService.selectByKey(cid);
+                    Integer authorid = curContents.getAuthorId();
+                    TypechoUsers toUser = usersService.selectByKey(authorid);
+                    Integer toAssets = toUser.getAssets();
+                    Integer curAssets = toAssets + num;
+                    toUser.setAssets(curAssets);
+                    usersService.update(toUser);
+
+                    jsonToMap.put("toid",authorid);
+
+                }
+                insert = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoUserlog.class);
             }
-            //收藏，只能一次
-            if(type.equals("mark")){
-                if(jsonToMap.get("cid")==null){
-                    return Result.getResultJson(0,"参数不正确",null);
-                }
-                Integer cid = Integer.parseInt(jsonToMap.get("cid").toString());
-                TypechoUserlog log = new TypechoUserlog();
-                log.setType("mark");
-                log.setUid(uid);
-                log.setCid(cid);
-                List<TypechoUserlog> info = service.selectList(log);
-                if(info.size()>0){
-                    return Result.getResultJson(0,"已在你的收藏中！",null);
-                }
-            }
-            //打赏，要扣余额
-            if(type.equals("reward")){
 
-                if(jsonToMap.get("num")==null){
-                    return Result.getResultJson(0,"参数不正确",null);
-                }
-                Integer num = Integer.parseInt(jsonToMap.get("num").toString());
-                if(num<=0){
-                    return Result.getResultJson(0,"参数不正确",null);
-                }
-                TypechoUsers user = usersService.selectByKey(uid);
-                Integer account = user.getAssets();
-                if(num>account){
-                    return Result.getResultJson(0,"积分不足！",null);
-                }
-                Integer Assets = account - num;
-                //扣除自己的积分
-                TypechoUsers newUser = new TypechoUsers();
-                newUser.setUid(uid);
-                newUser.setAssets(Assets);
-                usersService.update(newUser);
+            int rows = service.insert(insert);
 
-                //给文章的作者增加积分
-                Integer cid = Integer.parseInt(jsonToMap.get("cid").toString());
-                TypechoContents curContents = contentsService.selectByKey(cid);
-                Integer authorid = curContents.getAuthorId();
-                TypechoUsers toUser = usersService.selectByKey(authorid);
-                Integer toAssets = toUser.getAssets();
-                Integer curAssets = toAssets + num;
-                toUser.setAssets(curAssets);
-                usersService.update(toUser);
-
-                jsonToMap.put("toid",authorid);
-
-            }
-            insert = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoUserlog.class);
+            JSONObject response = new JSONObject();
+            response.put("code" , rows);
+            response.put("msg"  , rows > 0 ? "操作成功"+clock : "操作失败");
+            return response.toString();
+        }catch (Exception e){
+            System.out.println(e);
+            return Result.getResultJson(0,"操作失败",null);
         }
 
-        int rows = service.insert(insert);
-
-        JSONObject response = new JSONObject();
-        response.put("code" , rows);
-        response.put("msg"  , rows > 0 ? "操作成功"+clock : "操作失败");
-        return response.toString();
     }
 
     /***

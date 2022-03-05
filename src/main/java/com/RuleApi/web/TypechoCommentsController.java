@@ -151,6 +151,7 @@ public class TypechoCommentsController {
                 }
             }
         }catch (Exception e){
+            System.out.println(e);
             if(cacheList.size()>0){
                 jsonList = cacheList;
             }
@@ -180,6 +181,13 @@ public class TypechoCommentsController {
             if(uStatus==0){
                 return Result.getResultJson(0,"用户未登录或Token验证失败",null);
             }
+            String webTitle = this.webTitle;
+            byte[] byteName=webTitle.getBytes("UTF-8");
+            String str=new String(byteName,"ISO-8859-1");
+            byte[] byteName2=str.getBytes("ISO-8859-1");
+            String newStr=new String(byteName2,"UTF-8");
+            String title = newStr;
+
             TypechoComments insert = null;
             String  agent =  request.getHeader("User-Agent");
             //部分机型在uniapp打包下长度大于200
@@ -245,13 +253,16 @@ public class TypechoCommentsController {
                                         "<meta charset=\"utf-8\" /><style>*{padding:0px;margin:0px;box-sizing:border-box;}html{box-sizing:border-box;}body{font-size:15px;background:#fff}.main{margin:20px auto;max-width:500px;border:solid 1px #2299dd;overflow:hidden;}.main h1{display:block;width:100%;background:#2299dd;font-size:18px;color:#fff;text-align:center;padding:15px;}.text{padding:30px;}.text p{margin:10px 0px;line-height:25px;}.text p span{color:#2299dd;font-weight:bold;font-size:22px;margin-left:5px;}</style></head>" +
                                         "<body><div class=\"main\"><h1>文章评论</h1>" +
                                         "<div class=\"text\"><p>用户 "+uid+"，你的文章有新的评论：</p><p>”"+postName+"："+jsonToMap.get("text")+"“</p>" +
-                                        "<p>可前往<a href=\""+this.webUrl+"\">"+this.webTitle+"</a>查看详情</p>" +
+                                        "<p>可前往<a href=\""+this.webUrl+"\">"+title+"</a>查看详情</p>" +
                                         "</div></div></body></html>",
                                 new String[] {email}, new String[] {});
                     }
                     //给回复者发送信息
-                    if(jsonToMap.get("parent")!=null&&!jsonToMap.get("parent").toString().equals(0)){
-                        String parent = jsonToMap.get("parent").toString();
+                    Integer parent = 0;
+                    if(jsonToMap.get("parent")!=null){
+                        parent = Integer.parseInt(jsonToMap.get("parent").toString());
+                    }
+                    if(parent > 0){
                         TypechoComments pComments = service.selectByKey(parent);
                         if(pComments.getMail()!=null){
                             String pemail = pComments.getMail();
@@ -259,7 +270,7 @@ public class TypechoCommentsController {
                                             "<meta charset=\"utf-8\" /><style>*{padding:0px;margin:0px;box-sizing:border-box;}html{box-sizing:border-box;}body{font-size:15px;background:#fff}.main{margin:20px auto;max-width:500px;border:solid 1px #2299dd;overflow:hidden;}.main h1{display:block;width:100%;background:#2299dd;font-size:18px;color:#fff;text-align:center;padding:15px;}.text{padding:30px;}.text p{margin:10px 0px;line-height:25px;}.text p span{color:#2299dd;font-weight:bold;font-size:22px;margin-left:5px;}</style></head>" +
                                             "<body><div class=\"main\"><h1>文章评论</h1>" +
                                             "<div class=\"text\"><p>您的评论有了新的回复：</p><p>”"+postName+"："+jsonToMap.get("text")+"“</p>" +
-                                            "<p>可前往<a href=\""+this.webUrl+"\">"+this.webTitle+"</a>查看详情</p>" +
+                                            "<p>可前往<a href=\""+this.webUrl+"\">"+title+"</a>查看详情</p>" +
                                             "</div></div></body></html>",
                                     new String[] {pemail}, new String[] {});
                         }
@@ -286,6 +297,7 @@ public class TypechoCommentsController {
             response.put("msg"  , rows > 0 ? "发布成功" : "发布失败");
             return response.toString();
         }catch (Exception e){
+            System.out.println(e);
             return Result.getResultJson(0,"发布失败",null);
         }
 
@@ -329,6 +341,7 @@ public class TypechoCommentsController {
             response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
             return response.toString();
         }catch (Exception e){
+            System.out.println(e);
             return Result.getResultJson(0,"操作失败",null);
         }
     }
@@ -343,6 +356,12 @@ public class TypechoCommentsController {
             if(uStatus==0){
                 return Result.getResultJson(0,"用户未登录或Token验证失败",null);
             }
+            String webTitle = this.webTitle;
+            byte[] byteName=webTitle.getBytes("UTF-8");
+            String str=new String(byteName,"ISO-8859-1");
+            byte[] byteName2=str.getBytes("ISO-8859-1");
+            String newStr=new String(byteName2,"UTF-8");
+            String title = newStr;
             //String group = (String) redisHelp.getValue("userInfo"+token,"group",redisTemplate);
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             String group = map.get("group").toString();
@@ -372,7 +391,7 @@ public class TypechoCommentsController {
                                 "<meta charset=\"utf-8\" /><style>*{padding:0px;margin:0px;box-sizing:border-box;}html{box-sizing:border-box;}body{font-size:15px;background:#fff}.main{margin:20px auto;max-width:500px;border:solid 1px #2299dd;overflow:hidden;}.main h1{display:block;width:100%;background:#2299dd;font-size:18px;color:#fff;text-align:center;padding:15px;}.text{padding:30px;}.text p{margin:10px 0px;line-height:25px;}.text p span{color:#2299dd;font-weight:bold;font-size:22px;margin-left:5px;}</style></head>" +
                                 "<body><div class=\"main\"><h1>文章评论</h1>" +
                                 "<div class=\"text\"><p>用户 "+authorUid+"，你的文章有新的评论：</p><p>”"+postName+"："+text+"“</p>" +
-                                "<p>可前往<a href=\""+this.webUrl+"\">"+this.webTitle+"</a>查看详情</p>" +
+                                "<p>可前往<a href=\""+this.webUrl+"\">"+title+"</a>查看详情</p>" +
                                 "</div></div></body></html>",
                         new String[] {aemail}, new String[] {});
             }
@@ -385,7 +404,7 @@ public class TypechoCommentsController {
                                     "<meta charset=\"utf-8\" /><style>*{padding:0px;margin:0px;box-sizing:border-box;}html{box-sizing:border-box;}body{font-size:15px;background:#fff}.main{margin:20px auto;max-width:500px;border:solid 1px #2299dd;overflow:hidden;}.main h1{display:block;width:100%;background:#2299dd;font-size:18px;color:#fff;text-align:center;padding:15px;}.text{padding:30px;}.text p{margin:10px 0px;line-height:25px;}.text p span{color:#2299dd;font-weight:bold;font-size:22px;margin-left:5px;}</style></head>" +
                                     "<body><div class=\"main\"><h1>文章评论</h1>" +
                                     "<div class=\"text\"><p>您的评论有了新的回复：</p><p>”"+postName+"："+text+"“</p>" +
-                                    "<p>可前往<a href=\""+this.webUrl+"\">"+this.webTitle+"</a>查看详情</p>" +
+                                    "<p>可前往<a href=\""+this.webUrl+"\">"+title+"</a>查看详情</p>" +
                                     "</div></div></body></html>",
                             new String[] {pemail}, new String[] {});
                 }
@@ -398,6 +417,7 @@ public class TypechoCommentsController {
             response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
             return response.toString();
         }catch (Exception e){
+            System.out.println(e);
             return Result.getResultJson(0,"操作失败",null);
         }
     }
@@ -425,6 +445,7 @@ public class TypechoCommentsController {
             response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
             return response.toString();
         }catch (Exception e){
+            System.out.println(e);
             return Result.getResultJson(0,"操作失败",null);
         }
     }

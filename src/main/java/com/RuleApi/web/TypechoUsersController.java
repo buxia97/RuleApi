@@ -435,6 +435,7 @@ public class TypechoUsersController {
 
             }
         }catch (Exception e){
+            System.out.println(e);
             JSONObject response = new JSONObject();
 
             response.put("code" , 0);
@@ -490,6 +491,7 @@ public class TypechoUsersController {
             response.put("msg", rows > 0 ? "绑定成功" : "绑定失败");
             return response.toString();
         }catch (Exception e){
+                System.out.println(e);
                 JSONObject response = new JSONObject();
 
                 response.put("code" , 0);
@@ -538,6 +540,7 @@ public class TypechoUsersController {
             response.put("msg"  , "");
             return response.toString();
         }catch (Exception e){
+            System.out.println(e);
             response.put("code" ,0);
             response.put("data" , "");
             response.put("msg"  , "数据异常");
@@ -694,52 +697,58 @@ public class TypechoUsersController {
     @RequestMapping(value = "/userFoget")
     @ResponseBody
     public String userFoget(@RequestParam(value = "params", required = false) String  params) {
-        TypechoUsers update = null;
-        Map jsonToMap =null;
-        if (StringUtils.isNotBlank(params)) {
+        try{
+            TypechoUsers update = null;
+            Map jsonToMap =null;
+            if (StringUtils.isNotBlank(params)) {
 
-            jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
-            String code = jsonToMap.get("code").toString();
-            String name = jsonToMap.get("name").toString();
-            //从redis获取验证码
-            String sendCode = null;
-            if(redisHelp.getRedis(this.dataprefix+"_"+"sendCode"+name,redisTemplate)!=null){
-                sendCode =redisHelp.getRedis(this.dataprefix+"_"+"sendCode"+name,redisTemplate);
-            }else{
-                return Result.getResultJson(0,"验证码已超时或未发送",null);
+                jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
+                String code = jsonToMap.get("code").toString();
+                String name = jsonToMap.get("name").toString();
+                //从redis获取验证码
+                String sendCode = null;
+                if(redisHelp.getRedis(this.dataprefix+"_"+"sendCode"+name,redisTemplate)!=null){
+                    sendCode =redisHelp.getRedis(this.dataprefix+"_"+"sendCode"+name,redisTemplate);
+                }else{
+                    return Result.getResultJson(0,"验证码已超时或未发送",null);
+                }
+                if(!sendCode.equals(code)){
+                    return Result.getResultJson(0,"验证码不正确",null);
+                }
+                redisHelp.delete(this.dataprefix+"_"+"sendCode"+name,redisTemplate);
+                String p = jsonToMap.get("password").toString();
+                String passwd = phpass.HashPassword(p);
+                jsonToMap.put("password", passwd);
+                jsonToMap.remove("code");
+
+                Map keyName = new HashMap<String, String>();
+                keyName.put("name",jsonToMap.get("name").toString());
+                TypechoUsers toKey1 = JSON.parseObject(JSON.toJSONString(keyName), TypechoUsers.class);
+                List<TypechoUsers> isName = service.selectList(toKey1);
+                if(isName.size() == 0){
+                    return Result.getResultJson(0,"用户不存在",null);
+                }
+
+                Map updateMap = new HashMap<String, String>();
+                updateMap.put("uid",isName.get(0).getUid().toString());
+                updateMap.put("name",jsonToMap.get("name").toString());
+                updateMap.put("password", jsonToMap.get("password").toString());
+
+                update = JSON.parseObject(JSON.toJSONString(updateMap), TypechoUsers.class);
             }
-            if(!sendCode.equals(code)){
-                return Result.getResultJson(0,"验证码不正确",null);
-            }
-            redisHelp.delete(this.dataprefix+"_"+"sendCode"+name,redisTemplate);
-            String p = jsonToMap.get("password").toString();
-            String passwd = phpass.HashPassword(p);
-            jsonToMap.put("password", passwd);
-            jsonToMap.remove("code");
 
-            Map keyName = new HashMap<String, String>();
-            keyName.put("name",jsonToMap.get("name").toString());
-            TypechoUsers toKey1 = JSON.parseObject(JSON.toJSONString(keyName), TypechoUsers.class);
-            List<TypechoUsers> isName = service.selectList(toKey1);
-            if(isName.size() == 0){
-                return Result.getResultJson(0,"用户不存在",null);
-            }
+            int rows = service.update(update);
 
-            Map updateMap = new HashMap<String, String>();
-            updateMap.put("uid",isName.get(0).getUid().toString());
-            updateMap.put("name",jsonToMap.get("name").toString());
-            updateMap.put("password", jsonToMap.get("password").toString());
-
-            update = JSON.parseObject(JSON.toJSONString(updateMap), TypechoUsers.class);
+            JSONObject response = new JSONObject();
+            response.put("code" ,rows > 0 ? 1: 0 );
+            response.put("data" , rows);
+            response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
+            return response.toString();
+        }catch (Exception e){
+            System.out.println(e);
+            return Result.getResultJson(0,"操作失败",null);
         }
 
-        int rows = service.update(update);
-
-        JSONObject response = new JSONObject();
-        response.put("code" ,rows > 0 ? 1: 0 );
-        response.put("data" , rows);
-        response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
-        return response.toString();
     }
 
     /***
@@ -749,75 +758,81 @@ public class TypechoUsersController {
     @RequestMapping(value = "/userEdit")
     @ResponseBody
     public String userEdit(@RequestParam(value = "params", required = false) String  params, @RequestParam(value = "token", required = false) String  token) {
-        TypechoUsers update = null;
-        Map jsonToMap =null;
-        String code = "";
-        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-        if(uStatus==0){
-            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-        }
-        if (StringUtils.isNotBlank(params)) {
+        try {
+            TypechoUsers update = null;
+            Map jsonToMap =null;
+            String code = "";
+            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+            if(uStatus==0){
+                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+            }
+            if (StringUtils.isNotBlank(params)) {
 
-            jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
-            //根据验证码判断是否要修改邮箱
-            if(jsonToMap.get("code")!=null&&jsonToMap.get("mail")!=null){
+                jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
+                //根据验证码判断是否要修改邮箱
+                if(jsonToMap.get("code")!=null&&jsonToMap.get("mail")!=null){
 
-                String email = jsonToMap.get("mail").toString();
-                if(redisHelp.getRedis(this.dataprefix+"_"+"sendCode"+email,redisTemplate)!=null){
-                    String sendCode = redisHelp.getRedis(this.dataprefix+"_"+"sendCode"+email,redisTemplate);
-                    code = jsonToMap.get("code").toString();
-                    if(!sendCode.equals(code)){
-                        return Result.getResultJson(0,"验证码不正确",null);
+                    String email = jsonToMap.get("mail").toString();
+                    if(redisHelp.getRedis(this.dataprefix+"_"+"sendCode"+email,redisTemplate)!=null){
+                        String sendCode = redisHelp.getRedis(this.dataprefix+"_"+"sendCode"+email,redisTemplate);
+                        code = jsonToMap.get("code").toString();
+                        if(!sendCode.equals(code)){
+                            return Result.getResultJson(0,"验证码不正确",null);
+                        }
+                    }else{
+                        return Result.getResultJson(0,"验证码不正确或已失效",null);
                     }
                 }else{
-                    return Result.getResultJson(0,"验证码不正确或已失效",null);
+                    jsonToMap.remove("mail");
                 }
-            }else{
-                jsonToMap.remove("mail");
-            }
-            jsonToMap.remove("code");
-            if(jsonToMap.get("password")!=null){
-                String p = jsonToMap.get("password").toString();
-                String passwd = phpass.HashPassword(p);
-                jsonToMap.put("password", passwd);
-            }
-            Map keyName = new HashMap<String, String>();
-            keyName.put("name",jsonToMap.get("name").toString());
-            TypechoUsers toKey1 = JSON.parseObject(JSON.toJSONString(keyName), TypechoUsers.class);
-            List<TypechoUsers> isName = service.selectList(toKey1);
-            if(isName.size() == 0){
-                return Result.getResultJson(0,"用户不存在",null);
-            }
+                jsonToMap.remove("code");
+                if(jsonToMap.get("password")!=null){
+                    String p = jsonToMap.get("password").toString();
+                    String passwd = phpass.HashPassword(p);
+                    jsonToMap.put("password", passwd);
+                }
+                Map keyName = new HashMap<String, String>();
+                keyName.put("name",jsonToMap.get("name").toString());
+                TypechoUsers toKey1 = JSON.parseObject(JSON.toJSONString(keyName), TypechoUsers.class);
+                List<TypechoUsers> isName = service.selectList(toKey1);
+                if(isName.size() == 0){
+                    return Result.getResultJson(0,"用户不存在",null);
+                }
 
 
-            jsonToMap.remove("name");
-            jsonToMap.remove("group");
-            //部分字段不允许修改
+                jsonToMap.remove("name");
+                jsonToMap.remove("group");
+                //部分字段不允许修改
 
-            jsonToMap.remove("created");
-            jsonToMap.remove("activated");
-            jsonToMap.remove("logged");
-            jsonToMap.remove("authCode");
-            jsonToMap.remove("introduce");
-            jsonToMap.remove("assets");
-            update = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoUsers.class);
+                jsonToMap.remove("created");
+                jsonToMap.remove("activated");
+                jsonToMap.remove("logged");
+                jsonToMap.remove("authCode");
+                jsonToMap.remove("introduce");
+                jsonToMap.remove("assets");
+                update = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoUsers.class);
+            }
+
+            int rows = service.update(update);
+
+            if(rows>0&&jsonToMap.get("password")!=null) {
+                //执行成功后，如果密码发生了改变，需要重新登陆
+                redisHelp.delete(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            }
+            if(rows>0&&jsonToMap.get("mail")!=null) {
+                //执行成功后，如果邮箱发生了改变，则重新登陆
+                redisHelp.delete(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            }
+            JSONObject response = new JSONObject();
+            response.put("code" ,rows > 0 ? 1: 0 );
+            response.put("data" , rows);
+            response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
+            return response.toString();
+        }catch (Exception e){
+            System.out.println(e);
+            return Result.getResultJson(0,"操作失败",null);
         }
 
-        int rows = service.update(update);
-
-        if(rows>0&&jsonToMap.get("password")!=null) {
-            //执行成功后，如果密码发生了改变，需要重新登陆
-            redisHelp.delete(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
-        }
-        if(rows>0&&jsonToMap.get("mail")!=null) {
-            //执行成功后，如果邮箱发生了改变，则重新登陆
-            redisHelp.delete(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
-        }
-        JSONObject response = new JSONObject();
-        response.put("code" ,rows > 0 ? 1: 0 );
-        response.put("data" , rows);
-        response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
-        return response.toString();
     }
 
     /***
@@ -827,61 +842,67 @@ public class TypechoUsersController {
     @RequestMapping(value = "/manageUserEdit")
     @ResponseBody
     public String manageUserEdit(@RequestParam(value = "params", required = false) String  params, @RequestParam(value = "token", required = false) String  token) {
-        TypechoUsers update = null;
-        Map jsonToMap =null;
-        String code = "";
-        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-        if(uStatus==0){
-            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-        }
-        String name = "";
-        if (StringUtils.isNotBlank(params)) {
-
-            jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
-            name = jsonToMap.get("name").toString();
-            if(jsonToMap.get("password")!=null){
-                String p = jsonToMap.get("password").toString();
-                String passwd = phpass.HashPassword(p);
-                jsonToMap.put("password", passwd);
+        try {
+            TypechoUsers update = null;
+            Map jsonToMap =null;
+            String code = "";
+            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+            if(uStatus==0){
+                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
             }
-            Map keyName = new HashMap<String, String>();
-            keyName.put("name",jsonToMap.get("name").toString());
-            TypechoUsers toKey1 = JSON.parseObject(JSON.toJSONString(keyName), TypechoUsers.class);
-            List<TypechoUsers> isName = service.selectList(toKey1);
-            if(isName.size() == 0){
-                return Result.getResultJson(0,"用户不存在",null);
+            String name = "";
+            if (StringUtils.isNotBlank(params)) {
+
+                jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
+                name = jsonToMap.get("name").toString();
+                if(jsonToMap.get("password")!=null){
+                    String p = jsonToMap.get("password").toString();
+                    String passwd = phpass.HashPassword(p);
+                    jsonToMap.put("password", passwd);
+                }
+                Map keyName = new HashMap<String, String>();
+                keyName.put("name",jsonToMap.get("name").toString());
+                TypechoUsers toKey1 = JSON.parseObject(JSON.toJSONString(keyName), TypechoUsers.class);
+                List<TypechoUsers> isName = service.selectList(toKey1);
+                if(isName.size() == 0){
+                    return Result.getResultJson(0,"用户不存在",null);
+                }
+
+
+                jsonToMap.remove("name");
+                jsonToMap.remove("group");
+                //部分字段不允许修改
+
+                jsonToMap.remove("created");
+                jsonToMap.remove("activated");
+                jsonToMap.remove("logged");
+                jsonToMap.remove("authCode");
+                jsonToMap.remove("introduce");
+                jsonToMap.remove("assets");
+                update = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoUsers.class);
             }
 
+            int rows = service.update(update);
+            //修改后让用户强制重新登陆
 
-            jsonToMap.remove("name");
-            jsonToMap.remove("group");
-            //部分字段不允许修改
-
-            jsonToMap.remove("created");
-            jsonToMap.remove("activated");
-            jsonToMap.remove("logged");
-            jsonToMap.remove("authCode");
-            jsonToMap.remove("introduce");
-            jsonToMap.remove("assets");
-            update = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoUsers.class);
+            String oldToken = null;
+            if(redisHelp.getRedis(this.dataprefix+"_"+"userkey"+name,redisTemplate)!=null){
+                oldToken = redisHelp.getRedis(this.dataprefix+"_"+"userkey"+name,redisTemplate);
+            }
+            if(oldToken!=null){
+                redisHelp.delete(this.dataprefix+"_"+"userInfo"+oldToken,redisTemplate);
+                redisHelp.delete(this.dataprefix+"_"+"userkey"+name,redisTemplate);
+            }
+            JSONObject response = new JSONObject();
+            response.put("code" ,rows > 0 ? 1: 0 );
+            response.put("data" , rows);
+            response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
+            return response.toString();
+        }catch (Exception e){
+            System.out.println(e);
+            return Result.getResultJson(0,"操作失败",null);
         }
 
-        int rows = service.update(update);
-        //修改后让用户强制重新登陆
-
-        String oldToken = null;
-        if(redisHelp.getRedis(this.dataprefix+"_"+"userkey"+name,redisTemplate)!=null){
-            oldToken = redisHelp.getRedis(this.dataprefix+"_"+"userkey"+name,redisTemplate);
-        }
-        if(oldToken!=null){
-            redisHelp.delete(this.dataprefix+"_"+"userInfo"+oldToken,redisTemplate);
-            redisHelp.delete(this.dataprefix+"_"+"userkey"+name,redisTemplate);
-        }
-        JSONObject response = new JSONObject();
-        response.put("code" ,rows > 0 ? 1: 0 );
-        response.put("data" , rows);
-        response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
-        return response.toString();
     }
     /***
      * 用户状态检测
@@ -915,22 +936,28 @@ public class TypechoUsersController {
     @RequestMapping(value = "/userDelete")
     @ResponseBody
     public String userDelete(@RequestParam(value = "key", required = false) String  key, @RequestParam(value = "token", required = false) String  token) {
-        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-        if(uStatus==0){
-            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+        try {
+            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+            if(uStatus==0){
+                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+            }
+            //String group = (String) redisHelp.getValue("userInfo"+token,"group",redisTemplate);
+            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            String group = map.get("group").toString();
+            if(!group.equals("administrator")){
+                return Result.getResultJson(0,"你没有操作权限",null);
+            }
+            int rows = service.delete(key);
+            JSONObject response = new JSONObject();
+            response.put("code" ,rows > 0 ? 1: 0 );
+            response.put("data" , rows);
+            response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
+            return response.toString();
+        }catch (Exception e){
+            System.out.println(e);
+            return Result.getResultJson(0,"操作失败",null);
         }
-        //String group = (String) redisHelp.getValue("userInfo"+token,"group",redisTemplate);
-        Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
-        String group = map.get("group").toString();
-        if(!group.equals("administrator")){
-            return Result.getResultJson(0,"你没有操作权限",null);
-        }
-        int rows = service.delete(key);
-        JSONObject response = new JSONObject();
-        response.put("code" ,rows > 0 ? 1: 0 );
-        response.put("data" , rows);
-        response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
-        return response.toString();
+
     }
     /***
      * 发起提现
@@ -938,32 +965,38 @@ public class TypechoUsersController {
     @RequestMapping(value = "/userWithdraw")
     @ResponseBody
     public String userWithdraw(@RequestParam(value = "num", required = false) Integer  num, @RequestParam(value = "token", required = false) String  token) {
-        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-        if(uStatus==0){
-            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+        try {
+            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+            if(uStatus==0){
+                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+            }
+            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            Integer uid  = Integer.parseInt(map.get("uid").toString());
+            //查询用户是否设置pay
+            TypechoUsers user = service.selectByKey(uid);
+            if(user.getPay()==null){
+                return Result.getResultJson(0,"请先设置收款信息",null);
+            }
+            Long date = System.currentTimeMillis();
+            String userTime = String.valueOf(date).substring(0,10);
+            TypechoUserlog userlog = new TypechoUserlog();
+            userlog.setUid(uid);
+            userlog.setType("withdraw");
+            userlog.setNum(num);
+            userlog.setCid(-1);
+            userlog.setToid(uid);
+            userlog.setCreated(Integer.parseInt(userTime));
+            Integer rows = userlogService.insert(userlog);
+            JSONObject response = new JSONObject();
+            response.put("code" ,rows > 0 ? 1: 0 );
+            response.put("data" , rows);
+            response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
+            return response.toString();
+        }catch (Exception e){
+            System.out.println(e);
+            return Result.getResultJson(0,"操作失败",null);
         }
-        Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
-        Integer uid  = Integer.parseInt(map.get("uid").toString());
-        //查询用户是否设置pay
-        TypechoUsers user = service.selectByKey(uid);
-        if(user.getPay()==null){
-            return Result.getResultJson(0,"请先设置收款信息",null);
-        }
-        Long date = System.currentTimeMillis();
-        String userTime = String.valueOf(date).substring(0,10);
-        TypechoUserlog userlog = new TypechoUserlog();
-        userlog.setUid(uid);
-        userlog.setType("withdraw");
-        userlog.setNum(num);
-        userlog.setCid(-1);
-        userlog.setToid(uid);
-        userlog.setCreated(Integer.parseInt(userTime));
-        Integer rows = userlogService.insert(userlog);
-        JSONObject response = new JSONObject();
-        response.put("code" ,rows > 0 ? 1: 0 );
-        response.put("data" , rows);
-        response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
-        return response.toString();
+
     }
     /***
      * 提现列表
@@ -1027,38 +1060,44 @@ public class TypechoUsersController {
     @RequestMapping(value = "/withdrawStatus")
     @ResponseBody
     public String withdrawStatus(@RequestParam(value = "key", required = false) Integer  key,@RequestParam(value = "type", required = false) Integer type, @RequestParam(value = "token", required = false) String  token) {
-        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-        if(uStatus==0){
-            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-        }
-        //String group = (String) redisHelp.getValue("userInfo"+token,"group",redisTemplate);
-        Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
-        String group = map.get("group").toString();
-        if(!group.equals("administrator")){
-            return Result.getResultJson(0,"你没有操作权限",null);
+        try{
+            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+            if(uStatus==0){
+                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+            }
+            //String group = (String) redisHelp.getValue("userInfo"+token,"group",redisTemplate);
+            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            String group = map.get("group").toString();
+            if(!group.equals("administrator")){
+                return Result.getResultJson(0,"你没有操作权限",null);
+            }
+
+            TypechoUserlog userlog = userlogService.selectByKey(key);
+            //审核通过，则开始扣费和改状态
+            if(type.equals(1)){
+                Integer num = userlog.getNum();
+                Integer uid = userlog.getUid();
+                TypechoUsers user = service.selectByKey(uid);
+                Integer oldAssets = user.getAssets();
+
+                Integer assets = oldAssets - num;
+                user.setAssets(assets);
+                service.update(user);
+                userlog.setCid(0);
+            }else{
+                userlog.setCid(-2);
+            }
+            Integer rows = userlogService.update(userlog);
+            JSONObject response = new JSONObject();
+            response.put("code" ,rows > 0 ? 1: 0 );
+            response.put("data" , rows);
+            response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
+            return response.toString();
+        }catch (Exception e){
+            System.out.println(e);
+            return Result.getResultJson(0,"操作失败",null);
         }
 
-        TypechoUserlog userlog = userlogService.selectByKey(key);
-        //审核通过，则开始扣费和改状态
-        if(type.equals(1)){
-            Integer num = userlog.getNum();
-            Integer uid = userlog.getUid();
-            TypechoUsers user = service.selectByKey(uid);
-            Integer oldAssets = user.getAssets();
-
-            Integer assets = oldAssets - num;
-            user.setAssets(assets);
-            service.update(user);
-            userlog.setCid(0);
-        }else{
-            userlog.setCid(-2);
-        }
-        Integer rows = userlogService.update(userlog);
-        JSONObject response = new JSONObject();
-        response.put("code" ,rows > 0 ? 1: 0 );
-        response.put("data" , rows);
-        response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
-        return response.toString();
     }
     /***
      * 管理员手动充扣

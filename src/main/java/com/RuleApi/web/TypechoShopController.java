@@ -312,7 +312,6 @@ public class TypechoShopController {
             return Result.getResultJson(0,"购买实体商品前，需要先设置收货地址",null);
         }
 
-
         //生成用户日志，判断是否购买，这里的cid用于商品id
         TypechoUserlog log = new TypechoUserlog();
         log.setType("buy");

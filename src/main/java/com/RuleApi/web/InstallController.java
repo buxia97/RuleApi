@@ -37,11 +37,15 @@ public class InstallController {
     @RequestMapping(value = "/newInstall")
     @ResponseBody
     public String newInstall() {
-
-        String isInstall = redisHelp.getRedis(this.dataprefix+"_"+"isInstall",redisTemplate);
-        if(isInstall!=null){
-            return "虽然重复执行也没关系，但是还是尽量不要频繁点哦，十分钟后再来操作吧！";
+        try {
+            String isInstall = redisHelp.getRedis(this.dataprefix+"_"+"isInstall",redisTemplate);
+            if(isInstall!=null){
+                return "虽然重复执行也没关系，但是还是尽量不要频繁点哦，十分钟后再来操作吧！";
+            }
+        }catch (Exception e){
+            return "Redis连接失败或未安装";
         }
+
         Integer i = 1;
         //判断typecho是否安装，或者数据表前缀是否正确
 
