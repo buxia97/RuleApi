@@ -108,6 +108,13 @@ public class TypechoUsersController {
                 List list = pageList.getList();
                 for (int i = 0; i < list.size(); i++) {
                     Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
+                    //获取用户等级
+                    Integer uid = Integer.parseInt(json.get("uid").toString());
+                    TypechoComments comments = new TypechoComments();
+                    comments.setAuthorId(uid);
+                    Integer lv = commentsService.total(comments);
+                    json.put("lv",lv);
+
                     json.remove("password");
                     json.remove("address");
                     json.remove("pay");
@@ -213,6 +220,16 @@ public class TypechoUsersController {
         try {
             TypechoUsers info =  service.selectByKey(key);
             Map json = JSONObject.parseObject(JSONObject.toJSONString(info), Map.class);
+            //获取用户等级
+            Integer uid = Integer.parseInt(key);
+            if(uid<1){
+                return Result.getResultJson(0,"请传入正确的参数",null);
+            }
+            TypechoComments comments = new TypechoComments();
+            comments.setAuthorId(uid);
+            Integer lv = commentsService.total(comments);
+            json.put("lv",lv);
+
             json.remove("password");
             json.remove("address");
             json.remove("pay");
@@ -283,6 +300,13 @@ public class TypechoUsersController {
                 jsonToMap.put("mail",rows.get(0).getMail());
                 jsonToMap.put("url",rows.get(0).getUrl());
                 jsonToMap.put("screenName",rows.get(0).getScreenName());
+                //获取用户等级
+                Integer uid = rows.get(0).getUid();
+                TypechoComments comments = new TypechoComments();
+                comments.setAuthorId(uid);
+                Integer lv = commentsService.total(comments);
+                jsonToMap.put("lv",lv);
+
                 if(rows.get(0).getMail()!=null){
                     jsonToMap.put("avatar",baseFull.getAvatar(this.avatar,rows.get(0).getMail()));
                 }else{
@@ -356,6 +380,7 @@ public class TypechoUsersController {
                 Long date = System.currentTimeMillis();
                 String Token = date + user.getName();
                 jsonToMap.put("uid",user.getUid());
+
                 //生成唯一性token用于验证
                 jsonToMap.put("name",user.getName());
                 jsonToMap.put("token",user.getName()+DigestUtils.md5DigestAsHex(Token.getBytes()));
@@ -369,6 +394,12 @@ public class TypechoUsersController {
                 }else{
                     jsonToMap.put("avatar",this.avatar+"null");
                 }
+                //获取用户等级
+                Integer uid = user.getUid();
+                TypechoComments comments = new TypechoComments();
+                comments.setAuthorId(uid);
+                Integer lv = commentsService.total(comments);
+                jsonToMap.put("lv",lv);
                 //更新用户登录时间和第一次登陆时间（满足typecho要求）
                 String userTime = String.valueOf(date).substring(0,10);
                 Map updateLogin = new HashMap<String, String>();
@@ -421,7 +452,7 @@ public class TypechoUsersController {
                 jsonToMap.put("url","");
                 jsonToMap.put("screenName",userapi.getNickName());
                 jsonToMap.put("avatar",this.avatar+"null");
-
+                jsonToMap.put("lv",0);
 
                 //删除之前的token后，存入redis(防止积累导致内存溢出，超时时间默认是24小时)
                 String oldToken = redisHelp.getRedis(this.dataprefix+"_"+"userkey"+name,redisTemplate);

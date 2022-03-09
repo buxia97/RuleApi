@@ -138,7 +138,7 @@ public class TypechoShopController {
                     return Result.getResultJson(0,"请输入正确的参数",null);
                 }
             }
-            jsonToMap.remove("status");
+            jsonToMap.put("status","0");
             jsonToMap.remove("created");
             insert = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoShop.class);
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);

@@ -365,7 +365,16 @@ public class TypechoContentsController {
                 }
                 if(jsonToMap.get("text")==null){
                     jsonToMap.put("text","暂无内容");
+                }else{
+                    //满足typecho的要求，加入markdown申明
+                    String text = jsonToMap.get("text").toString();
+                    boolean status = text.contains("<!--markdown-->");
+                    if(!status){
+                        text = "<!--markdown-->"+text;
+                        jsonToMap.put("text",text);
+                    }
                 }
+                //
 
                 //写入创建时间和作者
                 jsonToMap.put("created",userTime);
@@ -523,6 +532,14 @@ public class TypechoContentsController {
                 }
                 if(jsonToMap.get("text")==null){
                     jsonToMap.put("text","暂无内容");
+                }else{
+                    //满足typecho的要求，加入markdown申明
+                    String text = jsonToMap.get("text").toString();
+                    boolean status = text.contains("<!--markdown-->");
+                    if(!status){
+                        text = "<!--markdown-->"+text;
+                        jsonToMap.put("text",text);
+                    }
                 }
 
 

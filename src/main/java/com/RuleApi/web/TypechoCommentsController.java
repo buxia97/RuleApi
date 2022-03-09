@@ -44,6 +44,7 @@ public class TypechoCommentsController {
     @Autowired
     private TypechoUsersService usersService;
 
+
     @Autowired
     private RedisTemplate redisTemplate;
 
@@ -137,6 +138,18 @@ public class TypechoCommentsController {
                     }else{
                         json.put("avatar",this.avatar+"null");
                     }
+                    //获取用户等级
+                    Integer userid = Integer.parseInt(json.get("authorId").toString());
+                    if(userid<1){
+                        json.put("lv",0);
+                    }else{
+                        TypechoComments comments = new TypechoComments();
+                        comments.setAuthorId(userid);
+                        Integer lv = service.total(comments);
+                        json.put("lv",lv);
+                    }
+
+
                     json.put("parentComments",parentComments);
                     json.put("contenTitle",contentsInfo.getTitle());
                     jsonList.add(json);
