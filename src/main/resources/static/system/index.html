@@ -62,6 +62,10 @@
 					<input type="text" class="input-text" v-model="webinfoUrl" placeholder="请输入网站地址"/>
 				</div>
 				<div class="form-box">
+					<p>积分充值比例<span class="text-gray">一元钱等于多少积分</span></p>
+					<input type="text" class="input-text" v-model="scale" placeholder="请输入积分充值比例"/>
+				</div>
+				<div class="form-box">
 					<p>系统管理key<span class="text-important">重要，用于访问此系统设置页面</span></p>
 					<input type="text" class="input-text" v-model="webinfoKey" placeholder="请输入系统管理key"/>
 				</div>
@@ -70,7 +74,7 @@
 					<input type="text" class="input-text" v-model="webinfoUsertime" placeholder="请输入用户登录状态持续时间"/>
 				</div>
 				<div class="form-box">
-					<p>本地图片访问地址<span class="text-gray">这里指通过本地上传接口上传后的访问地址，具体需要看配置教程</span></p>
+					<p>本地&ftp图片访问地址<span class="text-gray">本地上传接口或者FTP上传接口的访问地址，具体需要看配置教程</span></p>
 					<input type="text" class="input-text" v-model="webinfoUploadUrl" placeholder="请输入本地图片访问地址"/>
 				</div>
 				<div class="form-box">

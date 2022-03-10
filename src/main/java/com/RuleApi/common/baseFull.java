@@ -172,4 +172,31 @@ public class baseFull {
         return avatar;
 
     }
+    //生成lv等级
+    public static Integer getLv(Integer num){
+        Integer lv = 0;
+        try {
+            if(num<10){
+                lv = 0;
+            }else if(num>=10&&num<50){
+                lv = 1;
+            }else if(num>=50&&num<200){
+                lv = 2;
+            }else if(num>=200&&num<500){
+                lv = 3;
+            }else if(num>=500&&num<1000){
+                lv = 4;
+            }else if(num>=1000&&num<2000){
+                lv = 5;
+            }else if(num>=2000&&num<5000){
+                lv = 6;
+            }else if(num>=5000){
+                lv = 7;
+            }
+            return lv;
+
+        }catch (Exception e){
+            return 0;
+        }
+    }
 }

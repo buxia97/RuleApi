@@ -305,22 +305,28 @@ public class TypechoShopController {
         }
         Integer Assets = oldAssets - price;
         usersinfo.setAssets(Assets);
-        //判断商品类型，如果是实体商品需要设置收货地址
-        Integer type = shopinfo.getType();
-        String address = usersinfo.getAddress();
-        if(type.equals(1)&&address==""){
-            return Result.getResultJson(0,"购买实体商品前，需要先设置收货地址",null);
-        }
-
-        //生成用户日志，判断是否购买，这里的cid用于商品id
+        //生成用户日志，这里的cid用于商品id
         TypechoUserlog log = new TypechoUserlog();
         log.setType("buy");
         log.setUid(uid);
         log.setCid(Integer.parseInt(sid));
-        Integer isBuy = userlogService.total(log);
-        if(isBuy > 0){
-            return Result.getResultJson(0,"你已经购买过了",null);
+        //判断商品类型，如果是实体商品需要设置收货地址
+        Integer type = shopinfo.getType();
+        String address = usersinfo.getAddress();
+        if(type.equals(1)){
+            if(address==null||address==""){
+                return Result.getResultJson(0,"购买实体商品前，需要先设置收货地址",null);
+            }
+        }else {
+            //判断是否购买，非实体商品不能多次购买
+            Integer isBuy = userlogService.total(log);
+            if(isBuy > 0){
+                return Result.getResultJson(0,"你已经购买过了",null);
+            }
         }
+
+
+
         log.setNum(Assets);
         log.setToid(aid);
         Long date = System.currentTimeMillis();

@@ -113,7 +113,7 @@ public class TypechoUsersController {
                     TypechoComments comments = new TypechoComments();
                     comments.setAuthorId(uid);
                     Integer lv = commentsService.total(comments);
-                    json.put("lv",lv);
+                    json.put("lv",baseFull.getLv(lv));
 
                     json.remove("password");
                     json.remove("address");
@@ -228,7 +228,7 @@ public class TypechoUsersController {
             TypechoComments comments = new TypechoComments();
             comments.setAuthorId(uid);
             Integer lv = commentsService.total(comments);
-            json.put("lv",lv);
+            json.put("lv",baseFull.getLv(lv));
 
             json.remove("password");
             json.remove("address");
@@ -305,7 +305,7 @@ public class TypechoUsersController {
                 TypechoComments comments = new TypechoComments();
                 comments.setAuthorId(uid);
                 Integer lv = commentsService.total(comments);
-                jsonToMap.put("lv",lv);
+                jsonToMap.put("lv",baseFull.getLv(lv));
 
                 if(rows.get(0).getMail()!=null){
                     jsonToMap.put("avatar",baseFull.getAvatar(this.avatar,rows.get(0).getMail()));
@@ -399,7 +399,7 @@ public class TypechoUsersController {
                 TypechoComments comments = new TypechoComments();
                 comments.setAuthorId(uid);
                 Integer lv = commentsService.total(comments);
-                jsonToMap.put("lv",lv);
+                jsonToMap.put("lv",baseFull.getLv(lv));
                 //更新用户登录时间和第一次登陆时间（满足typecho要求）
                 String userTime = String.valueOf(date).substring(0,10);
                 Map updateLogin = new HashMap<String, String>();

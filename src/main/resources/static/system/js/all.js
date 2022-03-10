@@ -16,6 +16,8 @@ var vm = new Vue({
 		webinfoUploadUrl:"",
 		webinfoAvatar:"",
 		pexelsKey:"",
+		scale:"",
+
 		//邮箱配置
 		mailHost:'',
 		mailUsername:'',
@@ -153,6 +155,8 @@ var vm = new Vue({
 					that.webinfoUploadUrl=res.data.data.webinfoUploadUrl;
 					that.webinfoAvatar=res.data.data.webinfoAvatar;
 					that.pexelsKey = res.data.data.pexelsKey;
+					that.scale = res.data.data.scale;
+
 					//邮箱信息
 					that.mailHost=res.data.data.mailHost;
 					that.mailUsername=res.data.data.mailUsername;
@@ -227,6 +231,7 @@ var vm = new Vue({
 				webinfoUploadUrl:that.webinfoUploadUrl,
 				webinfoAvatar:that.webinfoAvatar,
 				pexelsKey:that.pexelsKey,
+				scale:that.scale
 			}
 			axios.get(url,{
 				params:{

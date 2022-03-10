@@ -66,6 +66,12 @@
             <artifactId>aliyun-sdk-oss</artifactId>
             <version>3.10.2</version>
         </dependency>
+        <!-- ftp上传 -->
+        <dependency>
+            <groupId>commons-net</groupId>
+            <artifactId>commons-net</artifactId>
+            <version>3.6</version>
+        </dependency>
         <!-- test测试 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

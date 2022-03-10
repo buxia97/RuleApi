@@ -43,6 +43,7 @@ public class SystemController {
     private String webinfoUploadUrl;
     private String webinfoAvatar;
     private String pexelsKey;
+    private String scale;
 
     /**
      * 邮箱配置
@@ -167,6 +168,7 @@ public class SystemController {
             String new_webinfoUploadUrl = "";
             String new_webinfoAvatar = "";
             String new_pexelsKey = "";
+            String new_scale = "";
 
             String webinfoTitle = "webinfo.title=";
             String webinfoUrl = "webinfo.url=";
@@ -175,6 +177,7 @@ public class SystemController {
             String webinfoUploadUrl = "webinfo.uploadUrl=";
             String webinfoAvatar = "webinfo.avatar=";
             String pexelsKey = "webinfo.pexelsKey=";
+            String scale = "webinfo.scale=";
 
 
             //老的配置
@@ -185,6 +188,7 @@ public class SystemController {
             String old_webinfoUploadUrl =  webinfoUploadUrl+this.webinfoUploadUrl;
             String old_webinfoAvatar =  webinfoAvatar+this.webinfoAvatar;
             String old_pexelsKey =  pexelsKey+this.pexelsKey;
+            String old_scale =  scale+this.scale;
 
             //新的配置
             if(jsonToMap.get("webinfoTitle")!=null){
@@ -229,6 +233,13 @@ public class SystemController {
                 new_pexelsKey = pexelsKey;
             }
             editFile.replacTextContent(old_pexelsKey,new_pexelsKey);
+
+            if(jsonToMap.get("scale")!=null){
+                new_scale = scale+jsonToMap.get("scale").toString();
+            }else{
+                new_scale = scale;
+            }
+            editFile.replacTextContent(old_scale,new_scale);
             return Result.getResultJson(1,"修改成功，手动重启后生效",null);
         } catch (Exception e) {
             e.printStackTrace();
@@ -761,6 +772,7 @@ public class SystemController {
         String webinfoUploadUrl = "webinfo.uploadUrl=";
         String webinfoAvatar = "webinfo.avatar=";
         String pexelsKey = "webinfo.pexelsKey=";
+        String scale = "webinfo.scale=";
         //邮箱配置信息
         String mailHost = "spring.mail.host=";
         String mailUsername = "spring.mail.username=";
@@ -837,6 +849,9 @@ public class SystemController {
                     }
                     if (line.contains(pexelsKey)){
                         this.pexelsKey = line.replace(pexelsKey,"");
+                    }
+                    if (line.contains(scale)){
+                        this.scale = line.replace(scale,"");
                     }
 
                     //邮箱信息
@@ -956,6 +971,7 @@ public class SystemController {
         data.put("webinfoUploadUrl",this.webinfoUploadUrl);
         data.put("webinfoAvatar",this.webinfoAvatar);
         data.put("pexelsKey",this.pexelsKey);
+        data.put("scale",this.scale);
 
         //邮箱信息
         data.put("mailHost",this.mailHost);

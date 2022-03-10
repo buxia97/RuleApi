@@ -242,7 +242,7 @@ public class TypechoUserlogController {
 
             //生成随机积分
             Random r = new Random();
-            int award = r.nextInt(8) + 1;
+            int award = r.nextInt(5) + 1;
             String clock = "";
 
             if (StringUtils.isNotBlank(params)) {

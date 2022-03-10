@@ -146,7 +146,7 @@ public class TypechoCommentsController {
                         TypechoComments comments = new TypechoComments();
                         comments.setAuthorId(userid);
                         Integer lv = service.total(comments);
-                        json.put("lv",lv);
+                        json.put("lv",baseFull.getLv(lv));
                     }
 
 

@@ -4,6 +4,8 @@ import com.RuleApi.common.ResultAll;
 import com.RuleApi.common.UserStatus;
 import com.aliyun.oss.OSS;
 import com.aliyun.oss.OSSClientBuilder;
+import org.apache.commons.net.ftp.FTP;
+import org.apache.commons.net.ftp.FTPClient;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.system.ApplicationHome;
@@ -26,10 +28,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.net.URLDecoder;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -73,6 +72,18 @@ public class UploadController {
     private String urlPrefix;
     @Value("${oss.filePrefix}")
     private String filePrefix;
+
+    //获取ftp上传配置
+    @Value("${spring.ftp.host}")
+    private String ftpHost;
+    @Value("${spring.ftp.port}")
+    private Integer ftpPort;
+    @Value("${spring.ftp.username}")
+    private String ftpUsername;
+    @Value("${spring.ftp.password}")
+    private String ftpPassword;
+    @Value("${spring.ftp.basePath}")
+    private String ftpBasePath;
 
     @Value("${web.prefix}")
     private String dataprefix;
@@ -213,7 +224,7 @@ public class UploadController {
     }
 
     /**
-     * 上传到本地
+     * 上传到oss
      * */
     @RequestMapping(value = "/ossUpload",method = RequestMethod.POST)
     @ResponseBody
@@ -263,6 +274,76 @@ public class UploadController {
         info.put("url",url);
         return Result.getResultJson(1,"上传成功",info);
     }
+    /**
+     * 上传到远程ftp
+     * */
+    @RequestMapping(value = "ftpUpload",method = RequestMethod.POST)
+    public String ftpUpload(@RequestParam(value = "file") MultipartFile file, @RequestParam(value = "token", required = false) String  token) {
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+        if(uStatus==0){
+            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+        }
+        String oldFileName = file.getOriginalFilename();
+        //检查是否是图片
+        BufferedImage bi = null;
+        try {
+            bi = ImageIO.read(file.getInputStream());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        if(bi == null){
+            return Result.getResultJson(0,"请上传图片文件",null);
+        }
 
 
+
+        FTPClient ftpClient = new FTPClient();
+        InputStream inputStream = null;
+        //检查是否是图片
+        try {
+            inputStream = file.getInputStream();
+            //生成时间，用于创建目录
+            Calendar cal = Calendar.getInstance();
+            int year = cal.get(Calendar.YEAR);
+            int month=cal.get(Calendar.MONTH);
+            int day=cal.get(Calendar.DATE);
+            //获取文件名称
+            String filename = file.getOriginalFilename();
+            String eName = filename.substring(filename.lastIndexOf("."));
+            //1.在文件名称中添加随机唯一的值
+            String newFileName = UUID.randomUUID()+eName;
+            // String uuid = UUID.randomUUID().toString().replaceAll("-","");
+            filename = newFileName;
+            String key = this.ftpBasePath+"/"+year+"/"+month+"/"+day+"/"+filename;
+
+
+            //连接ftp服务器 参数填服务器的ip
+            ftpClient.connect(this.ftpHost,this.ftpPort);
+
+            //进行登录 参数分别为账号 密码
+            ftpClient.login(this.ftpUsername,this.ftpPassword);
+
+            //改变工作目录（按自己需要是否改变）
+            //只能选择local_root下已存在的目录
+            ftpClient.changeWorkingDirectory(this.ftpBasePath);
+
+            //设置文件类型为二进制文件
+            ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
+
+            //开启被动模式（按自己如何配置的ftp服务器来决定是否开启）
+            //ftpClient.enterLocalPassiveMode();
+            //上传文件 参数：上传后的文件名，输入流
+            ftpClient.storeFile(key, inputStream);
+
+            ftpClient.disconnect();
+            Map<String,String> info =new HashMap<String, String>();
+            info.put("url",this.localUrl+key);
+            return Result.getResultJson(1,"上传成功",info);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            return Result.getResultJson(0,"上传失败",null);
+        }
+
+    }
 }

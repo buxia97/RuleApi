@@ -40,6 +40,10 @@ import java.util.regex.Pattern;
 @Controller
 @RequestMapping(value = "/pay")
 public class PayController {
+    @Value("${webinfo.scale}")
+    private Integer scale;
+
+
     /**支付宝**/
 
     /** 创建的应用ID */
@@ -195,7 +199,8 @@ public class PayController {
                 String trade_no = params.get("trade_no");
                 String out_trade_no = params.get("out_trade_no");
                 String total_amount = params.get("total_amount");
-                Integer integral = Double.valueOf(total_amount).intValue() * 100;
+                Integer scale = this.scale;
+                Integer integral = Double.valueOf(total_amount).intValue() * scale;
 
                 Long date = System.currentTimeMillis();
                 String created = String.valueOf(date).substring(0,10);
@@ -407,7 +412,8 @@ public class PayController {
             //支付完成后，写入充值日志
             String out_trade_no = request.getParameter("out_trade_no");
             String total_amount = request.getParameter("total_fee");
-            Integer integral = Double.valueOf(total_amount).intValue() * 100;
+            Integer scale = this.scale;
+            Integer integral = Double.valueOf(total_amount).intValue() * scale;
 
             Long date = System.currentTimeMillis();
             String created = String.valueOf(date).substring(0,10);
