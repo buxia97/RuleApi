@@ -86,7 +86,7 @@ public class InstallController {
         //查询用户表是否存在account字段
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_users' and column_name = 'assets';", Integer.class);
         if (i == 0){
-            jdbcTemplate.execute("alter table typecho_users ADD assets integer(11) DEFAULT 0;");
+            jdbcTemplate.execute("alter table "+prefix+"_users ADD assets integer(11) DEFAULT 0;");
             text+="数据表typecho_users，字段assets添加完成。";
         }else{
             text+="数据表typecho_users，字段assets已经存在，无需添加。";
@@ -94,7 +94,7 @@ public class InstallController {
         //查询用户表是否存在address字段
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_users' and column_name = 'address';", Integer.class);
         if (i == 0){
-            jdbcTemplate.execute("alter table typecho_users ADD address text;");
+            jdbcTemplate.execute("alter table "+prefix+"_users ADD address text;");
             text+="数据表typecho_users，字段address添加完成。";
         }else{
             text+="数据表typecho_users，字段address已经存在，无需添加。";
@@ -102,10 +102,18 @@ public class InstallController {
         //查询用户表是否存在address字段
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_users' and column_name = 'pay';", Integer.class);
         if (i == 0){
-            jdbcTemplate.execute("alter table typecho_users ADD pay text;");
+            jdbcTemplate.execute("alter table "+prefix+"_users ADD pay text;");
             text+="数据表typecho_users，字段pay添加完成。";
         }else{
             text+="数据表typecho_users，字段pay已经存在，无需添加。";
+        }
+        //查询用户表是否存在customize字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_users' and column_name = 'customize';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_users ADD customize varchar(255) DEFAULT NULL;");
+            text+="数据表typecho_users，字段customize添加完成。";
+        }else{
+            text+="数据表typecho_users，字段customize已经存在，无需添加。";
         }
         //判断用户日志表是否存在
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_userlog';", Integer.class);
