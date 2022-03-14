@@ -26,10 +26,11 @@
 					<a href="javascript:;">Redis设置</a>
 				</div>
 				<div class="menu-box">
-					<a href="javascript:;">对象存储设置</a>
+					<a href="javascript:;">远程存储设置</a>
 					<div class="menu-box-sub">
 						<a href="javascript:;" @click="toPage(5)" :class="page=='5'?'active':''">COS设置</a>
 						<a href="javascript:;" @click="toPage(6)" :class="page=='6'?'active':''">OSS设置</a>
+						<a href="javascript:;" @click="toPage(10)" :class="page=='10'?'active':''">远程FTP</a>
 					</div>
 				</div>
 
@@ -275,6 +276,36 @@
 				</div>
 			</div>
 			<!--微信支付设置结束-->
+			<!--远程FTP设置-->
+			<div class="form-main" v-if="page==10">
+				<div class="form-box">
+					用于将文件上传到远程FTP(非必须配置)
+				</div>
+				<div class="form-box">
+					<p>FTP地址</p>
+					<input type="text" class="input-text" v-model="ftpHost" placeholder="请输入FTP地址"/>
+				</div>
+				<div class="form-box">
+					<p>FTP端口号</p>
+					<input type="text" class="input-text" v-model="ftpPort" placeholder="请输入FTP端口号"/>
+				</div>
+				<div class="form-box">
+					<p>FTP用户名</p>
+					<input type="text" class="input-text" v-model="ftpUsername" placeholder="请输入FTP用户名"/>
+				</div>
+				<div class="form-box">
+					<p>FTP密码</p>
+					<input type="text" class="input-text" v-model="ftpPassword" placeholder="请输入FTP密码"/>
+				</div>
+				<div class="form-box">
+					<p>FTP根目录</p>
+					<input type="text" class="input-text" v-model="ftpBasePath" placeholder="请输入FTP根目录"/>
+				</div>
+				<div class="form-btn">
+					<button type="button" class="input-text" class="btn" @click="saveFTP()">保存数据</button>
+				</div>
+			</div>
+			<!--微信支付设置结束-->
 			<!--配置文件更新-->
 			<div class="form-text" v-if="page==8">
 				<div class="form-box">
@@ -334,6 +365,6 @@
 
 <script src="js/vue.js"></script>
 <script src="js/axios.js"></script>
-<script src="js/all.js?v=20220227"></script>
+<script src="js/all.js?v=20220315"></script>
 </body>
 </html>

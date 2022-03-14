@@ -19,6 +19,7 @@
         <result column="assets" property="assets" />
         <result column="address" property="address" />
         <result column="pay" property="pay" />
+        <result column="customize" property="customize" />
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -36,7 +37,8 @@
         `introduce`,
         `assets`,
         `address`,
-        `pay`
+        `pay`,
+        `customize`
     </sql>
 
     <!-- 插入数据 -->
@@ -151,7 +153,8 @@
             <if test ='null != introduce'>`introduce` = #{introduce},</if>
             <if test ='null != assets'>`assets` = #{assets},</if>
             <if test ='null != address'>`address` = #{address},</if>
-            <if test ='null != pay'>`pay` = #{pay}</if>
+            <if test ='null != pay'>`pay` = #{pay},</if>
+            <if test ='null != customize'>`customize` = #{customize}</if>
         </set>
         WHERE `uid` = #{uid}
     </update>

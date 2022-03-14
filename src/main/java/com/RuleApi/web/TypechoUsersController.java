@@ -300,6 +300,7 @@ public class TypechoUsersController {
                 jsonToMap.put("mail",rows.get(0).getMail());
                 jsonToMap.put("url",rows.get(0).getUrl());
                 jsonToMap.put("screenName",rows.get(0).getScreenName());
+                jsonToMap.put("customize",rows.get(0).getCustomize());
                 //获取用户等级
                 Integer uid = rows.get(0).getUid();
                 TypechoComments comments = new TypechoComments();
@@ -389,6 +390,7 @@ public class TypechoUsersController {
                 jsonToMap.put("mail",user.getMail());
                 jsonToMap.put("url",user.getUrl());
                 jsonToMap.put("screenName",user.getScreenName());
+                jsonToMap.put("customize",user.getCustomize());
                 if(user.getMail()!=null){
                     jsonToMap.put("avatar",baseFull.getAvatar(this.avatar,user.getMail()));
                 }else{
@@ -453,7 +455,7 @@ public class TypechoUsersController {
                 jsonToMap.put("screenName",userapi.getNickName());
                 jsonToMap.put("avatar",this.avatar+"null");
                 jsonToMap.put("lv",0);
-
+                jsonToMap.put("customize","");
                 //删除之前的token后，存入redis(防止积累导致内存溢出，超时时间默认是24小时)
                 String oldToken = redisHelp.getRedis(this.dataprefix+"_"+"userkey"+name,redisTemplate);
                 if(oldToken!=null){
@@ -629,6 +631,7 @@ public class TypechoUsersController {
             jsonToMap.put("password", passwd);
             jsonToMap.remove("introduce");
             jsonToMap.remove("assets");
+            jsonToMap.remove("customize");
         }
         insert = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoUsers.class);
         int rows = service.insert(insert);
@@ -834,7 +837,7 @@ public class TypechoUsersController {
                 jsonToMap.remove("name");
                 jsonToMap.remove("group");
                 //部分字段不允许修改
-
+                jsonToMap.remove("customize");
                 jsonToMap.remove("created");
                 jsonToMap.remove("activated");
                 jsonToMap.remove("logged");

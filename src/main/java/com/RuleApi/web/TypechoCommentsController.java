@@ -138,15 +138,18 @@ public class TypechoCommentsController {
                     }else{
                         json.put("avatar",this.avatar+"null");
                     }
-                    //获取用户等级
+                    //获取用户等级和自定义头衔
                     Integer userid = Integer.parseInt(json.get("authorId").toString());
                     if(userid<1){
                         json.put("lv",0);
+                        json.put("customize","");
                     }else{
                         TypechoComments comments = new TypechoComments();
                         comments.setAuthorId(userid);
                         Integer lv = service.total(comments);
+                        TypechoUsers userinfo = usersService.selectByKey(userid);
                         json.put("lv",baseFull.getLv(lv));
+                        json.put("customize",userinfo.getCustomize());
                     }
 
 

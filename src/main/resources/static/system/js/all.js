@@ -46,6 +46,12 @@ var vm = new Vue({
 		aliyunAucketName:'',
 		aliyunUrlPrefix:'',
 		aliyunFilePrefix:'',
+		//FTP
+		ftpHost:'',
+		ftpPort:'',
+		ftpUsername:'',
+		ftpPassword:'',
+		ftpBasePath:'',
 		//支付宝
 		alipayAppId:'',
 		alipayPrivateKey:'',
@@ -185,6 +191,12 @@ var vm = new Vue({
 					that.aliyunAucketName=res.data.data.aliyunAucketName;
 					that.aliyunUrlPrefix=res.data.data.aliyunUrlPrefix;
 					that.aliyunFilePrefix=res.data.data.aliyunFilePrefix;
+					//ftp
+					that.ftpHost=res.data.data.ftpHost;
+					that.ftpPort=res.data.data.ftpPort;
+					that.ftpUsername=res.data.data.ftpUsername;
+					that.ftpPassword=res.data.data.ftpPassword;
+					that.ftpBasePath=res.data.data.ftpBasePath;
 					//支付宝
 					that.alipayAppId=res.data.data.alipayAppId;
 					that.alipayPrivateKey=res.data.data.alipayPrivateKey;
@@ -360,6 +372,33 @@ var vm = new Vue({
 				aliyunAucketName:that.aliyunAucketName,
 				aliyunUrlPrefix:that.aliyunUrlPrefix,
 				aliyunFilePrefix:that.aliyunFilePrefix,
+			}
+			axios.get(url,{
+				params:{
+					"webkey":that.webkey,
+					"params":JSON.stringify(that.removeObjectEmptyKey(data))
+				}
+			}).then(function(res){
+				that.toAlert(res.data.msg);
+				if(res.data.code==1){
+					that.getAll();
+				}else{
+					that.outSystem();
+				}
+			}).catch(function (error) {
+				console.log(error);
+			});
+		},
+
+		saveFTP(){
+			var that = this;
+			var url = "/system/setupFtp"
+			var data={
+				ftpHost:that.ftpHost,
+				ftpPort:that.ftpPort,
+				ftpUsername:that.ftpUsername,
+				ftpPassword:that.ftpPassword,
+				ftpBasePath:that.ftpBasePath,
 			}
 			axios.get(url,{
 				params:{

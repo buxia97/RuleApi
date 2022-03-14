@@ -83,6 +83,15 @@ public class SystemController {
     private String aliyunAucketName;
     private String aliyunUrlPrefix;
     private String aliyunFilePrefix;
+
+    /**
+     * FTP
+     * */
+    private String ftpHost;
+    private String ftpPort;
+    private String ftpUsername;
+    private String ftpPassword;
+    private String ftpBasePath;
     /**
      * alipay
      * */
@@ -548,6 +557,82 @@ public class SystemController {
         }
     }
     /***
+     * Oss配置
+     */
+    @RequestMapping(value = "/setupFtp")
+    @ResponseBody
+    public String setupFtp(@RequestParam(value = "webkey", required = false) String  webkey,@RequestParam(value = "params", required = false) String  params) {
+        if(!webkey.equals(this.key)){
+            return Result.getResultJson(0,"请输入正确的访问key",null);
+        }
+        Map jsonToMap = new HashMap();
+        try {
+            //读取参数，开始写入
+            if (StringUtils.isNotBlank(params)) {
+                jsonToMap = JSONObject.parseObject(JSON.parseObject(params).toString());
+                //新的配置
+
+            }
+            String new_ftpHost = "";
+            String new_ftpPort = "";
+            String new_ftpUsername = "";
+            String new_ftpPassword = "";
+            String new_ftpBasePath = "";
+
+            String ftpHost="spring.ftp.host=";
+            String ftpPort="spring.ftp.port=";
+            String ftpUsername="spring.ftp.username=";
+            String ftpPassword="spring.ftp.password=";
+            String ftpBasePath="spring.ftp.basePath=";
+
+            //老的配置
+            String old_ftpHost = ftpHost+this.ftpHost;
+            String old_ftpPort = ftpPort+this.ftpPort;
+            String old_ftpUsername = ftpUsername+this.ftpUsername;
+            String old_ftpPassword = ftpPassword+this.ftpPassword;
+            String old_ftpBasePath = ftpBasePath+this.ftpBasePath;
+            //新的配置
+            if(jsonToMap.get("ftpHost")!=null){
+                new_ftpHost = ftpHost+jsonToMap.get("ftpHost").toString();
+            }else {
+                new_ftpHost = ftpHost;
+            }
+            editFile.replacTextContent(old_ftpHost,new_ftpHost);
+            if(jsonToMap.get("ftpPort")!=null){
+                new_ftpPort = ftpPort+jsonToMap.get("ftpPort").toString();
+            }else {
+                new_ftpPort = ftpPort;
+            }
+            editFile.replacTextContent(old_ftpPort,new_ftpPort);
+            if(jsonToMap.get("ftpUsername")!=null){
+                new_ftpUsername = ftpUsername+jsonToMap.get("ftpUsername").toString();
+            }else {
+                new_ftpUsername = ftpUsername;
+            }
+            editFile.replacTextContent(old_ftpUsername,new_ftpUsername);
+
+            if(jsonToMap.get("ftpPassword")!=null){
+                new_ftpPassword = ftpPassword+jsonToMap.get("ftpPassword").toString();
+            }else {
+                new_ftpPassword = ftpPassword;
+            }
+            editFile.replacTextContent(old_ftpPassword,new_ftpPassword);
+
+            if(jsonToMap.get("ftpBasePath")!=null){
+                new_ftpBasePath = ftpBasePath+jsonToMap.get("ftpBasePath").toString();
+            }else {
+                new_ftpBasePath = ftpBasePath;
+            }
+            editFile.replacTextContent(old_ftpBasePath,new_ftpBasePath);
+
+
+            return Result.getResultJson(1,"修改成功，手动重启后生效",null);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Result.getResultJson(1,"修改失败，请确认参数是否正确",null);
+        }
+    }
+    /***
      * 邮件发送配置
      */
     @RequestMapping(value = "/setupEmail")
@@ -801,6 +886,13 @@ public class SystemController {
         String aliyunAucketName = "spring.aliyun.bucketName=";
         String aliyunUrlPrefix = "spring.aliyun.urlPrefix=";
         String aliyunFilePrefix = "oss.filePrefix=";
+        //ftp
+        String ftpHost="spring.ftp.host=";
+        String ftpPort="spring.ftp.port=";
+        String ftpUsername="spring.ftp.username=";
+        String ftpPassword="spring.ftp.password=";
+        String ftpBasePath="spring.ftp.basePath=";
+
         //alipay
         String alipayAppId = "fastboot.pay.alipay.app-id=";
         String alipayPrivateKey = "fastboot.pay.alipay.private-key=";
@@ -816,6 +908,8 @@ public class SystemController {
 
         ApplicationHome h = new ApplicationHome(getClass());
         File jarF = h.getSource();
+
+
         /* 配置文件路径 */
         String path = jarF.getParentFile().toString()+"/application.properties";
         try {
@@ -830,7 +924,12 @@ public class SystemController {
                 line = br.readLine(); // 一次读入一行数据
                 if(line != null){
                     if (line.contains(webinfoTitle)){
-                        this.webinfoTitle = line.replace(webinfoTitle,"");
+                        String old_webinfoTitle = line.replace(webinfoTitle,"");
+                        byte[] byteName=old_webinfoTitle.getBytes("UTF-8");
+                        String str=new String(byteName,"ISO-8859-1");
+                        byte[] byteName2=str.getBytes("ISO-8859-1");
+                        String newStr=new String(byteName2,"UTF-8");
+                        this.webinfoTitle = newStr;
                     }
                     if (line.contains(webinfoUrl)){
                         this.webinfoUrl = line.replace(webinfoUrl,"");
@@ -929,7 +1028,23 @@ public class SystemController {
                     if (line.contains(aliyunFilePrefix)){
                         this.aliyunFilePrefix = line.replace(aliyunFilePrefix,"");
                     }
+                    //ftp
 
+                    if (line.contains(ftpHost)){
+                        this.ftpHost = line.replace(ftpHost,"");
+                    }
+                    if (line.contains(ftpPort)){
+                        this.ftpPort = line.replace(ftpPort,"");
+                    }
+                    if (line.contains(ftpUsername)){
+                        this.ftpUsername = line.replace(ftpUsername,"");
+                    }
+                    if (line.contains(ftpPassword)){
+                        this.ftpPassword = line.replace(ftpPassword,"");
+                    }
+                    if (line.contains(ftpBasePath)){
+                        this.ftpBasePath = line.replace(ftpBasePath,"");
+                    }
                     //alipay
                     if (line.contains(alipayAppId)){
                         this.alipayAppId = line.replace(alipayAppId,"");
@@ -1002,6 +1117,13 @@ public class SystemController {
         data.put("aliyunAucketName",this.aliyunAucketName);
         data.put("aliyunUrlPrefix",this.aliyunUrlPrefix);
         data.put("aliyunFilePrefix",this.aliyunFilePrefix);
+
+        //ftp
+        data.put("ftpHost",this.ftpHost);
+        data.put("ftpPort",this.ftpPort);
+        data.put("ftpUsername",this.ftpUsername);
+        data.put("ftpPassword",this.ftpPassword);
+        data.put("ftpBasePath",this.ftpBasePath);
         //支付宝当面付
         data.put("alipayAppId",this.alipayAppId);
         data.put("alipayPrivateKey",this.alipayPrivateKey);

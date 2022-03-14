@@ -86,4 +86,9 @@ public class TypechoUsers implements Serializable {
      * address
      */
     private String pay;
+
+    /**
+     * customize
+     */
+    private String customize;
 }

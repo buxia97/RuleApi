@@ -290,6 +290,8 @@ public class TypechoContentsController {
                     text=text.replaceAll("((https?|http):((//)|(\\\\))+[\\w\\d:#@%/;$()~_?\\+-=\\\\\\.&]*)","");
                     text=text.replaceAll("((!\\[)[\\s\\S]+?(\\]\\[)[\\s\\S]+?(\\]))", "");
                     text=text.replaceAll("((!\\[)[\\s\\S]+?(\\]))", "");
+                    text=text.replaceAll("\\(", "");
+                    text=text.replaceAll("\\)", "");
                     json.put("images",imgList);
                     json.put("text",text.length()>200 ? text.substring(0,200) : text);
                     json.put("category",metas);
