@@ -955,6 +955,10 @@ public class TypechoUsersController {
             Integer uid  = Integer.parseInt(map.get("uid").toString());
             TypechoUsers users = service.selectByKey(uid);
             Map json = JSONObject.parseObject(JSONObject.toJSONString(users), Map.class);
+            TypechoComments comments = new TypechoComments();
+            comments.setAuthorId(uid);
+            Integer lv = commentsService.total(comments);
+            json.put("lv",baseFull.getLv(lv));
             JSONObject response = new JSONObject();
 
             response.put("code" , 1);
