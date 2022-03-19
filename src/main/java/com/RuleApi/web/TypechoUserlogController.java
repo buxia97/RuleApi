@@ -64,7 +64,7 @@ public class TypechoUserlogController {
 
     baseFull baseFull = new baseFull();
     /***
-     * 查询用户收藏列表
+     * 查询用户是否收藏
      */
     @RequestMapping(value = "/isMark")
     @ResponseBody
@@ -79,6 +79,7 @@ public class TypechoUserlogController {
         TypechoUserlog userlog = new TypechoUserlog();
         userlog.setCid(Integer.parseInt(cid));
         userlog.setUid(uid);
+        userlog.setType("mark");
         Integer isMark = service.total(userlog);
         Integer logid = -1;
         if(isMark>0){
@@ -441,7 +442,7 @@ public class TypechoUserlogController {
     public String orderList (@RequestParam(value = "token", required = false) String  token) {
 
         String page = "1";
-        String limit = "30";
+        String limit = "60";
         Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
@@ -468,7 +469,15 @@ public class TypechoUserlogController {
                     Map shopInfo = JSONObject.parseObject(JSONObject.toJSONString(shop), Map.class);
                     Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
                     json.put("shopInfo",shopInfo);
-
+                    //获取商家邮箱
+                    Integer merid = shop.getUid();
+                    if(merid<1){
+                        json.put("merchantEmail","");
+                    }else{
+                        TypechoUsers merchant = usersService.selectByKey(merid);
+                        String merchantEmail = merchant.getMail();
+                        json.put("merchantEmail",merchantEmail);
+                    }
 
                     jsonList.add(json);
 
@@ -494,10 +503,10 @@ public class TypechoUserlogController {
      */
     @RequestMapping(value = "/orderSellList")
     @ResponseBody
-    public String orderSellList (@RequestParam(value = "token", required = false) String  token) {
+    public String orderSellList (@RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
+                                 @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
+                                 @RequestParam(value = "token", required = false) String  token) {
 
-        String page = "1";
-        String limit = "30";
         Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
@@ -515,7 +524,7 @@ public class TypechoUserlogController {
             if(cacheList.size()>0){
                 jsonList = cacheList;
             }else {
-                PageList<TypechoUserlog> pageList = service.selectPage(query, Integer.parseInt(page), Integer.parseInt(limit));
+                PageList<TypechoUserlog> pageList = service.selectPage(query, page, limit);
                 List<TypechoUserlog> list = pageList.getList();
                 for (int i = 0; i < list.size(); i++) {
                     Integer cid = list.get(i).getCid();
@@ -526,9 +535,19 @@ public class TypechoUserlogController {
                     Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
                     json.put("shopInfo",shopInfo);
                     //获取用户地址
-                    TypechoUsers user = usersService.selectByKey(touid);
-                    String address = user.getAddress();
-                    json.put("address",address);
+                    if(touid<1){
+                        json.put("address","");
+                        json.put("userEmail","");
+                    }else{
+
+                        TypechoUsers user = usersService.selectByKey(touid);
+                        String address = user.getAddress();
+                        String userEmail = user.getMail();
+                        json.put("address",address);
+                        json.put("userEmail",userEmail);
+                    }
+
+
 
                     jsonList.add(json);
 
