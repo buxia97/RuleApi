@@ -144,7 +144,11 @@ public class TypechoUserlogController {
                         text = text.replaceAll("\\s*", "");
                         text = text.replaceAll("</?[^>]+>", "");
                         //去掉文章开头的图片插入
-                        text = text.replaceAll("((!\\[)[\\s\\S]+?(\\]\\[)[\\s\\S]+?(\\]))+?", "");
+                        text=text.replaceAll("((https?|http):((//)|(\\\\))+[\\w\\d:#@%/;$()~_?\\+-=\\\\\\.&]*)","");
+                        text=text.replaceAll("((!\\[)[\\s\\S]+?(\\]\\[)[\\s\\S]+?(\\]))", "");
+                        text=text.replaceAll("((!\\[)[\\s\\S]+?(\\]))", "");
+                        text=text.replaceAll("\\(", "");
+                        text=text.replaceAll("\\)", "");
                         contentsInfo.put("text", text.length() > 200 ? text.substring(0, 200) : text);
                         contentsInfo.put("images", imgList);
                         //加入自定义字段，分类和标签
@@ -471,13 +475,15 @@ public class TypechoUserlogController {
                     json.put("shopInfo",shopInfo);
                     //获取商家邮箱
                     Integer merid = shop.getUid();
-                    if(merid<1){
-                        json.put("merchantEmail","");
+                    TypechoUsers merchant = usersService.selectByKey(merid);
+                    String merchantEmail = merchant.getMail();
+                    if(merchantEmail==null){
+                        json.put("merchantEmail",null);
                     }else{
-                        TypechoUsers merchant = usersService.selectByKey(merid);
-                        String merchantEmail = merchant.getMail();
                         json.put("merchantEmail",merchantEmail);
                     }
+
+
 
                     jsonList.add(json);
 
@@ -535,26 +541,27 @@ public class TypechoUserlogController {
                     Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
                     json.put("shopInfo",shopInfo);
                     //获取用户地址
-                    if(touid<1){
-                        json.put("address","");
-                        json.put("userEmail","");
-                    }else{
 
-                        TypechoUsers user = usersService.selectByKey(touid);
-                        String address = user.getAddress();
-                        String userEmail = user.getMail();
+                    TypechoUsers user = usersService.selectByKey(touid);
+                    String address = user.getAddress();
+                    String userEmail = user.getMail();
+                    if(address==null){
+                        json.put("address",null);
+                    }else{
                         json.put("address",address);
+                    }
+                    if(userEmail==null){
+                        json.put("userEmail",null);
+                    }else{
                         json.put("userEmail",userEmail);
                     }
-
-
-
                     jsonList.add(json);
 
 
                 }
                 redisHelp.delete(this.dataprefix+"_"+"orderSellList_"+page+"_"+limit+"_"+uid, redisTemplate);
                 redisHelp.setList(this.dataprefix+"_"+"orderSellList_"+page+"_"+limit+"_"+uid, jsonList, 5, redisTemplate);
+
             }
         }catch (Exception e){
             if(cacheList.size()>0){
