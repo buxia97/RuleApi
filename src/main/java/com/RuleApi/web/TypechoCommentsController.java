@@ -454,6 +454,18 @@ public class TypechoCommentsController {
             if(!group.equals("administrator")){
                 return Result.getResultJson(0,"你没有操作权限",null);
             }
+
+            //更新文章评论数量
+            TypechoComments comments = service.selectByKey(key);
+            Integer cid = comments.getCid();
+            TypechoContents contents = new TypechoContents();
+            TypechoComments sum = new TypechoComments();
+            sum.setCid(cid);
+            Integer total = service.total(sum);
+            contents.setCid(cid);
+            contents.setCommentsNum(total);
+            contentsService.update(contents);
+
             int rows = service.delete(key);
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );
