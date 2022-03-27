@@ -163,6 +163,8 @@ public class TypechoUsersController {
         Integer uid =Integer.parseInt(map.get("uid").toString());
         //用户文章数量
         TypechoContents contents = new TypechoContents();
+        contents.setType("post");
+        contents.setStatus("publish");
         contents.setAuthorId(uid);
         Integer contentsNum =  contentsService.total(contents);
         //用户评论数量

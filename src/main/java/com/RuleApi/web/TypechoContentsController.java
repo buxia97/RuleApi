@@ -817,6 +817,8 @@ public class TypechoContentsController {
         }
         JSONObject data = new JSONObject();
         TypechoContents contents = new TypechoContents();
+        contents.setType("post");
+        contents.setStatus("publish");
         Integer allContents = service.total(contents);
         TypechoComments comments = new TypechoComments();
         Integer allComments = commentsService.total(comments);
