@@ -181,7 +181,7 @@ public class TypechoUserlogController {
                         contentsInfo.remove("password");
                         contentsInfo.put("category", metas);
                         contentsInfo.put("tag", tags);
-
+                        contentsInfo.put("logid", list.get(i).getId());
                         jsonList.add(contentsInfo);
                     }
 
