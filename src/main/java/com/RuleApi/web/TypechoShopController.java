@@ -63,6 +63,9 @@ public class TypechoShopController {
                             @RequestParam(value = "searchKey"        , required = false, defaultValue = "") String searchKey,
                             @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit) {
         TypechoShop query = new TypechoShop();
+        if(limit>50){
+            limit = 50;
+        }
         if (StringUtils.isNotBlank(searchParams)) {
             JSONObject object = JSON.parseObject(searchParams);
             query = object.toJavaObject(TypechoShop.class);

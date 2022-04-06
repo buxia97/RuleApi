@@ -88,6 +88,9 @@ public class TypechoCommentsController {
                                 @RequestParam(value = "token"       , required = false, defaultValue = "") String token) {
         TypechoComments query = new TypechoComments();
         Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+        if(limit>50){
+            limit = 50;
+        }
         Integer uid = 0;
         if (StringUtils.isNotBlank(searchParams)) {
             JSONObject object = JSON.parseObject(searchParams);

@@ -111,6 +111,9 @@ public class TypechoUserlogController {
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
         }
+        if(limit>50){
+            limit = 50;
+        }
         Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         Integer uid =Integer.parseInt(map.get("uid").toString());
 
@@ -218,7 +221,9 @@ public class TypechoUserlogController {
         }
         Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         Integer uid =Integer.parseInt(map.get("uid").toString());
-
+        if(limit>50){
+            limit = 50;
+        }
         TypechoUserlog query = new TypechoUserlog();
         query.setUid(uid);
         query.setType("reward");
@@ -516,6 +521,9 @@ public class TypechoUserlogController {
         Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+        }
+        if(limit>50){
+            limit = 50;
         }
         Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         Integer uid =Integer.parseInt(map.get("uid").toString());

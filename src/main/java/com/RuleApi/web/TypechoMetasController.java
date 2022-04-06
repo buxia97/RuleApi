@@ -70,6 +70,9 @@ public class TypechoMetasController {
                                   @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit) {
 
         TypechoRelationships query = new TypechoRelationships();
+        if(limit>50){
+            limit = 50;
+        }
         if (StringUtils.isNotBlank(searchParams)) {
             JSONObject object = JSON.parseObject(searchParams);
             Integer mid = Integer.parseInt(object.get("mid").toString());
@@ -178,6 +181,9 @@ public class TypechoMetasController {
                             @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
                              @RequestParam(value = "order"        , required = false, defaultValue = "") String order) {
         TypechoMetas query = new TypechoMetas();
+        if(limit>50){
+            limit = 50;
+        }
         if (StringUtils.isNotBlank(searchParams)) {
             JSONObject object = JSON.parseObject(searchParams);
             query = object.toJavaObject(TypechoMetas.class);

@@ -99,6 +99,9 @@ public class TypechoUsersController {
             object.remove("password");
             query = object.toJavaObject(TypechoUsers.class);
         }
+        if(limit>50){
+            limit = 50;
+        }
         List jsonList = new ArrayList();
 
         List cacheList = redisHelp.getList(this.dataprefix + "_" + "userList_" + page + "_" + limit + "_" + searchParams + "_" + order + "_" + searchKey, redisTemplate);
@@ -1059,6 +1062,9 @@ public class TypechoUsersController {
         Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
         if (uStatus == 0) {
             return Result.getResultJson(0, "用户未登录或Token验证失败", null);
+        }
+        if(limit>50){
+            limit = 50;
         }
         TypechoUserlog query = new TypechoUserlog();
         if (StringUtils.isNotBlank(searchParams)) {

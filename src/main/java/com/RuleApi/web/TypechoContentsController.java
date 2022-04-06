@@ -220,6 +220,9 @@ public class TypechoContentsController {
                                @RequestParam(value = "token"        , required = false, defaultValue = "") String token){
         TypechoContents query = new TypechoContents();
         String aid = "null";
+        if(limit>50){
+            limit = 50;
+        }
         if (StringUtils.isNotBlank(searchParams)) {
             JSONObject object = JSON.parseObject(searchParams);
             //如果不是登陆状态，那么只显示开放状态文章。如果是，则查询自己发布的文章
