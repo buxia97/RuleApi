@@ -139,7 +139,10 @@ public class TypechoShopController {
                 }
             }
             jsonToMap.put("status","0");
-            jsonToMap.remove("created");
+            //生成typecho数据库格式的创建时间戳
+            Long date = System.currentTimeMillis();
+            String userTime = String.valueOf(date).substring(0,10);
+            jsonToMap.put("created",userTime);
             insert = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoShop.class);
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer uid  = Integer.parseInt(map.get("uid").toString());
