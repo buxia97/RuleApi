@@ -1199,12 +1199,15 @@ public class TypechoUsersController {
     @RequestMapping(value = "/getScan")
     @ResponseBody
     public void getScan(@RequestParam(value = "codeContent", required = false) String codeContent, HttpServletResponse response) {
-        redisHelp.setRedis(codeContent, "nodata", 300, redisTemplate);
+        redisHelp.setRedis(codeContent, "nodata", 90, redisTemplate);
+        JSONObject res = new JSONObject();
+        res.put("type", "Scan");
+        res.put("data", codeContent);
         try {
             /*
              * 调用工具类生成二维码并输出到输出流中
              */
-            QRCodeUtil.createCodeToOutputStream(codeContent, response.getOutputStream());
+            QRCodeUtil.createCodeToOutputStream(res.toString(), response.getOutputStream());
             System.out.println("成功生成二维码!");
         } catch (IOException e) {
             System.out.println("发生错误");
@@ -1224,7 +1227,23 @@ public class TypechoUsersController {
         if (value.equals("nodata")) {
             return Result.getResultJson(0, "未扫码", null);
         }
-        return Result.getResultJson(1, value, null);
+        String token = value;
+        Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+        Integer uid = Integer.parseInt(map.get("uid").toString());
+        TypechoUsers users = service.selectByKey(uid);
+        Map json = JSONObject.parseObject(JSONObject.toJSONString(users), Map.class);
+        TypechoComments comments = new TypechoComments();
+        comments.setAuthorId(uid);
+        Integer lv = commentsService.total(comments);
+        json.put("lv", baseFull.getLv(lv));
+        json.put("token", token);
+        JSONObject response = new JSONObject();
+
+        response.put("code", 1);
+        response.put("msg", "");
+        response.put("data", json);
+
+        return response.toString();
     }
     /**
      * 扫码登陆-app载入token
@@ -1237,7 +1256,7 @@ public class TypechoUsersController {
             if (value == null) {
                 return Result.getResultJson(0, "二维码已过期", null);
             }
-            redisHelp.setRedis(codeContent, token, 300, redisTemplate);
+            redisHelp.setRedis(codeContent, token, 90, redisTemplate);
             return Result.getResultJson(1, "操作成功！", null);
         }catch (Exception e){
             return Result.getResultJson(0, "请求异常", null);
