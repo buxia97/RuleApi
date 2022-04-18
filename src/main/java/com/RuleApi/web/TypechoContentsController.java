@@ -118,9 +118,6 @@ public class TypechoContentsController {
                 //要做处理将typecho的图片插入格式变成markdown
                 List imgList = baseFull.getImageSrc(text);
                 List codeList = baseFull.getImageCode(text);
-
-
-
                 for(int c = 0; c < codeList.size(); c++){
                     String codeimg = codeList.get(c).toString();
                     String urlimg = imgList.get(c).toString();
@@ -285,16 +282,20 @@ public class TypechoContentsController {
 
                     String text = json.get("text").toString();
                     List imgList = baseFull.getImageSrc(text);
-                    text=text.replaceAll("(\\\r\\\n|\\\r|\\\n|\\\n\\\r)", "");
-                    text=text.replaceAll("\\s*", "");
-                    text=text.replaceAll("</?[^>]+>", "");
-                    //去掉文章开头的图片插入
+//                    text=text.replaceAll("(\\\r\\\n|\\\r|\\\n|\\\n\\\r)", "");
+//                    text=text.replaceAll("\\s*", "");
+//                    text=text.replaceAll("</?[^>]+>", "");
+//                    //去掉文章开头的图片插入
+//
+//                    text=text.replaceAll("((https?|http):((//)|(\\\\))+[\\w\\d:#@%/;$()~_?\\+-=\\\\\\.&]*)","");
+//                    text=text.replaceAll("((!\\[)[\\s\\S]+?(\\]\\[)[\\s\\S]+?(\\]))", "");
+//                    text=text.replaceAll("((!\\[)[\\s\\S]+?(\\]))", "");
+//                    text=text.replaceAll("\\(", "");
+//                    text=text.replaceAll("\\)", "");
 
-                    text=text.replaceAll("((https?|http):((//)|(\\\\))+[\\w\\d:#@%/;$()~_?\\+-=\\\\\\.&]*)","");
-                    text=text.replaceAll("((!\\[)[\\s\\S]+?(\\]\\[)[\\s\\S]+?(\\]))", "");
-                    text=text.replaceAll("((!\\[)[\\s\\S]+?(\\]))", "");
-                    text=text.replaceAll("\\(", "");
-                    text=text.replaceAll("\\)", "");
+
+                    text = baseFull.toStrByChinese(text);
+
                     json.put("images",imgList);
                     json.put("text",text.length()>200 ? text.substring(0,200) : text);
                     json.put("category",metas);
@@ -371,6 +372,9 @@ public class TypechoContentsController {
                 if(jsonToMap.get("text")==null){
                     jsonToMap.put("text","暂无内容");
                 }else{
+                    if(jsonToMap.get("text").toString().length()>30000){
+                        return Result.getResultJson(0,"超出最大文章内容长度",null);
+                    }
                     //满足typecho的要求，加入markdown申明
                     String text = jsonToMap.get("text").toString();
                     boolean status = text.contains("<!--markdown-->");

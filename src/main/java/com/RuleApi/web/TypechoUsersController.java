@@ -74,10 +74,17 @@ public class TypechoUsersController {
     private String dataprefix;
 
 
+    @Value("${weixin.applets.appid}")
+    private String appletsAppid;
+
+    @Value("${weixin.applets.secret}")
+    private String appletsSecret;
+
     RedisHelp redisHelp = new RedisHelp();
     ResultAll Result = new ResultAll();
     baseFull baseFull = new baseFull();
     UserStatus UStatus = new UserStatus();
+    HttpClient HttpClient = new HttpClient();
     PHPass phpass = new PHPass(8);
 
     /***
@@ -373,8 +380,37 @@ public class TypechoUsersController {
             } else {
                 return Result.getResultJson(0, "请输入正确的参数", null);
             }
-            if (jsonToMap.get("accessToken") == null) {
-                return Result.getResultJson(0, "登录配置异常，请检查相关设置", null);
+
+            //如果是微信，则走两步判断，是小程序还是APP
+            if(jsonToMap.get("appLoginType").toString().equals("weixin")){
+                if(jsonToMap.get("type").toString().equals("applets")){
+                    //如果是小程序，走官方接口获取accessToken和openid
+                    if (jsonToMap.get("js_code") == null) {
+                        return Result.getResultJson(0, "APP配置异常，请检查相关设置", null);
+                    }
+                    String js_code = jsonToMap.get("js_code").toString();
+
+                    String requestUrl = "https://api.weixin.qq.com/sns/jscode2session?appid="+this.appletsAppid+"&secret="+this.appletsSecret+"&js_code="+js_code+"&grant_type=authorization_code";
+                    String res = HttpClient.doGet(requestUrl);
+                    if(res==null){
+                        return Result.getResultJson(0, "接口配置异常，请检查相关设置", null);
+                    }
+
+                    HashMap data = JSON.parseObject(res, HashMap.class);
+                    if(data.get("unionid")==null){
+                        return Result.getResultJson(0, "接口配置异常，请检查相关设置", null);
+                    }
+                    jsonToMap.put("accessToken",data.get("unionid"));
+                    jsonToMap.put("openId",data.get("openid"));
+                }else {
+                    if (jsonToMap.get("accessToken") == null) {
+                        return Result.getResultJson(0, "登录配置异常，请检查相关设置", null);
+                    }
+                }
+            }else{
+                if (jsonToMap.get("accessToken") == null) {
+                    return Result.getResultJson(0, "登录配置异常，请检查相关设置", null);
+                }
             }
             TypechoUserapi userapi = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoUserapi.class);
             String accessToken = userapi.getAccessToken();
@@ -509,9 +545,38 @@ public class TypechoUsersController {
             } else {
                 return Result.getResultJson(0, "请输入正确的参数", null);
             }
-            if (jsonToMap.get("accessToken") == null) {
-                return Result.getResultJson(0, "登录配置异常，请检查相关设置", null);
+            //如果是微信，则走两步判断，是小程序还是APP
+            if(jsonToMap.get("appLoginType").toString().equals("weixin")){
+                if(jsonToMap.get("type").toString().equals("applets")){
+                    //如果是小程序，走官方接口获取accessToken和openid
+                    if (jsonToMap.get("js_code") == null) {
+                        return Result.getResultJson(0, "APP配置异常，请检查相关设置", null);
+                    }
+                    String js_code = jsonToMap.get("js_code").toString();
+
+                    String requestUrl = "https://api.weixin.qq.com/sns/jscode2session?appid="+this.appletsAppid+"&secret="+this.appletsSecret+"&js_code="+js_code+"&grant_type=authorization_code";
+                    String res = HttpClient.doGet(requestUrl);
+                    if(res==null){
+                        return Result.getResultJson(0, "接口配置异常，请检查相关设置", null);
+                    }
+
+                    HashMap data = JSON.parseObject(res, HashMap.class);
+                    if(data.get("unionid")==null){
+                        return Result.getResultJson(0, "接口配置异常，请检查相关设置", null);
+                    }
+                    jsonToMap.put("accessToken",data.get("unionid"));
+                    jsonToMap.put("openId",data.get("openid"));
+                }else {
+                    if (jsonToMap.get("accessToken") == null) {
+                        return Result.getResultJson(0, "登录配置异常，请检查相关设置", null);
+                    }
+                }
+            }else{
+                if (jsonToMap.get("accessToken") == null) {
+                    return Result.getResultJson(0, "登录配置异常，请检查相关设置", null);
+                }
             }
+
             TypechoUserapi userapi = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoUserapi.class);
             Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
             Integer uid = Integer.parseInt(map.get("uid").toString());
@@ -599,56 +664,60 @@ public class TypechoUsersController {
     public String userRegister(@RequestParam(value = "params", required = false) String params) {
         TypechoUsers insert = null;
         Map jsonToMap = null;
+        try{
+            if (StringUtils.isNotBlank(params)) {
+                jsonToMap = JSONObject.parseObject(JSON.parseObject(params).toString());
+                //在之前需要做判断，验证用户名或者邮箱在数据库中是否存在
+                //验证是否存在相同用户名
+                Map keyMail = new HashMap<String, String>();
+                keyMail.put("mail", jsonToMap.get("mail").toString());
+                TypechoUsers toKey = JSON.parseObject(JSON.toJSONString(keyMail), TypechoUsers.class);
+                List isMail = service.selectList(toKey);
+                if (isMail.size() > 0) {
+                    return Result.getResultJson(0, "该邮箱已注册", null);
+                }
+                Map keyName = new HashMap<String, String>();
+                keyName.put("name", jsonToMap.get("name").toString());
+                TypechoUsers toKey1 = JSON.parseObject(JSON.toJSONString(keyName), TypechoUsers.class);
+                List isName = service.selectList(toKey1);
+                if (isName.size() > 0) {
+                    return Result.getResultJson(0, "该用户名已注册", null);
+                }
+                //验证邮箱验证码
+                String email = jsonToMap.get("mail").toString();
+                String code = jsonToMap.get("code").toString();
+                String cur_code = redisHelp.getRedis(this.dataprefix + "_" + "sendCode" + email, redisTemplate);
+                if (cur_code == null) {
+                    return Result.getResultJson(0, "请先发送验证码", null);
+                }
+                if (!cur_code.equals(code)) {
+                    return Result.getResultJson(0, "验证码不正确", null);
+                }
+                String p = jsonToMap.get("password").toString();
+                String passwd = phpass.HashPassword(p);
+                Long date = System.currentTimeMillis();
+                String userTime = String.valueOf(date).substring(0, 10);
+                jsonToMap.put("created", userTime);
+                jsonToMap.put("group", "contributor");
 
+                jsonToMap.put("password", passwd);
+                jsonToMap.remove("introduce");
+                jsonToMap.remove("assets");
+                jsonToMap.remove("customize");
+            }
+            insert = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoUsers.class);
+            int rows = service.insert(insert);
 
-        if (StringUtils.isNotBlank(params)) {
-            jsonToMap = JSONObject.parseObject(JSON.parseObject(params).toString());
-            //在之前需要做判断，验证用户名或者邮箱在数据库中是否存在
-            //验证是否存在相同用户名
-            Map keyMail = new HashMap<String, String>();
-            keyMail.put("mail", jsonToMap.get("mail").toString());
-            TypechoUsers toKey = JSON.parseObject(JSON.toJSONString(keyMail), TypechoUsers.class);
-            List isMail = service.selectList(toKey);
-            if (isMail.size() > 0) {
-                return Result.getResultJson(0, "该邮箱已注册", null);
-            }
-            Map keyName = new HashMap<String, String>();
-            keyName.put("name", jsonToMap.get("name").toString());
-            TypechoUsers toKey1 = JSON.parseObject(JSON.toJSONString(keyName), TypechoUsers.class);
-            List isName = service.selectList(toKey1);
-            if (isName.size() > 0) {
-                return Result.getResultJson(0, "该用户名已注册", null);
-            }
-            //验证邮箱验证码
-            String email = jsonToMap.get("mail").toString();
-            String code = jsonToMap.get("code").toString();
-            String cur_code = redisHelp.getRedis(this.dataprefix + "_" + "sendCode" + email, redisTemplate);
-            if (cur_code == null) {
-                return Result.getResultJson(0, "请先发送验证码", null);
-            }
-            if (!cur_code.equals(code)) {
-                return Result.getResultJson(0, "验证码不正确", null);
-            }
-            String p = jsonToMap.get("password").toString();
-            String passwd = phpass.HashPassword(p);
-            Long date = System.currentTimeMillis();
-            String userTime = String.valueOf(date).substring(0, 10);
-            jsonToMap.put("created", userTime);
-            jsonToMap.put("group", "contributor");
-
-            jsonToMap.put("password", passwd);
-            jsonToMap.remove("introduce");
-            jsonToMap.remove("assets");
-            jsonToMap.remove("customize");
+            JSONObject response = new JSONObject();
+            response.put("code", rows > 0 ? 1 : 0);
+            response.put("data", rows);
+            response.put("msg", rows > 0 ? "注册成功" : "注册失败");
+            return response.toString();
+        }catch (Exception e){
+            return Result.getResultJson(0, "参数错误", null);
         }
-        insert = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoUsers.class);
-        int rows = service.insert(insert);
 
-        JSONObject response = new JSONObject();
-        response.put("code", rows > 0 ? 1 : 0);
-        response.put("data", rows);
-        response.put("msg", rows > 0 ? "注册成功" : "注册失败");
-        return response.toString();
+
     }
 
     /**
@@ -1237,6 +1306,12 @@ public class TypechoUsersController {
         Integer lv = commentsService.total(comments);
         json.put("lv", baseFull.getLv(lv));
         json.put("token", token);
+        if (json.get("mail") != null) {
+            json.put("avatar", baseFull.getAvatar(this.avatar, json.get("mail").toString()));
+
+        } else {
+            json.put("avatar", this.avatar + "null");
+        }
         JSONObject response = new JSONObject();
 
         response.put("code", 1);

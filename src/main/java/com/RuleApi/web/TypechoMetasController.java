@@ -102,15 +102,7 @@ public class TypechoMetasController {
 
                         String text = contentsInfo.get("text").toString();
                         List imgList = baseFull.getImageSrc(text);
-                        text=text.replaceAll("(\\\r\\\n|\\\r|\\\n|\\\n\\\r)", "");
-                        text=text.replaceAll("\\s*", "");
-                        text=text.replaceAll("</?[^>]+>", "");
-                        //去掉文章开头的图片插入
-                        text=text.replaceAll("((https?|http):((//)|(\\\\))+[\\w\\d:#@%/;$()~_?\\+-=\\\\\\.&]*)","");
-                        text=text.replaceAll("((!\\[)[\\s\\S]+?(\\]\\[)[\\s\\S]+?(\\]))", "");
-                        text=text.replaceAll("((!\\[)[\\s\\S]+?(\\]))", "");
-                        text=text.replaceAll("\\(", "");
-                        text=text.replaceAll("\\)", "");
+                        text = baseFull.toStrByChinese(text);
                         contentsInfo.put("text",text.length()>200 ? text.substring(0,200) : text);
                         contentsInfo.put("images",imgList);
                         //加入自定义字段，分类和标签

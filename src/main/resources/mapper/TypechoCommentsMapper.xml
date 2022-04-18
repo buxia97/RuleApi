@@ -266,7 +266,7 @@
                 and `authorId` = #{typechoComments.authorId}
             </if>
             <if test ='null != typechoComments.ownerId'>
-                and ( `ownerId` = #{typechoComments.ownerId}  and authorId != #{typechoComments.ownerId} )
+                and authorId != #{typechoComments.ownerId} and `ownerId` = #{typechoComments.ownerId}
             </if>
             <if test ='null != typechoComments.mail'>
                 and `mail` = #{typechoComments.mail}

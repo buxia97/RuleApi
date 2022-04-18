@@ -138,7 +138,25 @@ public class baseFull {
 
         return ipAddress;
     }
-
+    /**
+     * 提取字符串中文字符
+     * @param text
+     * @return
+     */
+    public static String toStrByChinese(String text){
+        text=text.replaceAll("(\\\r\\\n|\\\r|\\\n|\\\n\\\r)", "");
+        text=text.replaceAll("\\s*", "");
+        text=text.replaceAll("</?[^>]+>", "");
+        //去掉文章开头的图片插入
+        text=text.replaceAll("((https?|http):((//)|(\\\\))+[\\w\\d:#@%/;$()~_?\\+-=\\\\\\.&]*)","");
+        text=text.replaceAll("((!\\[)[\\s\\S]+?(\\]\\[)[\\s\\S]+?(\\]))", "");
+        text=text.replaceAll("((!\\[)[\\s\\S]+?(\\]))", "");
+        text=text.replaceAll("\\(", "");
+        text=text.replaceAll("\\)", "");
+        text=text.replaceAll("\\[", "");
+        text=text.replaceAll("\\]", "");
+        return text;
+    }
     //生成随机英文字符串
     public static String createRandomStr(int length){
         String str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
