@@ -49,6 +49,15 @@ public class TypechoShopController {
     @Value("${web.prefix}")
     private String dataprefix;
 
+    @Value("${webinfo.vipPrice}")
+    private Integer vipPrice;
+
+    @Value("${webinfo.vipDay}")
+    private Integer vipDay;
+
+    @Value("${webinfo.vipDiscount}")
+    private Integer vipDiscount;
+
     RedisHelp redisHelp =new RedisHelp();
     ResultAll Result = new ResultAll();
     UserStatus UStatus = new UserStatus();
@@ -296,6 +305,14 @@ public class TypechoShopController {
         }
         TypechoUsers usersinfo =usersService.selectByKey(uid.toString());
         Integer price = shopinfo.getPrice();
+        //判断是否为VIP，是VIP则乘以折扣
+        Long date = System.currentTimeMillis();
+        String curTime = String.valueOf(date).substring(0, 10);
+        Integer viptime  = usersinfo.getVip();
+        if(viptime>Integer.parseInt(curTime)){
+            price = price * this.vipDiscount;
+        }
+
         Integer oldAssets =usersinfo.getAssets();
         if(price>oldAssets){
             return Result.getResultJson(0,"积分余额不足",null);
@@ -335,9 +352,7 @@ public class TypechoShopController {
 
         log.setNum(Assets);
         log.setToid(aid);
-        Long date = System.currentTimeMillis();
-        String userTime = String.valueOf(date).substring(0,10);
-        log.setCreated(Integer.parseInt(userTime));
+        log.setCreated(Integer.parseInt(curTime));
         try {
             userlogService.insert(log);
             //修改用户账户
@@ -360,6 +375,55 @@ public class TypechoShopController {
             JSONObject response = new JSONObject();
             response.put("code" , 1);
             response.put("msg"  , "操作成功");
+            return response.toString();
+        }catch (Exception e){
+            JSONObject response = new JSONObject();
+            response.put("code" , 0);
+            response.put("msg"  , "操作失败");
+            return response.toString();
+        }
+
+
+    }
+    /***
+     * 购买VIP
+     */
+    @RequestMapping(value = "/buyVIP")
+    @ResponseBody
+    public String buyVIP(@RequestParam(value = "day", required = false) Integer  day,@RequestParam(value = "token", required = false) String  token) {
+        try {
+            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+            if(uStatus==0){
+                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+            }
+            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            Integer uid  = Integer.parseInt(map.get("uid").toString());
+
+            Long date = System.currentTimeMillis();
+            String curTime = String.valueOf(date).substring(0, 10);
+            Integer days = 86400;
+            TypechoUsers users = usersService.selectByKey(uid);
+            Integer assets = users.getAssets();
+
+            Integer AllPrice = day * this.vipPrice;
+            if(AllPrice>assets){
+                return Result.getResultJson(0,"当前资产不足，请充值",null);
+            }
+
+            Integer vipTime = Integer.parseInt(curTime) + days*day;
+            if(day >= this.vipDay){
+                //如果时间戳为1就是永久会员
+                vipTime = 1;
+            }
+            Integer newassets = assets - AllPrice;
+            //更新用户资产与登录状态
+            users.setAssets(newassets);
+            users.setVip(vipTime);
+
+            int rows =  usersService.update(users);
+            JSONObject response = new JSONObject();
+            response.put("code" , rows);
+            response.put("msg"  , rows > 0 ? "开通VIP成功" : "操作失败");
             return response.toString();
         }catch (Exception e){
             JSONObject response = new JSONObject();

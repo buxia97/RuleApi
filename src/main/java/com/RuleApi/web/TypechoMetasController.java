@@ -58,7 +58,7 @@ public class TypechoMetasController {
     RedisHelp redisHelp =new RedisHelp();
     ResultAll Result = new ResultAll();
     baseFull baseFull = new baseFull();
-
+    UserStatus UStatus = new UserStatus();
     /***
      * 查询分类或标签下的文章
      *
@@ -188,6 +188,44 @@ public class TypechoMetasController {
         response.put("data" , null != pageList.getList() ? pageList.getList() : new JSONArray());
         response.put("count", pageList.getTotalCount());
         return response.toString();
+    }
+    /***
+     * 修改分类和标签
+     */
+    @RequestMapping(value = "/editMeta")
+    @ResponseBody
+    public String editMeta(@RequestParam(value = "params", required = false) String  params,@RequestParam(value = "token", required = false) String  token) {
+        try{
+            Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
+            if (uStatus == 0) {
+                return Result.getResultJson(0, "用户未登录或Token验证失败", null);
+            }
+            Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+            String group = map.get("group").toString();
+            if (!group.equals("administrator")) {
+                return Result.getResultJson(0, "你没有操作权限", null);
+            }
+            TypechoMetas update = new TypechoMetas();
+            Map jsonToMap =null;
+            if (StringUtils.isNotBlank(params)) {
+                jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
+                //为了数据稳定性考虑，禁止修改类型
+                jsonToMap.remove("type");
+                update = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoMetas.class);
+            }
+
+            int rows = service.update(update);
+            JSONObject response = new JSONObject();
+            response.put("code" , rows);
+            response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
+            return response.toString();
+        }catch (Exception e){
+            JSONObject response = new JSONObject();
+            response.put("code" , 0);
+            response.put("msg"  , "操作失败");
+            return response.toString();
+        }
+
     }
 
 }

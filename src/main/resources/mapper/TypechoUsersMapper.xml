@@ -38,7 +38,8 @@
         `assets`,
         `address`,
         `pay`,
-        `customize`
+        `customize`,
+        `vip`
     </sql>
 
     <!-- 插入数据 -->
@@ -154,7 +155,8 @@
             <if test ='null != assets'>`assets` = #{assets},</if>
             <if test ='null != address'>`address` = #{address},</if>
             <if test ='null != pay'>`pay` = #{pay},</if>
-            <if test ='null != customize'>`customize` = #{customize}</if>
+            <if test ='null != customize'>`customize` = #{customize},</if>
+            <if test ='null != vip'>`vip` = #{vip}</if>
         </set>
         WHERE `uid` = #{uid}
     </update>
@@ -260,7 +262,9 @@
             <if test ='null != typechoUsers.authCode'>
                 and `authCode` = #{typechoUsers.authCode}
             </if>
-
+            <if test ='null != typechoUsers.vip'>
+                and `vip` > 0
+            </if>
             <if test ='"" != searchKey'>
                 and CONCAT(IFNULL(`name`,''),IFNULL(`screenName`,'')) LIKE '%${searchKey}%'
             </if>

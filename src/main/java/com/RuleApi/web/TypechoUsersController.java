@@ -704,6 +704,7 @@ public class TypechoUsersController {
                 jsonToMap.remove("introduce");
                 jsonToMap.remove("assets");
                 jsonToMap.remove("customize");
+                jsonToMap.remove("vip");
             }
             insert = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoUsers.class);
             int rows = service.insert(insert);

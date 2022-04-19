@@ -108,6 +108,9 @@ public class TypechoContents implements Serializable {
      * likes
      */
     private Integer likes;
-
+    /**
+     * isrecommend
+     */
+    private Integer isrecommend;
 
 }

@@ -53,4 +53,13 @@ public class TypechoMetas implements Serializable {
      * parent  
      */
     private Integer parent;
+
+    /**
+     * imgurl
+     */
+    private String imgurl;
+    /**
+     * isrecommend
+     */
+    private Integer isrecommend;
 }

@@ -91,4 +91,9 @@ public class TypechoUsers implements Serializable {
      * customize
      */
     private String customize;
+
+    /**
+     * vip
+     */
+    private Integer vip;
 }

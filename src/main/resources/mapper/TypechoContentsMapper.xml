@@ -44,7 +44,9 @@
         `allowFeed`,
         `parent`,
         `views`,
-        `likes`
+        `likes`,
+        `isrecommend`
+
     </sql>
 
     <!-- 插入数据 -->
@@ -205,7 +207,8 @@
             <if test ='null != allowFeed'>`allowFeed` = #{allowFeed},</if>
             <if test ='null != parent'>`parent` = #{parent},</if>
             <if test ='null != views'>`views` = #{views},</if>
-            <if test ='null != likes'>`likes` = #{likes}</if>
+            <if test ='null != likes'>`likes` = #{likes},</if>
+            <if test ='null != isrecommend'>`isrecommend` = #{isrecommend}</if>
         </set>
         WHERE `cid` = #{cid}
     </update>
@@ -357,6 +360,9 @@
             </if>
             <if test ='null != typechoContents.likes'>
                 and `likes` = #{typechoContents.likes}
+            </if>
+            <if test ='null != typechoContents.isrecommend'>
+                and `isrecommend` = #{typechoContents.isrecommend}
             </if>
             <if test ='"" != searchKey'>
                 and CONCAT(IFNULL(`title`,''),IFNULL(`text`,'')) LIKE '%${searchKey}%'

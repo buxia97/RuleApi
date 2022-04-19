@@ -81,6 +81,9 @@ public class TypechoContentsController {
     @Value("${webinfo.url}")
     private String webUrl;
 
+    @Value("${webinfo.avatar}")
+    private String avatar;
+
     RedisHelp redisHelp =new RedisHelp();
     ResultAll Result = new ResultAll();
     baseFull baseFull = new baseFull();
@@ -335,7 +338,7 @@ public class TypechoContentsController {
         try {
             TypechoContents insert = null;
             Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-            Map jsonToMap =null;
+            Map jsonToMap = new HashMap();
             String category = "";
             String tag = "";
             Integer sid = -1;
@@ -388,6 +391,24 @@ public class TypechoContentsController {
                 //写入创建时间和作者
                 jsonToMap.put("created",userTime);
                 jsonToMap.put("authorId",uid);
+
+                //写入作者详细信息
+                if(Integer.parseInt(uid)>0){
+                    TypechoUsers author = usersService.selectByKey(uid);
+                    Map authorInfo = new HashMap();
+                    String name = author.getName();
+                    if(author.getScreenName()!=""){
+                        name = author.getScreenName();
+                    }
+                    String avatar = this.avatar + "null";
+                    if(author.getMail()!=""){
+                        avatar = baseFull.getAvatar(this.avatar, author.getMail());
+                    }
+                    authorInfo.put("name",name);
+                    authorInfo.put("avatar",avatar);
+
+                    jsonToMap.put("authorInfo",authorInfo);
+                }
                 //除管理员外，文章默认待审核
                 Map userMap =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
                 String group = userMap.get("group").toString();
@@ -407,6 +428,7 @@ public class TypechoContentsController {
                 jsonToMap.put("parent",0);
                 jsonToMap.remove("password");
                 jsonToMap.remove("sid");
+                jsonToMap.remove("isrecommend");
                 insert = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoContents.class);
 
             }
@@ -567,6 +589,7 @@ public class TypechoContentsController {
                 jsonToMap.remove("likes");
                 jsonToMap.remove("sid");
                 jsonToMap.remove("type");
+                jsonToMap.remove("isrecommend");
                 //状态重新变成待审核
                 if(!group.equals("administrator")){
                     jsonToMap.put("status","waiting");
@@ -722,6 +745,37 @@ public class TypechoContentsController {
             response.put("code" ,rows > 0 ? 1: 0 );
             response.put("data" , rows);
             response.put("msg"  , rows > 0 ? "操作成功，缓存缘故，数据可能存在延迟" : "操作失败");
+            return response.toString();
+        }catch (Exception e){
+            return Result.getResultJson(0,"操作失败",null);
+        }
+    }
+    /***
+     * 文章推荐
+     */
+    @RequestMapping(value = "/contentsRecommend")
+    @ResponseBody
+    public String contentsRecommend(@RequestParam(value = "key", required = false) String  key, @RequestParam(value = "token", required = false) String  token) {
+        try {
+            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+            if(uStatus==0){
+                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+            }
+
+            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            String group = map.get("group").toString();
+            if(!group.equals("administrator")){
+                return Result.getResultJson(0,"你没有操作权限",null);
+            }
+            TypechoContents info = service.selectByKey(key);
+            info.setCid(Integer.parseInt(key));
+            info.setIsrecommend(1);
+            Integer rows = service.update(info);
+
+            JSONObject response = new JSONObject();
+            response.put("code" ,rows > 0 ? 1: 0 );
+            response.put("data" , rows);
+            response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
             return response.toString();
         }catch (Exception e){
             return Result.getResultJson(0,"操作失败",null);

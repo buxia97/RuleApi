@@ -22,7 +22,9 @@
         `description`,
         `count`,
         `order`,
-        `parent`
+        `parent`,
+        `imgurl`,
+        `isrecommend`
     </sql>
 
     <!-- 插入数据 -->
@@ -109,7 +111,8 @@
             <if test ='null != description'>`description` = #{description},</if>
             <if test ='null != count'>`count` = #{count},</if>
             <if test ='null != orderKey'>`order` = #{orderKey},</if>
-            <if test ='null != parent'>`parent` = #{parent}</if>
+            <if test ='null != imgurl'>`imgurl` = #{imgurl},</if>
+            <if test ='null != isrecommend'>`isrecommend` = #{isrecommend}</if>
         </set>
         WHERE `mid` = #{mid}
     </update>
@@ -195,6 +198,12 @@
             </if>
             <if test ='null != typechoMetas.parent'>
                 and `parent` = #{typechoMetas.parent}
+            </if>
+            <if test ='null != typechoMetas.isrecommend'>
+                and `isrecommend` = #{typechoMetas.isrecommend}
+            </if>
+            <if test ='"" != searchKey'>
+                and CONCAT(IFNULL(`name`,''),IFNULL(`description`,'')) LIKE '%${searchKey}%'
             </if>
         </where>
         <if test ='"" != order'>
