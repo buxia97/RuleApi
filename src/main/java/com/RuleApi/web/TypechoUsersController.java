@@ -1039,6 +1039,14 @@ public class TypechoUsersController {
             TypechoComments comments = new TypechoComments();
             comments.setAuthorId(uid);
             Integer lv = commentsService.total(comments);
+            //判断是否为VIP
+            json.put("isvip", 0);
+            Long date = System.currentTimeMillis();
+            String curTime = String.valueOf(date).substring(0, 10);
+            Integer viptime  = users.getVip();
+            if(viptime>Integer.parseInt(curTime)||viptime.equals(1)){
+                json.put("isvip", 1);
+            }
             json.put("lv", baseFull.getLv(lv));
             JSONObject response = new JSONObject();
 

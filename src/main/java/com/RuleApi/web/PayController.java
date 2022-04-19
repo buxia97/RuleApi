@@ -144,11 +144,12 @@ public class PayController {
             Long date = System.currentTimeMillis();
             String created = String.valueOf(date).substring(0,10);
             TypechoPaylog paylog = new TypechoPaylog();
+            Integer TotalAmount = Integer.parseInt(total_fee) * this.scale;
             paylog.setStatus(0);
             paylog.setCreated(Integer.parseInt(created));
             paylog.setUid(uid);
             paylog.setOutTradeNo(order_no);
-            paylog.setTotalAmount(total_fee);
+            paylog.setTotalAmount(TotalAmount.toString());
             paylog.setPaytype("scancodePay");
             paylog.setSubject("扫码支付");
             paylogService.insert(paylog);
@@ -353,12 +354,13 @@ public class PayController {
             Integer uid  = Integer.parseInt(map.get("uid").toString());
             Long date = System.currentTimeMillis();
             String created = String.valueOf(date).substring(0,10);
+            Integer TotalAmount = price * this.scale;
             TypechoPaylog paylog = new TypechoPaylog();
             paylog.setStatus(0);
             paylog.setCreated(Integer.parseInt(created));
             paylog.setUid(uid);
             paylog.setOutTradeNo(response.get("out_trade_no"));
-            paylog.setTotalAmount(price.toString());
+            paylog.setTotalAmount(TotalAmount.toString());
             paylog.setPaytype("WXPay");
             paylog.setSubject("微信APP支付");
             paylogService.insert(paylog);

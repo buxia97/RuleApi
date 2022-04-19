@@ -281,21 +281,36 @@ public class TypechoContentsController {
                         }
 
                     }
+                    //写入作者详细信息
+                    Integer uid = Integer.parseInt(json.get("authorId").toString());
+                    if(uid>0){
+                        TypechoUsers author = usersService.selectByKey(uid);
+                        Map authorInfo = new HashMap();
+                        String name = author.getName();
+                        if(author.getScreenName()!=""){
+                            name = author.getScreenName();
+                        }
+                        String avatar = this.avatar + "null";
+                        if(author.getMail()!=""){
+                            avatar = baseFull.getAvatar(this.avatar, author.getMail());
+                        }
+                        authorInfo.put("name",name);
+                        authorInfo.put("avatar",avatar);
+                        authorInfo.put("customize",author.getCustomize());
+                        //判断是否为VIP
+                        authorInfo.put("isvip", 0);
+                        Long date = System.currentTimeMillis();
+                        String curTime = String.valueOf(date).substring(0, 10);
+                        Integer viptime  = author.getVip();
 
+                        if(viptime>Integer.parseInt(curTime)||viptime.equals(1)){
+                            authorInfo.put("isvip", 1);
+                        }
+                        json.put("authorInfo",authorInfo);
+                    }
 
                     String text = json.get("text").toString();
                     List imgList = baseFull.getImageSrc(text);
-//                    text=text.replaceAll("(\\\r\\\n|\\\r|\\\n|\\\n\\\r)", "");
-//                    text=text.replaceAll("\\s*", "");
-//                    text=text.replaceAll("</?[^>]+>", "");
-//                    //去掉文章开头的图片插入
-//
-//                    text=text.replaceAll("((https?|http):((//)|(\\\\))+[\\w\\d:#@%/;$()~_?\\+-=\\\\\\.&]*)","");
-//                    text=text.replaceAll("((!\\[)[\\s\\S]+?(\\]\\[)[\\s\\S]+?(\\]))", "");
-//                    text=text.replaceAll("((!\\[)[\\s\\S]+?(\\]))", "");
-//                    text=text.replaceAll("\\(", "");
-//                    text=text.replaceAll("\\)", "");
-
 
                     text = baseFull.toStrByChinese(text);
 
@@ -392,23 +407,7 @@ public class TypechoContentsController {
                 jsonToMap.put("created",userTime);
                 jsonToMap.put("authorId",uid);
 
-                //写入作者详细信息
-                if(Integer.parseInt(uid)>0){
-                    TypechoUsers author = usersService.selectByKey(uid);
-                    Map authorInfo = new HashMap();
-                    String name = author.getName();
-                    if(author.getScreenName()!=""){
-                        name = author.getScreenName();
-                    }
-                    String avatar = this.avatar + "null";
-                    if(author.getMail()!=""){
-                        avatar = baseFull.getAvatar(this.avatar, author.getMail());
-                    }
-                    authorInfo.put("name",name);
-                    authorInfo.put("avatar",avatar);
 
-                    jsonToMap.put("authorInfo",authorInfo);
-                }
                 //除管理员外，文章默认待审核
                 Map userMap =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
                 String group = userMap.get("group").toString();

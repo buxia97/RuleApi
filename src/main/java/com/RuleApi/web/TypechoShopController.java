@@ -46,6 +46,9 @@ public class TypechoShopController {
     @Autowired
     private MailService MailService;
 
+    @Autowired
+    private TypechoPaylogService paylogService;
+
     @Value("${web.prefix}")
     private String dataprefix;
 
@@ -56,7 +59,10 @@ public class TypechoShopController {
     private Integer vipDay;
 
     @Value("${webinfo.vipDiscount}")
-    private Integer vipDiscount;
+    private Double vipDiscount;
+
+    @Value("${webinfo.scale}")
+    private Integer scale;
 
     RedisHelp redisHelp =new RedisHelp();
     ResultAll Result = new ResultAll();
@@ -290,71 +296,83 @@ public class TypechoShopController {
     @RequestMapping(value = "/buyShop")
     @ResponseBody
     public String buyShop(@RequestParam(value = "sid", required = false) String  sid,@RequestParam(value = "token", required = false) String  token) {
-
-        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-        if(uStatus==0){
-            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-        }
-        Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
-        Integer uid  = Integer.parseInt(map.get("uid").toString());
-        TypechoShop shopinfo = service.selectByKey(sid);
-        Integer aid = shopinfo.getUid();
-
-        if(uid.equals(aid)){
-            return Result.getResultJson(0,"你不可以买自己的商品",null);
-        }
-        TypechoUsers usersinfo =usersService.selectByKey(uid.toString());
-        Integer price = shopinfo.getPrice();
-        //判断是否为VIP，是VIP则乘以折扣
-        Long date = System.currentTimeMillis();
-        String curTime = String.valueOf(date).substring(0, 10);
-        Integer viptime  = usersinfo.getVip();
-        if(viptime>Integer.parseInt(curTime)){
-            price = price * this.vipDiscount;
-        }
-
-        Integer oldAssets =usersinfo.getAssets();
-        if(price>oldAssets){
-            return Result.getResultJson(0,"积分余额不足",null);
-        }
-
-        Integer status = shopinfo.getStatus();
-        if(!status.equals(1)){
-            return Result.getResultJson(0,"该商品已下架",null);
-        }
-        Integer num = shopinfo.getNum();
-        if(num<1){
-            return Result.getResultJson(0,"该商品已售完",null);
-        }
-        Integer Assets = oldAssets - price;
-        usersinfo.setAssets(Assets);
-        //生成用户日志，这里的cid用于商品id
-        TypechoUserlog log = new TypechoUserlog();
-        log.setType("buy");
-        log.setUid(uid);
-        log.setCid(Integer.parseInt(sid));
-        //判断商品类型，如果是实体商品需要设置收货地址
-        Integer type = shopinfo.getType();
-        String address = usersinfo.getAddress();
-        if(type.equals(1)){
-            if(address==null||address==""){
-                return Result.getResultJson(0,"购买实体商品前，需要先设置收货地址",null);
-            }
-        }else {
-            //判断是否购买，非实体商品不能多次购买
-            Integer isBuy = userlogService.total(log);
-            if(isBuy > 0){
-                return Result.getResultJson(0,"你已经购买过了",null);
-            }
-        }
-
-
-
-        log.setNum(Assets);
-        log.setToid(aid);
-        log.setCreated(Integer.parseInt(curTime));
         try {
+            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+            if(uStatus==0){
+                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+            }
+            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            Integer uid  = Integer.parseInt(map.get("uid").toString());
+            TypechoShop shopinfo = service.selectByKey(sid);
+            Integer aid = shopinfo.getUid();
+
+            if(uid.equals(aid)){
+                return Result.getResultJson(0,"你不可以买自己的商品",null);
+            }
+            TypechoUsers usersinfo =usersService.selectByKey(uid.toString());
+            Integer price = shopinfo.getPrice();
+            //判断是否为VIP，是VIP则乘以折扣
+            Long date = System.currentTimeMillis();
+            String curTime = String.valueOf(date).substring(0, 10);
+            Integer viptime  = usersinfo.getVip();
+            if(viptime>Integer.parseInt(curTime)||viptime.equals(1)){
+                double newPrice = price;
+                newPrice = newPrice * this.vipDiscount;
+                price =(int)newPrice;
+            }
+            Integer oldAssets =usersinfo.getAssets();
+            if(price>oldAssets){
+                return Result.getResultJson(0,"积分余额不足",null);
+            }
+
+            Integer status = shopinfo.getStatus();
+            if(!status.equals(1)){
+                return Result.getResultJson(0,"该商品已下架",null);
+            }
+            Integer num = shopinfo.getNum();
+            if(num<1){
+                return Result.getResultJson(0,"该商品已售完",null);
+            }
+            Integer Assets = oldAssets - price;
+            usersinfo.setAssets(Assets);
+            //生成用户日志，这里的cid用于商品id
+            TypechoUserlog log = new TypechoUserlog();
+            log.setType("buy");
+            log.setUid(uid);
+            log.setCid(Integer.parseInt(sid));
+            //判断商品类型，如果是实体商品需要设置收货地址
+            Integer type = shopinfo.getType();
+            String address = usersinfo.getAddress();
+            if(type.equals(1)){
+                if(address==null||address==""){
+                    return Result.getResultJson(0,"购买实体商品前，需要先设置收货地址",null);
+                }
+            }else {
+                //判断是否购买，非实体商品不能多次购买
+                Integer isBuy = userlogService.total(log);
+                if(isBuy > 0){
+                    return Result.getResultJson(0,"你已经购买过了",null);
+                }
+            }
+
+
+
+            log.setNum(Assets);
+            log.setToid(aid);
+            log.setCreated(Integer.parseInt(curTime));
+
             userlogService.insert(log);
+            //生成购买者资产日志
+            TypechoPaylog paylog = new TypechoPaylog();
+            paylog.setStatus(1);
+            paylog.setCreated(Integer.parseInt(curTime));
+            paylog.setUid(uid);
+            paylog.setOutTradeNo(curTime+"buyshop");
+            paylog.setTotalAmount("-"+price);
+            paylog.setPaytype("buyshop");
+            paylog.setSubject("购买商品");
+            paylogService.insert(paylog);
+
             //修改用户账户
             usersService.update(usersinfo);
             //修改商品剩余数量
@@ -362,12 +380,32 @@ public class TypechoShopController {
             shopnum = shopnum - 1;
             shopinfo.setNum(shopnum);
             service.update(shopinfo);
-            //给店家发送邮件
-            Integer bid = usersinfo.getUid();
+
+
+            //修改店家资产
             TypechoUsers minfo = usersService.selectByKey(aid);
+            Integer mAssets = minfo.getAssets();
+            mAssets = mAssets + price;
+            minfo.setAssets(mAssets);
+            usersService.update(minfo);
+            //生成店家资产日志
+
+            TypechoPaylog paylogB = new TypechoPaylog();
+            paylogB.setStatus(1);
+            paylogB.setCreated(Integer.parseInt(curTime));
+            paylogB.setUid(aid);
+            paylogB.setOutTradeNo(curTime+"sellshop");
+            paylogB.setTotalAmount(price.toString());
+            paylogB.setPaytype("sellshop");
+            paylogB.setSubject("出售商品收益");
+            paylogService.insert(paylogB);
+
+            //给店家发送邮件
+
             String email = minfo.getMail();
             String name = minfo.getName();
             String title = shopinfo.getTitle();
+            Integer bid = usersinfo.getUid();
             MailService.send("您有新的商品订单，用户ID"+bid, "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><title></title><meta charset=\"utf-8\" /><style>*{padding:0px;margin:0px;box-sizing:border-box;}html{box-sizing:border-box;}body{font-size:15px;background:#fff}.main{margin:20px auto;max-width:500px;border:solid 1px #2299dd;overflow:hidden;}.main h1{display:block;width:100%;background:#2299dd;font-size:18px;color:#fff;text-align:center;padding:15px;}.text{padding:30px;}.text p{margin:10px 0px;line-height:25px;}.text p span{color:#2299dd;font-weight:bold;font-size:22px;margin-left:5px;}</style></head><body><div class=\"main\"><h1>商品订单</h1><div class=\"text\"><p>用户 "+name+"，你的商品<"+title+">有一个新的订单。</p><p>请及时打开APP进行处理！</p></div></div></body></html>",
                     new String[] {email}, new String[] {});
 
@@ -421,6 +459,17 @@ public class TypechoShopController {
             users.setVip(vipTime);
 
             int rows =  usersService.update(users);
+            String created = String.valueOf(date).substring(0,10);
+            TypechoPaylog paylog = new TypechoPaylog();
+            paylog.setStatus(1);
+            paylog.setCreated(Integer.parseInt(created));
+            paylog.setUid(uid);
+            paylog.setOutTradeNo(created+"buyvip");
+            paylog.setTotalAmount("-"+AllPrice);
+            paylog.setPaytype("buyvip");
+            paylog.setSubject("购买VIP");
+            paylogService.insert(paylog);
+
             JSONObject response = new JSONObject();
             response.put("code" , rows);
             response.put("msg"  , rows > 0 ? "开通VIP成功" : "操作失败");
@@ -433,6 +482,22 @@ public class TypechoShopController {
         }
 
 
+    }
+    /***
+     * VIP信息
+     */
+    @RequestMapping(value = "/vipInfo")
+    @ResponseBody
+    public String vipInfo() {
+        JSONObject data = new JSONObject();
+        data.put("vipDiscount",this.vipDiscount);
+        data.put("vipPrice",this.vipPrice);
+        data.put("scale",this.scale);
+        JSONObject response = new JSONObject();
+        response.put("code" , 1);
+        response.put("data" , data);
+        response.put("msg"  , "");
+        return response.toString();
     }
     /**
      * 文章挂载商品

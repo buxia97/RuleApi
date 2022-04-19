@@ -54,6 +54,9 @@ public class TypechoUserlogController {
     @Autowired
     private TypechoUsersService usersService;
 
+    @Autowired
+    private TypechoPaylogService paylogService;
+
     @Value("${web.prefix}")
     private String dataprefix;
 
@@ -377,11 +380,26 @@ public class TypechoUserlogController {
                     newUser.setUid(uid);
                     newUser.setAssets(Assets);
                     usersService.update(newUser);
-
-                    //给文章的作者增加积分
+                    //获取作者信息
                     Integer cid = Integer.parseInt(jsonToMap.get("cid").toString());
                     TypechoContents curContents = contentsService.selectByKey(cid);
                     Integer authorid = curContents.getAuthorId();
+                    //生成打赏者资产日志（如果是自己打赏自己，就不生成）
+                    if(!uid.equals(authorid)){
+                        TypechoPaylog paylog = new TypechoPaylog();
+                        paylog.setStatus(1);
+                        paylog.setCreated(Integer.parseInt(userTime));
+                        paylog.setUid(uid);
+                        paylog.setOutTradeNo(userTime+"toReward");
+                        paylog.setTotalAmount("-"+num);
+                        paylog.setPaytype("toReward");
+                        paylog.setSubject("打赏作品");
+                        paylogService.insert(paylog);
+                    }
+
+
+                    //给文章的作者增加积分
+
                     TypechoUsers toUser = usersService.selectByKey(authorid);
                     Integer toAssets = toUser.getAssets();
                     Integer curAssets = toAssets + num;
@@ -389,6 +407,19 @@ public class TypechoUserlogController {
                     usersService.update(toUser);
 
                     jsonToMap.put("toid",authorid);
+
+                    if(!uid.equals(authorid)) {
+                        //生成作者资产日志
+                        TypechoPaylog paylogB = new TypechoPaylog();
+                        paylogB.setStatus(1);
+                        paylogB.setCreated(Integer.parseInt(userTime));
+                        paylogB.setUid(authorid);
+                        paylogB.setOutTradeNo(userTime + "reward");
+                        paylogB.setTotalAmount(num.toString());
+                        paylogB.setPaytype("reward");
+                        paylogB.setSubject("来自用户ID" + uid + "打赏");
+                        paylogService.insert(paylogB);
+                    }
 
                 }
                 insert = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoUserlog.class);
