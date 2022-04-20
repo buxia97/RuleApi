@@ -533,7 +533,7 @@ public class PayController {
      * **/
     @RequestMapping(value = "/tokenPay")
     @ResponseBody
-    public String tokenPay(@RequestParam(value = "key", required = false) Integer  key,@RequestParam(value = "token", required = false) String  token) {
+    public String tokenPay(@RequestParam(value = "key", required = false) String key,@RequestParam(value = "token", required = false) String  token) {
         try {
             Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
             if(uStatus==0){

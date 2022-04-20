@@ -762,9 +762,9 @@ public class TypechoContentsController {
     /***
      * 文章推荐
      */
-    @RequestMapping(value = "/contentsRecommend")
+    @RequestMapping(value = "/toRecommend")
     @ResponseBody
-    public String contentsRecommend(@RequestParam(value = "key", required = false) String  key, @RequestParam(value = "token", required = false) String  token) {
+    public String addRecommend(@RequestParam(value = "key", required = false) String  key,@RequestParam(value = "recommend", required = false) Integer  recommend, @RequestParam(value = "token", required = false) String  token) {
         try {
             Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
             if(uStatus==0){
@@ -778,7 +778,7 @@ public class TypechoContentsController {
             }
             TypechoContents info = service.selectByKey(key);
             info.setCid(Integer.parseInt(key));
-            info.setIsrecommend(1);
+            info.setIsrecommend(recommend);
             Integer rows = service.update(info);
 
             JSONObject response = new JSONObject();
@@ -790,6 +790,7 @@ public class TypechoContentsController {
             return Result.getResultJson(0,"操作失败",null);
         }
     }
+
     /**
      * 文章是否评论过（用于回复可见）
      * */
