@@ -342,6 +342,17 @@ public class TypechoUserlogController {
                     jsonToMap.put("num",award);
                     clock = "，获得"+award+"积分奖励！";
 
+                    //生成签到收益日志
+                    TypechoPaylog paylog = new TypechoPaylog();
+                    paylog.setStatus(1);
+                    paylog.setCreated(Integer.parseInt(userTime));
+                    paylog.setUid(uid);
+                    paylog.setOutTradeNo(userTime+"clock");
+                    paylog.setTotalAmount(award+"");
+                    paylog.setPaytype("clock");
+                    paylog.setSubject("签到奖励");
+                    paylogService.insert(paylog);
+
                     jsonToMap.put("toid",uid);
                 }
                 //收藏，只能一次

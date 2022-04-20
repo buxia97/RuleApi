@@ -11,29 +11,29 @@ import java.util.List;
 
 /**
  * 业务层实现类
- * TypechoMetasServiceImpl
- * @author buxia97
- * @date 2021/11/29
+ * TypechoPaykeyServiceImpl
+ * @author paykey
+ * @date 2022/04/20
  */
 @Service
-public class TypechoMetasServiceImpl implements TypechoMetasService {
+public class TypechoPaykeyServiceImpl implements TypechoPaykeyService {
 
     @Autowired
-	TypechoMetasDao dao;
+	TypechoPaykeyDao dao;
 
     @Override
-    public int insert(TypechoMetas typechoMetas) {
-        return dao.insert(typechoMetas);
+    public int insert(TypechoPaykey typechoPaykey) {
+        return dao.insert(typechoPaykey);
     }
 
     @Override
-    public int batchInsert(List<TypechoMetas> list) {
+    public int batchInsert(List<TypechoPaykey> list) {
     	return dao.batchInsert(list);
     }
 
     @Override
-    public int update(TypechoMetas typechoMetas) {
-    	return dao.update(typechoMetas);
+    public int update(TypechoPaykey typechoPaykey) {
+    	return dao.update(typechoPaykey);
     }
 
     @Override
@@ -47,20 +47,20 @@ public class TypechoMetasServiceImpl implements TypechoMetasService {
     }
 
 	@Override
-	public TypechoMetas selectByKey(Object key) {
+	public TypechoPaykey selectByKey(Object key) {
 		return dao.selectByKey(key);
 	}
 
 	@Override
-	public List<TypechoMetas> selectList(TypechoMetas typechoMetas) {
-		return dao.selectList(typechoMetas);
+	public List<TypechoPaykey> selectList(TypechoPaykey typechoPaykey) {
+		return dao.selectList(typechoPaykey);
 	}
 
 	@Override
-	public PageList<TypechoMetas> selectPage(TypechoMetas typechoMetas, Integer offset, Integer pageSize, String searchKey, String order) {
-		PageList<TypechoMetas> pageList = new PageList<>();
+	public PageList<TypechoPaykey> selectPage(TypechoPaykey typechoPaykey, Integer offset, Integer pageSize) {
+		PageList<TypechoPaykey> pageList = new PageList<>();
 
-		int total = this.total(typechoMetas);
+		int total = this.total(typechoPaykey);
 
 		Integer totalPage;
 		if (total % pageSize != 0) {
@@ -71,7 +71,7 @@ public class TypechoMetasServiceImpl implements TypechoMetasService {
 
 		int page = (offset - 1) * pageSize;
 
-		List<TypechoMetas> list = dao.selectPage(typechoMetas, page, pageSize,searchKey,order);
+		List<TypechoPaykey> list = dao.selectPage(typechoPaykey, page, pageSize);
 
 		pageList.setList(list);
 		pageList.setStartPageNo(offset);
@@ -82,7 +82,7 @@ public class TypechoMetasServiceImpl implements TypechoMetasService {
 	}
 
 	@Override
-	public int total(TypechoMetas typechoMetas) {
-		return dao.total(typechoMetas);
+	public int total(TypechoPaykey typechoPaykey) {
+		return dao.total(typechoPaykey);
 	}
 }

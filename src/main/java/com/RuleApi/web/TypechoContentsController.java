@@ -209,9 +209,9 @@ public class TypechoContentsController {
      * @param page         页码
      * @param limit        每页显示数量
      */
-    @RequestMapping(value = "/contensList")
+    @RequestMapping(value = "/contentsList")
     @ResponseBody
-    public String contensList (@RequestParam(value = "searchParams", required = false) String  searchParams,
+    public String contentsList (@RequestParam(value = "searchParams", required = false) String  searchParams,
                             @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
                             @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
                             @RequestParam(value = "searchKey"        , required = false, defaultValue = "") String searchKey,
@@ -245,7 +245,7 @@ public class TypechoContentsController {
         }
         List jsonList = new ArrayList();
 
-        List cacheList = redisHelp.getList(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchParams+"_"+order+"_"+searchKey+"_"+random+"_"+aid,redisTemplate);
+        List cacheList = redisHelp.getList(this.dataprefix+"_"+"contentsList_"+page+"_"+limit+"_"+searchParams+"_"+order+"_"+searchKey+"_"+random+"_"+aid,redisTemplate);
         //监听异常，如果有异常则调用redis缓存中的list，如果无异常也调用redis，但是会更新数据
         try{
             if(cacheList.size()>0){
@@ -323,8 +323,8 @@ public class TypechoContentsController {
 
 
                     jsonList.add(json);
-                    redisHelp.delete(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchParams+"_"+order+"_"+searchKey+"_"+random+"_"+aid,redisTemplate);
-                    redisHelp.setList(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchParams+"_"+order+"_"+searchKey+"_"+random+"_"+aid,jsonList,this.contentCache,redisTemplate);
+                    redisHelp.delete(this.dataprefix+"_"+"contentsList_"+page+"_"+limit+"_"+searchParams+"_"+order+"_"+searchKey+"_"+random+"_"+aid,redisTemplate);
+                    redisHelp.setList(this.dataprefix+"_"+"contentsList_"+page+"_"+limit+"_"+searchParams+"_"+order+"_"+searchKey+"_"+random+"_"+aid,jsonList,this.contentCache,redisTemplate);
                 }
             }
         }catch (Exception e){
@@ -347,9 +347,9 @@ public class TypechoContentsController {
      * 发布文章
      * @param params Bean对象JSON字符串
      */
-    @RequestMapping(value = "/contensAdd")
+    @RequestMapping(value = "/contentsAdd")
     @ResponseBody
-    public String contensAdd(@RequestParam(value = "params", required = false) String  params, @RequestParam(value = "token", required = false) String  token) {
+    public String contentsAdd(@RequestParam(value = "params", required = false) String  params, @RequestParam(value = "token", required = false) String  token) {
         try {
             TypechoContents insert = null;
             Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
@@ -513,9 +513,9 @@ public class TypechoContentsController {
      * 文章修改
      * @param params Bean对象JSON字符串
      */
-    @RequestMapping(value = "/contensUpdate")
+    @RequestMapping(value = "/contentsUpdate")
     @ResponseBody
-    public String contensUpdate(@RequestParam(value = "params", required = false) String  params, @RequestParam(value = "token", required = false) String  token) {
+    public String contentsUpdate(@RequestParam(value = "params", required = false) String  params, @RequestParam(value = "token", required = false) String  token) {
 
         try {
             TypechoContents update = null;
@@ -651,9 +651,19 @@ public class TypechoContentsController {
                     shop.setId(sid);
                     Integer num  = shopService.total(shop);
                     if(num >= 1){
+                        //如果是，去数据库将其它商品的cid改为0
+                        TypechoShop rmshop = new TypechoShop();
+                        rmshop.setCid(cid);
+                        List<TypechoShop> list = shopService.selectList(rmshop);
+                        for (int i = 0; i < list.size(); i++) {
+                            list.get(i).setCid(-1);
+                            shopService.update(list.get(i));
+                        }
+                        //清除完之前的时候，修改新的
                         shop.setCid(cid);
                         shopService.update(shop);
                     }
+
                 }
             }
 
@@ -703,7 +713,7 @@ public class TypechoContentsController {
      */
     @RequestMapping(value = "/contentsAudit")
     @ResponseBody
-    public String contensAudit(@RequestParam(value = "key", required = false) String  key, @RequestParam(value = "token", required = false) String  token) {
+    public String contentsAudit(@RequestParam(value = "key", required = false) String  key, @RequestParam(value = "token", required = false) String  token) {
         try {
             Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
             if(uStatus==0){

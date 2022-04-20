@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.RuleApi.dao.TypechoPaykeyDao">
+
+    <resultMap id="BaseResultMap" type="com.RuleApi.entity.TypechoPaykey" >
+        <result column="id" property="id" />
+        <result column="value" property="value" />
+        <result column="price" property="price" />
+        <result column="status" property="status" />
+        <result column="created" property="created" />
+        <result column="uid" property="uid" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        `id`,
+        `value`,
+        `price`,
+        `status`,
+        `created`,
+        `uid`
+    </sql>
+
+    <!-- 插入数据 -->
+    <insert id="insert" parameterType="com.RuleApi.entity.TypechoPaykey">
+        INSERT INTO typecho_paykey
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test ='null != id'>
+                `id`,
+            </if>
+            <if test ='null != value'>
+                `value`,
+            </if>
+            <if test ='null != price'>
+                `price`,
+            </if>
+            <if test ='null != status'>
+                `status`,
+            </if>
+            <if test ='null != created'>
+                `created`,
+            </if>
+            <if test ='null != uid'>
+                `uid`
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test ='null != id'>
+                #{id},
+            </if>
+            <if test ='null != value'>
+                #{value},
+            </if>
+            <if test ='null != price'>
+                #{price},
+            </if>
+            <if test ='null != status'>
+                #{status},
+            </if>
+            <if test ='null != created'>
+                #{created},
+            </if>
+            <if test ='null != uid'>
+                #{uid}
+            </if>
+        </trim>
+    </insert>
+
+    <!-- 批量插入数据 -->
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO typecho_paykey ( <include refid="Base_Column_List" /> ) VALUES
+        <foreach collection="list" item="curr" index="index" separator=",">
+            (
+                #{curr.id},
+                #{curr.value},
+                #{curr.price},
+                #{curr.status},
+                #{curr.created},
+                #{curr.uid}
+            )
+        </foreach>
+    </insert>
+
+    <!-- 更新 -->
+    <update id="update" parameterType="com.RuleApi.entity.TypechoPaykey">
+        UPDATE typecho_paykey
+        <set>
+            <if test ='null != value'>`value` = #{value},</if>
+            <if test ='null != price'>`price` = #{price},</if>
+            <if test ='null != status'>`status` = #{status},</if>
+            <if test ='null != created'>`created` = #{created},</if>
+            <if test ='null != uid'>`uid` = #{uid}</if>
+        </set>
+        WHERE `id` = #{id}
+    </update>
+
+    <!-- 删除 -->
+    <delete id="delete">
+        DELETE FROM typecho_paykey
+        WHERE `id` = #{key}
+    </delete>
+
+    <!-- 批量删除 -->
+    <delete id="batchDelete" parameterType = "java.util.List">
+        DELETE FROM typecho_paykey WHERE id IN
+        <foreach collection="list"  item="item" open="(" separator="," close=")"  >
+            #{item}
+        </foreach>
+    </delete>
+
+    <!-- 根据value查询 -->
+    <select id="selectByKey" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM typecho_paykey
+        WHERE `value` = #{key}
+    </select>
+
+    <!-- 条件查询 -->
+    <select id="selectList" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM typecho_paykey
+        <where>
+            <if test ='null != id'>
+                and `id` = #{id}
+            </if>
+            <if test ='null != value'>
+                and `value` = #{value}
+            </if>
+            <if test ='null != price'>
+                and `price` = #{price}
+            </if>
+            <if test ='null != status'>
+                and `status` = #{status}
+            </if>
+            <if test ='null != created'>
+                and `created` = #{created}
+            </if>
+            <if test ='null != uid'>
+                and `uid` = #{uid}
+            </if>
+        </where>
+    </select>
+
+    <!-- 分页条件查询 -->
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM typecho_paykey
+        <where>
+            <if test ='null != typechoPaykey.id'>
+                and `id` = #{typechoPaykey.id}
+            </if>
+            <if test ='null != typechoPaykey.value'>
+                and `value` = #{typechoPaykey.value}
+            </if>
+            <if test ='null != typechoPaykey.price'>
+                and `price` = #{typechoPaykey.price}
+            </if>
+            <if test ='null != typechoPaykey.status'>
+                and `status` = #{typechoPaykey.status}
+            </if>
+            <if test ='null != typechoPaykey.created'>
+                and `created` = #{typechoPaykey.created}
+            </if>
+            <if test ='null != typechoPaykey.uid'>
+                and `uid` = #{typechoPaykey.uid}
+            </if>
+        </where>
+        limit #{page,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
+    </select>
+
+    <!-- 总量查询 -->
+    <select id="total" resultType="java.lang.Integer">
+        SELECT count(*) FROM typecho_paykey
+        <where>
+            <if test ='null != id'>
+                and `id` = #{id}
+            </if>
+            <if test ='null != value'>
+                and `value` = #{value}
+            </if>
+            <if test ='null != price'>
+                and `price` = #{price}
+            </if>
+            <if test ='null != status'>
+                and `status` = #{status}
+            </if>
+            <if test ='null != created'>
+                and `created` = #{created}
+            </if>
+            <if test ='null != uid'>
+                and `uid` = #{uid}
+            </if>
+        </where>
+    </select>
+</mapper>

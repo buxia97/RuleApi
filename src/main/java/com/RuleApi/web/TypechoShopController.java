@@ -442,13 +442,24 @@ public class TypechoShopController {
             Integer days = 86400;
             TypechoUsers users = usersService.selectByKey(uid);
             Integer assets = users.getAssets();
+            //判断用户是否为VIP，决定是续期还是从当前时间开始计算
+            Integer vip = users.getVip();
+            //默认是从当前时间开始相加
+            Integer vipTime = Integer.parseInt(curTime) + days*day;
+            if(vip.equals(1)){
+                return Result.getResultJson(0,"您已经是永久VIP，无需购买",null);
+            }
+            //如果已经是vip，走续期逻辑。
+            if(vip>Integer.parseInt(curTime)){
+                vipTime = vip+ days*day;
+            }
 
             Integer AllPrice = day * this.vipPrice;
             if(AllPrice>assets){
                 return Result.getResultJson(0,"当前资产不足，请充值",null);
             }
 
-            Integer vipTime = Integer.parseInt(curTime) + days*day;
+
             if(day >= this.vipDay){
                 //如果时间戳为1就是永久会员
                 vipTime = 1;

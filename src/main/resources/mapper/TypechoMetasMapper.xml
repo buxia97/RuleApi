@@ -202,6 +202,9 @@
             <if test ='null != typechoMetas.isrecommend'>
                 and `isrecommend` = #{typechoMetas.isrecommend}
             </if>
+            <if test ='"" != searchKey'>
+                and CONCAT(IFNULL(`name`,''),IFNULL(`description`,'')) LIKE '%${searchKey}%'
+            </if>
         </where>
         <if test ='"" != order'>
             order by ${order} desc

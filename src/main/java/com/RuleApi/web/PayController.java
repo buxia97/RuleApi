@@ -1,11 +1,14 @@
 package com.RuleApi.web;
 
 import com.RuleApi.common.*;
+import com.RuleApi.entity.TypechoPaykey;
 import com.RuleApi.entity.TypechoPaylog;
 import com.RuleApi.entity.TypechoUsers;
+import com.RuleApi.service.TypechoPaykeyService;
 import com.RuleApi.service.TypechoPaylogService;
 import com.RuleApi.service.TypechoUsersService;
 import com.RuleApi.service.WxPayService;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alipay.api.AlipayApiException;
@@ -17,6 +20,7 @@ import com.alipay.api.response.AlipayTradePrecreateResponse;
 import com.github.wxpay.sdk.WXPay;
 import com.github.wxpay.sdk.WXPayConstants;
 import com.github.wxpay.sdk.WXPayUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -78,6 +82,9 @@ public class PayController {
 
     @Autowired
     private TypechoPaylogService paylogService;
+
+    @Autowired
+    private TypechoPaykeyService paykeyService;
 
     @Autowired(required = false)
     private WxPayService wxpayService;
@@ -453,4 +460,135 @@ public class PayController {
             return result;
         }
     }
+
+    /**
+     * 卡密充值相关
+     * **/
+
+    /**
+     * 创建卡密
+     * **/
+    @RequestMapping(value = "/marktoken")
+    @ResponseBody
+    public String marktoken(@RequestParam(value = "price", required = false) Integer  price,@RequestParam(value = "num", required = false) Integer  num,@RequestParam(value = "token", required = false) String  token) {
+        try{
+            Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
+            if (uStatus == 0) {
+                return Result.getResultJson(0, "用户未登录或Token验证失败", null);
+            }
+            Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+            String group = map.get("group").toString();
+            if (!group.equals("administrator")) {
+                return Result.getResultJson(0, "你没有操作权限", null);
+            }
+
+            Long date = System.currentTimeMillis();
+            String curTime = String.valueOf(date).substring(0, 10);
+            //循环生成卡密
+            for (int i = 0; i < num; i++) {
+                TypechoPaykey paykey = new TypechoPaykey();
+                String value = UUID.randomUUID()+"";
+                paykey.setValue(value);
+                paykey.setStatus(0);
+                paykey.setCreated(Integer.parseInt(curTime));
+                paykey.setUid(-1);
+                paykeyService.insert(paykey);
+            }
+            JSONObject response = new JSONObject();
+            response.put("code" , 1);
+            response.put("msg"  , "生成卡密成功");
+            return response.toString();
+        }catch (Exception e){
+            JSONObject response = new JSONObject();
+            response.put("code" , 1);
+            response.put("msg"  , "生成卡密失败");
+            return response.toString();
+        }
+    }
+    /***
+     * 卡密列表
+     *
+     */
+    @RequestMapping(value = "/tokenPayList")
+    @ResponseBody
+    public String tokenPayList (@RequestParam(value = "searchParams", required = false) String  searchParams,
+                            @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
+                            @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit) {
+        TypechoPaykey query = new TypechoPaykey();
+        if (StringUtils.isNotBlank(searchParams)) {
+            JSONObject object = JSON.parseObject(searchParams);
+            query = object.toJavaObject(TypechoPaykey.class);
+        }
+
+        PageList<TypechoPaykey> pageList = paykeyService.selectPage(query, page, limit);
+        JSONObject response = new JSONObject();
+        response.put("code" , 0);
+        response.put("msg"  , "");
+        response.put("data" , null != pageList.getList() ? pageList.getList() : new JSONArray());
+        response.put("count", pageList.getTotalCount());
+        return response.toString();
+    }
+    /**
+     * 卡密充值
+     * **/
+    @RequestMapping(value = "/tokenPay")
+    @ResponseBody
+    public String tokenPay(@RequestParam(value = "key", required = false) Integer  key,@RequestParam(value = "token", required = false) String  token) {
+        try {
+            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+            if(uStatus==0){
+                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+            }
+            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            Integer uid =Integer.parseInt(map.get("uid").toString());
+
+            TypechoPaykey paykey = paykeyService.selectByKey(key);
+            if(paykey==null){
+                return Result.getResultJson(0,"卡密已失效",null);
+            }
+            Integer pirce = paykey.getPrice();
+
+            TypechoUsers users = usersService.selectByKey(uid);
+            Integer assets = users.getAssets();
+
+            if(!paykey.getStatus().equals(0)){
+                return Result.getResultJson(0,"卡密已失效",null);
+            }
+
+            //修改用户账户
+            Integer newassets = assets + pirce;
+            users.setAssets(newassets);
+            usersService.update(users);
+
+            //修改卡密状态
+            paykey.setStatus(1);
+            paykey.setUid(uid);
+            paykeyService.update(paykey);
+
+            //生成资产日志
+            Long date = System.currentTimeMillis();
+            String curTime = String.valueOf(date).substring(0,10);
+            TypechoPaylog paylog = new TypechoPaylog();
+            paylog.setStatus(0);
+            paylog.setCreated(Integer.parseInt(curTime));
+            paylog.setUid(uid);
+            paylog.setOutTradeNo(curTime+"tokenPay");
+            paylog.setTotalAmount(pirce.toString());
+            paylog.setPaytype("tokenPay");
+            paylog.setSubject("卡密充值");
+            paylogService.insert(paylog);
+
+            JSONObject response = new JSONObject();
+            response.put("code" , 1);
+            response.put("msg"  , "卡密充值成功");
+            return response.toString();
+        }catch (Exception e){
+            JSONObject response = new JSONObject();
+            response.put("code" , 0);
+            response.put("msg"  , "卡密充值失败");
+            return response.toString();
+        }
+
+    }
+
 }

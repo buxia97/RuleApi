@@ -204,6 +204,7 @@ public class TypechoMetasController {
     public String metasList (@RequestParam(value = "searchParams", required = false) String  searchParams,
                             @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
                             @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
+                             @RequestParam(value = "searchKey"        , required = false, defaultValue = "") String searchKey,
                              @RequestParam(value = "order"        , required = false, defaultValue = "") String order) {
         TypechoMetas query = new TypechoMetas();
         if(limit>50){
@@ -214,13 +215,38 @@ public class TypechoMetasController {
             query = object.toJavaObject(TypechoMetas.class);
         }
 
-        PageList<TypechoMetas> pageList = service.selectPage(query, page, limit,order);
+        PageList<TypechoMetas> pageList = service.selectPage(query, page, limit,searchKey,order);
         JSONObject response = new JSONObject();
         response.put("code" , 1);
         response.put("msg"  , "");
         response.put("data" , null != pageList.getList() ? pageList.getList() : new JSONArray());
         response.put("count", pageList.getTotalCount());
         return response.toString();
+    }
+    /***
+     * 查询分类详情
+     */
+    @RequestMapping(value = "/metaInfo")
+    @ResponseBody
+    public String metaInfo(@RequestParam(value = "key", required = false) String key) {
+        try{
+            TypechoMetas metas = service.selectByKey(key);
+            Map json = JSONObject.parseObject(JSONObject.toJSONString(metas), Map.class);
+            JSONObject response = new JSONObject();
+
+            response.put("code", 1);
+            response.put("msg", "");
+            response.put("data", json);
+
+            return response.toString();
+        }catch (Exception e){
+            JSONObject response = new JSONObject();
+            response.put("code", 1);
+            response.put("msg", "");
+            response.put("data", null);
+
+            return response.toString();
+        }
     }
     /***
      * 修改分类和标签

@@ -153,6 +153,15 @@ public class TypechoCommentsController {
                         TypechoUsers userinfo = usersService.selectByKey(userid);
                         json.put("lv",baseFull.getLv(lv));
                         json.put("customize",userinfo.getCustomize());
+                        //判断是否为VIP
+                        json.put("isvip", 0);
+                        json.put("vip", userinfo.getVip());
+                        Long date = System.currentTimeMillis();
+                        String curTime = String.valueOf(date).substring(0, 10);
+                        Integer viptime  = userinfo.getVip();
+                        if(viptime>Integer.parseInt(curTime)||viptime.equals(1)){
+                            json.put("isvip", 1);
+                        }
                     }
 
 

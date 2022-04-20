@@ -246,6 +246,23 @@ public class InstallController {
             text+="数据表typecho_paylog已经存在，无需添加。";
         }
 
+        //添加卡密充值模块
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_paykey';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("CREATE TABLE `"+prefix+"_paykey` (" +
+                    "  `id` int(11) NOT NULL AUTO_INCREMENT," +
+                    "  `value` varchar(255) DEFAULT '' COMMENT '密钥'," +
+                    "  `price` int(11) DEFAULT '0' COMMENT '等值积分'," +
+                    "  `status` int(2) DEFAULT '0' COMMENT '0未使用，1已使用'," +
+                    "  `created` int(10) DEFAULT '0' COMMENT '创建时间'," +
+                    "  `uid` int(11) DEFAULT '-1' COMMENT '使用用户'," +
+                    "  PRIMARY KEY (`id`)" +
+                    ") ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='卡密充值相关';");
+            text+="数据表typecho_paylog创建完成。";
+        }else{
+            text+="数据表typecho_paylog已经存在，无需添加。";
+        }
+
         text+=" ------ 执行结束，安装执行完成";
 
         redisHelp.setRedis(this.dataprefix+"_"+"isInstall","1",600,redisTemplate);

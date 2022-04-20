@@ -8,27 +8,27 @@ import java.util.List;
 
 /**
  * dao层接口
- * TypechoMetasDao
- * @author buxia97
- * @date 2021/11/29
+ * TypechoPaykeyDao
+ * @author paykey
+ * @date 2022/04/20
  */
 @Mapper
-public interface TypechoMetasDao {
+public interface TypechoPaykeyDao {
 
     /**
      * [新增]
      **/
-    int insert(TypechoMetas typechoMetas);
+    int insert(TypechoPaykey typechoPaykey);
 
     /**
      * [批量新增]
      **/
-    int batchInsert(List<TypechoMetas> list);
+    int batchInsert(List<TypechoPaykey> list);
 
     /**
      * [更新]
      **/
-    int update(TypechoMetas typechoMetas);
+    int update(TypechoPaykey typechoPaykey);
 
     /**
      * [删除]
@@ -43,20 +43,20 @@ public interface TypechoMetasDao {
     /**
      * [主键查询]
      **/
-    TypechoMetas selectByKey(Object key);
+    TypechoPaykey selectByKey(Object key);
 
     /**
      * [条件查询]
      **/
-    List<TypechoMetas> selectList (TypechoMetas typechoMetas);
+    List<TypechoPaykey> selectList (TypechoPaykey typechoPaykey);
 
     /**
      * [分页条件查询]
      **/
-    List<TypechoMetas> selectPage (@Param("typechoMetas") TypechoMetas typechoMetas, @Param("page") Integer page, @Param("pageSize") Integer pageSize, @Param("searchKey") String searchKey, @Param("order") String order);
+    List<TypechoPaykey> selectPage (@Param("typechoPaykey") TypechoPaykey typechoPaykey, @Param("page") Integer page, @Param("pageSize") Integer pageSize);
 
     /**
      * [总量查询]
      **/
-    int total(TypechoMetas typechoMetas);
+    int total(TypechoPaykey typechoPaykey);
 }

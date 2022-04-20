@@ -4,29 +4,28 @@ import java.util.Map;
 import java.util.List;
 import com.RuleApi.entity.*;
 import com.RuleApi.common.PageList;
-
 /**
  * 业务层
- * TypechoMetasService
- * @author buxia97
- * @date 2021/11/29
+ * TypechoPaykeyService
+ * @author paykey
+ * @date 2022/04/20
  */
-public interface TypechoMetasService {
+public interface TypechoPaykeyService {
 
     /**
      * [新增]
      **/
-    int insert(TypechoMetas typechoMetas);
+    int insert(TypechoPaykey typechoPaykey);
 
     /**
      * [批量新增]
      **/
-    int batchInsert(List<TypechoMetas> list);
+    int batchInsert(List<TypechoPaykey> list);
 
     /**
      * [更新]
      **/
-    int update(TypechoMetas typechoMetas);
+    int update(TypechoPaykey typechoPaykey);
 
     /**
      * [删除]
@@ -41,20 +40,20 @@ public interface TypechoMetasService {
     /**
      * [主键查询]
      **/
-    TypechoMetas selectByKey(Object key);
+    TypechoPaykey selectByKey(Object key);
 
     /**
      * [条件查询]
      **/
-    List<TypechoMetas> selectList (TypechoMetas typechoMetas);
+    List<TypechoPaykey> selectList (TypechoPaykey typechoPaykey);
 
     /**
      * [分页条件查询]
      **/
-    PageList<TypechoMetas> selectPage (TypechoMetas typechoMetas, Integer page, Integer pageSize,String searchKey,String order);
+    PageList<TypechoPaykey> selectPage (TypechoPaykey typechoPaykey, Integer page, Integer pageSize);
 
     /**
      * [总量查询]
      **/
-    int total(TypechoMetas typechoMetas);
+    int total(TypechoPaykey typechoPaykey);
 }
