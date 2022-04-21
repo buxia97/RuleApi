@@ -3,6 +3,7 @@ package com.RuleApi.web;
 import com.RuleApi.common.*;
 import com.RuleApi.entity.TypechoPaykey;
 import com.RuleApi.entity.TypechoPaylog;
+import com.RuleApi.entity.TypechoRelationships;
 import com.RuleApi.entity.TypechoUsers;
 import com.RuleApi.service.TypechoPaykeyService;
 import com.RuleApi.service.TypechoPaylogService;
@@ -21,6 +22,7 @@ import com.github.wxpay.sdk.WXPay;
 import com.github.wxpay.sdk.WXPayConstants;
 import com.github.wxpay.sdk.WXPayUtil;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.hssf.usermodel.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -468,9 +470,9 @@ public class PayController {
     /**
      * 创建卡密
      * **/
-    @RequestMapping(value = "/marktoken")
+    @RequestMapping(value = "/madetoken")
     @ResponseBody
-    public String marktoken(@RequestParam(value = "price", required = false) Integer  price,@RequestParam(value = "num", required = false) Integer  num,@RequestParam(value = "token", required = false) String  token) {
+    public String madetoken(@RequestParam(value = "price", required = false) Integer  price,@RequestParam(value = "num", required = false) Integer  num,@RequestParam(value = "token", required = false) String  token) {
         try{
             Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
             if (uStatus == 0) {
@@ -481,7 +483,12 @@ public class PayController {
             if (!group.equals("administrator")) {
                 return Result.getResultJson(0, "你没有操作权限", null);
             }
-
+            if(num>100){
+                num = 100;
+            }
+            if(price<1){
+                return Result.getResultJson(0, "充值码价格不能小于1", null);
+            }
             Long date = System.currentTimeMillis();
             String curTime = String.valueOf(date).substring(0, 10);
             //循环生成卡密
@@ -490,6 +497,7 @@ public class PayController {
                 String value = UUID.randomUUID()+"";
                 paykey.setValue(value);
                 paykey.setStatus(0);
+                paykey.setPrice(price);
                 paykey.setCreated(Integer.parseInt(curTime));
                 paykey.setUid(-1);
                 paykeyService.insert(paykey);
@@ -513,7 +521,17 @@ public class PayController {
     @ResponseBody
     public String tokenPayList (@RequestParam(value = "searchParams", required = false) String  searchParams,
                             @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
-                            @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit) {
+                            @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
+                            @RequestParam(value = "token", required = false) String  token) {
+        Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
+        if (uStatus == 0) {
+            return Result.getResultJson(0, "用户未登录或Token验证失败", null);
+        }
+        Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+        String group = map.get("group").toString();
+        if (!group.equals("administrator")) {
+            return Result.getResultJson(0, "你没有操作权限", null);
+        }
         TypechoPaykey query = new TypechoPaykey();
         if (StringUtils.isNotBlank(searchParams)) {
             JSONObject object = JSON.parseObject(searchParams);
@@ -522,11 +540,68 @@ public class PayController {
 
         PageList<TypechoPaykey> pageList = paykeyService.selectPage(query, page, limit);
         JSONObject response = new JSONObject();
-        response.put("code" , 0);
+        response.put("code" , 1);
         response.put("msg"  , "");
         response.put("data" , null != pageList.getList() ? pageList.getList() : new JSONArray());
         response.put("count", pageList.getTotalCount());
         return response.toString();
+    }
+    @RequestMapping(value = "/tokenPayExcel")
+    @ResponseBody
+    public void tokenPayExcel(@RequestParam(value = "limit" , required = false, defaultValue = "15") Integer limit,@RequestParam(value = "token", required = false) String  token,HttpServletResponse response) throws IOException {
+        HSSFWorkbook workbook = new HSSFWorkbook();
+        HSSFSheet sheet = workbook.createSheet("充值码列表");
+
+        Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
+        if (uStatus == 0) {
+            response.setContentType("application/octet-stream");
+            response.setHeader("Content-disposition", "attachment;filename=nodata.xls");
+            response.flushBuffer();
+            workbook.write(response.getOutputStream());
+        }
+        Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+        String group = map.get("group").toString();
+        if (!group.equals("administrator")) {
+            response.setContentType("application/octet-stream");
+            response.setHeader("Content-disposition", "attachment;filename=nodata.xls");
+            response.flushBuffer();
+            workbook.write(response.getOutputStream());
+        }
+        TypechoPaykey query = new TypechoPaykey();
+        PageList<TypechoPaykey> pageList = paykeyService.selectPage(query, 1, limit);
+        List<TypechoPaykey> list = pageList.getList();
+
+
+
+
+        String fileName = "tokenPayExcel"  + ".xls";//设置要导出的文件的名字
+        //新增数据行，并且设置单元格数据
+
+        int rowNum = 1;
+
+        String[] headers = { "ID", "充值码", "等同积分"};
+        //headers表示excel表中第一行的表头
+
+        HSSFRow row = sheet.createRow(0);
+        //在excel表中添加表头
+
+        for(int i=0;i<headers.length;i++){
+            HSSFCell cell = row.createCell(i);
+            HSSFRichTextString text = new HSSFRichTextString(headers[i]);
+            cell.setCellValue(text);
+        }
+        for (TypechoPaykey paykey : list) {
+            HSSFRow row1 = sheet.createRow(rowNum);
+            row1.createCell(0).setCellValue(paykey.getId());
+            row1.createCell(1).setCellValue(paykey.getValue());
+            row1.createCell(2).setCellValue(paykey.getPrice());
+            rowNum++;
+        }
+
+        response.setContentType("application/octet-stream");
+        response.setHeader("Content-disposition", "attachment;filename=" + fileName);
+        response.flushBuffer();
+        workbook.write(response.getOutputStream());
     }
     /**
      * 卡密充值
@@ -569,7 +644,7 @@ public class PayController {
             Long date = System.currentTimeMillis();
             String curTime = String.valueOf(date).substring(0,10);
             TypechoPaylog paylog = new TypechoPaylog();
-            paylog.setStatus(0);
+            paylog.setStatus(1);
             paylog.setCreated(Integer.parseInt(curTime));
             paylog.setUid(uid);
             paylog.setOutTradeNo(curTime+"tokenPay");

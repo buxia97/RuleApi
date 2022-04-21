@@ -150,7 +150,7 @@ public class UploadController {
             return Result.getResultJson(1,"上传成功",info);
 
         } catch (IOException e) {
-            return Result.getResultJson(1,"上传失败",null);
+            return Result.getResultJson(0,"上传失败",null);
         }finally {
             // 关闭客户端(关闭后台线程)
             cosclient.shutdown();

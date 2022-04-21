@@ -53,6 +53,9 @@ public class TypechoUsersController {
     private TypechoUserapiService userapiService;
 
     @Autowired
+    private TypechoPaylogService paylogService;
+
+    @Autowired
     MailService MailService;
 
     @Autowired
@@ -1256,12 +1259,26 @@ public class TypechoUsersController {
             return Result.getResultJson(0, "金额不正确", null);
         }
         Integer assets;
+        //生成系统对用户资产操作的日志
+        Long date = System.currentTimeMillis();
+        String userTime = String.valueOf(date).substring(0,10);
+        TypechoPaylog paylog = new TypechoPaylog();
+        paylog.setStatus(1);
+        paylog.setCreated(Integer.parseInt(userTime));
+        paylog.setUid(key);
+        paylog.setOutTradeNo(userTime+"system");
+        paylog.setPaytype("system");
+        //0是充值，1是扣款
         if (type.equals(0)) {
             assets = oldAssets + num;
+            paylog.setTotalAmount(num+"");
+            paylog.setSubject("系统充值");
         } else {
             assets = oldAssets - num;
+            paylog.setTotalAmount("-"+num);
+            paylog.setSubject("系统扣款");
         }
-
+        paylogService.insert(paylog);
         user.setAssets(assets);
         Integer rows = service.update(user);
         JSONObject response = new JSONObject();
