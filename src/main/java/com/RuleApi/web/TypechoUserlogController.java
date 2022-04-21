@@ -10,6 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -57,8 +58,14 @@ public class TypechoUserlogController {
     @Autowired
     private TypechoPaylogService paylogService;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     @Value("${web.prefix}")
     private String dataprefix;
+
+    @Value("${mybatis.configuration.variables.prefix}")
+    private String prefix;
 
     RedisHelp redisHelp =new RedisHelp();
     ResultAll Result = new ResultAll();
@@ -624,5 +631,54 @@ public class TypechoUserlogController {
         response.put("data" , null != jsonList ? jsonList : new JSONArray());
         response.put("count", jsonList.size());
         return response.toString();
+    }
+
+    /***
+     * 查询商品是否已经购买过
+     */
+    @RequestMapping(value = "/dataClean")
+    @ResponseBody
+    public String dataClean(@RequestParam(value = "clean", required = false) Integer  clean,@RequestParam(value = "token", required = false) String  token) {
+        try {
+            //1是清理用户签到，2是清理用户资产日志，3是清理用户订单数据，4是清理无效卡密
+            Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
+            if (uStatus == 0) {
+                return Result.getResultJson(0, "用户未登录或Token验证失败", null);
+            }
+            Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+            String group = map.get("group").toString();
+            if (!group.equals("administrator")) {
+                return Result.getResultJson(0, "你没有操作权限", null);
+            }
+            Long date = System.currentTimeMillis();
+            String curTime = String.valueOf(date).substring(0,10);
+            Integer cleanTime = Integer.parseInt(curTime) - 2592000;
+            //用户签到清理
+            if(clean.equals(1)){
+                jdbcTemplate.execute("DELETE FROM "+this.prefix+"_userlog WHERE type='clock' and  created < "+cleanTime+";");
+            }
+            //用户资产记录清理
+            if(clean.equals(2)){
+                jdbcTemplate.execute("DELETE FROM "+this.prefix+"_paylog WHERE created < "+cleanTime+";");
+            }
+            //用户订单清理
+            if(clean.equals(3)){
+                jdbcTemplate.execute("DELETE FROM "+this.prefix+"_userlog WHERE type='buy' and created < "+cleanTime+";");
+            }
+            //充值码清理
+            if(clean.equals(4)){
+                jdbcTemplate.execute("DELETE FROM "+this.prefix+"_paykey WHERE status=1 ;");
+            }
+            JSONObject response = new JSONObject();
+            response.put("code" , 1);
+            response.put("msg"  , "清理成功");
+            return response.toString();
+        }catch (Exception e){
+            JSONObject response = new JSONObject();
+            response.put("code" , 0);
+            response.put("msg"  , "操作失败");
+            return response.toString();
+        }
+
     }
 }

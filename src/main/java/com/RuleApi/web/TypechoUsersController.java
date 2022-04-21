@@ -1114,8 +1114,13 @@ public class TypechoUsersController {
             TypechoUserlog userlog = new TypechoUserlog();
             userlog.setUid(uid);
             userlog.setType("withdraw");
-            userlog.setNum(num);
             userlog.setCid(-1);
+
+            List<TypechoUserlog> list = userlogService.selectList(userlog);
+            if(list.size()>0){
+                return Result.getResultJson(0, "您有正在审核的申请", null);
+            }
+            userlog.setNum(num);
             userlog.setToid(uid);
             userlog.setCreated(Integer.parseInt(userTime));
             Integer rows = userlogService.insert(userlog);
@@ -1216,7 +1221,9 @@ public class TypechoUsersController {
                 Integer uid = userlog.getUid();
                 TypechoUsers user = service.selectByKey(uid);
                 Integer oldAssets = user.getAssets();
-
+                if(oldAssets<num){
+                    return Result.getResultJson(0, "该用户资产已不足以用于提现！", null);
+                }
                 Integer assets = oldAssets - num;
                 user.setAssets(assets);
                 service.update(user);
