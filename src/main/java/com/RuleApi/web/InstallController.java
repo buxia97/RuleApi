@@ -135,7 +135,7 @@ public class InstallController {
         //查询分类标签表是否存在imgurl字段
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_metas' and column_name = 'imgurl';", Integer.class);
         if (i == 0){
-            jdbcTemplate.execute("alter table "+prefix+"_users ADD imgurl varchar(500) DEFAULT NULL;");
+            jdbcTemplate.execute("alter table "+prefix+"_metas ADD imgurl varchar(500) DEFAULT NULL;");
             text+="数据表typecho_metas，字段imgurl添加完成。";
         }else{
             text+="数据表typecho_metas，字段imgurl已经存在，无需添加。";
@@ -143,7 +143,7 @@ public class InstallController {
         //查询分类标签表是否存在isrecommend字段
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_metas' and column_name = 'isrecommend';", Integer.class);
         if (i == 0){
-            jdbcTemplate.execute("alter table "+prefix+"_users ADD isrecommend integer(2) DEFAULT 0;");
+            jdbcTemplate.execute("alter table "+prefix+"_metas ADD isrecommend integer(2) DEFAULT 0;");
             text+="数据表typecho_metas，字段isrecommend添加完成。";
         }else{
             text+="数据表typecho_metas，字段isrecommend已经存在，无需添加。";
