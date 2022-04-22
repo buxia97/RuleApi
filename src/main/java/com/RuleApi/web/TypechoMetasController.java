@@ -128,6 +128,10 @@ public class TypechoMetasController {
                         if(viptime>Integer.parseInt(curTime)||viptime.equals(1)){
                             authorInfo.put("isvip", 1);
                         }
+                        if(viptime.equals(1)){
+                            //永久VIP
+                            authorInfo.put("isvip", 2);
+                        }
                         contentsInfo.put("authorInfo",authorInfo);
                     }
 

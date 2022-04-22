@@ -306,6 +306,10 @@ public class TypechoContentsController {
                         if(viptime>Integer.parseInt(curTime)||viptime.equals(1)){
                             authorInfo.put("isvip", 1);
                         }
+                        if(viptime.equals(1)){
+                            //永久VIP
+                            authorInfo.put("isvip", 2);
+                        }
                         json.put("authorInfo",authorInfo);
                     }
 
@@ -742,10 +746,15 @@ public class TypechoContentsController {
             Integer uid = ainfo.getUid();
             if(ainfo.getMail()!=null){
                 String email = ainfo.getMail();
-                MailService.send("用户："+uid+",您的文章已审核通过", "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><title></title><meta charset=\"utf-8\" /><style>*{padding:0px;margin:0px;box-sizing:border-box;}html{box-sizing:border-box;}body{font-size:15px;background:#fff}.main{margin:20px auto;max-width:500px;border:solid 1px #2299dd;overflow:hidden;}.main h1{display:block;width:100%;background:#2299dd;font-size:18px;color:#fff;text-align:center;padding:15px;}.text{padding:30px;}.text p{margin:10px 0px;line-height:25px;}.text p span{color:#2299dd;font-weight:bold;font-size:22px;margin-left:5px;}</style></head>" +
-                                "<body><div class=\"main\"><h1>文章审核</h1><div class=\"text\"><p>用户 "+uid+"，你的文章<"+title+">已经审核通过！</p>" +
-                                "<p>可前往<a href=\""+this.webUrl+"\">"+newtitle+"</a>查看详情</p></div></div></body></html>",
-                        new String[] {email}, new String[] {});
+                try{
+                    MailService.send("用户："+uid+",您的文章已审核通过", "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><title></title><meta charset=\"utf-8\" /><style>*{padding:0px;margin:0px;box-sizing:border-box;}html{box-sizing:border-box;}body{font-size:15px;background:#fff}.main{margin:20px auto;max-width:500px;border:solid 1px #2299dd;overflow:hidden;}.main h1{display:block;width:100%;background:#2299dd;font-size:18px;color:#fff;text-align:center;padding:15px;}.text{padding:30px;}.text p{margin:10px 0px;line-height:25px;}.text p span{color:#2299dd;font-weight:bold;font-size:22px;margin-left:5px;}</style></head>" +
+                                    "<body><div class=\"main\"><h1>文章审核</h1><div class=\"text\"><p>用户 "+uid+"，你的文章<"+title+">已经审核通过！</p>" +
+                                    "<p>可前往<a href=\""+this.webUrl+"\">"+newtitle+"</a>查看详情</p></div></div></body></html>",
+                            new String[] {email}, new String[] {});
+                }catch (Exception e){
+                    System.out.println("邮箱发信配置错误："+e);
+                }
+
             }
 
 
