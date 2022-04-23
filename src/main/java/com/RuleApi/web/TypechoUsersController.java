@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.mail.MessagingException;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -729,9 +730,17 @@ public class TypechoUsersController {
      */
     @RequestMapping(value = "/SendCode")
     @ResponseBody
-    public String SendCode(@RequestParam(value = "params", required = false) String params) throws MessagingException {
+    public String SendCode(@RequestParam(value = "params", required = false) String params, HttpServletRequest request) throws MessagingException {
         Map jsonToMap = null;
+        String  agent =  request.getHeader("User-Agent");
+        String  ip = baseFull.getIpAddr(request);
 
+        String iSsendCode = redisHelp.getRedis(this.dataprefix + "_" + "iSsendCode_"+agent+"_"+ip, redisTemplate);
+        if(iSsendCode==null){
+            redisHelp.setRedis(this.dataprefix + "_" + "iSsendCode_"+agent+"_"+ip, "data", 30, redisTemplate);
+        }else{
+            return Result.getResultJson(0, "你的操作太频繁了", null);
+        }
         if (StringUtils.isNotBlank(params)) {
             jsonToMap = JSONObject.parseObject(JSON.parseObject(params).toString());
             Map keyName = new HashMap<String, String>();
@@ -771,9 +780,17 @@ public class TypechoUsersController {
      */
     @RequestMapping(value = "/RegSendCode")
     @ResponseBody
-    public String RegSendCode(@RequestParam(value = "params", required = false) String params) throws MessagingException {
+    public String RegSendCode(@RequestParam(value = "params", required = false) String params, HttpServletRequest request) throws MessagingException {
         Map jsonToMap = null;
+        String  agent =  request.getHeader("User-Agent");
+        String  ip = baseFull.getIpAddr(request);
 
+        String regISsendCode = redisHelp.getRedis(this.dataprefix + "_" + "regISsendCode_"+agent+"_"+ip, redisTemplate);
+        if(regISsendCode==null){
+            redisHelp.setRedis(this.dataprefix + "_" + "regISsendCode_"+agent+"_"+ip, "data", 30, redisTemplate);
+        }else{
+            return Result.getResultJson(0, "你的操作太频繁了", null);
+        }
         if (StringUtils.isNotBlank(params)) {
             jsonToMap = JSONObject.parseObject(JSON.parseObject(params).toString());
             String email = jsonToMap.get("mail").toString();

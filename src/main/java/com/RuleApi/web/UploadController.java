@@ -262,9 +262,6 @@ public class UploadController {
        // String uuid = UUID.randomUUID().toString().replaceAll("-","");
         filename = newFileName;
 
-        //2.把文件按日期分类
-//        String datePath = new DateTime().toString("yyyy/MM/dd");
-//        filename = datePath +"/"+filename;
         String key = this.filePrefix+"/"+year+"/"+month+"/"+day+"/"+filename;
         //调用OSS方法实现上传
         ossClient.putObject(this.ossBucketName, key, inputStream);
@@ -278,6 +275,7 @@ public class UploadController {
      * 上传到远程ftp
      * */
     @RequestMapping(value = "ftpUpload",method = RequestMethod.POST)
+    @ResponseBody
     public String ftpUpload(@RequestParam(value = "file") MultipartFile file, @RequestParam(value = "token", required = false) String  token) {
         Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
         if(uStatus==0){
@@ -295,52 +293,79 @@ public class UploadController {
             return Result.getResultJson(0,"请上传图片文件",null);
         }
 
-
-
         FTPClient ftpClient = new FTPClient();
-        InputStream inputStream = null;
         //检查是否是图片
         try {
-            inputStream = file.getInputStream();
-            //生成时间，用于创建目录
-            Calendar cal = Calendar.getInstance();
-            int year = cal.get(Calendar.YEAR);
-            int month=cal.get(Calendar.MONTH);
-            int day=cal.get(Calendar.DATE);
-            //获取文件名称
-            String filename = file.getOriginalFilename();
-            String eName = filename.substring(filename.lastIndexOf("."));
-            //1.在文件名称中添加随机唯一的值
-            String newFileName = UUID.randomUUID()+eName;
-            // String uuid = UUID.randomUUID().toString().replaceAll("-","");
-            filename = newFileName;
-            String key = this.ftpBasePath+"/"+year+"/"+month+"/"+day+"/"+filename;
 
+            //指定存放上传文件的目录
+            ApplicationHome h = new ApplicationHome(getClass());
+            File jarF = h.getSource();
+            /* 配置文件路径 */
+            String classespath = jarF.getParentFile().toString()+"/files";
 
+            String decodeClassespath = URLDecoder.decode(classespath,"utf-8");
+            String fileDir = decodeClassespath+"/temp";
+            File dir = new File(fileDir);
+
+            //判断目录是否存在，不存在则创建目录
+            if (!dir.exists()){
+                dir.mkdirs();
+            }
+
+            //生成新文件名，防止文件名重复而导致文件覆盖
+            //1、获取原文件后缀名 .img .jpg ....
+            String originalFileName = file.getOriginalFilename();
+            String suffix = originalFileName.substring(originalFileName.lastIndexOf('.'));
+            //2、使用UUID生成新文件名
+            String newFileName = UUID.randomUUID() + suffix;
+
+            //生成文件
+            File file1 = new File(dir, newFileName);
+
+            //传输内容
+            try {
+                file.transferTo(file1);
+                System.out.println("上传文件成功！");
+            } catch (IOException e) {
+                System.out.println("上传文件失败！");
+                e.printStackTrace();
+            }
+            //在服务器上生成新的目录
+            String key = this.ftpBasePath+"/"+file1.getName();
+
+            ftpClient.setConnectTimeout(1000 * 30);//设置连接超时时间
+            ftpClient.setControlEncoding("utf-8");//设置ftp字符集
             //连接ftp服务器 参数填服务器的ip
             ftpClient.connect(this.ftpHost,this.ftpPort);
 
             //进行登录 参数分别为账号 密码
             ftpClient.login(this.ftpUsername,this.ftpPassword);
 
-            //改变工作目录（按自己需要是否改变）
-            //只能选择local_root下已存在的目录
-            ftpClient.changeWorkingDirectory(this.ftpBasePath);
 
-            //设置文件类型为二进制文件
-            ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
 
             //开启被动模式（按自己如何配置的ftp服务器来决定是否开启）
-            //ftpClient.enterLocalPassiveMode();
+            ftpClient.enterLocalPassiveMode();
+            //只能选择local_root下已存在的目录
+            //ftpClient.changeWorkingDirectory(this.ftpBasePath);
+
+            // 文件夹不存在时新建
+            String remotePath = this.ftpBasePath;
+            if (!ftpClient.changeWorkingDirectory(remotePath)) {
+                ftpClient.makeDirectory(remotePath);
+                ftpClient.changeWorkingDirectory(remotePath);
+            }
+            //设置文件类型为二进制文件
+            ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
+            //inputStream = file.getInputStream();
             //上传文件 参数：上传后的文件名，输入流
-            ftpClient.storeFile(key, inputStream);
+            ftpClient.storeFile(key, new FileInputStream(file1));
 
             ftpClient.disconnect();
             Map<String,String> info =new HashMap<String, String>();
             info.put("url",this.localUrl+key);
             return Result.getResultJson(1,"上传成功",info);
 
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             return Result.getResultJson(0,"上传失败",null);
         }
