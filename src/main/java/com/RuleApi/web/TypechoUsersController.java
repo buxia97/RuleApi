@@ -248,7 +248,14 @@ public class TypechoUsersController {
             comments.setAuthorId(uid);
             Integer lv = commentsService.total(comments);
             json.put("lv", baseFull.getLv(lv));
-
+            //判断是否为VIP
+            json.put("isvip", 0);
+            Long date = System.currentTimeMillis();
+            String curTime = String.valueOf(date).substring(0, 10);
+            Integer viptime  = info.getVip();
+            if(viptime>Integer.parseInt(curTime)||viptime.equals(1)){
+                json.put("isvip", 1);
+            }
             json.remove("password");
             json.remove("address");
             json.remove("pay");
@@ -321,6 +328,14 @@ public class TypechoUsersController {
                 jsonToMap.put("url", rows.get(0).getUrl());
                 jsonToMap.put("screenName", rows.get(0).getScreenName());
                 jsonToMap.put("customize", rows.get(0).getCustomize());
+                //判断是否为VIP
+                jsonToMap.put("vip", rows.get(0).getVip());
+                jsonToMap.put("isvip", 0);
+                String curTime = String.valueOf(date).substring(0, 10);
+                Integer viptime  = rows.get(0).getVip();
+                if(viptime>Integer.parseInt(curTime)||viptime.equals(1)){
+                    jsonToMap.put("isvip", 1);
+                }
                 //获取用户等级
                 Integer uid = rows.get(0).getUid();
                 TypechoComments comments = new TypechoComments();
@@ -440,6 +455,14 @@ public class TypechoUsersController {
                 jsonToMap.put("url", user.getUrl());
                 jsonToMap.put("screenName", user.getScreenName());
                 jsonToMap.put("customize", user.getCustomize());
+                //判断是否为VIP
+                jsonToMap.put("vip", user.getVip());
+                jsonToMap.put("isvip", 0);
+                String curTime = String.valueOf(date).substring(0, 10);
+                Integer viptime  = user.getVip();
+                if(viptime>Integer.parseInt(curTime)||viptime.equals(1)){
+                    jsonToMap.put("isvip", 1);
+                }
                 if (user.getMail() != null) {
                     jsonToMap.put("avatar", baseFull.getAvatar(this.avatar, user.getMail()));
                 } else {
@@ -505,6 +528,10 @@ public class TypechoUsersController {
                 jsonToMap.put("avatar", this.avatar + "null");
                 jsonToMap.put("lv", 0);
                 jsonToMap.put("customize", "");
+                //VIP
+                jsonToMap.put("vip", 0);
+                jsonToMap.put("isvip", 0);
+
                 //删除之前的token后，存入redis(防止积累导致内存溢出，超时时间默认是24小时)
                 String oldToken = redisHelp.getRedis(this.dataprefix + "_" + "userkey" + name, redisTemplate);
                 if (oldToken != null) {
@@ -731,46 +758,51 @@ public class TypechoUsersController {
     @RequestMapping(value = "/SendCode")
     @ResponseBody
     public String SendCode(@RequestParam(value = "params", required = false) String params, HttpServletRequest request) throws MessagingException {
-        Map jsonToMap = null;
-        String  agent =  request.getHeader("User-Agent");
-        String  ip = baseFull.getIpAddr(request);
+        try{
+            Map jsonToMap = null;
+            String  agent =  request.getHeader("User-Agent");
+            String  ip = baseFull.getIpAddr(request);
 
-        String iSsendCode = redisHelp.getRedis(this.dataprefix + "_" + "iSsendCode_"+agent+"_"+ip, redisTemplate);
-        if(iSsendCode==null){
-            redisHelp.setRedis(this.dataprefix + "_" + "iSsendCode_"+agent+"_"+ip, "data", 30, redisTemplate);
-        }else{
-            return Result.getResultJson(0, "你的操作太频繁了", null);
-        }
-        if (StringUtils.isNotBlank(params)) {
-            jsonToMap = JSONObject.parseObject(JSON.parseObject(params).toString());
-            Map keyName = new HashMap<String, String>();
-            keyName.put("name", jsonToMap.get("name").toString());
-            TypechoUsers toKey1 = JSON.parseObject(JSON.toJSONString(keyName), TypechoUsers.class);
-            List<TypechoUsers> isName = service.selectList(toKey1);
-
-
-            if (isName.size() > 0) {
-                //生成六位随机验证码
-                Random random = new Random();
-                String code = "";
-                for (int i = 0; i < 6; i++) {
-                    code += random.nextInt(10);
-                }
-                //存入redis并发送邮件
-                String name = isName.get(0).getName();
-                String email = isName.get(0).getMail();
-                redisHelp.delete(this.dataprefix + "_" + "sendCode" + name, redisTemplate);
-                redisHelp.setRedis(this.dataprefix + "_" + "sendCode" + name, code, 1800, redisTemplate);
-                MailService.send("你本次的验证码为" + code, "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><title></title><meta charset=\"utf-8\" /><style>*{padding:0px;margin:0px;box-sizing:border-box;}html{box-sizing:border-box;}body{font-size:15px;background:#fff}.main{margin:20px auto;max-width:500px;border:solid 1px #2299dd;overflow:hidden;}.main h1{display:block;width:100%;background:#2299dd;font-size:18px;color:#fff;text-align:center;padding:15px;}.text{padding:30px;}.text p{margin:10px 0px;line-height:25px;}.text p span{color:#2299dd;font-weight:bold;font-size:22px;margin-left:5px;}</style></head><body><div class=\"main\"><h1>用户验证码</h1><div class=\"text\"><p>用户 " + name + "，你本次的验证码为<span>" + code + "</span>。</p><p>出于安全原因，该验证码将于30分钟后失效。请勿将验证码透露给他人。</p></div></div></body></html>",
-                        new String[]{email}, new String[]{});
-                return Result.getResultJson(1, "邮件发送成功", null);
-            } else {
-                return Result.getResultJson(0, "该用户不存在", null);
+            String iSsendCode = redisHelp.getRedis(this.dataprefix + "_" + "iSsendCode_"+agent+"_"+ip, redisTemplate);
+            if(iSsendCode==null){
+                redisHelp.setRedis(this.dataprefix + "_" + "iSsendCode_"+agent+"_"+ip, "data", 30, redisTemplate);
+            }else{
+                return Result.getResultJson(0, "你的操作太频繁了", null);
             }
+            if (StringUtils.isNotBlank(params)) {
+                jsonToMap = JSONObject.parseObject(JSON.parseObject(params).toString());
+                Map keyName = new HashMap<String, String>();
+                keyName.put("name", jsonToMap.get("name").toString());
+                TypechoUsers toKey1 = JSON.parseObject(JSON.toJSONString(keyName), TypechoUsers.class);
+                List<TypechoUsers> isName = service.selectList(toKey1);
 
-        } else {
-            return Result.getResultJson(0, "参数错误", null);
+
+                if (isName.size() > 0) {
+                    //生成六位随机验证码
+                    Random random = new Random();
+                    String code = "";
+                    for (int i = 0; i < 6; i++) {
+                        code += random.nextInt(10);
+                    }
+                    //存入redis并发送邮件
+                    String name = isName.get(0).getName();
+                    String email = isName.get(0).getMail();
+                    redisHelp.delete(this.dataprefix + "_" + "sendCode" + name, redisTemplate);
+                    redisHelp.setRedis(this.dataprefix + "_" + "sendCode" + name, code, 1800, redisTemplate);
+                    MailService.send("你本次的验证码为" + code, "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><title></title><meta charset=\"utf-8\" /><style>*{padding:0px;margin:0px;box-sizing:border-box;}html{box-sizing:border-box;}body{font-size:15px;background:#fff}.main{margin:20px auto;max-width:500px;border:solid 1px #2299dd;overflow:hidden;}.main h1{display:block;width:100%;background:#2299dd;font-size:18px;color:#fff;text-align:center;padding:15px;}.text{padding:30px;}.text p{margin:10px 0px;line-height:25px;}.text p span{color:#2299dd;font-weight:bold;font-size:22px;margin-left:5px;}</style></head><body><div class=\"main\"><h1>用户验证码</h1><div class=\"text\"><p>用户 " + name + "，你本次的验证码为<span>" + code + "</span>。</p><p>出于安全原因，该验证码将于30分钟后失效。请勿将验证码透露给他人。</p></div></div></body></html>",
+                            new String[]{email}, new String[]{});
+                    return Result.getResultJson(1, "邮件发送成功", null);
+                } else {
+                    return Result.getResultJson(0, "该用户不存在", null);
+                }
+
+            } else {
+                return Result.getResultJson(0, "参数错误", null);
+            }
+        }catch (Exception e){
+            return Result.getResultJson(0, "不正确的邮箱发信配置", null);
         }
+
 
 
     }
@@ -781,46 +813,51 @@ public class TypechoUsersController {
     @RequestMapping(value = "/RegSendCode")
     @ResponseBody
     public String RegSendCode(@RequestParam(value = "params", required = false) String params, HttpServletRequest request) throws MessagingException {
-        Map jsonToMap = null;
-        String  agent =  request.getHeader("User-Agent");
-        String  ip = baseFull.getIpAddr(request);
+        try{
+            Map jsonToMap = null;
+            String  agent =  request.getHeader("User-Agent");
+            String  ip = baseFull.getIpAddr(request);
 
-        String regISsendCode = redisHelp.getRedis(this.dataprefix + "_" + "regISsendCode_"+agent+"_"+ip, redisTemplate);
-        if(regISsendCode==null){
-            redisHelp.setRedis(this.dataprefix + "_" + "regISsendCode_"+agent+"_"+ip, "data", 30, redisTemplate);
-        }else{
-            return Result.getResultJson(0, "你的操作太频繁了", null);
-        }
-        if (StringUtils.isNotBlank(params)) {
-            jsonToMap = JSONObject.parseObject(JSON.parseObject(params).toString());
-            String email = jsonToMap.get("mail").toString();
-            if (!baseFull.isEmail(email)) {
-                return Result.getResultJson(0, "请输入正确的邮箱", null);
+            String regISsendCode = redisHelp.getRedis(this.dataprefix + "_" + "regISsendCode_"+agent+"_"+ip, redisTemplate);
+            if(regISsendCode==null){
+                redisHelp.setRedis(this.dataprefix + "_" + "regISsendCode_"+agent+"_"+ip, "data", 30, redisTemplate);
+            }else{
+                return Result.getResultJson(0, "你的操作太频繁了", null);
             }
-            //判断邮箱是否寻找
-            Map keyMail = new HashMap<String, String>();
-            keyMail.put("mail", jsonToMap.get("mail").toString());
-            TypechoUsers toKey1 = JSON.parseObject(JSON.toJSONString(keyMail), TypechoUsers.class);
-            List<TypechoUsers> isName = service.selectList(toKey1);
-            if (isName.size() > 0) {
-                return Result.getResultJson(0, "该邮箱已被注册", null);
-            }
+            if (StringUtils.isNotBlank(params)) {
+                jsonToMap = JSONObject.parseObject(JSON.parseObject(params).toString());
+                String email = jsonToMap.get("mail").toString();
+                if (!baseFull.isEmail(email)) {
+                    return Result.getResultJson(0, "请输入正确的邮箱", null);
+                }
+                //判断邮箱是否寻找
+                Map keyMail = new HashMap<String, String>();
+                keyMail.put("mail", jsonToMap.get("mail").toString());
+                TypechoUsers toKey1 = JSON.parseObject(JSON.toJSONString(keyMail), TypechoUsers.class);
+                List<TypechoUsers> isName = service.selectList(toKey1);
+                if (isName.size() > 0) {
+                    return Result.getResultJson(0, "该邮箱已被注册", null);
+                }
 
-            //生成六位随机验证码
-            Random random = new Random();
-            String code = "";
-            for (int i = 0; i < 6; i++) {
-                code += random.nextInt(10);
+                //生成六位随机验证码
+                Random random = new Random();
+                String code = "";
+                for (int i = 0; i < 6; i++) {
+                    code += random.nextInt(10);
+                }
+                //存入redis并发送邮件
+                redisHelp.delete(this.dataprefix + "_" + "sendCode" + email, redisTemplate);
+                redisHelp.setRedis(this.dataprefix + "_" + "sendCode" + email, code, 1800, redisTemplate);
+                MailService.send("你本次的验证码为" + code, "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><title></title><meta charset=\"utf-8\" /><style>*{padding:0px;margin:0px;box-sizing:border-box;}html{box-sizing:border-box;}body{font-size:15px;background:#fff}.main{margin:20px auto;max-width:500px;border:solid 1px #2299dd;overflow:hidden;}.main h1{display:block;width:100%;background:#2299dd;font-size:18px;color:#fff;text-align:center;padding:15px;}.text{padding:30px;}.text p{margin:10px 0px;line-height:25px;}.text p span{color:#2299dd;font-weight:bold;font-size:22px;margin-left:5px;}</style></head><body><div class=\"main\"><h1>用户验证码</h1><div class=\"text\"><p>你本次的验证码为<span>" + code + "</span>。</p><p>出于安全原因，该验证码将于30分钟后失效。请勿将验证码透露给他人。</p></div></div></body></html>",
+                        new String[]{email}, new String[]{});
+                return Result.getResultJson(1, "邮件发送成功", null);
+            } else {
+                return Result.getResultJson(0, "参数错误", null);
             }
-            //存入redis并发送邮件
-            redisHelp.delete(this.dataprefix + "_" + "sendCode" + email, redisTemplate);
-            redisHelp.setRedis(this.dataprefix + "_" + "sendCode" + email, code, 1800, redisTemplate);
-            MailService.send("你本次的验证码为" + code, "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><title></title><meta charset=\"utf-8\" /><style>*{padding:0px;margin:0px;box-sizing:border-box;}html{box-sizing:border-box;}body{font-size:15px;background:#fff}.main{margin:20px auto;max-width:500px;border:solid 1px #2299dd;overflow:hidden;}.main h1{display:block;width:100%;background:#2299dd;font-size:18px;color:#fff;text-align:center;padding:15px;}.text{padding:30px;}.text p{margin:10px 0px;line-height:25px;}.text p span{color:#2299dd;font-weight:bold;font-size:22px;margin-left:5px;}</style></head><body><div class=\"main\"><h1>用户验证码</h1><div class=\"text\"><p>你本次的验证码为<span>" + code + "</span>。</p><p>出于安全原因，该验证码将于30分钟后失效。请勿将验证码透露给他人。</p></div></div></body></html>",
-                    new String[]{email}, new String[]{});
-            return Result.getResultJson(1, "邮件发送成功", null);
-        } else {
-            return Result.getResultJson(0, "参数错误", null);
+        }catch (Exception e){
+            return Result.getResultJson(0, "不正确的邮箱发信配置", null);
         }
+
 
     }
 
