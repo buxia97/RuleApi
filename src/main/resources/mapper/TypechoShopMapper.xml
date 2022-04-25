@@ -34,7 +34,7 @@
 
     <!-- 插入数据 -->
     <insert id="insert" parameterType="com.RuleApi.entity.TypechoShop">
-        INSERT INTO typecho_shop
+        INSERT INTO ${prefix}_shop
         <trim prefix="(" suffix=")" suffixOverrides=",">
             <if test ='null != id'>
                 `id`,
@@ -115,7 +115,7 @@
 
     <!-- 更新 -->
     <update id="update" parameterType="com.RuleApi.entity.TypechoShop">
-        UPDATE typecho_shop
+        UPDATE ${prefix}_shop
         <set>
             <if test ='null != title'>`title` = #{title},</if>
             <if test ='null != imgurl'>`imgurl` = #{imgurl},</if>
@@ -134,13 +134,13 @@
 
     <!-- 删除 -->
     <delete id="delete">
-        DELETE FROM typecho_shop
+        DELETE FROM ${prefix}_shop
         WHERE `id` = #{key}
     </delete>
 
     <!-- 批量删除 -->
     <delete id="batchDelete" parameterType = "java.util.List">
-        DELETE FROM typecho_shop WHERE id IN
+        DELETE FROM ${prefix}_shop WHERE id IN
         <foreach collection="list"  item="item" open="(" separator="," close=")"  >
             #{item}
         </foreach>
@@ -149,14 +149,14 @@
     <!-- 主键查询 -->
     <select id="selectByKey" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List" />
-        FROM typecho_shop
+        FROM ${prefix}_shop
         WHERE `id` = #{key}
     </select>
 
     <!-- 条件查询 -->
     <select id="selectList" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List" />
-        FROM typecho_shop
+        FROM ${prefix}_shop
         <where>
             <if test ='null != id'>
                 and `id` = #{id}
@@ -198,7 +198,7 @@
     <!-- 分页条件查询 -->
     <select id="selectPage" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List" />
-        FROM typecho_shop
+        FROM ${prefix}_shop
         <where>
             <if test ='null != typechoShop.id'>
                 and `id` = #{typechoShop.id}
@@ -243,7 +243,7 @@
 
     <!-- 总量查询 -->
     <select id="total" resultType="java.lang.Integer">
-        SELECT count(*) FROM typecho_shop
+        SELECT count(*) FROM ${prefix}_shop
         <where>
             <if test ='null != id'>
                 and `id` = #{id}

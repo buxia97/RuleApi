@@ -23,7 +23,7 @@
 
     <!-- 插入数据 -->
     <insert id="insert" parameterType="com.RuleApi.entity.TypechoPaykey">
-        INSERT INTO typecho_paykey
+        INSERT INTO ${prefix}_paykey
         <trim prefix="(" suffix=")" suffixOverrides=",">
             <if test ='null != id'>
                 `id`,
@@ -68,7 +68,7 @@
 
     <!-- 批量插入数据 -->
     <insert id="batchInsert" parameterType="java.util.List">
-        INSERT INTO typecho_paykey ( <include refid="Base_Column_List" /> ) VALUES
+        INSERT INTO ${prefix}_paykey ( <include refid="Base_Column_List" /> ) VALUES
         <foreach collection="list" item="curr" index="index" separator=",">
             (
                 #{curr.id},
@@ -83,7 +83,7 @@
 
     <!-- 更新 -->
     <update id="update" parameterType="com.RuleApi.entity.TypechoPaykey">
-        UPDATE typecho_paykey
+        UPDATE ${prefix}_paykey
         <set>
             <if test ='null != value'>`value` = #{value},</if>
             <if test ='null != price'>`price` = #{price},</if>
@@ -96,13 +96,13 @@
 
     <!-- 删除 -->
     <delete id="delete">
-        DELETE FROM typecho_paykey
+        DELETE FROM ${prefix}_paykey
         WHERE `id` = #{key}
     </delete>
 
     <!-- 批量删除 -->
     <delete id="batchDelete" parameterType = "java.util.List">
-        DELETE FROM typecho_paykey WHERE id IN
+        DELETE FROM ${prefix}_paykey WHERE id IN
         <foreach collection="list"  item="item" open="(" separator="," close=")"  >
             #{item}
         </foreach>
@@ -111,14 +111,14 @@
     <!-- 根据value查询 -->
     <select id="selectByKey" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List" />
-        FROM typecho_paykey
+        FROM ${prefix}_paykey
         WHERE `value` = #{key}
     </select>
 
     <!-- 条件查询 -->
     <select id="selectList" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List" />
-        FROM typecho_paykey
+        FROM ${prefix}_paykey
         <where>
             <if test ='null != id'>
                 and `id` = #{id}
@@ -144,7 +144,7 @@
     <!-- 分页条件查询 -->
     <select id="selectPage" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List" />
-        FROM typecho_paykey
+        FROM ${prefix}_paykey
         <where>
             <if test ='null != typechoPaykey.id'>
                 and `id` = #{typechoPaykey.id}
@@ -170,7 +170,7 @@
 
     <!-- 总量查询 -->
     <select id="total" resultType="java.lang.Integer">
-        SELECT count(*) FROM typecho_paykey
+        SELECT count(*) FROM ${prefix}_paykey
         <where>
             <if test ='null != id'>
                 and `id` = #{id}

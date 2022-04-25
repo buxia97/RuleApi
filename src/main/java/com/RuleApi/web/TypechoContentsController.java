@@ -439,7 +439,12 @@ public class TypechoContentsController {
             int rows = service.insert(insert);
 
             Integer cid = insert.getCid();
-            //文章添加完成后，再处理分类和标签还有挂载商品
+            //文章添加完成后，再处理分类和标签还有挂载商品，还有slug
+            TypechoContents slugUpdate = new TypechoContents();
+            slugUpdate.setSlug(cid.toString());
+            slugUpdate.setCid(cid);
+            service.update(slugUpdate);
+
             if(rows > 0) {
                 if (category != "") {
                     Integer result = category.indexOf(",");

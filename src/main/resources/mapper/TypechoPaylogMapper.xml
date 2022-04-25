@@ -29,7 +29,7 @@
 
     <!-- 插入数据 -->
     <insert id="insert" parameterType="com.RuleApi.entity.TypechoPaylog">
-        INSERT INTO typecho_paylog
+        INSERT INTO ${prefix}_paylog
         <trim prefix="(" suffix=")" suffixOverrides=",">
             <if test ='null != pid'>
                 `pid`,
@@ -92,7 +92,7 @@
 
     <!-- 批量插入数据 -->
     <insert id="batchInsert" parameterType="java.util.List">
-        INSERT INTO typecho_paylog ( <include refid="Base_Column_List" /> ) VALUES
+        INSERT INTO ${prefix}_paylog ( <include refid="Base_Column_List" /> ) VALUES
         <foreach collection="list" item="curr" index="index" separator=",">
             (
                 #{curr.pid},
@@ -110,7 +110,7 @@
 
     <!-- 更新 -->
     <update id="update" parameterType="com.RuleApi.entity.TypechoPaylog">
-        UPDATE typecho_paylog
+        UPDATE ${prefix}_paylog
         <set>
             <if test ='null != subject'>`subject` = #{subject},</if>
             <if test ='null != totalAmount'>`total_amount` = #{totalAmount},</if>
@@ -126,13 +126,13 @@
 
     <!-- 删除 -->
     <delete id="delete">
-        DELETE FROM typecho_paylog
+        DELETE FROM ${prefix}_paylog
         WHERE `pid` = #{key}
     </delete>
 
     <!-- 批量删除 -->
     <delete id="batchDelete" parameterType = "java.util.List">
-        DELETE FROM typecho_paylog WHERE pid IN
+        DELETE FROM ${prefix}_paylog WHERE pid IN
         <foreach collection="list"  item="item" open="(" separator="," close=")"  >
             #{item}
         </foreach>
@@ -141,14 +141,14 @@
     <!-- 主键查询 -->
     <select id="selectByKey" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List" />
-        FROM typecho_paylog
+        FROM ${prefix}_paylog
         WHERE `pid` = #{key}
     </select>
 
     <!-- 条件查询 -->
     <select id="selectList" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List" />
-        FROM typecho_paylog
+        FROM ${prefix}_paylog
         <where>
             <if test ='null != pid'>
                 and `pid` = #{pid}
@@ -184,7 +184,7 @@
     <!-- 分页条件查询 -->
     <select id="selectPage" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List" />
-        FROM typecho_paylog
+        FROM ${prefix}_paylog
         <where>
             <if test ='null != typechoPaylog.pid'>
                 and `pid` = #{typechoPaylog.pid}
@@ -220,7 +220,7 @@
 
     <!-- 总量查询 -->
     <select id="total" resultType="java.lang.Integer">
-        SELECT count(*) FROM typecho_paylog
+        SELECT count(*) FROM ${prefix}_paylog
         <where>
             <if test ='null != pid'>
                 and `pid` = #{pid}
