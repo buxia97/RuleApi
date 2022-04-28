@@ -77,6 +77,7 @@ var vm = new Vue({
 			that.isLogin = 0;
 		}
 		that.getAll();
+		that.getConfigAll();
 		that.getApplicationText();
 	},
 	mounted(){
@@ -145,38 +146,23 @@ var vm = new Vue({
 			}
 			return json;
 		},
-		getAll(){
+		getConfigAll(){
 			var that = this;
-			var url = "/system/allConfig"
+			var url = "/system/getApiConfig"
 			axios.get(url,{
-			        params:{
-						"webkey":that.webkey,
-			        }
+				params:{
+					"webkey":that.webkey,
+				}
 			}).then(function(res){
 				if(res.data.code==1){
 					that.webinfoTitle=res.data.data.webinfoTitle;
 					that.webinfoUrl=res.data.data.webinfoUrl;
-					that.webinfoKey=res.data.data.webinfoKey;
 					that.webinfoUsertime=res.data.data.webinfoUsertime;
 					that.webinfoUploadUrl=res.data.data.webinfoUploadUrl;
 					that.webinfoAvatar=res.data.data.webinfoAvatar;
 					that.pexelsKey = res.data.data.pexelsKey;
 					that.scale = res.data.data.scale;
 
-					//邮箱信息
-					that.mailHost=res.data.data.mailHost;
-					that.mailUsername=res.data.data.mailUsername;
-					that.mailPassword=res.data.data.mailPassword;
-					//mysql配置
-					that.dataUrl=res.data.data.dataUrl;
-					that.dataUsername=res.data.data.dataUsername;
-					that.dataPassword=res.data.data.dataPassword;
-					that.dataPrefix=res.data.data.dataPrefix;
-					//Redis配置
-					that.redisHost=res.data.data.redisHost;
-					that.redisPassword=res.data.data.redisPassword;
-					that.redisPort=res.data.data.redisPort;
-					that.redisPrefix=res.data.data.redisPrefix;
 					//COS
 					that.cosAccessKey=res.data.data.cosAccessKey;
 					that.cosSecretKey=res.data.data.cosSecretKey;
@@ -215,6 +201,41 @@ var vm = new Vue({
 				console.log(error);
 			});
 		},
+		getAll(){
+			var that = this;
+			that.getConfigAll();
+			var url = "/system/allConfig"
+			axios.get(url,{
+			        params:{
+						"webkey":that.webkey,
+			        }
+			}).then(function(res){
+				if(res.data.code==1){
+
+					that.webinfoKey=res.data.data.webinfoKey;
+
+
+					//邮箱信息
+					that.mailHost=res.data.data.mailHost;
+					that.mailUsername=res.data.data.mailUsername;
+					that.mailPassword=res.data.data.mailPassword;
+					//mysql配置
+					that.dataUrl=res.data.data.dataUrl;
+					that.dataUsername=res.data.data.dataUsername;
+					that.dataPassword=res.data.data.dataPassword;
+					that.dataPrefix=res.data.data.dataPrefix;
+					//Redis配置
+					that.redisHost=res.data.data.redisHost;
+					that.redisPassword=res.data.data.redisPassword;
+					that.redisPort=res.data.data.redisPort;
+					that.redisPrefix=res.data.data.redisPrefix;
+				}else{
+					that.outSystem();
+				}
+			}).catch(function (error) {
+				console.log(error);
+			});
+		},
 		getApplicationText(){
 			var that = this;
 			var url = "/system/getConfig"
@@ -234,11 +255,10 @@ var vm = new Vue({
 		},
 		saveWebinfo(){
 			var that = this;
-			var url = "/system/setupWebInfo"
+			var url = "/system/apiConfigUpdate"
 			var data={
 				webinfoTitle:that.webinfoTitle,
 				webinfoUrl:that.webinfoUrl,
-				webinfoKey:that.webinfoKey,
 				webinfoUsertime:that.webinfoUsertime,
 				webinfoUploadUrl:that.webinfoUploadUrl,
 				webinfoAvatar:that.webinfoAvatar,
@@ -337,7 +357,7 @@ var vm = new Vue({
 		},
 		saveCos(){
 			var that = this;
-			var url = "/system/setupCos"
+			var url = "/system/apiConfigUpdate"
 			var data={
 				cosAccessKey:that.cosAccessKey,
 				cosSecretKey:that.cosSecretKey,
@@ -364,7 +384,7 @@ var vm = new Vue({
 		},
 		saveOss(){
 			var that = this;
-			var url = "/system/setupOss"
+			var url = "/system/apiConfigUpdate"
 			var data={
 				aliyunEndpoint:that.aliyunEndpoint,
 				aliyunAccessKeyId:that.aliyunAccessKeyId,
@@ -392,7 +412,7 @@ var vm = new Vue({
 
 		saveFTP(){
 			var that = this;
-			var url = "/system/setupFtp"
+			var url = "/system/apiConfigUpdate"
 			var data={
 				ftpHost:that.ftpHost,
 				ftpPort:that.ftpPort,
@@ -418,7 +438,7 @@ var vm = new Vue({
 		},
 		saveAlipay(){
 			var that = this;
-			var url = "/system/setupAlipay"
+			var url = "/system/apiConfigUpdate"
 			var data={
 				alipayAppId:that.alipayAppId,
 				alipayPrivateKey:that.alipayPrivateKey,
@@ -443,7 +463,7 @@ var vm = new Vue({
 		},
 		saveWxpay(){
 			var that = this;
-			var url = "/system/setupWxpay"
+			var url = "/system/apiConfigUpdate"
 			var data={
 				wxpayAppId:that.wxpayAppId,
 				wxpayMchId:that.wxpayMchId,

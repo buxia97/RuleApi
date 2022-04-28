@@ -50,6 +50,9 @@ public class TypechoMetasController {
     private TypechoUsersService usersService;
 
     @Autowired
+    private TypechoApiconfigService apiconfigService;
+
+    @Autowired
     private RedisTemplate redisTemplate;
 
     @Value("${webinfo.contentCache}")
@@ -58,8 +61,6 @@ public class TypechoMetasController {
     @Value("${web.prefix}")
     private String dataprefix;
 
-    @Value("${webinfo.avatar}")
-    private String avatar;
 
     RedisHelp redisHelp =new RedisHelp();
     ResultAll Result = new ResultAll();
@@ -95,6 +96,7 @@ public class TypechoMetasController {
             if(cacheList.size()>0){
                 jsonList = cacheList;
             }else{
+                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
                 //首先查询typechoRelationships获取映射关系
                 PageList<TypechoRelationships> pageList = relationshipsService.selectPage(query, page, limit);
                 List<TypechoRelationships> list = pageList.getList();
@@ -112,9 +114,9 @@ public class TypechoMetasController {
                         if(author.getScreenName()!=""){
                             name = author.getScreenName();
                         }
-                        String avatar = this.avatar + "null";
+                        String avatar = apiconfig.getWebinfoAvatar() + "null";
                         if(author.getMail()!=""){
-                            avatar = baseFull.getAvatar(this.avatar, author.getMail());
+                            avatar = baseFull.getAvatar(apiconfig.getWebinfoAvatar(), author.getMail());
                         }
                         authorInfo.put("name",name);
                         authorInfo.put("avatar",avatar);

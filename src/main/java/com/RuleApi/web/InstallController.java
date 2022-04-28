@@ -297,14 +297,14 @@ public class InstallController {
                     "  `ftpPassword` varchar(255) NOT NULL," +
                     "  `ftpBasePath` varchar(255) NOT NULL," +
                     "  `alipayAppId` varchar(255) NOT NULL," +
-                    "  `alipayPrivateKey` varchar(1200) NOT NULL," +
-                    "  `alipayPublicKey` varchar(2000) NOT NULL," +
+                    "  `alipayPrivateKey` varchar(5000) NOT NULL," +
+                    "  `alipayPublicKey` varchar(5000) NOT NULL," +
                     "  `alipayNotifyUrl` varchar(500) NOT NULL," +
                     "  `appletsAppid` varchar(255) NOT NULL," +
-                    "  `appletsSecret` varchar(500) NOT NULL," +
+                    "  `appletsSecret` varchar(5000) NOT NULL," +
                     "  `wxpayAppId` varchar(255) NOT NULL," +
                     "  `wxpayMchId` varchar(255) NOT NULL," +
-                    "  `wxpayKey` varchar(2000) DEFAULT ''," +
+                    "  `wxpayKey` varchar(5000) DEFAULT ''," +
                     "  `wxpayNotifyUrl` varchar(500) DEFAULT ''," +
                     "  PRIMARY KEY (`id`)" +
                     ") ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='api配置信息表';");

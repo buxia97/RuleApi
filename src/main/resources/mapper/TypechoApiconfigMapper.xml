@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.apiconfig.dao.TypechoApiconfigDao">
+<mapper namespace="com.RuleApi.dao.TypechoApiconfigDao">
 
     <resultMap id="BaseResultMap" type="com.RuleApi.entity.TypechoApiconfig" >
         <result column="id" property="id" />
@@ -91,7 +91,7 @@
 
     <!-- 插入数据 -->
     <insert id="insert" parameterType="com.RuleApi.entity.TypechoApiconfig">
-        INSERT INTO typecho_apiconfig
+        INSERT INTO ${prefix}_apiconfig
         <trim prefix="(" suffix=")" suffixOverrides=",">
             <if test ='null != id'>
                 `id`,
@@ -341,7 +341,7 @@
 
     <!-- 更新 -->
     <update id="update" parameterType="com.RuleApi.entity.TypechoApiconfig">
-        UPDATE typecho_apiconfig
+        UPDATE ${prefix}_apiconfig
         <set>
             <if test ='null != webinfoTitle'>`webinfoTitle` = #{webinfoTitle},</if>
             <if test ='null != webinfoUrl'>`webinfoUrl` = #{webinfoUrl},</if>

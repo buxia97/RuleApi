@@ -65,8 +65,7 @@ public class TypechoUsersController {
     @Autowired
     private RedisTemplate redisTemplate;
 
-    @Value("${webinfo.url}")
-    private String url;
+
 
     @Value("${webinfo.usertime}")
     private Integer usertime;
@@ -74,8 +73,6 @@ public class TypechoUsersController {
     @Value("${webinfo.userCache}")
     private Integer userCache;
 
-    @Value("${webinfo.avatar}")
-    private String avatar;
 
     @Value("${web.prefix}")
     private String dataprefix;
@@ -118,6 +115,7 @@ public class TypechoUsersController {
             if (cacheList.size() > 0) {
                 jsonList = cacheList;
             } else {
+                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
                 PageList<TypechoUsers> pageList = service.selectPage(query, page, limit, searchKey, order);
                 List list = pageList.getList();
                 for (int i = 0; i < list.size(); i++) {
@@ -134,9 +132,9 @@ public class TypechoUsersController {
                     json.remove("pay");
                     json.remove("assets");
                     if (json.get("mail") != null) {
-                        json.put("avatar", baseFull.getAvatar(this.avatar, json.get("mail").toString()));
+                        json.put("avatar", baseFull.getAvatar(apiconfig.getWebinfoAvatar(), json.get("mail").toString()));
                     } else {
-                        json.put("avatar", this.avatar + "null");
+                        json.put("avatar", apiconfig.getWebinfoAvatar() + "null");
                     }
 
 
@@ -258,11 +256,12 @@ public class TypechoUsersController {
             json.remove("address");
             json.remove("pay");
             json.remove("assets");
+            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
             if (json.get("mail") != null) {
-                json.put("avatar", baseFull.getAvatar(this.avatar, json.get("mail").toString()));
+                json.put("avatar", baseFull.getAvatar(apiconfig.getWebinfoAvatar(), json.get("mail").toString()));
 
             } else {
-                json.put("avatar", this.avatar + "null");
+                json.put("avatar", apiconfig.getWebinfoAvatar() + "null");
             }
             JSONObject response = new JSONObject();
 
@@ -340,11 +339,11 @@ public class TypechoUsersController {
                 comments.setAuthorId(uid);
                 Integer lv = commentsService.total(comments);
                 jsonToMap.put("lv", baseFull.getLv(lv));
-
+                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
                 if (rows.get(0).getMail() != null) {
-                    jsonToMap.put("avatar", baseFull.getAvatar(this.avatar, rows.get(0).getMail()));
+                    jsonToMap.put("avatar", baseFull.getAvatar(apiconfig.getWebinfoAvatar(), rows.get(0).getMail()));
                 } else {
-                    jsonToMap.put("avatar", this.avatar + "null");
+                    jsonToMap.put("avatar", apiconfig.getWebinfoAvatar() + "null");
                 }
                 //更新用户登录时间和第一次登陆时间（满足typecho要求）
                 String userTime = String.valueOf(date).substring(0, 10);
@@ -397,12 +396,11 @@ public class TypechoUsersController {
             } else {
                 return Result.getResultJson(0, "请输入正确的参数", null);
             }
-
+            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
             //如果是微信，则走两步判断，是小程序还是APP
             if(jsonToMap.get("appLoginType").toString().equals("weixin")){
                 if(jsonToMap.get("type").toString().equals("applets")){
                     //如果是小程序，走官方接口获取accessToken和openid
-                    TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
                     if (jsonToMap.get("js_code") == null) {
                         return Result.getResultJson(0, "APP配置异常，请检查相关设置", null);
                     }
@@ -462,10 +460,11 @@ public class TypechoUsersController {
                 if(viptime>Integer.parseInt(curTime)||viptime.equals(1)){
                     jsonToMap.put("isvip", 1);
                 }
+
                 if (user.getMail() != null) {
-                    jsonToMap.put("avatar", baseFull.getAvatar(this.avatar, user.getMail()));
+                    jsonToMap.put("avatar", baseFull.getAvatar(apiconfig.getWebinfoAvatar(), user.getMail()));
                 } else {
-                    jsonToMap.put("avatar", this.avatar + "null");
+                    jsonToMap.put("avatar", apiconfig.getWebinfoAvatar() + "null");
                 }
                 //获取用户等级
                 Integer uid = user.getUid();
@@ -524,7 +523,7 @@ public class TypechoUsersController {
                 jsonToMap.put("mail", "");
                 jsonToMap.put("url", "");
                 jsonToMap.put("screenName", userapi.getNickName());
-                jsonToMap.put("avatar", this.avatar + "null");
+                jsonToMap.put("avatar", apiconfig.getWebinfoAvatar() + "null");
                 jsonToMap.put("lv", 0);
                 jsonToMap.put("customize", "");
                 //VIP
@@ -1392,11 +1391,12 @@ public class TypechoUsersController {
         Integer lv = commentsService.total(comments);
         json.put("lv", baseFull.getLv(lv));
         json.put("token", token);
+        TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
         if (json.get("mail") != null) {
-            json.put("avatar", baseFull.getAvatar(this.avatar, json.get("mail").toString()));
+            json.put("avatar", baseFull.getAvatar(apiconfig.getWebinfoAvatar(), json.get("mail").toString()));
 
         } else {
-            json.put("avatar", this.avatar + "null");
+            json.put("avatar", apiconfig.getWebinfoAvatar() + "null");
         }
         JSONObject response = new JSONObject();
 

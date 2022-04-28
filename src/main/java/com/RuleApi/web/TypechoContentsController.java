@@ -60,6 +60,7 @@ public class TypechoContentsController {
     @Autowired
     private TypechoApiconfigService apiconfigService;
 
+
     @Autowired
     private RedisTemplate redisTemplate;
 
@@ -76,14 +77,7 @@ public class TypechoContentsController {
     @Value("${web.prefix}")
     private String dataprefix;
 
-    @Value("${webinfo.title}")
-    private String webTitle;
 
-    @Value("${webinfo.url}")
-    private String webUrl;
-
-    @Value("${webinfo.avatar}")
-    private String avatar;
 
     RedisHelp redisHelp =new RedisHelp();
     ResultAll Result = new ResultAll();
@@ -252,6 +246,7 @@ public class TypechoContentsController {
             if(cacheList.size()>0){
                 jsonList = cacheList;
             }else{
+                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
                 PageList<TypechoContents> pageList = service.selectPage(query, page, limit, searchKey,order,random);
                 List list = pageList.getList();
                 for (int i = 0; i < list.size(); i++) {
@@ -291,9 +286,9 @@ public class TypechoContentsController {
                         if(author.getScreenName()!=""){
                             name = author.getScreenName();
                         }
-                        String avatar = this.avatar + "null";
+                        String avatar = apiconfig.getWebinfoAvatar() + "null";
                         if(author.getMail()!=""){
-                            avatar = baseFull.getAvatar(this.avatar, author.getMail());
+                            avatar = baseFull.getAvatar(apiconfig.getWebinfoAvatar(), author.getMail());
                         }
                         authorInfo.put("name",name);
                         authorInfo.put("avatar",avatar);
@@ -729,12 +724,8 @@ public class TypechoContentsController {
             if(uStatus==0){
                 return Result.getResultJson(0,"用户未登录或Token验证失败",null);
             }
-            String webTitle = this.webTitle;
-            byte[] byteName=webTitle.getBytes("UTF-8");
-            String str=new String(byteName,"ISO-8859-1");
-            byte[] byteName2=str.getBytes("ISO-8859-1");
-            String newStr=new String(byteName2,"UTF-8");
-            String newtitle = newStr;
+            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+            String newtitle = apiconfig.getWebinfoTitle();
             //String group = (String) redisHelp.getValue("userInfo"+token,"group",redisTemplate);
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             String group = map.get("group").toString();
@@ -755,7 +746,7 @@ public class TypechoContentsController {
                 try{
                     MailService.send("用户："+uid+",您的文章已审核通过", "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><title></title><meta charset=\"utf-8\" /><style>*{padding:0px;margin:0px;box-sizing:border-box;}html{box-sizing:border-box;}body{font-size:15px;background:#fff}.main{margin:20px auto;max-width:500px;border:solid 1px #2299dd;overflow:hidden;}.main h1{display:block;width:100%;background:#2299dd;font-size:18px;color:#fff;text-align:center;padding:15px;}.text{padding:30px;}.text p{margin:10px 0px;line-height:25px;}.text p span{color:#2299dd;font-weight:bold;font-size:22px;margin-left:5px;}</style></head>" +
                                     "<body><div class=\"main\"><h1>文章审核</h1><div class=\"text\"><p>用户 "+uid+"，你的文章<"+title+">已经审核通过！</p>" +
-                                    "<p>可前往<a href=\""+this.webUrl+"\">"+newtitle+"</a>查看详情</p></div></div></body></html>",
+                                    "<p>可前往<a href=\""+apiconfig.getWebinfoUrl()+"\">"+newtitle+"</a>查看详情</p></div></div></body></html>",
                             new String[] {email}, new String[] {});
                 }catch (Exception e){
                     System.out.println("邮箱发信配置错误："+e);

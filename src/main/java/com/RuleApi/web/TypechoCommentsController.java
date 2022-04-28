@@ -44,6 +44,8 @@ public class TypechoCommentsController {
     @Autowired
     private TypechoUsersService usersService;
 
+    @Autowired
+    private TypechoApiconfigService apiconfigService;
 
     @Autowired
     private RedisTemplate redisTemplate;
@@ -53,16 +55,6 @@ public class TypechoCommentsController {
 
     @Value("${webinfo.CommentCache}")
     private Integer CommentCache;
-
-    @Value("${webinfo.avatar}")
-    private String avatar;
-
-    @Value("${webinfo.title}")
-    private String webTitle;
-
-    @Value("${webinfo.url}")
-    private String webUrl;
-
 
     @Value("${web.prefix}")
     private String dataprefix;
@@ -118,6 +110,7 @@ public class TypechoCommentsController {
             if(cacheList.size()>0){
                 jsonList = cacheList;
             }else{
+                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
                 PageList<TypechoComments> pageList = service.selectPage(query, page, limit,searchKey,order);
                 List list = pageList.getList();
                 for (int i = 0; i < list.size(); i++) {
@@ -137,9 +130,9 @@ public class TypechoCommentsController {
                         }
                     }
                     if(json.get("mail")!=null){
-                        json.put("avatar",baseFull.getAvatar(this.avatar,json.get("mail").toString()));
+                        json.put("avatar",baseFull.getAvatar(apiconfig.getWebinfoAvatar(),json.get("mail").toString()));
                     }else{
-                        json.put("avatar",this.avatar+"null");
+                        json.put("avatar",apiconfig.getWebinfoAvatar()+"null");
                     }
                     //获取用户等级和自定义头衔
                     Integer userid = Integer.parseInt(json.get("authorId").toString());
@@ -213,12 +206,8 @@ public class TypechoCommentsController {
             if(uStatus==0){
                 return Result.getResultJson(0,"用户未登录或Token验证失败",null);
             }
-            String webTitle = this.webTitle;
-            byte[] byteName=webTitle.getBytes("UTF-8");
-            String str=new String(byteName,"ISO-8859-1");
-            byte[] byteName2=str.getBytes("ISO-8859-1");
-            String newStr=new String(byteName2,"UTF-8");
-            String title = newStr;
+            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+            String title = apiconfig.getWebinfoTitle();
 
             TypechoComments insert = null;
             String  agent =  request.getHeader("User-Agent");
@@ -286,7 +275,7 @@ public class TypechoCommentsController {
                                             "<meta charset=\"utf-8\" /><style>*{padding:0px;margin:0px;box-sizing:border-box;}html{box-sizing:border-box;}body{font-size:15px;background:#fff}.main{margin:20px auto;max-width:500px;border:solid 1px #2299dd;overflow:hidden;}.main h1{display:block;width:100%;background:#2299dd;font-size:18px;color:#fff;text-align:center;padding:15px;}.text{padding:30px;}.text p{margin:10px 0px;line-height:25px;}.text p span{color:#2299dd;font-weight:bold;font-size:22px;margin-left:5px;}</style></head>" +
                                             "<body><div class=\"main\"><h1>文章评论</h1>" +
                                             "<div class=\"text\"><p>用户 "+uid+"，你的文章有新的评论：</p><p>”"+postName+"："+jsonToMap.get("text")+"“</p>" +
-                                            "<p>可前往<a href=\""+this.webUrl+"\">"+title+"</a>查看详情</p>" +
+                                            "<p>可前往<a href=\""+apiconfig.getWebinfoUrl()+"\">"+title+"</a>查看详情</p>" +
                                             "</div></div></body></html>",
                                     new String[] {email}, new String[] {});
                         }
@@ -303,7 +292,7 @@ public class TypechoCommentsController {
                                                 "<meta charset=\"utf-8\" /><style>*{padding:0px;margin:0px;box-sizing:border-box;}html{box-sizing:border-box;}body{font-size:15px;background:#fff}.main{margin:20px auto;max-width:500px;border:solid 1px #2299dd;overflow:hidden;}.main h1{display:block;width:100%;background:#2299dd;font-size:18px;color:#fff;text-align:center;padding:15px;}.text{padding:30px;}.text p{margin:10px 0px;line-height:25px;}.text p span{color:#2299dd;font-weight:bold;font-size:22px;margin-left:5px;}</style></head>" +
                                                 "<body><div class=\"main\"><h1>文章评论</h1>" +
                                                 "<div class=\"text\"><p>您的评论有了新的回复：</p><p>”"+postName+"："+jsonToMap.get("text")+"“</p>" +
-                                                "<p>可前往<a href=\""+this.webUrl+"\">"+title+"</a>查看详情</p>" +
+                                                "<p>可前往<a href=\""+apiconfig.getWebinfoUrl()+"\">"+title+"</a>查看详情</p>" +
                                                 "</div></div></body></html>",
                                         new String[] {pemail}, new String[] {});
                             }
@@ -393,12 +382,8 @@ public class TypechoCommentsController {
             if(uStatus==0){
                 return Result.getResultJson(0,"用户未登录或Token验证失败",null);
             }
-            String webTitle = this.webTitle;
-            byte[] byteName=webTitle.getBytes("UTF-8");
-            String str=new String(byteName,"ISO-8859-1");
-            byte[] byteName2=str.getBytes("ISO-8859-1");
-            String newStr=new String(byteName2,"UTF-8");
-            String title = newStr;
+            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+            String title = apiconfig.getWebinfoTitle();
             //String group = (String) redisHelp.getValue("userInfo"+token,"group",redisTemplate);
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             String group = map.get("group").toString();
@@ -413,7 +398,7 @@ public class TypechoCommentsController {
                 Integer uid = comments.getAuthorId();
                 if(comments.getMail()!=null){
                     String email = comments.getMail();
-                    MailService.send("用户："+uid+",您的评论已审核通过", "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><title></title><meta charset=\"utf-8\" /><style>*{padding:0px;margin:0px;box-sizing:border-box;}html{box-sizing:border-box;}body{font-size:15px;background:#fff}.main{margin:20px auto;max-width:500px;border:solid 1px #2299dd;overflow:hidden;}.main h1{display:block;width:100%;background:#2299dd;font-size:18px;color:#fff;text-align:center;padding:15px;}.text{padding:30px;}.text p{margin:10px 0px;line-height:25px;}.text p span{color:#2299dd;font-weight:bold;font-size:22px;margin-left:5px;}</style></head><body><div class=\"main\"><h1>商品订单</h1><div class=\"text\"><p>用户 "+uid+"，你的评论已经审核通过！</p><p>可前往<a href=\""+this.webUrl+"\">"+this.webTitle+"</a>查看详情</p></div></div></body></html>",
+                    MailService.send("用户："+uid+",您的评论已审核通过", "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><title></title><meta charset=\"utf-8\" /><style>*{padding:0px;margin:0px;box-sizing:border-box;}html{box-sizing:border-box;}body{font-size:15px;background:#fff}.main{margin:20px auto;max-width:500px;border:solid 1px #2299dd;overflow:hidden;}.main h1{display:block;width:100%;background:#2299dd;font-size:18px;color:#fff;text-align:center;padding:15px;}.text{padding:30px;}.text p{margin:10px 0px;line-height:25px;}.text p span{color:#2299dd;font-weight:bold;font-size:22px;margin-left:5px;}</style></head><body><div class=\"main\"><h1>商品订单</h1><div class=\"text\"><p>用户 "+uid+"，你的评论已经审核通过！</p><p>可前往<a href=\""+apiconfig.getWebinfoUrl()+"\">"+apiconfig.getWebinfoTitle()+"</a>查看详情</p></div></div></body></html>",
                             new String[] {email}, new String[] {});
                 }
                 //给相关人员发送评论
@@ -428,7 +413,7 @@ public class TypechoCommentsController {
                                     "<meta charset=\"utf-8\" /><style>*{padding:0px;margin:0px;box-sizing:border-box;}html{box-sizing:border-box;}body{font-size:15px;background:#fff}.main{margin:20px auto;max-width:500px;border:solid 1px #2299dd;overflow:hidden;}.main h1{display:block;width:100%;background:#2299dd;font-size:18px;color:#fff;text-align:center;padding:15px;}.text{padding:30px;}.text p{margin:10px 0px;line-height:25px;}.text p span{color:#2299dd;font-weight:bold;font-size:22px;margin-left:5px;}</style></head>" +
                                     "<body><div class=\"main\"><h1>文章评论</h1>" +
                                     "<div class=\"text\"><p>用户 "+authorUid+"，你的文章有新的评论：</p><p>”"+postName+"："+text+"“</p>" +
-                                    "<p>可前往<a href=\""+this.webUrl+"\">"+title+"</a>查看详情</p>" +
+                                    "<p>可前往<a href=\""+apiconfig.getWebinfoUrl()+"\">"+title+"</a>查看详情</p>" +
                                     "</div></div></body></html>",
                             new String[] {aemail}, new String[] {});
                 }
@@ -441,7 +426,7 @@ public class TypechoCommentsController {
                                         "<meta charset=\"utf-8\" /><style>*{padding:0px;margin:0px;box-sizing:border-box;}html{box-sizing:border-box;}body{font-size:15px;background:#fff}.main{margin:20px auto;max-width:500px;border:solid 1px #2299dd;overflow:hidden;}.main h1{display:block;width:100%;background:#2299dd;font-size:18px;color:#fff;text-align:center;padding:15px;}.text{padding:30px;}.text p{margin:10px 0px;line-height:25px;}.text p span{color:#2299dd;font-weight:bold;font-size:22px;margin-left:5px;}</style></head>" +
                                         "<body><div class=\"main\"><h1>文章评论</h1>" +
                                         "<div class=\"text\"><p>您的评论有了新的回复：</p><p>”"+postName+"："+text+"“</p>" +
-                                        "<p>可前往<a href=\""+this.webUrl+"\">"+title+"</a>查看详情</p>" +
+                                        "<p>可前往<a href=\""+apiconfig.getWebinfoUrl()+"\">"+title+"</a>查看详情</p>" +
                                         "</div></div></body></html>",
                                 new String[] {pemail}, new String[] {});
                     }
