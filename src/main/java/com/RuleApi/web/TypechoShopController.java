@@ -49,20 +49,11 @@ public class TypechoShopController {
     @Autowired
     private TypechoPaylogService paylogService;
 
+    @Autowired
+    private TypechoApiconfigService apiconfigService;
+
     @Value("${web.prefix}")
     private String dataprefix;
-
-    @Value("${webinfo.vipPrice}")
-    private Integer vipPrice;
-
-    @Value("${webinfo.vipDay}")
-    private Integer vipDay;
-
-    @Value("${webinfo.vipDiscount}")
-    private Double vipDiscount;
-
-    @Value("${webinfo.scale}")
-    private Integer scale;
 
     RedisHelp redisHelp =new RedisHelp();
     ResultAll Result = new ResultAll();
@@ -309,6 +300,9 @@ public class TypechoShopController {
             if(uid.equals(aid)){
                 return Result.getResultJson(0,"你不可以买自己的商品",null);
             }
+            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+            Double vipDiscount = Double.valueOf(apiconfig.getVipDiscount());
+
             TypechoUsers usersinfo =usersService.selectByKey(uid.toString());
             Integer price = shopinfo.getPrice();
             //判断是否为VIP，是VIP则乘以折扣
@@ -317,7 +311,7 @@ public class TypechoShopController {
             Integer viptime  = usersinfo.getVip();
             if(viptime>Integer.parseInt(curTime)||viptime.equals(1)){
                 double newPrice = price;
-                newPrice = newPrice * this.vipDiscount;
+                newPrice = newPrice * vipDiscount;
                 price =(int)newPrice;
             }
             Integer oldAssets =usersinfo.getAssets();
@@ -440,6 +434,7 @@ public class TypechoShopController {
             }
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer uid  = Integer.parseInt(map.get("uid").toString());
+            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
 
             Long date = System.currentTimeMillis();
             String curTime = String.valueOf(date).substring(0, 10);
@@ -458,13 +453,13 @@ public class TypechoShopController {
                 vipTime = vip+ days*day;
             }
 
-            Integer AllPrice = day * this.vipPrice;
+            Integer AllPrice = day * apiconfig.getVipPrice();
             if(AllPrice>assets){
                 return Result.getResultJson(0,"当前资产不足，请充值",null);
             }
 
 
-            if(day >= this.vipDay){
+            if(day >= apiconfig.getVipDay()){
                 //如果时间戳为1就是永久会员
                 vipTime = 1;
             }
@@ -505,9 +500,10 @@ public class TypechoShopController {
     @ResponseBody
     public String vipInfo() {
         JSONObject data = new JSONObject();
-        data.put("vipDiscount",this.vipDiscount);
-        data.put("vipPrice",this.vipPrice);
-        data.put("scale",this.scale);
+        TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+        data.put("vipDiscount",apiconfig.getVipDiscount());
+        data.put("vipPrice",apiconfig.getVipPrice());
+        data.put("scale",apiconfig.getScale());
         JSONObject response = new JSONObject();
         response.put("code" , 1);
         response.put("data" , data);

@@ -8,6 +8,9 @@ import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeUtility;
 
+import com.RuleApi.entity.TypechoApiconfig;
+import com.RuleApi.service.TypechoApiconfigService;
+import com.RuleApi.service.TypechoPaylogService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,8 +41,9 @@ public class MailServiceImpl implements MailService{
     @Value(value = "${spring.mail.username}")
     private String username;
 
-    @Value(value = "${webinfo.title}")
-    private String emailFromName;
+    @Autowired
+    private TypechoApiconfigService apiconfigService;
+
 
 
     /**
@@ -93,19 +97,8 @@ public class MailServiceImpl implements MailService{
         //附件处理需要进行二进制传输
         MimeMessage mimeMessage = mailSender.createMimeMessage();
         MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, true, defaultEncoding);
-
-        //设置发件人，中文乱码处理
-        String newEmailFromName;
-        try {
-            byte[] byteName=emailFromName.getBytes("UTF-8");
-            String str=new String(byteName,"ISO-8859-1");
-            byte[] byteName2=str.getBytes("ISO-8859-1");
-            String newStr=new String(byteName2,"UTF-8");
-            newEmailFromName = newStr;
-        } catch (UnsupportedEncodingException e) {
-            newEmailFromName = emailFromName;
-        }
-        log.info("emailFromName = " + newEmailFromName);
+        TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+        String newEmailFromName = apiconfig.getWebinfoTitle();
         //log.info("from = " + from);emailFromName
         mimeMessageHelper.setFrom(newEmailFromName + "<"+ username + ">");
 

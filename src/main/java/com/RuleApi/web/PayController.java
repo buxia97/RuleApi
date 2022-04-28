@@ -1,14 +1,8 @@
 package com.RuleApi.web;
 
 import com.RuleApi.common.*;
-import com.RuleApi.entity.TypechoPaykey;
-import com.RuleApi.entity.TypechoPaylog;
-import com.RuleApi.entity.TypechoRelationships;
-import com.RuleApi.entity.TypechoUsers;
-import com.RuleApi.service.TypechoPaykeyService;
-import com.RuleApi.service.TypechoPaylogService;
-import com.RuleApi.service.TypechoUsersService;
-import com.RuleApi.service.WxPayService;
+import com.RuleApi.entity.*;
+import com.RuleApi.service.*;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -46,34 +40,7 @@ import java.util.regex.Pattern;
 @Controller
 @RequestMapping(value = "/pay")
 public class PayController {
-    @Value("${webinfo.scale}")
-    private Integer scale;
 
-
-    /**支付宝**/
-
-    /** 创建的应用ID */
-    @Value("${fastboot.pay.alipay.app-id}")
-    private String appId;
-    /** 自己生成的应用私钥 */
-    @Value("${fastboot.pay.alipay.private-key}")
-    private String privateKey;
-    /** 支付宝提供的支付宝公钥 */
-    @Value("${fastboot.pay.alipay.alipay-public-key}")
-    private String alipayPublicKey;
-    /** 回调地址，需要公网且链接不需要重定向的，如：https://fastboot.shaines.cn/api/myalipay/trade-notify */
-    @Value("${fastboot.pay.alipay.notify-url}")
-    private String notifyUrl;
-
-    /**微信支付**/
-    @Value("${gzh.appid}")
-    private String wxappid;
-    @Value("${wxPay.key}")
-    private String wxkey;
-    @Value("${wxPay.mchId}")
-    private String mchId;
-    @Value("${wxPay.notifyUrl}")
-    private String wxnotifyUrl;
 
     @Autowired
     private RedisTemplate redisTemplate;
@@ -90,6 +57,9 @@ public class PayController {
 
     @Autowired(required = false)
     private WxPayService wxpayService;
+
+    @Autowired
+    private TypechoApiconfigService apiconfigService;
 
     @Value("${web.prefix}")
     private String dataprefix;
@@ -118,10 +88,11 @@ public class PayController {
         if(Integer.parseInt(num) <= 0){
             return Result.getResultJson(0,"充值金额不正确",null);
         }
+        TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
 
-        final String APPID = this.appId;
-        String RSA2_PRIVATE = this.privateKey;
-        String ALIPAY_PUBLIC_KEY = this.alipayPublicKey;
+        final String APPID = apiconfig.getAlipayAppId();
+        String RSA2_PRIVATE = apiconfig.getAlipayPrivateKey();
+        String ALIPAY_PUBLIC_KEY = apiconfig.getAlipayPublicKey();
 
         Date now = new Date();
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss");//可以方便地修改日期格式
@@ -141,7 +112,7 @@ public class PayController {
                 "    \"body\":\"" + body + "\"," +
                 "    \"subject\":\"扫码支付\"," +
                 "    \"timeout_express\":\"90m\"}");//设置业务参数
-        request.setNotifyUrl(this.notifyUrl);
+        request.setNotifyUrl(apiconfig.getAlipayNotifyUrl());
         AlipayTradePrecreateResponse response = alipayClient.execute(request);//通过alipayClient调用API，获得对应的response类
         System.out.print(response.getBody());
 
@@ -153,7 +124,7 @@ public class PayController {
             Long date = System.currentTimeMillis();
             String created = String.valueOf(date).substring(0,10);
             TypechoPaylog paylog = new TypechoPaylog();
-            Integer TotalAmount = Integer.parseInt(total_fee) * this.scale;
+            Integer TotalAmount = Integer.parseInt(total_fee) * apiconfig.getScale();
             paylog.setStatus(0);
             paylog.setCreated(Integer.parseInt(created));
             paylog.setUid(uid);
@@ -195,9 +166,10 @@ public class PayController {
             params.put(name, valueStr);
         }
         System.err.println(params);
+        TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
         String CHARSET = "UTF-8";
         //支付宝公钥
-        String ALIPAY_PUBLIC_KEY = this.alipayPublicKey;
+        String ALIPAY_PUBLIC_KEY = apiconfig.getAlipayPublicKey();
 
         String tradeStatus = request.getParameter("trade_status");
         boolean flag = AlipaySignature.rsaCheckV1(params, ALIPAY_PUBLIC_KEY, CHARSET, "RSA2");
@@ -209,7 +181,7 @@ public class PayController {
                 String trade_no = params.get("trade_no");
                 String out_trade_no = params.get("out_trade_no");
                 String total_amount = params.get("total_amount");
-                Integer scale = this.scale;
+                Integer scale = apiconfig.getScale();
                 Integer integral = Double.valueOf(total_amount).intValue() * scale;
 
                 Long date = System.currentTimeMillis();
@@ -322,12 +294,13 @@ public class PayController {
         if(price <= 0){
             return Result.getResultJson(0,"充值金额不正确",null);
         }
+        TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
         WXConfigUtil config = new WXConfigUtil();
         WXPay wxpay = new WXPay(config);
         Map<String, String> data = new HashMap<>();
         //生成商户订单号，不可重复
-        data.put("appid", this.wxappid);
-        data.put("mch_id", this.mchId);
+        data.put("appid", apiconfig.getWxpayAppId());
+        data.put("mch_id", apiconfig.getWxpayMchId());
         data.put("nonce_str", WXPayUtil.generateNonceStr());
         String body = "订单支付";
         data.put("body", body);
@@ -336,12 +309,12 @@ public class PayController {
         //自己的服务器IP地址
         data.put("spbill_create_ip", request.getRemoteAddr());
         //异步通知地址（请注意必须是外网）
-        data.put("notify_url", wxnotifyUrl);
+        data.put("notify_url", apiconfig.getWxpayNotifyUrl());
         //交易类型
         data.put("trade_type", "APP");
         //附加数据，在查询API和支付通知中原样返回，该字段主要用于商户携带订单的自定义数据
         data.put("attach", "");
-        data.put("sign", WXPayUtil.generateSignature(data, this.wxkey,
+        data.put("sign", WXPayUtil.generateSignature(data, apiconfig.getWxpayKey(),
                 WXPayConstants.SignType.MD5));
         //使用官方API请求预付订单
         Map<String, String> response = wxpay.unifiedOrder(data);
@@ -349,7 +322,7 @@ public class PayController {
         if ("SUCCESS".equals(response.get("return_code"))) {
             //主要返回以下5个参数
             Map<String, String> param = new HashMap<>();
-            param.put("appid",this.wxappid);
+            param.put("appid",apiconfig.getWxpayAppId());
             param.put("partnerid", response.get("mch_id"));
             param.put("prepayid", response.get("prepay_id"));
             param.put("package", "Sign=WXPay");
@@ -363,7 +336,7 @@ public class PayController {
             Integer uid  = Integer.parseInt(map.get("uid").toString());
             Long date = System.currentTimeMillis();
             String created = String.valueOf(date).substring(0,10);
-            Integer TotalAmount = price * this.scale;
+            Integer TotalAmount = price * apiconfig.getScale();
             TypechoPaylog paylog = new TypechoPaylog();
             paylog.setStatus(0);
             paylog.setCreated(Integer.parseInt(created));
@@ -390,7 +363,7 @@ public class PayController {
     @RequestMapping(value = "/wxPayNotify")
     @ResponseBody
     public String wxPayNotify(HttpServletRequest request) {
-
+        TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
         String resXml = "";
         try {
 
@@ -423,7 +396,7 @@ public class PayController {
             //支付完成后，写入充值日志
             String out_trade_no = request.getParameter("out_trade_no");
             String total_amount = request.getParameter("total_fee");
-            Integer scale = this.scale;
+            Integer scale = apiconfig.getScale();
             Integer integral = Double.valueOf(total_amount).intValue() * scale;
 
             Long date = System.currentTimeMillis();

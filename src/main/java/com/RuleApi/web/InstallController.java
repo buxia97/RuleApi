@@ -63,90 +63,90 @@ public class InstallController {
         if (i == 0){
             //新增字段
             jdbcTemplate.execute("alter table "+prefix+"_contents ADD views integer(10) DEFAULT 0;");
-            text+="数据表typecho_contents，字段views添加完成。";
+            text+="内容模块，字段views添加完成。";
         }else{
-            text+="数据表typecho_contents，字段views已经存在，无需添加。";
+            text+="内容模块，字段views已经存在，无需添加。";
         }
         //查询文章表是否存在likes字段
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_contents' and column_name = 'likes';", Integer.class);
         if (i == 0){
             jdbcTemplate.execute("alter table "+prefix+"_contents ADD likes integer(10) DEFAULT 0;");
-            text+="数据表typecho_contents，字段likes添加完成。";
+            text+="内容模块，字段likes添加完成。";
         }else{
-            text+="数据表typecho_contents，字段likes已经存在，无需添加。";
+            text+="内容模块，字段likes已经存在，无需添加。";
         }
         //查询文章表是否存在isrecommend字段
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_contents' and column_name = 'isrecommend';", Integer.class);
         if (i == 0){
             jdbcTemplate.execute("alter table "+prefix+"_contents ADD isrecommend integer(2) DEFAULT 0;");
-            text+="数据表typecho_contents，字段isrecommend添加完成。";
+            text+="内容模块，字段isrecommend添加完成。";
         }else{
-            text+="数据表typecho_contents，字段isrecommend已经存在，无需添加。";
+            text+="内容模块，字段isrecommend已经存在，无需添加。";
         }
         //查询用户表是否存在introduce字段
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_users' and column_name = 'introduce';", Integer.class);
         if (i == 0){
             jdbcTemplate.execute("alter table "+prefix+"_users ADD introduce varchar(255);");
-            text+="数据表typecho_users，字段introduce添加完成。";
+            text+="用户模块，字段introduce添加完成。";
         }else{
-            text+="数据表typecho_users，字段introduce已经存在，无需添加。";
+            text+="用户模块，字段introduce已经存在，无需添加。";
         }
         //查询用户表是否存在account字段
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_users' and column_name = 'assets';", Integer.class);
         if (i == 0){
             jdbcTemplate.execute("alter table "+prefix+"_users ADD assets integer(11) DEFAULT 0;");
-            text+="数据表typecho_users，字段assets添加完成。";
+            text+="用户模块，字段assets添加完成。";
         }else{
-            text+="数据表typecho_users，字段assets已经存在，无需添加。";
+            text+="用户模块，字段assets已经存在，无需添加。";
         }
         //查询用户表是否存在address字段
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_users' and column_name = 'address';", Integer.class);
         if (i == 0){
             jdbcTemplate.execute("alter table "+prefix+"_users ADD address text;");
-            text+="数据表typecho_users，字段address添加完成。";
+            text+="用户模块，字段address添加完成。";
         }else{
-            text+="数据表typecho_users，字段address已经存在，无需添加。";
+            text+="用户模块，字段address已经存在，无需添加。";
         }
         //查询用户表是否存在address字段
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_users' and column_name = 'pay';", Integer.class);
         if (i == 0){
             jdbcTemplate.execute("alter table "+prefix+"_users ADD pay text;");
-            text+="数据表typecho_users，字段pay添加完成。";
+            text+="用户模块，字段pay添加完成。";
         }else{
-            text+="数据表typecho_users，字段pay已经存在，无需添加。";
+            text+="用户模块，字段pay已经存在，无需添加。";
         }
         //查询用户表是否存在customize字段
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_users' and column_name = 'customize';", Integer.class);
         if (i == 0){
             jdbcTemplate.execute("alter table "+prefix+"_users ADD customize varchar(255) DEFAULT NULL;");
-            text+="数据表typecho_users，字段customize添加完成。";
+            text+="用户模块，字段customize添加完成。";
         }else{
-            text+="数据表typecho_users，字段customize已经存在，无需添加。";
+            text+="用户模块，字段customize已经存在，无需添加。";
         }
         //查询用户表是否存在vip字段
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_users' and column_name = 'vip';", Integer.class);
         if (i == 0){
             jdbcTemplate.execute("alter table "+prefix+"_users ADD vip integer(10) DEFAULT 0;");
-            text+="数据表typecho_users，字段vip添加完成。";
+            text+="用户模块，字段vip添加完成。";
         }else{
-            text+="数据表typecho_users，字段vip已经存在，无需添加。";
+            text+="用户模块，字段vip已经存在，无需添加。";
         }
 
         //查询分类标签表是否存在imgurl字段
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_metas' and column_name = 'imgurl';", Integer.class);
         if (i == 0){
             jdbcTemplate.execute("alter table "+prefix+"_metas ADD imgurl varchar(500) DEFAULT NULL;");
-            text+="数据表typecho_metas，字段imgurl添加完成。";
+            text+="标签分类模块，字段imgurl添加完成。";
         }else{
-            text+="数据表typecho_metas，字段imgurl已经存在，无需添加。";
+            text+="标签分类模块，字段imgurl已经存在，无需添加。";
         }
         //查询分类标签表是否存在isrecommend字段
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_metas' and column_name = 'isrecommend';", Integer.class);
         if (i == 0){
             jdbcTemplate.execute("alter table "+prefix+"_metas ADD isrecommend integer(2) DEFAULT 0;");
-            text+="数据表typecho_metas，字段isrecommend添加完成。";
+            text+="标签分类模块，字段isrecommend添加完成。";
         }else{
-            text+="数据表typecho_metas，字段isrecommend已经存在，无需添加。";
+            text+="标签分类模块，字段isrecommend已经存在，无需添加。";
         }
         //判断用户日志表是否存在
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_userlog';", Integer.class);
@@ -160,17 +160,17 @@ public class InstallController {
                     "  `created` int(10) NOT NULL DEFAULT '0' COMMENT '时间'," +
                     "  PRIMARY KEY (`id`)" +
                     ") ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='用户日志（收藏，扩展等）';");
-            text+="数据表typecho_userlog创建完成。";
+            text+="用户操作模块创建完成。";
         }else{
-            text+="数据表typecho_userlog已经存在，无需添加。";
+            text+="用户操作模块已经存在，无需添加。";
         }
         //查询日志表是否存在toid字段
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_userlog' and column_name = 'toid';", Integer.class);
         if (i == 0){
             jdbcTemplate.execute("alter table "+prefix+"_userlog ADD toid integer(11) DEFAULT 0;");
-            text+="数据表typecho_userlog，字段toid添加完成。";
+            text+="用户操作模块，字段toid添加完成。";
         }else{
-            text+="数据表typecho_userlog，字段toid已经存在，无需添加。";
+            text+="用户操作模块，字段toid已经存在，无需添加。";
         }
         //判断用户社会化API表是否存在
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_userapi';", Integer.class);
@@ -184,9 +184,9 @@ public class InstallController {
                     "  `uid` int(11) DEFAULT '0' COMMENT '用户ID'," +
                     "  PRIMARY KEY (`id`)" +
                     ") ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='社会化登陆';");
-            text+="数据表typecho_userapi创建完成。";
+            text+="社会化登录模块创建完成。";
         }else{
-            text+="数据表typecho_userapi已经存在，无需添加。";
+            text+="社会化登录模块已经存在，无需添加。";
         }
 
 
@@ -206,25 +206,25 @@ public class InstallController {
                     "  `uid` int(11) DEFAULT '0' COMMENT '发布人'," +
                     "  PRIMARY KEY (`id`)" +
                     ") ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='商品表';");
-            text+="数据表typecho_shop创建完成。";
+            text+="积分商城模块创建完成。";
         }else{
-            text+="数据表typecho_shop已经存在，无需添加。";
+            text+="积分商城模块已经存在，无需添加。";
         }
         //查询商品表是否存在created字段
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_shop' and column_name = 'created';", Integer.class);
         if (i == 0){
             jdbcTemplate.execute("alter table "+prefix+"_shop ADD created integer(10) DEFAULT 0;");
-            text+="数据表typecho_shop，字段created添加完成。";
+            text+="积分商城模块，字段created添加完成。";
         }else{
-            text+="数据表typecho_shop，字段created已经存在，无需添加。";
+            text+="积分商城模块，字段created已经存在，无需添加。";
         }
         //查询商品表是否存在status字段
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_shop' and column_name = 'status';", Integer.class);
         if (i == 0){
             jdbcTemplate.execute("alter table "+prefix+"_shop ADD status integer(10) DEFAULT 0;");
-            text+="数据表typecho_shop，字段status添加完成。";
+            text+="积分商城模块，字段status添加完成。";
         }else{
-            text+="数据表typecho_shop，字段status已经存在，无需添加。";
+            text+="积分商城模块，字段status已经存在，无需添加。";
         }
         //判断充值记录表是否存在
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_paylog';", Integer.class);
@@ -241,9 +241,9 @@ public class InstallController {
                     "  `status` int(11) DEFAULT '0' COMMENT '支付状态（0未支付，1已支付）'," +
                     "  PRIMARY KEY (`pid`)" +
                     ") ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='支付渠道充值记录';");
-            text+="数据表typecho_paylog创建完成。";
+            text+="资产日志模块创建完成。";
         }else{
-            text+="数据表typecho_paylog已经存在，无需添加。";
+            text+="资产日志模块已经存在，无需添加。";
         }
 
         //添加卡密充值模块
@@ -258,11 +258,62 @@ public class InstallController {
                     "  `uid` int(11) DEFAULT '-1' COMMENT '使用用户'," +
                     "  PRIMARY KEY (`id`)" +
                     ") ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='卡密充值相关';");
-            text+="数据表typecho_paylog创建完成。";
+            text+="卡密充值模块创建完成。";
         }else{
-            text+="数据表typecho_paylog已经存在，无需添加。";
+            text+="卡密充值模块已经存在，无需添加。";
         }
-
+        //添加API配置中心模块
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("CREATE TABLE `"+prefix+"_apiconfig` (" +
+                    "  `id` int(11) NOT NULL AUTO_INCREMENT," +
+                    "  `webinfoTitle` varchar(500) NOT NULL DEFAULT '' COMMENT '网站名称'," +
+                    "  `webinfoUrl` varchar(500) NOT NULL DEFAULT '' COMMENT '网站URL'," +
+                    "  `webinfoUploadUrl` varchar(255) NOT NULL DEFAULT 'http://127.0.0.1:8081/' COMMENT '本地图片访问路径'," +
+                    "  `webinfoAvatar` varchar(500) NOT NULL DEFAULT 'https://cdn.helingqi.com/wavatar/' COMMENT '头像源'," +
+                    "  `pexelsKey` varchar(255) NOT NULL DEFAULT '' COMMENT '图库key'," +
+                    "  `scale` int(11) NOT NULL DEFAULT '100' COMMENT '一元能买多少积分'," +
+                    "  `clock` varchar(255) NOT NULL DEFAULT '5' COMMENT '签到最多多少积分'," +
+                    "  `vipPrice` int(11) NOT NULL DEFAULT '200' COMMENT 'VIP一天价格'," +
+                    "  `vipDay` int(11) NOT NULL DEFAULT '300' COMMENT '多少天VIP等于永久'," +
+                    "  `vipDiscount` varchar(11) NOT NULL DEFAULT '0.1' COMMENT 'VIP折扣'," +
+                    "  `isEmail` int(2) NOT NULL DEFAULT '1' COMMENT '是否开启邮箱注册（关闭后不再验证邮箱）'," +
+                    "  `isInvite` int(11) NOT NULL DEFAULT '0' COMMENT '注册是否验证邀请码（默认关闭）'," +
+                    "  `cosAccessKey` varchar(300) NOT NULL DEFAULT ''," +
+                    "  `cosSecretKey` varchar(300) NOT NULL DEFAULT ''," +
+                    "  `cosBucket` varchar(255) NOT NULL DEFAULT ''," +
+                    "  `cosBucketName` varchar(255) NOT NULL DEFAULT ''," +
+                    "  `cosPath` varchar(255) DEFAULT ''," +
+                    "  `cosPrefix` varchar(255) NOT NULL DEFAULT ''," +
+                    "  `aliyunEndpoint` varchar(500) NOT NULL," +
+                    "  `aliyunAccessKeyId` varchar(255) NOT NULL," +
+                    "  `aliyunAccessKeySecret` varchar(255) NOT NULL," +
+                    "  `aliyunAucketName` varchar(255) NOT NULL," +
+                    "  `aliyunUrlPrefix` varchar(255) NOT NULL," +
+                    "  `aliyunFilePrefix` varchar(255) NOT NULL," +
+                    "  `ftpHost` varchar(255) NOT NULL," +
+                    "  `ftpPort` int(11) NOT NULL DEFAULT '21'," +
+                    "  `ftpUsername` varchar(255) NOT NULL," +
+                    "  `ftpPassword` varchar(255) NOT NULL," +
+                    "  `ftpBasePath` varchar(255) NOT NULL," +
+                    "  `alipayAppId` varchar(255) NOT NULL," +
+                    "  `alipayPrivateKey` varchar(1200) NOT NULL," +
+                    "  `alipayPublicKey` varchar(2000) NOT NULL," +
+                    "  `alipayNotifyUrl` varchar(500) NOT NULL," +
+                    "  `appletsAppid` varchar(255) NOT NULL," +
+                    "  `appletsSecret` varchar(500) NOT NULL," +
+                    "  `wxpayAppId` varchar(255) NOT NULL," +
+                    "  `wxpayMchId` varchar(255) NOT NULL," +
+                    "  `wxpayKey` varchar(2000) DEFAULT ''," +
+                    "  `wxpayNotifyUrl` varchar(500) DEFAULT ''," +
+                    "  PRIMARY KEY (`id`)" +
+                    ") ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='api配置信息表';");
+            text+="API配置中心模块创建完成。";
+            //修改请求头
+            jdbcTemplate.execute("INSERT INTO `"+prefix+"_apiconfig` VALUES (1,'网站名称','','http://127.0.0.1:8081/','https://cdn.helingqi.com/wavatar/','',100,'5',200,300,'0.1',1,0,'','','','','','','','','','','','','',21,'','','','','','','','','','','','','');");
+        }else{
+            text+="API配置中心模块已经存在，无需添加。";
+        }
         text+=" ------ 执行结束，安装执行完成";
 
         redisHelp.setRedis(this.dataprefix+"_"+"isInstall","1",600,redisTemplate);

@@ -1,0 +1,397 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.apiconfig.dao.TypechoApiconfigDao">
+
+    <resultMap id="BaseResultMap" type="com.RuleApi.entity.TypechoApiconfig" >
+        <result column="id" property="id" />
+        <result column="webinfoTitle" property="webinfoTitle" />
+        <result column="webinfoUrl" property="webinfoUrl" />
+        <result column="webinfoUploadUrl" property="webinfoUploadUrl" />
+        <result column="webinfoAvatar" property="webinfoAvatar" />
+        <result column="pexelsKey" property="pexelsKey" />
+        <result column="scale" property="scale" />
+        <result column="clock" property="clock" />
+        <result column="vipPrice" property="vipPrice" />
+        <result column="vipDay" property="vipDay" />
+        <result column="vipDiscount" property="vipDiscount" />
+        <result column="isEmail" property="isEmail" />
+        <result column="isInvite" property="isInvite" />
+        <result column="cosAccessKey" property="cosAccessKey" />
+        <result column="cosSecretKey" property="cosSecretKey" />
+        <result column="cosBucket" property="cosBucket" />
+        <result column="cosBucketName" property="cosBucketName" />
+        <result column="cosPath" property="cosPath" />
+        <result column="cosPrefix" property="cosPrefix" />
+        <result column="aliyunEndpoint" property="aliyunEndpoint" />
+        <result column="aliyunAccessKeyId" property="aliyunAccessKeyId" />
+        <result column="aliyunAccessKeySecret" property="aliyunAccessKeySecret" />
+        <result column="aliyunAucketName" property="aliyunAucketName" />
+        <result column="aliyunUrlPrefix" property="aliyunUrlPrefix" />
+        <result column="aliyunFilePrefix" property="aliyunFilePrefix" />
+        <result column="ftpHost" property="ftpHost" />
+        <result column="ftpPort" property="ftpPort" />
+        <result column="ftpUsername" property="ftpUsername" />
+        <result column="ftpPassword" property="ftpPassword" />
+        <result column="ftpBasePath" property="ftpBasePath" />
+        <result column="alipayAppId" property="alipayAppId" />
+        <result column="alipayPrivateKey" property="alipayPrivateKey" />
+        <result column="alipayPublicKey" property="alipayPublicKey" />
+        <result column="alipayNotifyUrl" property="alipayNotifyUrl" />
+        <result column="appletsAppid" property="appletsAppid" />
+        <result column="appletsSecret" property="appletsSecret" />
+        <result column="wxpayAppId" property="wxpayAppId" />
+        <result column="wxpayMchId" property="wxpayMchId" />
+        <result column="wxpayKey" property="wxpayKey" />
+        <result column="wxpayNotifyUrl" property="wxpayNotifyUrl" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        `id`,
+        `webinfoTitle`,
+        `webinfoUrl`,
+        `webinfoUploadUrl`,
+        `webinfoAvatar`,
+        `pexelsKey`,
+        `scale`,
+        `clock`,
+        `vipPrice`,
+        `vipDay`,
+        `vipDiscount`,
+        `isEmail`,
+        `isInvite`,
+        `cosAccessKey`,
+        `cosSecretKey`,
+        `cosBucket`,
+        `cosBucketName`,
+        `cosPath`,
+        `cosPrefix`,
+        `aliyunEndpoint`,
+        `aliyunAccessKeyId`,
+        `aliyunAccessKeySecret`,
+        `aliyunAucketName`,
+        `aliyunUrlPrefix`,
+        `aliyunFilePrefix`,
+        `ftpHost`,
+        `ftpPort`,
+        `ftpUsername`,
+        `ftpPassword`,
+        `ftpBasePath`,
+        `alipayAppId`,
+        `alipayPrivateKey`,
+        `alipayPublicKey`,
+        `alipayNotifyUrl`,
+        `appletsAppid`,
+        `appletsSecret`,
+        `wxpayAppId`,
+        `wxpayMchId`,
+        `wxpayKey`,
+        `wxpayNotifyUrl`
+    </sql>
+
+    <!-- 插入数据 -->
+    <insert id="insert" parameterType="com.RuleApi.entity.TypechoApiconfig">
+        INSERT INTO typecho_apiconfig
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test ='null != id'>
+                `id`,
+            </if>
+            <if test ='null != webinfoTitle'>
+                `webinfoTitle`,
+            </if>
+            <if test ='null != webinfoUrl'>
+                `webinfoUrl`,
+            </if>
+            <if test ='null != webinfoUploadUrl'>
+                `webinfoUploadUrl`,
+            </if>
+            <if test ='null != webinfoAvatar'>
+                `webinfoAvatar`,
+            </if>
+            <if test ='null != pexelsKey'>
+                `pexelsKey`,
+            </if>
+            <if test ='null != scale'>
+                `scale`,
+            </if>
+            <if test ='null != clock'>
+                `clock`,
+            </if>
+            <if test ='null != vipPrice'>
+                `vipPrice`,
+            </if>
+            <if test ='null != vipDay'>
+                `vipDay`,
+            </if>
+            <if test ='null != vipDiscount'>
+                `vipDiscount`,
+            </if>
+            <if test ='null != isEmail'>
+                `isEmail`,
+            </if>
+            <if test ='null != isInvite'>
+                `isInvite`,
+            </if>
+            <if test ='null != cosAccessKey'>
+                `cosAccessKey`,
+            </if>
+            <if test ='null != cosSecretKey'>
+                `cosSecretKey`,
+            </if>
+            <if test ='null != cosBucket'>
+                `cosBucket`,
+            </if>
+            <if test ='null != cosBucketName'>
+                `cosBucketName`,
+            </if>
+            <if test ='null != cosPath'>
+                `cosPath`,
+            </if>
+            <if test ='null != cosPrefix'>
+                `cosPrefix`,
+            </if>
+            <if test ='null != aliyunEndpoint'>
+                `aliyunEndpoint`,
+            </if>
+            <if test ='null != aliyunAccessKeyId'>
+                `aliyunAccessKeyId`,
+            </if>
+            <if test ='null != aliyunAccessKeySecret'>
+                `aliyunAccessKeySecret`,
+            </if>
+            <if test ='null != aliyunAucketName'>
+                `aliyunAucketName`,
+            </if>
+            <if test ='null != aliyunUrlPrefix'>
+                `aliyunUrlPrefix`,
+            </if>
+            <if test ='null != aliyunFilePrefix'>
+                `aliyunFilePrefix`,
+            </if>
+            <if test ='null != ftpHost'>
+                `ftpHost`,
+            </if>
+            <if test ='null != ftpPort'>
+                `ftpPort`,
+            </if>
+            <if test ='null != ftpUsername'>
+                `ftpUsername`,
+            </if>
+            <if test ='null != ftpPassword'>
+                `ftpPassword`,
+            </if>
+            <if test ='null != ftpBasePath'>
+                `ftpBasePath`,
+            </if>
+            <if test ='null != alipayAppId'>
+                `alipayAppId`,
+            </if>
+            <if test ='null != alipayPrivateKey'>
+                `alipayPrivateKey`,
+            </if>
+            <if test ='null != alipayPublicKey'>
+                `alipayPublicKey`,
+            </if>
+            <if test ='null != alipayNotifyUrl'>
+                `alipayNotifyUrl`,
+            </if>
+            <if test ='null != appletsAppid'>
+                `appletsAppid`,
+            </if>
+            <if test ='null != appletsSecret'>
+                `appletsSecret`,
+            </if>
+            <if test ='null != wxpayAppId'>
+                `wxpayAppId`,
+            </if>
+            <if test ='null != wxpayMchId'>
+                `wxpayMchId`,
+            </if>
+            <if test ='null != wxpayKey'>
+                `wxpayKey`,
+            </if>
+            <if test ='null != wxpayNotifyUrl'>
+                `wxpayNotifyUrl`
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test ='null != id'>
+                #{id},
+            </if>
+            <if test ='null != webinfoTitle'>
+                #{webinfoTitle},
+            </if>
+            <if test ='null != webinfoUrl'>
+                #{webinfoUrl},
+            </if>
+            <if test ='null != webinfoUploadUrl'>
+                #{webinfoUploadUrl},
+            </if>
+            <if test ='null != webinfoAvatar'>
+                #{webinfoAvatar},
+            </if>
+            <if test ='null != pexelsKey'>
+                #{pexelsKey},
+            </if>
+            <if test ='null != scale'>
+                #{scale},
+            </if>
+            <if test ='null != clock'>
+                #{clock},
+            </if>
+            <if test ='null != vipPrice'>
+                #{vipPrice},
+            </if>
+            <if test ='null != vipDay'>
+                #{vipDay},
+            </if>
+            <if test ='null != vipDiscount'>
+                #{vipDiscount},
+            </if>
+            <if test ='null != isEmail'>
+                #{isEmail},
+            </if>
+            <if test ='null != isInvite'>
+                #{isInvite},
+            </if>
+            <if test ='null != cosAccessKey'>
+                #{cosAccessKey},
+            </if>
+            <if test ='null != cosSecretKey'>
+                #{cosSecretKey},
+            </if>
+            <if test ='null != cosBucket'>
+                #{cosBucket},
+            </if>
+            <if test ='null != cosBucketName'>
+                #{cosBucketName},
+            </if>
+            <if test ='null != cosPath'>
+                #{cosPath},
+            </if>
+            <if test ='null != cosPrefix'>
+                #{cosPrefix},
+            </if>
+            <if test ='null != aliyunEndpoint'>
+                #{aliyunEndpoint},
+            </if>
+            <if test ='null != aliyunAccessKeyId'>
+                #{aliyunAccessKeyId},
+            </if>
+            <if test ='null != aliyunAccessKeySecret'>
+                #{aliyunAccessKeySecret},
+            </if>
+            <if test ='null != aliyunAucketName'>
+                #{aliyunAucketName},
+            </if>
+            <if test ='null != aliyunUrlPrefix'>
+                #{aliyunUrlPrefix},
+            </if>
+            <if test ='null != aliyunFilePrefix'>
+                #{aliyunFilePrefix},
+            </if>
+            <if test ='null != ftpHost'>
+                #{ftpHost},
+            </if>
+            <if test ='null != ftpPort'>
+                #{ftpPort},
+            </if>
+            <if test ='null != ftpUsername'>
+                #{ftpUsername},
+            </if>
+            <if test ='null != ftpPassword'>
+                #{ftpPassword},
+            </if>
+            <if test ='null != ftpBasePath'>
+                #{ftpBasePath},
+            </if>
+            <if test ='null != alipayAppId'>
+                #{alipayAppId},
+            </if>
+            <if test ='null != alipayPrivateKey'>
+                #{alipayPrivateKey},
+            </if>
+            <if test ='null != alipayPublicKey'>
+                #{alipayPublicKey},
+            </if>
+            <if test ='null != alipayNotifyUrl'>
+                #{alipayNotifyUrl},
+            </if>
+            <if test ='null != appletsAppid'>
+                #{appletsAppid},
+            </if>
+            <if test ='null != appletsSecret'>
+                #{appletsSecret},
+            </if>
+            <if test ='null != wxpayAppId'>
+                #{wxpayAppId},
+            </if>
+            <if test ='null != wxpayMchId'>
+                #{wxpayMchId},
+            </if>
+            <if test ='null != wxpayKey'>
+                #{wxpayKey},
+            </if>
+            <if test ='null != wxpayNotifyUrl'>
+                #{wxpayNotifyUrl}
+            </if>
+        </trim>
+    </insert>
+
+
+    <!-- 更新 -->
+    <update id="update" parameterType="com.RuleApi.entity.TypechoApiconfig">
+        UPDATE typecho_apiconfig
+        <set>
+            <if test ='null != webinfoTitle'>`webinfoTitle` = #{webinfoTitle},</if>
+            <if test ='null != webinfoUrl'>`webinfoUrl` = #{webinfoUrl},</if>
+            <if test ='null != webinfoUploadUrl'>`webinfoUploadUrl` = #{webinfoUploadUrl},</if>
+            <if test ='null != webinfoAvatar'>`webinfoAvatar` = #{webinfoAvatar},</if>
+            <if test ='null != pexelsKey'>`pexelsKey` = #{pexelsKey},</if>
+            <if test ='null != scale'>`scale` = #{scale},</if>
+            <if test ='null != clock'>`clock` = #{clock},</if>
+            <if test ='null != vipPrice'>`vipPrice` = #{vipPrice},</if>
+            <if test ='null != vipDay'>`vipDay` = #{vipDay},</if>
+            <if test ='null != vipDiscount'>`vipDiscount` = #{vipDiscount},</if>
+            <if test ='null != isEmail'>`isEmail` = #{isEmail},</if>
+            <if test ='null != isInvite'>`isInvite` = #{isInvite},</if>
+            <if test ='null != cosAccessKey'>`cosAccessKey` = #{cosAccessKey},</if>
+            <if test ='null != cosSecretKey'>`cosSecretKey` = #{cosSecretKey},</if>
+            <if test ='null != cosBucket'>`cosBucket` = #{cosBucket},</if>
+            <if test ='null != cosBucketName'>`cosBucketName` = #{cosBucketName},</if>
+            <if test ='null != cosPath'>`cosPath` = #{cosPath},</if>
+            <if test ='null != cosPrefix'>`cosPrefix` = #{cosPrefix},</if>
+            <if test ='null != aliyunEndpoint'>`aliyunEndpoint` = #{aliyunEndpoint},</if>
+            <if test ='null != aliyunAccessKeyId'>`aliyunAccessKeyId` = #{aliyunAccessKeyId},</if>
+            <if test ='null != aliyunAccessKeySecret'>`aliyunAccessKeySecret` = #{aliyunAccessKeySecret},</if>
+            <if test ='null != aliyunAucketName'>`aliyunAucketName` = #{aliyunAucketName},</if>
+            <if test ='null != aliyunUrlPrefix'>`aliyunUrlPrefix` = #{aliyunUrlPrefix},</if>
+            <if test ='null != aliyunFilePrefix'>`aliyunFilePrefix` = #{aliyunFilePrefix},</if>
+            <if test ='null != ftpHost'>`ftpHost` = #{ftpHost},</if>
+            <if test ='null != ftpPort'>`ftpPort` = #{ftpPort},</if>
+            <if test ='null != ftpUsername'>`ftpUsername` = #{ftpUsername},</if>
+            <if test ='null != ftpPassword'>`ftpPassword` = #{ftpPassword},</if>
+            <if test ='null != ftpBasePath'>`ftpBasePath` = #{ftpBasePath},</if>
+            <if test ='null != alipayAppId'>`alipayAppId` = #{alipayAppId},</if>
+            <if test ='null != alipayPrivateKey'>`alipayPrivateKey` = #{alipayPrivateKey},</if>
+            <if test ='null != alipayPublicKey'>`alipayPublicKey` = #{alipayPublicKey},</if>
+            <if test ='null != alipayNotifyUrl'>`alipayNotifyUrl` = #{alipayNotifyUrl},</if>
+            <if test ='null != appletsAppid'>`appletsAppid` = #{appletsAppid},</if>
+            <if test ='null != appletsSecret'>`appletsSecret` = #{appletsSecret},</if>
+            <if test ='null != wxpayAppId'>`wxpayAppId` = #{wxpayAppId},</if>
+            <if test ='null != wxpayMchId'>`wxpayMchId` = #{wxpayMchId},</if>
+            <if test ='null != wxpayKey'>`wxpayKey` = #{wxpayKey},</if>
+            <if test ='null != wxpayNotifyUrl'>`wxpayNotifyUrl` = #{wxpayNotifyUrl}</if>
+        </set>
+        WHERE `id` = #{id}
+    </update>
+
+    <!-- 主键查询 -->
+    <select id="selectByKey" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM typecho_apiconfig
+        WHERE `id` = #{key}
+    </select>
+
+
+</mapper>

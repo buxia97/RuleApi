@@ -58,6 +58,9 @@ public class TypechoContentsController {
     private TypechoShopService shopService;
 
     @Autowired
+    private TypechoApiconfigService apiconfigService;
+
+    @Autowired
     private RedisTemplate redisTemplate;
 
     @Autowired
@@ -69,8 +72,6 @@ public class TypechoContentsController {
     @Value("${webinfo.contentInfoCache}")
     private Integer contentInfoCache;
 
-    @Value("${webinfo.pexelsKey}")
-    private String pexelsKey;
 
     @Value("${web.prefix}")
     private String dataprefix;
@@ -849,8 +850,9 @@ public class TypechoContentsController {
     public String ImagePexels() {
         String cacheImage = redisHelp.getRedis(this.dataprefix+"_"+"ImagePexels",redisTemplate);
         String imgList = "";
+        TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
         if(cacheImage==null){
-            imgList = HttpClient.doGetImg("https://api.pexels.com/v1/curated?per_page=40",this.pexelsKey);
+            imgList = HttpClient.doGetImg("https://api.pexels.com/v1/curated?per_page=40",apiconfig.getPexelsKey());
             if(imgList==null){
                 return Result.getResultJson(0,"图片接口异常",null);
             }

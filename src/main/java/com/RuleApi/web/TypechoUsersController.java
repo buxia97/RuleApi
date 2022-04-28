@@ -57,6 +57,9 @@ public class TypechoUsersController {
     private TypechoPaylogService paylogService;
 
     @Autowired
+    private TypechoApiconfigService apiconfigService;
+
+    @Autowired
     MailService MailService;
 
     @Autowired
@@ -78,11 +81,6 @@ public class TypechoUsersController {
     private String dataprefix;
 
 
-    @Value("${weixin.applets.appid}")
-    private String appletsAppid;
-
-    @Value("${weixin.applets.secret}")
-    private String appletsSecret;
 
     RedisHelp redisHelp = new RedisHelp();
     ResultAll Result = new ResultAll();
@@ -404,12 +402,13 @@ public class TypechoUsersController {
             if(jsonToMap.get("appLoginType").toString().equals("weixin")){
                 if(jsonToMap.get("type").toString().equals("applets")){
                     //如果是小程序，走官方接口获取accessToken和openid
+                    TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
                     if (jsonToMap.get("js_code") == null) {
                         return Result.getResultJson(0, "APP配置异常，请检查相关设置", null);
                     }
                     String js_code = jsonToMap.get("js_code").toString();
 
-                    String requestUrl = "https://api.weixin.qq.com/sns/jscode2session?appid="+this.appletsAppid+"&secret="+this.appletsSecret+"&js_code="+js_code+"&grant_type=authorization_code";
+                    String requestUrl = "https://api.weixin.qq.com/sns/jscode2session?appid="+apiconfig.getAppletsAppid()+"&secret="+apiconfig.getAppletsSecret()+"&js_code="+js_code+"&grant_type=authorization_code";
                     String res = HttpClient.doGet(requestUrl);
                     if(res==null){
                         return Result.getResultJson(0, "接口配置异常，请检查相关设置", null);
@@ -584,8 +583,8 @@ public class TypechoUsersController {
                         return Result.getResultJson(0, "APP配置异常，请检查相关设置", null);
                     }
                     String js_code = jsonToMap.get("js_code").toString();
-
-                    String requestUrl = "https://api.weixin.qq.com/sns/jscode2session?appid="+this.appletsAppid+"&secret="+this.appletsSecret+"&js_code="+js_code+"&grant_type=authorization_code";
+                    TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+                    String requestUrl = "https://api.weixin.qq.com/sns/jscode2session?appid="+apiconfig.getAppletsAppid()+"&secret="+apiconfig.getAppletsSecret()+"&js_code="+js_code+"&grant_type=authorization_code";
                     String res = HttpClient.doGet(requestUrl);
                     if(res==null){
                         return Result.getResultJson(0, "接口配置异常，请检查相关设置", null);

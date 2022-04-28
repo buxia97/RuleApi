@@ -2,6 +2,8 @@ package com.RuleApi.web;
 
 import com.RuleApi.common.ResultAll;
 import com.RuleApi.common.UserStatus;
+import com.RuleApi.entity.TypechoApiconfig;
+import com.RuleApi.service.TypechoApiconfigService;
 import com.aliyun.oss.OSS;
 import com.aliyun.oss.OSSClientBuilder;
 import org.apache.commons.net.ftp.FTP;
@@ -45,52 +47,12 @@ import java.util.UUID;
 @RequestMapping(value = "/upload")
 public class UploadController {
 
-    //获取腾讯云cos相关配置
-    @Value("${spring.cos.accessKey}")
-    private String accessKey;
-    @Value("${spring.cos.secretKey}")
-    private String secretKey;
-    @Value("${spring.cos.bucket}")
-    private String bucket;
-    @Value("${spring.cos.bucketName}")
-    private String bucketName;
-    @Value("${spring.cos.path}")
-    private String path;
-    @Value("${spring.cos.prefix}")
-    private String prefix;
-
-    //获取阿里云oss相关配置
-    @Value("${spring.aliyun.endpoint}")
-    private String endpoint;
-    @Value("${spring.aliyun.accessKeyId}")
-    private String accessKeyId;
-    @Value("${spring.aliyun.accessKeySecret}")
-    private String accessKeySecret;
-    @Value("${spring.aliyun.bucketName}")
-    private String ossBucketName;
-    @Value("${spring.aliyun.urlPrefix}")
-    private String urlPrefix;
-    @Value("${oss.filePrefix}")
-    private String filePrefix;
-
-    //获取ftp上传配置
-    @Value("${spring.ftp.host}")
-    private String ftpHost;
-    @Value("${spring.ftp.port}")
-    private Integer ftpPort;
-    @Value("${spring.ftp.username}")
-    private String ftpUsername;
-    @Value("${spring.ftp.password}")
-    private String ftpPassword;
-    @Value("${spring.ftp.basePath}")
-    private String ftpBasePath;
-
     @Value("${web.prefix}")
     private String dataprefix;
 
-    //获取本地上传相关配置
-    @Value("${webinfo.uploadUrl}")
-    private String localUrl;
+
+    @Autowired
+    private TypechoApiconfigService apiconfigService;
 
     @Autowired
     private RedisTemplate redisTemplate;
@@ -119,20 +81,20 @@ public class UploadController {
         if(bi == null){
             return Result.getResultJson(0,"请上传图片文件",null);
         }
-
+        TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
         String newFileName = UUID.randomUUID()+eName;
         Calendar cal = Calendar.getInstance();
         int year = cal.get(Calendar.YEAR);
         int month=cal.get(Calendar.MONTH);
         int day=cal.get(Calendar.DATE);
         // 1 初始化用户身份信息(secretId, secretKey)
-        COSCredentials cred = new BasicCOSCredentials(accessKey, secretKey);
+        COSCredentials cred = new BasicCOSCredentials(apiconfig.getCosAccessKey(), apiconfig.getCosSecretKey());
         // 2 设置bucket的区域, COS地域的简称请参照 https://cloud.tencent.com/document/product/436/6224
-        ClientConfig clientConfig = new ClientConfig(new Region(bucket));
+        ClientConfig clientConfig = new ClientConfig(new Region(apiconfig.getCosBucket()));
         // 3 生成cos客户端
         COSClient cosclient = new COSClient(cred, clientConfig);
         // bucket的命名规则为{name}-{appid} ，此处填写的存储桶名称必须为此格式
-        String bucketName = this.bucketName;
+        String bucketName = apiconfig.getCosBucketName();
 
         // 简单文件上传, 最大支持 5 GB, 适用于小文件上传, 建议 20 M 以下的文件使用该接口
         // 大文件上传请参照 API 文档高级 API 上传
@@ -141,12 +103,12 @@ public class UploadController {
             localFile = File.createTempFile("temp",null);
             file.transferTo(localFile);
             // 指定要上传到 COS 上的路径
-            String key = "/"+this.prefix+"/"+year+"/"+month+"/"+day+"/"+newFileName;
+            String key = "/"+apiconfig.getCosPath()+"/"+year+"/"+month+"/"+day+"/"+newFileName;
             PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, key, localFile);
             PutObjectResult putObjectResult = cosclient.putObject(putObjectRequest);
             //return new UploadMsg(1,"上传成功",this.path + putObjectRequest.getKey());
             Map<String,String> info =new HashMap<String, String>();
-            info.put("url",this.path + putObjectRequest.getKey());
+            info.put("url",apiconfig.getCosPath() + putObjectRequest.getKey());
             return Result.getResultJson(1,"上传成功",info);
 
         } catch (IOException e) {
@@ -182,7 +144,7 @@ public class UploadController {
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
         }
-
+        TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
 
         String filename = file.getOriginalFilename();
         String filetype = filename.substring(filename.lastIndexOf("."));
@@ -215,7 +177,7 @@ public class UploadController {
         try {
             file.transferTo(file1);
             Map<String,String> info =new HashMap<String, String>();
-            info.put("url",this.localUrl+"upload"+"/"+year+"/"+month+"/"+day+"/"+newfile);
+            info.put("url",apiconfig.getWebinfoUploadUrl()+"upload"+"/"+year+"/"+month+"/"+day+"/"+newfile);
             return Result.getResultJson(1,"上传成功",info);
         } catch (IOException e) {
             e.printStackTrace();
@@ -233,9 +195,10 @@ public class UploadController {
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
         }
+        TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
         //获取上传文件MultipartFile
         //返回上传到oss的路径
-        OSS ossClient = new OSSClientBuilder().build(this.endpoint, this.accessKeyId, this.accessKeySecret);
+        OSS ossClient = new OSSClientBuilder().build(apiconfig.getAliyunEndpoint(), apiconfig.getAliyunAccessKeyId(),apiconfig.getAliyunAccessKeySecret());
         InputStream inputStream = null;
         //检查是否是图片
         BufferedImage bi = ImageIO.read(file.getInputStream());
@@ -262,11 +225,11 @@ public class UploadController {
        // String uuid = UUID.randomUUID().toString().replaceAll("-","");
         filename = newFileName;
 
-        String key = this.filePrefix+"/"+year+"/"+month+"/"+day+"/"+filename;
+        String key = apiconfig.getAliyunFilePrefix()+"/"+year+"/"+month+"/"+day+"/"+filename;
         //调用OSS方法实现上传
-        ossClient.putObject(this.ossBucketName, key, inputStream);
+        ossClient.putObject(apiconfig.getAliyunAucketName(), key, inputStream);
         ossClient.shutdown();
-        String url = this.urlPrefix+key;
+        String url = apiconfig.getAliyunUrlPrefix()+key;
         Map<String,String> info =new HashMap<String, String>();
         info.put("url",url);
         return Result.getResultJson(1,"上传成功",info);
@@ -330,16 +293,17 @@ public class UploadController {
                 System.out.println("上传文件失败！");
                 e.printStackTrace();
             }
+            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
             //在服务器上生成新的目录
-            String key = this.ftpBasePath+"/"+file1.getName();
+            String key = apiconfig.getFtpBasePath()+"/"+file1.getName();
 
             ftpClient.setConnectTimeout(1000 * 30);//设置连接超时时间
             ftpClient.setControlEncoding("utf-8");//设置ftp字符集
             //连接ftp服务器 参数填服务器的ip
-            ftpClient.connect(this.ftpHost,this.ftpPort);
+            ftpClient.connect(apiconfig.getFtpHost(),apiconfig.getFtpPort());
 
             //进行登录 参数分别为账号 密码
-            ftpClient.login(this.ftpUsername,this.ftpPassword);
+            ftpClient.login(apiconfig.getFtpUsername(),apiconfig.getFtpPassword());
 
 
 
@@ -349,7 +313,7 @@ public class UploadController {
             //ftpClient.changeWorkingDirectory(this.ftpBasePath);
 
             // 文件夹不存在时新建
-            String remotePath = this.ftpBasePath;
+            String remotePath = apiconfig.getFtpBasePath();
             if (!ftpClient.changeWorkingDirectory(remotePath)) {
                 ftpClient.makeDirectory(remotePath);
                 ftpClient.changeWorkingDirectory(remotePath);
@@ -362,7 +326,7 @@ public class UploadController {
 
             ftpClient.disconnect();
             Map<String,String> info =new HashMap<String, String>();
-            info.put("url",this.localUrl+key);
+            info.put("url",apiconfig.getWebinfoUploadUrl()+key);
             return Result.getResultJson(1,"上传成功",info);
 
         } catch (Exception e) {
