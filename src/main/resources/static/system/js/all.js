@@ -11,12 +11,22 @@ var vm = new Vue({
 		//基本信息
 		webinfoTitle:"",
 		webinfoUrl:"",
-		webinfoKey:"",
+
 		webinfoUsertime:"",
 		webinfoUploadUrl:"",
 		webinfoAvatar:"",
 		pexelsKey:"",
 		scale:"",
+
+		clock:"",
+		vipPrice:"",
+		vipDay:"",
+		vipDiscount:"",
+		isEmail:"",
+		isInvite:"",
+
+		//系统密钥
+		webinfoKey:"",
 
 		//邮箱配置
 		mailHost:'',
@@ -32,6 +42,12 @@ var vm = new Vue({
 		redisPassword:'',
 		redisPort:'',
 		redisPrefix:'',
+		//缓存配置
+		usertime:'',
+		contentCache:'',
+		contentInfoCache:'',
+		CommentCache:'',
+		userCache:'',
 		//COS
 		cosAccessKey:'',
 		cosSecretKey:'',
@@ -58,6 +74,8 @@ var vm = new Vue({
 		alipayPublicKey:'',
 		alipayNotifyUrl:'',
 		//微信支付
+		appletsAppid:'',
+		appletsSecret:'',
 		wxpayAppId:'',
 		wxpayMchId:'',
 		wxpayKey:'',
@@ -161,7 +179,7 @@ var vm = new Vue({
 					that.webinfoUploadUrl=res.data.data.webinfoUploadUrl;
 					that.webinfoAvatar=res.data.data.webinfoAvatar;
 					that.pexelsKey = res.data.data.pexelsKey;
-					that.scale = res.data.data.scale;
+
 
 					//COS
 					that.cosAccessKey=res.data.data.cosAccessKey;
@@ -190,10 +208,22 @@ var vm = new Vue({
 					that.alipayNotifyUrl=res.data.data.alipayNotifyUrl;
 
 					//微信支付
+					that.appletsAppid=res.data.data.appletsAppid;
+					that.appletsSecret=res.data.data.appletsSecret;
 					that.wxpayAppId=res.data.data.wxpayAppId;
 					that.wxpayMchId=res.data.data.wxpayMchId;
 					that.wxpayKey=res.data.data.wxpayKey;
 					that.wxpayNotifyUrl=res.data.data.wxpayNotifyUrl;
+
+					//支付模块
+					that.scale = res.data.data.scale;
+					that.clock=res.data.data.clock;
+					that.vipPrice=res.data.data.vipPrice;
+					that.vipDay=res.data.data.vipDay;
+					that.vipDiscount=res.data.data.vipDiscount;
+					that.isEmail=res.data.data.isEmail;
+					that.isInvite=res.data.data.isInvite;
+
 				}else{
 					that.outSystem();
 				}
@@ -229,6 +259,12 @@ var vm = new Vue({
 					that.redisPassword=res.data.data.redisPassword;
 					that.redisPort=res.data.data.redisPort;
 					that.redisPrefix=res.data.data.redisPrefix;
+					//缓存配置
+					that.usertime=res.data.data.usertime;
+					that.contentCache=res.data.data.contentCache;
+					that.contentInfoCache=res.data.data.contentCache;
+					that.CommentCache=res.data.data.CommentCache;
+					that.userCache=res.data.data.userCache;
 				}else{
 					that.outSystem();
 				}
@@ -253,6 +289,54 @@ var vm = new Vue({
 				console.log(error);
 			});
 		},
+		saveCache(){
+			var that = this;
+			var url = "/system/setupCache"
+			var data={
+				usertime:that.usertime,
+				contentCache:that.contentCache,
+				contentInfoCache:that.contentInfoCache,
+				CommentCache:that.CommentCache,
+				userCache:that.userCache,
+			}
+			axios.get(url,{
+				params:{
+					"webkey":that.webkey,
+					"params":JSON.stringify(that.removeObjectEmptyKey(data))
+				}
+			}).then(function(res){
+				that.toAlert(res.data.msg);
+				if(res.data.code==1){
+					that.getAll();
+				}else{
+					that.outSystem();
+				}
+			}).catch(function (error) {
+				console.log(error);
+			});
+		},
+		saveWebKey(){
+			var that = this;
+			var url = "/system/setupWebKey"
+			var data={
+				webinfoKey:that.webinfoKey,
+			}
+			axios.get(url,{
+				params:{
+					"webkey":that.webkey,
+					"params":JSON.stringify(that.removeObjectEmptyKey(data))
+				}
+			}).then(function(res){
+				that.toAlert(res.data.msg);
+				if(res.data.code==1){
+					that.getAll();
+				}else{
+					that.outSystem();
+				}
+			}).catch(function (error) {
+				console.log(error);
+			});
+		},
 		saveWebinfo(){
 			var that = this;
 			var url = "/system/apiConfigUpdate"
@@ -263,7 +347,33 @@ var vm = new Vue({
 				webinfoUploadUrl:that.webinfoUploadUrl,
 				webinfoAvatar:that.webinfoAvatar,
 				pexelsKey:that.pexelsKey,
-				scale:that.scale
+				isEmail:that.isEmail,
+				isInvite:that.isInvite,
+			}
+			axios.get(url,{
+				params:{
+					"webkey":that.webkey,
+					"params":JSON.stringify(that.removeObjectEmptyKey(data))
+				}
+			}).then(function(res){
+				that.toAlert(res.data.msg);
+				if(res.data.code==1){
+					that.getAll();
+				}else{
+					that.outSystem();
+				}
+			}).catch(function (error) {
+				console.log(error);
+			});
+		},
+		saveAssets(){
+			var that = this;
+			var url = "/system/apiConfigUpdate"
+			var data={
+				clock:that.clock,
+				vipPrice:that.vipPrice,
+				vipDay:that.vipDay,
+				vipDiscount:that.vipDiscount,
 			}
 			axios.get(url,{
 				params:{
@@ -469,6 +579,8 @@ var vm = new Vue({
 				wxpayMchId:that.wxpayMchId,
 				wxpayKey:that.wxpayKey,
 				wxpayNotifyUrl:that.wxpayNotifyUrl,
+				appletsAppid:that.appletsAppid,
+				appletsSecret:that.appletsSecret,
 			}
 			axios.get(url,{
 				params:{

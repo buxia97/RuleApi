@@ -40,9 +40,20 @@ public class SystemController {
 
     @Value("${webinfo.key}")
     private String key;
-
+    /**
+     * 密钥配置
+     * */
     private String webinfoKey;
 
+
+    /**
+     * 缓存配置
+     * */
+    private String usertime;
+    private String contentCache;
+    private String contentInfoCache;
+    private String CommentCache;
+    private String userCache;
     /**
      * 邮箱配置
      * */
@@ -112,9 +123,9 @@ public class SystemController {
     /***
      * 网站基本信息配置
      */
-    @RequestMapping(value = "/setupWebInfo")
+    @RequestMapping(value = "/setupWebKey")
     @ResponseBody
-    public String setupWebInfo(@RequestParam(value = "webkey", required = false) String  webkey,@RequestParam(value = "params", required = false) String  params) {
+    public String setupWebKey(@RequestParam(value = "webkey", required = false) String  webkey,@RequestParam(value = "params", required = false) String  params) {
         if(!webkey.equals(this.key)){
             return Result.getResultJson(0,"请输入正确的访问key",null);
         }
@@ -126,15 +137,10 @@ public class SystemController {
                 //新的配置
 
             }
-
             String new_webinfoKey = "";
-
             String webinfoKey = "webinfo.key=";
-
             //老的配置
-
             String old_webinfoKey =  webinfoKey+this.webinfoKey;
-
             //新的配置
 
             if(jsonToMap.get("webinfoKey")!=null){
@@ -144,6 +150,79 @@ public class SystemController {
             }
             editFile.replacTextContent(old_webinfoKey,new_webinfoKey);
 
+            return Result.getResultJson(1,"修改成功，手动重启后生效",null);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Result.getResultJson(1,"修改失败，请确认参数是否正确",null);
+        }
+    }
+    /***
+     * 缓存配置
+     */
+    @RequestMapping(value = "/setupCache")
+    @ResponseBody
+    public String setupCache(@RequestParam(value = "webkey", required = false) String  webkey,@RequestParam(value = "params", required = false) String  params) {
+        if(!webkey.equals(this.key)){
+            return Result.getResultJson(0,"请输入正确的访问key",null);
+        }
+        Map jsonToMap = new HashMap();
+        try {
+            //读取参数，开始写入
+            if (StringUtils.isNotBlank(params)) {
+                jsonToMap = JSONObject.parseObject(JSON.parseObject(params).toString());
+                //新的配置
+
+            }
+            String new_usertime = "";
+            String new_contentCache = "";
+            String new_contentInfoCache = "";
+            String new_CommentCache = "";
+            String new_userCache = "";
+
+            String usertime = "webinfo.usertime=";
+            String contentCache = "webinfo.contentCache=";
+            String contentInfoCache = "webinfo.contentInfoCache=";
+            String CommentCache = "webinfo.CommentCache=";
+            String userCache = "webinfo.userCache=";
+            //老的配置
+            String old_usertime =  usertime+this.usertime;
+            String old_contentCache =  contentCache+this.contentCache;
+            String old_contentInfoCache =  contentInfoCache+this.contentInfoCache;
+            String old_CommentCache =  CommentCache+this.CommentCache;
+            String old_userCache =  userCache+this.userCache;
+            //新的配置
+
+            if(jsonToMap.get("usertime")!=null){
+                new_usertime = usertime+jsonToMap.get("usertime").toString();
+            }else{
+                new_usertime = usertime;
+            }
+            editFile.replacTextContent(old_usertime,new_usertime);
+            if(jsonToMap.get("contentCache")!=null){
+                new_contentCache = contentCache+jsonToMap.get("contentCache").toString();
+            }else{
+                new_contentCache = contentCache;
+            }
+            editFile.replacTextContent(old_contentCache,new_contentCache);
+            if(jsonToMap.get("contentInfoCache")!=null){
+                new_contentInfoCache = contentInfoCache+jsonToMap.get("contentInfoCache").toString();
+            }else{
+                new_contentInfoCache = contentInfoCache;
+            }
+            editFile.replacTextContent(old_contentInfoCache,new_contentInfoCache);
+            if(jsonToMap.get("CommentCache")!=null){
+                new_CommentCache = CommentCache+jsonToMap.get("CommentCache").toString();
+            }else{
+                new_CommentCache = CommentCache;
+            }
+            editFile.replacTextContent(old_CommentCache,new_CommentCache);
+
+            if(jsonToMap.get("userCache")!=null){
+                new_userCache = userCache+jsonToMap.get("userCache").toString();
+            }else{
+                new_userCache = userCache;
+            }
+            editFile.replacTextContent(old_userCache,new_userCache);
             return Result.getResultJson(1,"修改成功，手动重启后生效",null);
         } catch (Exception e) {
             e.printStackTrace();
@@ -385,7 +464,12 @@ public class SystemController {
         String redisPassword = "spring.redis.password=";
         String redisPort = "spring.redis.port=";
         String redisPrefix = "web.prefix=";
-
+        //缓存配置
+        String usertime = "webinfo.usertime=";
+        String contentCache = "webinfo.contentCache=";
+        String contentInfoCache = "webinfo.contentInfoCache=";
+        String CommentCache = "webinfo.CommentCache=";
+        String userCache = "webinfo.userCache=";
 
 
 
@@ -447,6 +531,22 @@ public class SystemController {
                     if (line.contains(redisPrefix)){
                         this.redisPrefix = line.replace(redisPrefix,"");
                     }
+                    //缓存信息
+                    if (line.contains(usertime)){
+                        this.usertime = line.replace(usertime,"");
+                    }
+                    if (line.contains(contentCache)){
+                        this.contentCache = line.replace(contentCache,"");
+                    }
+                    if (line.contains(contentInfoCache)){
+                        this.contentInfoCache = line.replace(contentInfoCache,"");
+                    }
+                    if (line.contains(CommentCache)){
+                        this.CommentCache = line.replace(CommentCache,"");
+                    }
+                    if (line.contains(userCache)){
+                        this.userCache = line.replace(userCache,"");
+                    }
 
 
 
@@ -474,7 +574,12 @@ public class SystemController {
         data.put("redisPassword",this.redisPassword);
         data.put("redisPort",this.redisPort);
         data.put("redisPrefix",this.redisPrefix);
-
+        //缓存配置信息
+        data.put("usertime",this.usertime);
+        data.put("contentCache",this.contentCache);
+        data.put("contentInfoCache",this.contentInfoCache);
+        data.put("CommentCache",this.CommentCache);
+        data.put("userCache",this.userCache);
 
 
         JSONObject response = new JSONObject();

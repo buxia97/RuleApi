@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>系统设置中心 - RuleApi</title>
-<link href="css/base.css?v=20220227" rel="stylesheet"/>
+<link href="css/base.css?v=20220429" rel="stylesheet"/>
 </head>
 
 <body>
@@ -19,11 +19,11 @@
 				<div class="menu-box">
 					<a href="javascript:;">系统参数设置</a>
 					<div class="menu-box-sub">
-						<a href="javascript:;" @click="toPage(13)" :class="page=='2'?'active':''">APIKEY</a>
+						<a href="javascript:;" @click="toPage(13)" :class="page=='13'?'active':''">APIKEY</a>
 						<a href="javascript:;" @click="toPage(2)" :class="page=='2'?'active':''">邮箱配置</a>
 						<a href="javascript:;" @click="toPage(3)" :class="page=='3'?'active':''">Mysql设置</a>
 						<a href="javascript:;" @click="toPage(4)" :class="page=='4'?'active':''">Redis设置</a>
-						<a href="javascript:;" @click="toPage(11)" :class="page=='4'?'active':''">缓存设置</a>
+						<a href="javascript:;" @click="toPage(11)" :class="page=='11'?'active':''">缓存设置</a>
 					</div>
 				</div>
 				<div class="menu-box">
@@ -37,7 +37,7 @@
 				<div class="menu-box">
 					<a href="javascript:;">支付模块设置</a>
 					<div class="menu-box-sub">
-						<a href="javascript:;" @click="toPage(12)" :class="page=='9'?'active':''">模块配置</a>
+						<a href="javascript:;" @click="toPage(12)" :class="page=='12'?'active':''">模块配置</a>
 						<a href="javascript:;" @click="toPage(7)" :class="page=='7'?'active':''">支付宝</a>
 						<a href="javascript:;" @click="toPage(9)" :class="page=='9'?'active':''">微信</a>
 					</div>
@@ -63,18 +63,7 @@
 					<p>网站地址</p>
 					<input type="text" class="input-text" v-model="webinfoUrl" placeholder="请输入网站地址"/>
 				</div>
-				<div class="form-box">
-					<p>积分充值比例<span class="text-gray">一元钱等于多少积分</span></p>
-					<input type="text" class="input-text" v-model="scale" placeholder="请输入积分充值比例"/>
-				</div>
-				<div class="form-box">
-					<p>系统管理key<span class="text-important">重要，用于访问此系统设置页面</span></p>
-					<input type="text" class="input-text" v-model="webinfoKey" placeholder="请输入系统管理key"/>
-				</div>
-				<div class="form-box">
-					<p>用户登录状态持续时间<span class="text-gray">默认10天</span></p>
-					<input type="text" class="input-text" v-model="webinfoUsertime" placeholder="请输入用户登录状态持续时间"/>
-				</div>
+
 				<div class="form-box">
 					<p>本地&ftp图片访问地址<span class="text-gray">本地上传接口或者FTP上传接口的访问地址，具体需要看配置教程</span></p>
 					<input type="text" class="input-text" v-model="webinfoUploadUrl" placeholder="请输入本地图片访问地址"/>
@@ -86,6 +75,14 @@
 				<div class="form-box">
 					<p>pexelsKey<span class="text-gray">pexel是一个在线图库，可以获取免费无版权风险的高清图片，<a href="https://www.pexels.com/zh-cn/api/" target="_blank">点击此处申请</a></span></p>
 					<input type="text" class="input-text" v-model="pexelsKey" placeholder="请输入pexelsKey"/>
+				</div>
+				<div class="form-box">
+					<p>是否开启邮箱发信<span class="text-gray">0是关闭，1是开启。关闭后，接口将不再支持邮箱发信。</span></p>
+					<input type="text" class="input-text" v-model="isEmail" placeholder="注册是否邮箱验证"/>
+				</div>
+				<div class="form-box">
+					<p>是否开启邀请注册<span class="text-gray">0是关闭，1是开启。开启后，注册将必须填写邀请码。</span></p>
+					<input type="text" class="input-text" v-model="isInvite" placeholder="注册是否邮箱验证"/>
 				</div>
 				<div class="form-btn">
 					<button type="button" class="input-text" class="btn" @click="saveWebinfo()">保存数据</button>
@@ -257,6 +254,14 @@
 					微信支付是微信官方提供的支付接口，<span class="text-red">证书文件apiclient_cert.p12请放在服务器/opt/weixin/文件夹</span>
 				</div>
 				<div class="form-box">
+					<p>小程序APPID<span>可不填，负责小程序登录</span></p>
+					<input type="text" class="input-text" v-model="appletsAppid" placeholder="请输入appletsAppid"/>
+				</div>
+				<div class="form-box">
+					<p>小程序Secret<span>可不填，负责小程序登录</span></p>
+					<input type="text" class="input-text" v-model="appletsSecret" placeholder="请输入appletsSecret"/>
+				</div>
+				<div class="form-box">
 					<p>公众号APP Id</p>
 					<input type="text" class="input-text" v-model="wxpayAppId" placeholder="请输入APP ID"/>
 				</div>
@@ -306,7 +311,80 @@
 					<button type="button" class="input-text" class="btn" @click="saveFTP()">保存数据</button>
 				</div>
 			</div>
-			<!--微信支付设置结束-->
+			<!--缓存配置-->
+			<div class="form-main" v-if="page==11">
+				<div class="form-box">
+					配置API各模块数据的Redis缓存时间。
+				</div>
+				<div class="form-box">
+					<p>用户登录状态持续时间（s）</p>
+					<input type="number" class="input-text" v-model="usertime" placeholder="请输入用户登录状态持续时间"/>
+				</div>
+				<div class="form-box">
+					<p>内容列表缓存时间（s）</p>
+					<input type="number" class="input-text" v-model="contentCache" placeholder="请输入内容列表缓存时间"/>
+				</div>
+				<div class="form-box">
+					<p>内容详情缓存时间（s）</p>
+					<input type="number" class="input-text" v-model="contentInfoCache" placeholder="请输入内容详情缓存时间"/>
+				</div>
+				<div class="form-box">
+					<p>评论列表缓存时间（s）</p>
+					<input type="number" class="input-text" v-model="CommentCache" placeholder="请输入评论列表缓存时间"/>
+				</div>
+				<div class="form-box">
+					<p>用户列表缓存时间（s）</p>
+					<input type="number" class="input-text" v-model="userCache" placeholder="请输入用户列表缓存时间"/>
+				</div>
+				<div class="form-btn">
+					<button type="button" class="input-text" class="btn" @click="saveCache()">保存数据</button>
+				</div>
+			</div>
+			<!--缓存配置借宿-->
+			<!--支付模块配置-->
+			<div class="form-main" v-if="page==12">
+				<div class="form-box">
+					配置积分体系，VIP等资产相关
+				</div>
+				<div class="form-box">
+					<p>积分充值比例<span class="text-gray">一元钱等于多少积分</span></p>
+					<input type="number" class="input-text" v-model="scale" placeholder="请输入积分充值比例"/>
+				</div>
+				<div class="form-box">
+					<p>签到最高赠送积分</p>
+					<input type="number" class="input-text" v-model="clock" placeholder="请输入签到最高赠送积分"/>
+				</div>
+				<div class="form-box">
+					<p>一天VIP价格</p>
+					<input type="number" class="input-text" v-model="vipPrice" placeholder="请输入一天VIP价格"/>
+				</div>
+				<div class="form-box">
+					<p>多少天VIP等于永久</p>
+					<input type="number" class="input-text" v-model="vipDay" placeholder="请输入多少天VIP等于永久"/>
+				</div>
+				<div class="form-box">
+					<p>VIP折扣<span class="text-gray">商品价格乘以该折扣，为0.0则免费购买商品</span></p>
+					<input type="number" class="input-text" v-model="vipDiscount" placeholder="请输入VIP折扣"/>
+				</div>
+				<div class="form-btn">
+					<button type="button" class="input-text" class="btn" @click="saveAssets()">保存数据</button>
+				</div>
+			</div>
+			<!--APIkey配置结束-->
+			<!--APIkey配置-->
+			<div class="form-main" v-if="page==13">
+				<div class="form-box">
+					APIKey用于访问可视化配置中心。
+				</div>
+				<div class="form-box">
+					<p>APIKey</p>
+					<input type="text" class="input-text" v-model="webinfoKey" placeholder="请输入APIKey"/>
+				</div>
+				<div class="form-btn">
+					<button type="button" class="input-text" class="btn" @click="saveWebKey()">保存数据</button>
+				</div>
+			</div>
+			<!--APIkey配置结束-->
 			<!--配置文件更新-->
 			<div class="form-text" v-if="page==8">
 				<div class="form-box">
@@ -330,6 +408,10 @@
 			</p>
 			<div class="code">
 				<p>sh /opt/ruleapi.sh restart</p>
+			</div>
+			<p>API会始终发布新版，请及时留意最新版本更新时间，并通过下方指令进行更新。</p>
+			<div class="code">
+				<p>sh /opt/ruleapi.sh update</p>
 			</div>
 			<p>或者到官网网站<a href="https://www.ruletree.club/tag/RuleApi/" target="_blank">查看更多信息</a></p>
 		</div>

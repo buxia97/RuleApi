@@ -254,9 +254,7 @@ a{
 	color: #fff;
 	line-height: 40px;
 }
-.menu-box-sub a:nth-child(1){
-	border-bottom: #6c6c6c 1px solid;
-}
+
 .tomenu{
 	display: none;
 }

@@ -715,13 +715,19 @@ public class TypechoUsersController {
                 //验证邮箱验证码
                 String email = jsonToMap.get("mail").toString();
                 String code = jsonToMap.get("code").toString();
-                String cur_code = redisHelp.getRedis(this.dataprefix + "_" + "sendCode" + email, redisTemplate);
-                if (cur_code == null) {
-                    return Result.getResultJson(0, "请先发送验证码", null);
+                //判断是否开启邮箱验证
+                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+                Integer isEmail = apiconfig.getIsEmail();
+                if(isEmail.equals(1)){
+                    String cur_code = redisHelp.getRedis(this.dataprefix + "_" + "sendCode" + email, redisTemplate);
+                    if (cur_code == null) {
+                        return Result.getResultJson(0, "请先发送验证码", null);
+                    }
+                    if (!cur_code.equals(code)) {
+                        return Result.getResultJson(0, "验证码不正确", null);
+                    }
                 }
-                if (!cur_code.equals(code)) {
-                    return Result.getResultJson(0, "验证码不正确", null);
-                }
+
                 String p = jsonToMap.get("password").toString();
                 String passwd = phpass.HashPassword(p);
                 Long date = System.currentTimeMillis();
@@ -758,6 +764,12 @@ public class TypechoUsersController {
     public String SendCode(@RequestParam(value = "params", required = false) String params, HttpServletRequest request) throws MessagingException {
         try{
             Map jsonToMap = null;
+
+            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+            Integer isEmail = apiconfig.getIsEmail();
+            if(isEmail.equals(0)){
+                return Result.getResultJson(0, "邮箱验证已经关闭", null);
+            }
             String  agent =  request.getHeader("User-Agent");
             String  ip = baseFull.getIpAddr(request);
 
@@ -813,6 +825,11 @@ public class TypechoUsersController {
     public String RegSendCode(@RequestParam(value = "params", required = false) String params, HttpServletRequest request) throws MessagingException {
         try{
             Map jsonToMap = null;
+            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+            Integer isEmail = apiconfig.getIsEmail();
+            if(isEmail.equals(0)){
+                return Result.getResultJson(0, "邮箱验证已经关闭", null);
+            }
             String  agent =  request.getHeader("User-Agent");
             String  ip = baseFull.getIpAddr(request);
 
@@ -870,7 +887,11 @@ public class TypechoUsersController {
             TypechoUsers update = null;
             Map jsonToMap = null;
             if (StringUtils.isNotBlank(params)) {
-
+                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+                Integer isEmail = apiconfig.getIsEmail();
+                if(isEmail.equals(0)){
+                    return Result.getResultJson(0, "邮箱验证已经关闭，请联系管理员找回密码", null);
+                }
                 jsonToMap = JSONObject.parseObject(JSON.parseObject(params).toString());
                 String code = jsonToMap.get("code").toString();
                 String name = jsonToMap.get("name").toString();
@@ -940,17 +961,21 @@ public class TypechoUsersController {
                 jsonToMap = JSONObject.parseObject(JSON.parseObject(params).toString());
                 //根据验证码判断是否要修改邮箱
                 if (jsonToMap.get("code") != null && jsonToMap.get("mail") != null) {
-
-                    String email = jsonToMap.get("mail").toString();
-                    if (redisHelp.getRedis(this.dataprefix + "_" + "sendCode" + email, redisTemplate) != null) {
-                        String sendCode = redisHelp.getRedis(this.dataprefix + "_" + "sendCode" + email, redisTemplate);
-                        code = jsonToMap.get("code").toString();
-                        if (!sendCode.equals(code)) {
-                            return Result.getResultJson(0, "验证码不正确", null);
+                    TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+                    Integer isEmail = apiconfig.getIsEmail();
+                    if(isEmail.equals(1)){
+                        String email = jsonToMap.get("mail").toString();
+                        if (redisHelp.getRedis(this.dataprefix + "_" + "sendCode" + email, redisTemplate) != null) {
+                            String sendCode = redisHelp.getRedis(this.dataprefix + "_" + "sendCode" + email, redisTemplate);
+                            code = jsonToMap.get("code").toString();
+                            if (!sendCode.equals(code)) {
+                                return Result.getResultJson(0, "验证码不正确", null);
+                            }
+                        } else {
+                            return Result.getResultJson(0, "验证码不正确或已失效", null);
                         }
-                    } else {
-                        return Result.getResultJson(0, "验证码不正确或已失效", null);
                     }
+
                 } else {
                     jsonToMap.remove("mail");
                 }
@@ -1423,5 +1448,21 @@ public class TypechoUsersController {
             return Result.getResultJson(0, "请求异常", null);
         }
 
+    }
+    /***
+     * 注册系统配置信息
+     */
+    @RequestMapping(value = "/regConfig")
+    @ResponseBody
+    public String regConfig() {
+        JSONObject data = new JSONObject();
+        TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+        data.put("isEmail",apiconfig.getIsEmail());
+        data.put("isInvite",apiconfig.getIsInvite());
+        JSONObject response = new JSONObject();
+        response.put("code" , 1);
+        response.put("data" , data);
+        response.put("msg"  , "");
+        return response.toString();
     }
 }
