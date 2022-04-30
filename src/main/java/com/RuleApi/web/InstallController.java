@@ -293,32 +293,32 @@ public class InstallController {
                     "  `cosBucketName` varchar(255) NOT NULL DEFAULT ''," +
                     "  `cosPath` varchar(255) DEFAULT ''," +
                     "  `cosPrefix` varchar(255) NOT NULL DEFAULT ''," +
-                    "  `aliyunEndpoint` varchar(500) NOT NULL," +
-                    "  `aliyunAccessKeyId` varchar(255) NOT NULL," +
-                    "  `aliyunAccessKeySecret` varchar(255) NOT NULL," +
-                    "  `aliyunAucketName` varchar(255) NOT NULL," +
-                    "  `aliyunUrlPrefix` varchar(255) NOT NULL," +
-                    "  `aliyunFilePrefix` varchar(255) NOT NULL," +
-                    "  `ftpHost` varchar(255) NOT NULL," +
+                    "  `aliyunEndpoint` varchar(500) NOT NULL DEFAULT ''," +
+                    "  `aliyunAccessKeyId` varchar(255) NOT NULL DEFAULT ''," +
+                    "  `aliyunAccessKeySecret` varchar(255) NOT NULL DEFAULT ''," +
+                    "  `aliyunAucketName` varchar(255) NOT NULL DEFAULT ''," +
+                    "  `aliyunUrlPrefix` varchar(255) NOT NULL DEFAULT ''," +
+                    "  `aliyunFilePrefix` varchar(255) NOT NULL DEFAULT ''," +
+                    "  `ftpHost` varchar(255) NOT NULL DEFAULT ''," +
                     "  `ftpPort` int(11) NOT NULL DEFAULT '21'," +
-                    "  `ftpUsername` varchar(255) NOT NULL," +
-                    "  `ftpPassword` varchar(255) NOT NULL," +
-                    "  `ftpBasePath` varchar(255) NOT NULL," +
-                    "  `alipayAppId` varchar(255) NOT NULL," +
-                    "  `alipayPrivateKey` varchar(5000) NOT NULL," +
-                    "  `alipayPublicKey` varchar(5000) NOT NULL," +
-                    "  `alipayNotifyUrl` varchar(500) NOT NULL," +
-                    "  `appletsAppid` varchar(255) NOT NULL," +
-                    "  `appletsSecret` varchar(5000) NOT NULL," +
-                    "  `wxpayAppId` varchar(255) NOT NULL," +
-                    "  `wxpayMchId` varchar(255) NOT NULL," +
-                    "  `wxpayKey` varchar(5000) DEFAULT ''," +
+                    "  `ftpUsername` varchar(255) NOT NULL DEFAULT ''," +
+                    "  `ftpPassword` varchar(255) NOT NULL DEFAULT ''," +
+                    "  `ftpBasePath` varchar(255) NOT NULL DEFAULT ''," +
+                    "  `alipayAppId` varchar(255) NOT NULL DEFAULT ''," +
+                    "  `alipayPrivateKey` text," +
+                    "  `alipayPublicKey` text," +
+                    "  `alipayNotifyUrl` varchar(500) NOT NULL DEFAULT ''," +
+                    "  `appletsAppid` varchar(255) NOT NULL DEFAULT ''," +
+                    "  `appletsSecret` text," +
+                    "  `wxpayAppId` varchar(255) NOT NULL DEFAULT ''," +
+                    "  `wxpayMchId` varchar(255) NOT NULL DEFAULT ''," +
+                    "  `wxpayKey` text," +
                     "  `wxpayNotifyUrl` varchar(500) DEFAULT ''," +
                     "  PRIMARY KEY (`id`)" +
                     ") ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='api配置信息表';");
             text+="API配置中心模块创建完成。";
             //修改请求头
-            jdbcTemplate.execute("INSERT INTO `"+prefix+"_apiconfig` VALUES (1,'网站名称','','http://127.0.0.1:8081/','https://cdn.helingqi.com/wavatar/','',100,'5',200,300,'0.1',1,0,'','','','','','','','','','','','','',21,'','','','','','','','','','','','','');");
+            jdbcTemplate.execute("INSERT INTO `"+prefix+"_apiconfig` (webinfoTitle) VALUES ('网站名称');");
         }else{
             text+="API配置中心模块已经存在，无需添加。";
         }
