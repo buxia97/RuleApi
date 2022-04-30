@@ -210,6 +210,14 @@ public class InstallController {
         }else{
             text+="积分商城模块已经存在，无需添加。";
         }
+        //查询商品表是否存在vipDiscount字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_shop' and column_name = 'vipDiscount';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_shop ADD vipDiscount varchar(255) NOT NULL DEFAULT '0.1' COMMENT 'VIP折扣，权高于系统设置折扣';");
+            text+="积分商城模块，字段vipDiscount添加完成。";
+        }else{
+            text+="积分商城模块，字段vipDiscount已经存在，无需添加。";
+        }
         //查询商品表是否存在created字段
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_shop' and column_name = 'created';", Integer.class);
         if (i == 0){

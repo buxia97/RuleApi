@@ -325,6 +325,7 @@ public class TypechoUsersController {
                 jsonToMap.put("url", rows.get(0).getUrl());
                 jsonToMap.put("screenName", rows.get(0).getScreenName());
                 jsonToMap.put("customize", rows.get(0).getCustomize());
+                jsonToMap.put("introduce", rows.get(0).getIntroduce());
                 //判断是否为VIP
                 jsonToMap.put("vip", rows.get(0).getVip());
                 jsonToMap.put("isvip", 0);
@@ -452,6 +453,7 @@ public class TypechoUsersController {
                 jsonToMap.put("url", user.getUrl());
                 jsonToMap.put("screenName", user.getScreenName());
                 jsonToMap.put("customize", user.getCustomize());
+                jsonToMap.put("introduce", user.getIntroduce());
                 //判断是否为VIP
                 jsonToMap.put("vip", user.getVip());
                 jsonToMap.put("isvip", 0);
@@ -1414,6 +1416,7 @@ public class TypechoUsersController {
         TypechoComments comments = new TypechoComments();
         comments.setAuthorId(uid);
         Integer lv = commentsService.total(comments);
+        json.remove("password");
         json.put("lv", baseFull.getLv(lv));
         json.put("token", token);
         TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
@@ -1422,6 +1425,15 @@ public class TypechoUsersController {
 
         } else {
             json.put("avatar", apiconfig.getWebinfoAvatar() + "null");
+        }
+        //判断是否为VIP
+        json.put("vip", users.getVip());
+        json.put("isvip", 0);
+        Long date = System.currentTimeMillis();
+        String curTime = String.valueOf(date).substring(0, 10);
+        Integer viptime  = users.getVip();
+        if(viptime>Integer.parseInt(curTime)||viptime.equals(1)){
+            json.put("isvip", 1);
         }
         JSONObject response = new JSONObject();
 

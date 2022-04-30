@@ -15,6 +15,7 @@
         <result column="cid" property="cid" />
         <result column="uid" property="uid" />
         <result column="status" property="status" />
+        <result column="vipDiscount" property="vipDiscount" />
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -29,7 +30,8 @@
         `cid`,
         `uid`,
         `created`,
-        `status`
+        `status`,
+        `vipDiscount`
     </sql>
 
     <!-- 插入数据 -->
@@ -70,7 +72,10 @@
                 `created`,
             </if>
             <if test ='null != status'>
-                `status`
+                `status`,
+            </if>
+            <if test ='null != vipDiscount'>
+                `vipDiscount`
             </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
@@ -108,7 +113,10 @@
                 #{created},
             </if>
             <if test ='null != status'>
-                #{status}
+                #{status},
+            </if>
+            <if test ='null != vipDiscount'>
+                #{vipDiscount}
             </if>
         </trim>
     </insert>
@@ -127,7 +135,8 @@
             <if test ='null != cid'>`cid` = #{cid},</if>
             <if test ='null != uid'>`uid` = #{uid},</if>
             <if test ='null != created'>`created` = #{created},</if>
-            <if test ='null != status'>`status` = #{status}</if>
+            <if test ='null != status'>`status` = #{status},</if>
+            <if test ='null != vipDiscount'>`vipDiscount` = #{vipDiscount}</if>
         </set>
         WHERE `id` = #{id}
     </update>

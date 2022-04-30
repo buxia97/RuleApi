@@ -73,4 +73,9 @@ public class TypechoShop implements Serializable {
      * status  审核状态
      */
     private Integer status;
+    /**
+     * vipDiscount  VIP折扣
+     */
+    private String vipDiscount;
+
 }
