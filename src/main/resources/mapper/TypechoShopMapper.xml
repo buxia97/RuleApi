@@ -130,7 +130,7 @@
             <if test ='null != text'>`text` = #{text},</if>
             <if test ='null != price'>`price` = #{price},</if>
             <if test ='null != num'>`num` = #{num},</if>
-            <if test ='null != type'>`type` = #{type},</if>
+            <if test ='null != type'>`type` = #{type},</if>07
             <if test ='null != value'>`value` = #{value},</if>
             <if test ='null != cid'>`cid` = #{cid},</if>
             <if test ='null != uid'>`uid` = #{uid},</if>

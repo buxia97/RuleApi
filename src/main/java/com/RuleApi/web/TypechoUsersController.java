@@ -738,7 +738,7 @@ public class TypechoUsersController {
                 jsonToMap.put("group", "contributor");
 
                 jsonToMap.put("password", passwd);
-                jsonToMap.remove("introduce");
+                //jsonToMap.remove("introduce");
                 jsonToMap.remove("assets");
                 jsonToMap.remove("customize");
                 jsonToMap.remove("vip");
@@ -1004,7 +1004,7 @@ public class TypechoUsersController {
                 jsonToMap.remove("activated");
                 jsonToMap.remove("logged");
                 jsonToMap.remove("authCode");
-                jsonToMap.remove("introduce");
+                //jsonToMap.remove("introduce");
                 jsonToMap.remove("assets");
                 update = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoUsers.class);
             }
@@ -1073,7 +1073,7 @@ public class TypechoUsersController {
                 jsonToMap.remove("activated");
                 jsonToMap.remove("logged");
                 jsonToMap.remove("authCode");
-                jsonToMap.remove("introduce");
+                //jsonToMap.remove("introduce");
                 jsonToMap.remove("assets");
                 update = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoUsers.class);
             }

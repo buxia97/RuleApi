@@ -151,7 +151,16 @@ public class TypechoShopController {
             //生成typecho数据库格式的创建时间戳
             Long date = System.currentTimeMillis();
             String userTime = String.valueOf(date).substring(0,10);
+
+
             jsonToMap.put("created",userTime);
+
+            //如果用户不设置VIP折扣，则调用系统设置
+            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+            Double vipDiscount = Double.valueOf(apiconfig.getVipDiscount());
+            if(jsonToMap.get("vipDiscount")==null){
+                jsonToMap.put("vipDiscount",vipDiscount);
+            }
             insert = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoShop.class);
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer uid  = Integer.parseInt(map.get("uid").toString());
@@ -300,8 +309,7 @@ public class TypechoShopController {
             if(uid.equals(aid)){
                 return Result.getResultJson(0,"你不可以买自己的商品",null);
             }
-            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
-            Double vipDiscount = Double.valueOf(apiconfig.getVipDiscount());
+            Double vipDiscount = Double.valueOf(shopinfo.getVipDiscount());
 
             TypechoUsers usersinfo =usersService.selectByKey(uid.toString());
             Integer price = shopinfo.getPrice();

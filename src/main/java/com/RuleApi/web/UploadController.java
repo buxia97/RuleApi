@@ -75,7 +75,15 @@ public class UploadController {
             return new UploadMsg(0,"文件为空",null);
         }
         String oldFileName = file.getOriginalFilename();
-        String eName = oldFileName.substring(oldFileName.lastIndexOf("."));
+        //应对图片剪裁后的无后缀图片
+        String eName = "";
+        try{
+            eName = oldFileName.substring(oldFileName.lastIndexOf("."));
+        }catch (Exception e){
+            oldFileName = oldFileName +".png";
+            eName = oldFileName.substring(oldFileName.lastIndexOf("."));
+        }
+
         //检查是否是图片
         BufferedImage bi = ImageIO.read(file.getInputStream());
         if(bi == null){
@@ -99,11 +107,13 @@ public class UploadController {
         // 简单文件上传, 最大支持 5 GB, 适用于小文件上传, 建议 20 M 以下的文件使用该接口
         // 大文件上传请参照 API 文档高级 API 上传
         File localFile = null;
+        localFile = File.createTempFile("temp",null);
+        file.transferTo(localFile);
         try {
             localFile = File.createTempFile("temp",null);
             file.transferTo(localFile);
             // 指定要上传到 COS 上的路径
-            String key = "/"+apiconfig.getCosPath()+"/"+year+"/"+month+"/"+day+"/"+newFileName;
+            String key = "/"+apiconfig.getCosPrefix()+"/"+year+"/"+month+"/"+day+"/"+newFileName;
             PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, key, localFile);
             PutObjectResult putObjectResult = cosclient.putObject(putObjectRequest);
             //return new UploadMsg(1,"上传成功",this.path + putObjectRequest.getKey());
@@ -147,7 +157,14 @@ public class UploadController {
         TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
 
         String filename = file.getOriginalFilename();
-        String filetype = filename.substring(filename.lastIndexOf("."));
+        //String filetype = filename.substring(filename.lastIndexOf("."));
+        String filetype = "";
+        try{
+            filetype = filename.substring(filename.lastIndexOf("."));
+        }catch (Exception e){
+            filename = filename +".png";
+            filetype = filename.substring(filename.lastIndexOf("."));
+        }
         String newfile = UUID.randomUUID()+filetype;
         //检查是否是图片
         BufferedImage bi = ImageIO.read(file.getInputStream());
@@ -176,6 +193,7 @@ public class UploadController {
         }
         try {
             file.transferTo(file1);
+
             Map<String,String> info =new HashMap<String, String>();
             info.put("url",apiconfig.getWebinfoUploadUrl()+"upload"+"/"+year+"/"+month+"/"+day+"/"+newfile);
             return Result.getResultJson(1,"上传成功",info);
@@ -218,7 +236,15 @@ public class UploadController {
         int day=cal.get(Calendar.DATE);
         //获取文件名称
         String filename = file.getOriginalFilename();
-        String eName = filename.substring(filename.lastIndexOf("."));
+        //String eName = filename.substring(filename.lastIndexOf("."));
+        //应对图片剪裁后的无后缀图片
+        String eName = "";
+        try{
+            eName = filename.substring(filename.lastIndexOf("."));
+        }catch (Exception e){
+            filename = filename +".png";
+            eName = filename.substring(filename.lastIndexOf("."));
+        }
         //1.在文件名称中添加随机唯一的值
         String newFileName = UUID.randomUUID()+eName;
 
@@ -278,7 +304,15 @@ public class UploadController {
             //生成新文件名，防止文件名重复而导致文件覆盖
             //1、获取原文件后缀名 .img .jpg ....
             String originalFileName = file.getOriginalFilename();
-            String suffix = originalFileName.substring(originalFileName.lastIndexOf('.'));
+            //String suffix = originalFileName.substring(originalFileName.lastIndexOf('.'));
+            //应对图片剪裁后的无后缀图片
+            String suffix = "";
+            try{
+                suffix = originalFileName.substring(originalFileName.lastIndexOf("."));
+            }catch (Exception e){
+                originalFileName = originalFileName +".png";
+                suffix = originalFileName.substring(originalFileName.lastIndexOf("."));
+            }
             //2、使用UUID生成新文件名
             String newFileName = UUID.randomUUID() + suffix;
 
