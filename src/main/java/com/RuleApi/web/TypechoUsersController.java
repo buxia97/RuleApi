@@ -7,6 +7,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.RuleApi.entity.*;
 import com.RuleApi.service.*;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.hssf.usermodel.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -58,6 +59,9 @@ public class TypechoUsersController {
 
     @Autowired
     private TypechoApiconfigService apiconfigService;
+
+    @Autowired
+    private TypechoInvitationService invitationService;
 
     @Autowired
     MailService MailService;
@@ -398,6 +402,7 @@ public class TypechoUsersController {
                 return Result.getResultJson(0, "请输入正确的参数", null);
             }
             TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+            Integer isInvite = apiconfig.getIsInvite();
             //如果是微信，则走两步判断，是小程序还是APP
             if(jsonToMap.get("appLoginType").toString().equals("weixin")){
                 if(jsonToMap.get("type").toString().equals("applets")){
@@ -438,6 +443,7 @@ public class TypechoUsersController {
             List<TypechoUserapi> apiList = userapiService.selectList(isApi);
             //大于0则走向登陆，小于0则进行注册
             if (apiList.size() > 0) {
+
                 TypechoUserapi apiInfo = apiList.get(0);
                 TypechoUsers user = service.selectByKey(apiInfo.getUid().toString());
                 Long date = System.currentTimeMillis();
@@ -497,6 +503,9 @@ public class TypechoUsersController {
 
             } else {
                 //注册
+                if(isInvite.equals(1)){
+                    return Result.getResultJson(0, "当前注册需要邀请码，请采用普通方式注册！", null);
+                }
                 TypechoUsers regUser = new TypechoUsers();
                 String name = baseFull.createRandomStr(5) + baseFull.createRandomStr(4);
                 String p = baseFull.createRandomStr(9);
@@ -699,28 +708,30 @@ public class TypechoUsersController {
             if (StringUtils.isNotBlank(params)) {
                 jsonToMap = JSONObject.parseObject(JSON.parseObject(params).toString());
                 //在之前需要做判断，验证用户名或者邮箱在数据库中是否存在
-                //验证是否存在相同用户名
-                Map keyMail = new HashMap<String, String>();
-                keyMail.put("mail", jsonToMap.get("mail").toString());
-                TypechoUsers toKey = JSON.parseObject(JSON.toJSONString(keyMail), TypechoUsers.class);
-                List isMail = service.selectList(toKey);
-                if (isMail.size() > 0) {
-                    return Result.getResultJson(0, "该邮箱已注册", null);
+                //判断是否开启邮箱验证
+                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+                Integer isEmail = apiconfig.getIsEmail();
+                Integer isInvite = apiconfig.getIsInvite();
+                //验证是否存在相同用户名或者邮箱
+                TypechoUsers toKey = new TypechoUsers();
+                if(isEmail.equals(1)) {
+
+                    toKey.setMail(jsonToMap.get("mail").toString());
+                    List isMail = service.selectList(toKey);
+                    if (isMail.size() > 0) {
+                        return Result.getResultJson(0, "该邮箱已注册", null);
+                    }
                 }
-                Map keyName = new HashMap<String, String>();
-                keyName.put("name", jsonToMap.get("name").toString());
-                TypechoUsers toKey1 = JSON.parseObject(JSON.toJSONString(keyName), TypechoUsers.class);
-                List isName = service.selectList(toKey1);
+                toKey.setMail(null);
+                toKey.setName(jsonToMap.get("name").toString());
+                List isName = service.selectList(toKey);
                 if (isName.size() > 0) {
                     return Result.getResultJson(0, "该用户名已注册", null);
                 }
                 //验证邮箱验证码
-                String email = jsonToMap.get("mail").toString();
-                String code = jsonToMap.get("code").toString();
-                //判断是否开启邮箱验证
-                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
-                Integer isEmail = apiconfig.getIsEmail();
                 if(isEmail.equals(1)){
+                    String email = jsonToMap.get("mail").toString();
+                    String code = jsonToMap.get("code").toString();
                     String cur_code = redisHelp.getRedis(this.dataprefix + "_" + "sendCode" + email, redisTemplate);
                     if (cur_code == null) {
                         return Result.getResultJson(0, "请先发送验证码", null);
@@ -729,7 +740,23 @@ public class TypechoUsersController {
                         return Result.getResultJson(0, "验证码不正确", null);
                     }
                 }
+                //验证邀请码
+                if(isInvite.equals(1)){
+                    if(jsonToMap.get("inviteCode")==null){
+                        return Result.getResultJson(0, "请输入邀请码", null);
+                    }
+                    TypechoInvitation invitation = new TypechoInvitation();
+                    invitation.setCode(jsonToMap.get("inviteCode").toString());
+                    List<TypechoInvitation> invite = invitationService.selectList(invitation);
+                    if(invite.size()<1){
+                        return Result.getResultJson(0, "错误的邀请码", null);
+                    }else{
+                        TypechoInvitation cur = invite.get(0);
+                        cur.setStatus(1);
+                        invitationService.update(cur);
+                    }
 
+                }
                 String p = jsonToMap.get("password").toString();
                 String passwd = phpass.HashPassword(p);
                 Long date = System.currentTimeMillis();
@@ -1476,5 +1503,145 @@ public class TypechoUsersController {
         response.put("data" , data);
         response.put("msg"  , "");
         return response.toString();
+    }
+
+    /**
+     * 创建邀请码
+     * **/
+    @RequestMapping(value = "/madeInvitation")
+    @ResponseBody
+    public String madeInvitation(@RequestParam(value = "num", required = false) Integer  num,@RequestParam(value = "token", required = false) String  token) {
+        try{
+            Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
+            if (uStatus == 0) {
+                return Result.getResultJson(0, "用户未登录或Token验证失败", null);
+            }
+            Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+            String group = map.get("group").toString();;
+            Integer uid =Integer.parseInt(map.get("uid").toString());
+            if (!group.equals("administrator")) {
+                return Result.getResultJson(0, "你没有操作权限", null);
+            }
+            if(num>100){
+                num = 100;
+            }
+
+            Long date = System.currentTimeMillis();
+            String curTime = String.valueOf(date).substring(0, 10);
+            //循环生成卡密
+            for (int i = 0; i < num; i++) {
+                TypechoInvitation invitation = new TypechoInvitation();
+                String code = baseFull.createRandomStr(8);
+                invitation.setCode(code);
+                invitation.setStatus(0);
+                invitation.setCreated(Integer.parseInt(curTime));
+                invitation.setUid(uid);
+                invitationService.insert(invitation);
+            }
+            JSONObject response = new JSONObject();
+            response.put("code" , 1);
+            response.put("msg"  , "生成邀请码成功");
+            return response.toString();
+        }catch (Exception e){
+            JSONObject response = new JSONObject();
+            response.put("code" , 1);
+            response.put("msg"  , "生成邀请码失败");
+            return response.toString();
+        }
+    }
+
+    /***
+     * 邀请码列表
+     *
+     */
+    @RequestMapping(value = "/invitationList")
+    @ResponseBody
+    public String invitationList (@RequestParam(value = "searchParams", required = false) String  searchParams,
+                                @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
+                                @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
+                                @RequestParam(value = "token", required = false) String  token) {
+        Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
+        if (uStatus == 0) {
+            return Result.getResultJson(0, "用户未登录或Token验证失败", null);
+        }
+        Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+        String group = map.get("group").toString();
+        if (!group.equals("administrator")) {
+            return Result.getResultJson(0, "你没有操作权限", null);
+        }
+        TypechoInvitation query = new TypechoInvitation();
+        if (StringUtils.isNotBlank(searchParams)) {
+            JSONObject object = JSON.parseObject(searchParams);
+            query = object.toJavaObject(TypechoInvitation.class);
+        }
+
+        PageList<TypechoInvitation> pageList = invitationService.selectPage(query, page, limit);
+        JSONObject response = new JSONObject();
+        response.put("code" , 1);
+        response.put("msg"  , "");
+        response.put("data" , null != pageList.getList() ? pageList.getList() : new JSONArray());
+        response.put("count", pageList.getTotalCount());
+        return response.toString();
+    }
+    /***
+     * 导出邀请码
+     *
+     */
+    @RequestMapping(value = "/invitationExcel")
+    @ResponseBody
+    public void invitationExcel(@RequestParam(value = "limit" , required = false, defaultValue = "15") Integer limit,@RequestParam(value = "token", required = false) String  token,HttpServletResponse response) throws IOException {
+        HSSFWorkbook workbook = new HSSFWorkbook();
+        HSSFSheet sheet = workbook.createSheet("邀请码列表");
+
+        Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
+        if (uStatus == 0) {
+            response.setContentType("application/octet-stream");
+            response.setHeader("Content-disposition", "attachment;filename=nodata.xls");
+            response.flushBuffer();
+            workbook.write(response.getOutputStream());
+        }
+        Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+        String group = map.get("group").toString();
+        if (!group.equals("administrator")) {
+            response.setContentType("application/octet-stream");
+            response.setHeader("Content-disposition", "attachment;filename=nodata.xls");
+            response.flushBuffer();
+            workbook.write(response.getOutputStream());
+        }
+        TypechoInvitation query = new TypechoInvitation();
+        PageList<TypechoInvitation> pageList = invitationService.selectPage(query, 1, limit);
+        List<TypechoInvitation> list = pageList.getList();
+
+
+
+
+        String fileName = "InvitationExcel"  + ".xls";//设置要导出的文件的名字
+        //新增数据行，并且设置单元格数据
+
+        int rowNum = 1;
+
+        String[] headers = { "ID", "邀请码", "创建人"};
+        //headers表示excel表中第一行的表头
+
+        HSSFRow row = sheet.createRow(0);
+        //在excel表中添加表头
+
+        for(int i=0;i<headers.length;i++){
+            HSSFCell cell = row.createCell(i);
+            HSSFRichTextString text = new HSSFRichTextString(headers[i]);
+            cell.setCellValue(text);
+        }
+        for (TypechoInvitation Invitation : list) {
+            HSSFRow row1 = sheet.createRow(rowNum);
+            row1.createCell(0).setCellValue(Invitation.getId());
+            row1.createCell(1).setCellValue(Invitation.getCode());
+            row1.createCell(2).setCellValue(Invitation.getUid());
+            rowNum++;
+        }
+
+        response.setContentType("application/octet-stream");
+        response.setHeader("Content-disposition", "attachment;filename=" + fileName);
+        response.flushBuffer();
+        workbook.write(response.getOutputStream());
     }
 }

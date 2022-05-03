@@ -52,7 +52,7 @@ public class TypechoApiconfig implements Serializable {
     /**
      * clock  签到最多多少积分
      */
-    private String clock;
+    private Integer clock;
 
     /**
      * vipPrice  VIP一天价格

@@ -9,31 +9,32 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+
 /**
  * 业务层实现类
- * TypechoPaykeyServiceImpl
- * @author paykey
- * @date 2022/04/20
+ * TypechoInvitationServiceImpl
+ * @author invitation
+ * @date 2022/05/03
  */
 @Service
-public class TypechoPaykeyServiceImpl implements TypechoPaykeyService {
+public class TypechoInvitationServiceImpl implements TypechoInvitationService {
 
     @Autowired
-	TypechoPaykeyDao dao;
+	TypechoInvitationDao dao;
 
     @Override
-    public int insert(TypechoPaykey typechoPaykey) {
-        return dao.insert(typechoPaykey);
+    public int insert(TypechoInvitation typechoInvitation) {
+        return dao.insert(typechoInvitation);
     }
 
     @Override
-    public int batchInsert(List<TypechoPaykey> list) {
+    public int batchInsert(List<TypechoInvitation> list) {
     	return dao.batchInsert(list);
     }
 
     @Override
-    public int update(TypechoPaykey typechoPaykey) {
-    	return dao.update(typechoPaykey);
+    public int update(TypechoInvitation typechoInvitation) {
+    	return dao.update(typechoInvitation);
     }
 
     @Override
@@ -47,20 +48,20 @@ public class TypechoPaykeyServiceImpl implements TypechoPaykeyService {
     }
 
 	@Override
-	public TypechoPaykey selectByKey(Object key) {
+	public TypechoInvitation selectByKey(Object key) {
 		return dao.selectByKey(key);
 	}
 
 	@Override
-	public List<TypechoPaykey> selectList(TypechoPaykey typechoPaykey) {
-		return dao.selectList(typechoPaykey);
+	public List<TypechoInvitation> selectList(TypechoInvitation typechoInvitation) {
+		return dao.selectList(typechoInvitation);
 	}
 
 	@Override
-	public PageList<TypechoPaykey> selectPage(TypechoPaykey typechoPaykey, Integer offset, Integer pageSize,String searchKey) {
-		PageList<TypechoPaykey> pageList = new PageList<>();
+	public PageList<TypechoInvitation> selectPage(TypechoInvitation typechoInvitation, Integer offset, Integer pageSize) {
+		PageList<TypechoInvitation> pageList = new PageList<>();
 
-		int total = this.total(typechoPaykey);
+		int total = this.total(typechoInvitation);
 
 		Integer totalPage;
 		if (total % pageSize != 0) {
@@ -71,7 +72,7 @@ public class TypechoPaykeyServiceImpl implements TypechoPaykeyService {
 
 		int page = (offset - 1) * pageSize;
 
-		List<TypechoPaykey> list = dao.selectPage(typechoPaykey, page, pageSize,searchKey);
+		List<TypechoInvitation> list = dao.selectPage(typechoInvitation, page, pageSize);
 
 		pageList.setList(list);
 		pageList.setStartPageNo(offset);
@@ -82,7 +83,7 @@ public class TypechoPaykeyServiceImpl implements TypechoPaykeyService {
 	}
 
 	@Override
-	public int total(TypechoPaykey typechoPaykey) {
-		return dao.total(typechoPaykey);
+	public int total(TypechoInvitation typechoInvitation) {
+		return dao.total(typechoInvitation);
 	}
 }

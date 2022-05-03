@@ -288,7 +288,7 @@
 					用于将文件上传到远程FTP(非必须配置)
 				</div>
 				<div class="form-box">
-					<p>FTP地址</p>
+					<p>FTP地址<span class="text-gray">填写域名或者IP地址，不需要ftp请求头</span></p>
 					<input type="text" class="input-text" v-model="ftpHost" placeholder="请输入FTP地址"/>
 				</div>
 				<div class="form-box">
@@ -304,7 +304,7 @@
 					<input type="text" class="input-text" v-model="ftpPassword" placeholder="请输入FTP密码"/>
 				</div>
 				<div class="form-box">
-					<p>FTP根目录</p>
+					<p>FTP根目录<span class="text-gray">暂时只支持一级目录，如/www</span></p>
 					<input type="text" class="input-text" v-model="ftpBasePath" placeholder="请输入FTP根目录"/>
 				</div>
 				<div class="form-btn">
@@ -351,7 +351,7 @@
 					<input type="number" class="input-text" v-model="scale" placeholder="请输入积分充值比例"/>
 				</div>
 				<div class="form-box">
-					<p>签到最高赠送积分</p>
+					<p>签到最高赠送积分<span class="text-gray">必须为整数，为0或小于1则关闭签到功能</span></p>
 					<input type="number" class="input-text" v-model="clock" placeholder="请输入签到最高赠送积分"/>
 				</div>
 				<div class="form-box">

@@ -495,6 +495,7 @@ public class PayController {
     public String tokenPayList (@RequestParam(value = "searchParams", required = false) String  searchParams,
                             @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
                             @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
+                                @RequestParam(value = "searchKey"        , required = false, defaultValue = "") String searchKey,
                             @RequestParam(value = "token", required = false) String  token) {
         Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
         if (uStatus == 0) {
@@ -511,7 +512,7 @@ public class PayController {
             query = object.toJavaObject(TypechoPaykey.class);
         }
 
-        PageList<TypechoPaykey> pageList = paykeyService.selectPage(query, page, limit);
+        PageList<TypechoPaykey> pageList = paykeyService.selectPage(query, page, limit,searchKey);
         JSONObject response = new JSONObject();
         response.put("code" , 1);
         response.put("msg"  , "");
@@ -541,7 +542,7 @@ public class PayController {
             workbook.write(response.getOutputStream());
         }
         TypechoPaykey query = new TypechoPaykey();
-        PageList<TypechoPaykey> pageList = paykeyService.selectPage(query, 1, limit);
+        PageList<TypechoPaykey> pageList = paykeyService.selectPage(query, 1, limit,"");
         List<TypechoPaykey> list = pageList.getList();
 
 

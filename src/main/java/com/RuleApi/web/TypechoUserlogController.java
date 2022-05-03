@@ -59,6 +59,9 @@ public class TypechoUserlogController {
     private TypechoPaylogService paylogService;
 
     @Autowired
+    private TypechoApiconfigService apiconfigService;
+
+    @Autowired
     private JdbcTemplate jdbcTemplate;
 
     @Value("${web.prefix}")
@@ -262,7 +265,7 @@ public class TypechoUserlogController {
 
             //生成随机积分
             Random r = new Random();
-            int award = r.nextInt(5) + 1;
+
             String clock = "";
 
             if (StringUtils.isNotBlank(params)) {
@@ -314,6 +317,12 @@ public class TypechoUserlogController {
                 }
                 //签到，每天一次
                 if(type.equals("clock")){
+                    TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+                    Integer clockMax = apiconfig.getClock();
+                    if (clockMax < 1){
+                        return Result.getResultJson(0,"签到功能已关闭",null);
+                    }
+                    int award = r.nextInt(clockMax) + 1;
                     TypechoUserlog log = new TypechoUserlog();
                     log.setType("clock");
                     log.setUid(uid);

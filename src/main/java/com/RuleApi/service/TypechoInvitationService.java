@@ -4,28 +4,29 @@ import java.util.Map;
 import java.util.List;
 import com.RuleApi.entity.*;
 import com.RuleApi.common.PageList;
+
 /**
  * 业务层
- * TypechoPaykeyService
- * @author paykey
- * @date 2022/04/20
+ * TypechoInvitationService
+ * @author invitation
+ * @date 2022/05/03
  */
-public interface TypechoPaykeyService {
+public interface TypechoInvitationService {
 
     /**
      * [新增]
      **/
-    int insert(TypechoPaykey typechoPaykey);
+    int insert(TypechoInvitation typechoInvitation);
 
     /**
      * [批量新增]
      **/
-    int batchInsert(List<TypechoPaykey> list);
+    int batchInsert(List<TypechoInvitation> list);
 
     /**
      * [更新]
      **/
-    int update(TypechoPaykey typechoPaykey);
+    int update(TypechoInvitation typechoInvitation);
 
     /**
      * [删除]
@@ -40,20 +41,20 @@ public interface TypechoPaykeyService {
     /**
      * [主键查询]
      **/
-    TypechoPaykey selectByKey(Object key);
+    TypechoInvitation selectByKey(Object key);
 
     /**
      * [条件查询]
      **/
-    List<TypechoPaykey> selectList (TypechoPaykey typechoPaykey);
+    List<TypechoInvitation> selectList (TypechoInvitation typechoInvitation);
 
     /**
      * [分页条件查询]
      **/
-    PageList<TypechoPaykey> selectPage (TypechoPaykey typechoPaykey, Integer page, Integer pageSize,String searchKey);
+    PageList<TypechoInvitation> selectPage (TypechoInvitation typechoInvitation, Integer page, Integer pageSize);
 
     /**
      * [总量查询]
      **/
-    int total(TypechoPaykey typechoPaykey);
+    int total(TypechoInvitation typechoInvitation);
 }

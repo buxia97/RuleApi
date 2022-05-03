@@ -6,29 +6,30 @@ import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
+
 /**
  * dao层接口
- * TypechoPaykeyDao
- * @author paykey
- * @date 2022/04/20
+ * TypechoInvitationDao
+ * @author invitation
+ * @date 2022/05/03
  */
 @Mapper
-public interface TypechoPaykeyDao {
+public interface TypechoInvitationDao {
 
     /**
      * [新增]
      **/
-    int insert(TypechoPaykey typechoPaykey);
+    int insert(TypechoInvitation typechoInvitation);
 
     /**
      * [批量新增]
      **/
-    int batchInsert(List<TypechoPaykey> list);
+    int batchInsert(List<TypechoInvitation> list);
 
     /**
      * [更新]
      **/
-    int update(TypechoPaykey typechoPaykey);
+    int update(TypechoInvitation typechoInvitation);
 
     /**
      * [删除]
@@ -43,20 +44,20 @@ public interface TypechoPaykeyDao {
     /**
      * [主键查询]
      **/
-    TypechoPaykey selectByKey(Object key);
+    TypechoInvitation selectByKey(Object key);
 
     /**
      * [条件查询]
      **/
-    List<TypechoPaykey> selectList (TypechoPaykey typechoPaykey);
+    List<TypechoInvitation> selectList (TypechoInvitation typechoInvitation);
 
     /**
      * [分页条件查询]
      **/
-    List<TypechoPaykey> selectPage (@Param("typechoPaykey") TypechoPaykey typechoPaykey, @Param("page") Integer page, @Param("pageSize") Integer pageSize,@Param("searchKey") String searchKey);
+    List<TypechoInvitation> selectPage (@Param("typechoInvitation") TypechoInvitation typechoInvitation, @Param("page") Integer page, @Param("pageSize") Integer pageSize);
 
     /**
      * [总量查询]
      **/
-    int total(TypechoPaykey typechoPaykey);
+    int total(TypechoInvitation typechoInvitation);
 }

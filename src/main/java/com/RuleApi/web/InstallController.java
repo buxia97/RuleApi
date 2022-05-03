@@ -281,7 +281,7 @@ public class InstallController {
                     "  `webinfoAvatar` varchar(500) NOT NULL DEFAULT 'https://cdn.helingqi.com/wavatar/' COMMENT '头像源'," +
                     "  `pexelsKey` varchar(255) NOT NULL DEFAULT '' COMMENT '图库key'," +
                     "  `scale` int(11) NOT NULL DEFAULT '100' COMMENT '一元能买多少积分'," +
-                    "  `clock` varchar(255) NOT NULL DEFAULT '5' COMMENT '签到最多多少积分'," +
+                    "  `clock` int(11) NOT NULL DEFAULT '5' COMMENT '签到最多多少积分'," +
                     "  `vipPrice` int(11) NOT NULL DEFAULT '200' COMMENT 'VIP一天价格'," +
                     "  `vipDay` int(11) NOT NULL DEFAULT '300' COMMENT '多少天VIP等于永久'," +
                     "  `vipDiscount` varchar(11) NOT NULL DEFAULT '0.1' COMMENT 'VIP折扣'," +
