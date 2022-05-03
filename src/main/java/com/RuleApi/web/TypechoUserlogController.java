@@ -662,6 +662,8 @@ public class TypechoUserlogController {
             Long date = System.currentTimeMillis();
             String curTime = String.valueOf(date).substring(0,10);
             Integer cleanTime = Integer.parseInt(curTime) - 2592000;
+
+            Integer cleanUserTime = Integer.parseInt(curTime) - 31556926;
             //用户签到清理
             if(clean.equals(1)){
                 jdbcTemplate.execute("DELETE FROM "+this.prefix+"_userlog WHERE type='clock' and  created < "+cleanTime+";");
@@ -677,6 +679,14 @@ public class TypechoUserlogController {
             //充值码清理
             if(clean.equals(4)){
                 jdbcTemplate.execute("DELETE FROM "+this.prefix+"_paykey WHERE status=1 ;");
+            }
+            //邀请码清理
+            if(clean.equals(5)){
+                jdbcTemplate.execute("DELETE FROM "+this.prefix+"_invitation WHERE status=1 ;");
+            }
+            //不活跃用户清理
+            if(clean.equals(6)){
+                jdbcTemplate.execute("DELETE FROM "+this.prefix+"_user WHERE activated < "+cleanUserTime+";");
             }
             JSONObject response = new JSONObject();
             response.put("code" , 1);

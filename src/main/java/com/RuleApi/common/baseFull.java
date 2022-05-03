@@ -144,6 +144,8 @@ public class baseFull {
      * @return
      */
     public static String toStrByChinese(String text){
+        text=text.replaceAll("\\[hide(([\\s\\S])*?)\\[\\/hide\\]", "");
+        text=text.replaceAll("\\{hide(([\\s\\S])*?)\\{\\/hide\\}", "");
         text=text.replaceAll("(\\\r\\\n|\\\r|\\\n|\\\n\\\r)", "");
         text=text.replaceAll("\\s*", "");
         text=text.replaceAll("</?[^>]+>", "");
