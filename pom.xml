@@ -13,7 +13,7 @@
     <artifactId>RuleApi</artifactId>
     <version>1.2.1</version>
     <name>RuleApi</name>
-    <description>RuleApi of buxia97</description>
+    <description>RuleApi is a Typecho-based API program developed by buxia97.</description>
     <packaging>jar</packaging>
 
     <properties>

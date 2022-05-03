@@ -21,7 +21,7 @@
 
     <!-- 插入数据 -->
     <insert id="insert" parameterType="com.RuleApi.entity.TypechoInvitation">
-        INSERT INTO typecho_invitation
+        INSERT INTO ${prefix}_invitation
         <trim prefix="(" suffix=")" suffixOverrides=",">
             <if test ='null != id'>
                 `id`,
@@ -60,7 +60,7 @@
 
     <!-- 批量插入数据 -->
     <insert id="batchInsert" parameterType="java.util.List">
-        INSERT INTO typecho_invitation ( <include refid="Base_Column_List" /> ) VALUES
+        INSERT INTO ${prefix}_invitation ( <include refid="Base_Column_List" /> ) VALUES
         <foreach collection="list" item="curr" index="index" separator=",">
             (
                 #{curr.id},
@@ -74,7 +74,7 @@
 
     <!-- 更新 -->
     <update id="update" parameterType="com.RuleApi.entity.TypechoInvitation">
-        UPDATE typecho_invitation
+        UPDATE ${prefix}_invitation
         <set>
             <if test ='null != code'>`code` = #{code},</if>
             <if test ='null != created'>`created` = #{created},</if>
@@ -86,13 +86,13 @@
 
     <!-- 删除 -->
     <delete id="delete">
-        DELETE FROM typecho_invitation
+        DELETE FROM ${prefix}_invitation
         WHERE `id` = #{key}
     </delete>
 
     <!-- 批量删除 -->
     <delete id="batchDelete" parameterType = "java.util.List">
-        DELETE FROM typecho_invitation WHERE id IN
+        DELETE FROM ${prefix}_invitation WHERE id IN
         <foreach collection="list"  item="item" open="(" separator="," close=")"  >
             #{item}
         </foreach>
@@ -101,14 +101,14 @@
     <!-- 主键查询 -->
     <select id="selectByKey" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List" />
-        FROM typecho_invitation
+        FROM ${prefix}_invitation
         WHERE `id` = #{key}
     </select>
 
     <!-- 条件查询 -->
     <select id="selectList" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List" />
-        FROM typecho_invitation
+        FROM ${prefix}_invitation
         <where>
             <if test ='null != id'>
                 and `id` = #{id}
@@ -131,7 +131,7 @@
     <!-- 分页条件查询 -->
     <select id="selectPage" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List" />
-        FROM typecho_invitation
+        FROM ${prefix}_invitation
         <where>
             <if test ='null != typechoInvitation.id'>
                 and `id` = #{typechoInvitation.id}
@@ -154,7 +154,7 @@
 
     <!-- 总量查询 -->
     <select id="total" resultType="java.lang.Integer">
-        SELECT count(*) FROM typecho_invitation
+        SELECT count(*) FROM ${prefix}_invitation
         <where>
             <if test ='null != id'>
                 and `id` = #{id}
