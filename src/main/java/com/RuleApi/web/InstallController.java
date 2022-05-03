@@ -322,6 +322,21 @@ public class InstallController {
         }else{
             text+="API配置中心模块已经存在，无需添加。";
         }
+        //添加邀请码模块
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_invitation';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("CREATE TABLE `"+prefix+"_invitation` (" +
+                    "  `id` int(11) NOT NULL AUTO_INCREMENT," +
+                    "  `code` varchar(255) DEFAULT NULL COMMENT '邀请码'," +
+                    "  `created` int(10) DEFAULT '0' COMMENT '创建时间'," +
+                    "  `uid` int(11) DEFAULT '0' COMMENT '创建者'," +
+                    "  `status` int(2) DEFAULT '0' COMMENT '0未使用，1已使用'," +
+                    "  PRIMARY KEY (`id`)" +
+                    ") ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='邀请码';");
+            text+="邀请码模块创建完成。";
+        }else{
+            text+="邀请码模块已经存在，无需添加。";
+        }
         text+=" ------ 执行结束，安装执行完成";
 
         redisHelp.setRedis(this.dataprefix+"_"+"isInstall","1",600,redisTemplate);
