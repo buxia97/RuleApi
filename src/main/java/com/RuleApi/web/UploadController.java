@@ -61,7 +61,7 @@ public class UploadController {
     UserStatus UStatus = new UserStatus();
 
     /**
-     * 上传道腾讯云服务器（https://cloud.tencent.com/document/product/436/10199）
+     * 上传cos
      * @return
      */
     @RequestMapping(value = "/cosUpload",method = RequestMethod.POST)
@@ -74,22 +74,15 @@ public class UploadController {
         if(file == null){
             return new UploadMsg(0,"文件为空",null);
         }
+        TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
         String oldFileName = file.getOriginalFilename();
-        //应对图片剪裁后的无后缀图片
-        String eName = "";
-        try{
-            eName = oldFileName.substring(oldFileName.lastIndexOf("."));
-        }catch (Exception e){
-            oldFileName = oldFileName +".png";
-            eName = oldFileName.substring(oldFileName.lastIndexOf("."));
-        }
-
+        String eName = oldFileName.substring(oldFileName.lastIndexOf("."));
         //检查是否是图片
         BufferedImage bi = ImageIO.read(file.getInputStream());
         if(bi == null){
             return Result.getResultJson(0,"请上传图片文件",null);
         }
-        TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+
         String newFileName = UUID.randomUUID()+eName;
         Calendar cal = Calendar.getInstance();
         int year = cal.get(Calendar.YEAR);
@@ -107,8 +100,6 @@ public class UploadController {
         // 简单文件上传, 最大支持 5 GB, 适用于小文件上传, 建议 20 M 以下的文件使用该接口
         // 大文件上传请参照 API 文档高级 API 上传
         File localFile = null;
-        localFile = File.createTempFile("temp",null);
-        file.transferTo(localFile);
         try {
             localFile = File.createTempFile("temp",null);
             file.transferTo(localFile);
