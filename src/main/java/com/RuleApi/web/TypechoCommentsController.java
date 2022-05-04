@@ -223,6 +223,7 @@ public class TypechoCommentsController {
 
                 //获取发布者信息
                 Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+                Integer cuid =Integer.parseInt(map.get("uid").toString());
                 Long date = System.currentTimeMillis();
                 String created = String.valueOf(date).substring(0,10);
                 //获取评论发布者信息和填写其它不可定义的值
@@ -275,16 +276,19 @@ public class TypechoCommentsController {
                             TypechoUsers author = usersService.selectByKey(contents.getAuthorId());
 
                             Integer uid = author.getUid();
-                            if(author.getMail()!=null){
-                                String email = author.getMail();
-                                MailService.send("用户："+uid+",您的文章有新的评论", "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><title></title>" +
-                                                "<meta charset=\"utf-8\" /><style>*{padding:0px;margin:0px;box-sizing:border-box;}html{box-sizing:border-box;}body{font-size:15px;background:#fff}.main{margin:20px auto;max-width:500px;border:solid 1px #2299dd;overflow:hidden;}.main h1{display:block;width:100%;background:#2299dd;font-size:18px;color:#fff;text-align:center;padding:15px;}.text{padding:30px;}.text p{margin:10px 0px;line-height:25px;}.text p span{color:#2299dd;font-weight:bold;font-size:22px;margin-left:5px;}</style></head>" +
-                                                "<body><div class=\"main\"><h1>文章评论</h1>" +
-                                                "<div class=\"text\"><p>用户 "+uid+"，你的文章有新的评论：</p><p>”"+postName+"："+jsonToMap.get("text")+"“</p>" +
-                                                "<p>可前往<a href=\""+apiconfig.getWebinfoUrl()+"\">"+title+"</a>查看详情</p>" +
-                                                "</div></div></body></html>",
-                                        new String[] {email}, new String[] {});
+                            if(!uid.equals(cuid)){
+                                if(author.getMail()!=null){
+                                    String email = author.getMail();
+                                    MailService.send("用户："+uid+",您的文章有新的评论", "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><title></title>" +
+                                                    "<meta charset=\"utf-8\" /><style>*{padding:0px;margin:0px;box-sizing:border-box;}html{box-sizing:border-box;}body{font-size:15px;background:#fff}.main{margin:20px auto;max-width:500px;border:solid 1px #2299dd;overflow:hidden;}.main h1{display:block;width:100%;background:#2299dd;font-size:18px;color:#fff;text-align:center;padding:15px;}.text{padding:30px;}.text p{margin:10px 0px;line-height:25px;}.text p span{color:#2299dd;font-weight:bold;font-size:22px;margin-left:5px;}</style></head>" +
+                                                    "<body><div class=\"main\"><h1>文章评论</h1>" +
+                                                    "<div class=\"text\"><p>用户 "+uid+"，你的文章有新的评论：</p><p>”"+postName+"："+jsonToMap.get("text")+"“</p>" +
+                                                    "<p>可前往<a href=\""+apiconfig.getWebinfoUrl()+"\">"+title+"</a>查看详情</p>" +
+                                                    "</div></div></body></html>",
+                                            new String[] {email}, new String[] {});
+                                }
                             }
+
                             //给回复者发送信息
                             Integer parent = 0;
                             if(jsonToMap.get("parent")!=null){
