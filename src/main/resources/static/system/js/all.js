@@ -370,6 +370,7 @@ var vm = new Vue({
 			var that = this;
 			var url = "/system/apiConfigUpdate"
 			var data={
+				scale:that.scale,
 				clock:that.clock,
 				vipPrice:that.vipPrice,
 				vipDay:that.vipDay,
