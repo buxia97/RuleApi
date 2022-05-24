@@ -1148,6 +1148,7 @@ public class TypechoUsersController {
             TypechoComments comments = new TypechoComments();
             comments.setAuthorId(uid);
             Integer lv = commentsService.total(comments);
+            json.remove("password");
             //判断是否为VIP
             json.put("isvip", 0);
             Long date = System.currentTimeMillis();
