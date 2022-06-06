@@ -129,6 +129,7 @@ public class TypechoCommentsController {
 
                         }
                     }
+
                     if(json.get("mail")!=null){
                         json.put("avatar",baseFull.getAvatar(apiconfig.getWebinfoAvatar(),json.get("mail").toString()));
                     }else{
@@ -149,6 +150,9 @@ public class TypechoCommentsController {
                         //判断是否为VIP
                         json.put("isvip", 0);
                         json.put("vip", userinfo.getVip());
+                        if(userinfo.getAvatar()!=null){
+                            json.put("avatar",userinfo.getAvatar());
+                        }
                         Long date = System.currentTimeMillis();
                         String curTime = String.valueOf(date).substring(0, 10);
                         Integer viptime  = userinfo.getVip();

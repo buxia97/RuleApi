@@ -131,6 +131,14 @@ public class InstallController {
         }else{
             text+="用户模块，字段vip已经存在，无需添加。";
         }
+        //查询用户表是否存在avatar字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_users' and column_name = 'avatar';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_users ADD avatar text;");
+            text+="用户模块，字段avatar添加完成。";
+        }else{
+            text+="用户模块，字段avatar已经存在，无需添加。";
+        }
 
         //查询分类标签表是否存在imgurl字段
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_metas' and column_name = 'imgurl';", Integer.class);

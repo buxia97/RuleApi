@@ -135,11 +135,14 @@ public class TypechoUsersController {
                     json.remove("address");
                     json.remove("pay");
                     json.remove("assets");
-                    if (json.get("mail") != null) {
-                        json.put("avatar", baseFull.getAvatar(apiconfig.getWebinfoAvatar(), json.get("mail").toString()));
-                    } else {
-                        json.put("avatar", apiconfig.getWebinfoAvatar() + "null");
+                    if(json.get("avatar")==null){
+                        if (json.get("mail") != null) {
+                            json.put("avatar", baseFull.getAvatar(apiconfig.getWebinfoAvatar(), json.get("mail").toString()));
+                        } else {
+                            json.put("avatar", apiconfig.getWebinfoAvatar() + "null");
+                        }
                     }
+
 
 
                     jsonList.add(json);
@@ -261,12 +264,15 @@ public class TypechoUsersController {
             json.remove("pay");
             json.remove("assets");
             TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
-            if (json.get("mail") != null) {
-                json.put("avatar", baseFull.getAvatar(apiconfig.getWebinfoAvatar(), json.get("mail").toString()));
+            if(json.get("avatar")==null){
+                if (json.get("mail") != null) {
+                    json.put("avatar", baseFull.getAvatar(apiconfig.getWebinfoAvatar(), json.get("mail").toString()));
 
-            } else {
-                json.put("avatar", apiconfig.getWebinfoAvatar() + "null");
+                } else {
+                    json.put("avatar", apiconfig.getWebinfoAvatar() + "null");
+                }
             }
+
             JSONObject response = new JSONObject();
 
             response.put("code", 1);
@@ -345,11 +351,16 @@ public class TypechoUsersController {
                 Integer lv = commentsService.total(comments);
                 jsonToMap.put("lv", baseFull.getLv(lv));
                 TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
-                if (rows.get(0).getMail() != null) {
-                    jsonToMap.put("avatar", baseFull.getAvatar(apiconfig.getWebinfoAvatar(), rows.get(0).getMail()));
-                } else {
-                    jsonToMap.put("avatar", apiconfig.getWebinfoAvatar() + "null");
+                if(rows.get(0).getAvatar()!=null){
+                    jsonToMap.put("avatar",rows.get(0).getAvatar());
+                }else{
+                    if (rows.get(0).getMail() != null) {
+                        jsonToMap.put("avatar", baseFull.getAvatar(apiconfig.getWebinfoAvatar(), rows.get(0).getMail()));
+                    } else {
+                        jsonToMap.put("avatar", apiconfig.getWebinfoAvatar() + "null");
+                    }
                 }
+
                 //更新用户登录时间和第一次登陆时间（满足typecho要求）
                 String userTime = String.valueOf(date).substring(0, 10);
                 Map updateLogin = new HashMap<String, String>();
@@ -468,12 +479,16 @@ public class TypechoUsersController {
                 if(viptime>Integer.parseInt(curTime)||viptime.equals(1)){
                     jsonToMap.put("isvip", 1);
                 }
-
-                if (user.getMail() != null) {
-                    jsonToMap.put("avatar", baseFull.getAvatar(apiconfig.getWebinfoAvatar(), user.getMail()));
-                } else {
-                    jsonToMap.put("avatar", apiconfig.getWebinfoAvatar() + "null");
+                if(user.getAvatar()!=null){
+                    jsonToMap.put("avatar", user.getAvatar());
+                }else{
+                    if (user.getMail() != null) {
+                        jsonToMap.put("avatar", baseFull.getAvatar(apiconfig.getWebinfoAvatar(), user.getMail()));
+                    } else {
+                        jsonToMap.put("avatar", apiconfig.getWebinfoAvatar() + "null");
+                    }
                 }
+
                 //获取用户等级
                 Integer uid = user.getUid();
                 TypechoComments comments = new TypechoComments();

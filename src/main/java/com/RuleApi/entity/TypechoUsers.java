@@ -96,4 +96,9 @@ public class TypechoUsers implements Serializable {
      * vip
      */
     private Integer vip;
+
+    /**
+     * avatar
+     */
+    private String avatar;
 }

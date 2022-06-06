@@ -76,7 +76,14 @@ public class UploadController {
         }
         TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
         String oldFileName = file.getOriginalFilename();
-        String eName = oldFileName.substring(oldFileName.lastIndexOf("."));
+        //String eName = oldFileName.substring(oldFileName.lastIndexOf("."));
+        String eName = "";
+        try{
+            eName = oldFileName.substring(oldFileName.lastIndexOf("."));
+        }catch (Exception e){
+            oldFileName = oldFileName +".png";
+            eName = oldFileName.substring(oldFileName.lastIndexOf("."));
+        }
         //检查是否是图片
         BufferedImage bi = ImageIO.read(file.getInputStream());
         if(bi == null){
@@ -149,6 +156,7 @@ public class UploadController {
 
         String filename = file.getOriginalFilename();
         //String filetype = filename.substring(filename.lastIndexOf("."));
+        //下面代码是解决app上传剪裁后图片无后缀问题。
         String filetype = "";
         try{
             filetype = filename.substring(filename.lastIndexOf("."));
