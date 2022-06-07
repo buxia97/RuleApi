@@ -213,4 +213,14 @@ public class TypechoApiconfig implements Serializable {
      * wxpayNotifyUrl  
      */
     private String wxpayNotifyUrl;
+
+    /**
+     * auditlevel
+     */
+    private Integer auditlevel;
+
+    /**
+     * forbidden
+     */
+    private String forbidden;
 }

@@ -84,6 +84,14 @@
 					<p>是否开启邀请注册<span class="text-gray">0是关闭，1是开启。开启后，注册将必须填写邀请码。</span></p>
 					<input type="text" class="input-text" v-model="isInvite" placeholder="注册是否邮箱验证"/>
 				</div>
+				<div class="form-box">
+					<p>评论审核等级<span class="text-gray">0不审核，1第一次评论审核，2违禁词匹配审核，3.违禁词匹配拦截，4默认全部审核</span></p>
+					<input type="text" class="input-text" v-model="auditlevel" placeholder="设置评论审核等级"/>
+				</div>
+				<div class="form-box">
+					<p>违禁词<span class="text-gray text-red">违禁词将用于评论审核，个性签名拦截。根据英文逗号”,“进行分割，不要存在换行或者空格。</span></p>
+					<textarea type="text" class="text" v-model="forbidden" placeholder="请输入违禁词"></textarea>
+				</div>
 				<div class="form-btn">
 					<button type="button" class="input-text" class="btn" @click="saveWebinfo()">保存数据</button>
 				</div>

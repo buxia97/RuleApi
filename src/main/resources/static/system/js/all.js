@@ -82,6 +82,9 @@ var vm = new Vue({
 		wxpayNotifyUrl:'',
 		//配置信息
 		applicationText:"",
+		//评论配置
+		auditlevel:"",
+		forbidden:""
 	},
 	created(){
 		var that = this;
@@ -223,6 +226,10 @@ var vm = new Vue({
 					that.vipDiscount=res.data.data.vipDiscount;
 					that.isEmail=res.data.data.isEmail;
 					that.isInvite=res.data.data.isInvite;
+
+					//评论模块
+					that.auditlevel=res.data.data.auditlevel;
+					that.forbidden=res.data.data.forbidden;
 
 				}else{
 					that.outSystem();

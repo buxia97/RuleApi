@@ -44,6 +44,8 @@
         <result column="wxpayMchId" property="wxpayMchId" />
         <result column="wxpayKey" property="wxpayKey" />
         <result column="wxpayNotifyUrl" property="wxpayNotifyUrl" />
+        <result column="auditlevel" property="auditlevel" />
+        <result column="forbidden" property="forbidden" />
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -86,7 +88,9 @@
         `wxpayAppId`,
         `wxpayMchId`,
         `wxpayKey`,
-        `wxpayNotifyUrl`
+        `wxpayNotifyUrl`,
+        `auditlevel`,
+        `forbidden`
     </sql>
 
     <!-- 插入数据 -->
@@ -211,7 +215,13 @@
                 `wxpayKey`,
             </if>
             <if test ='null != wxpayNotifyUrl'>
-                `wxpayNotifyUrl`
+                `wxpayNotifyUrl`,
+            </if>
+            <if test ='null != auditlevel'>
+                `auditlevel`,
+            </if>
+            <if test ='null != forbidden'>
+                `forbidden`
             </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
@@ -333,7 +343,13 @@
                 #{wxpayKey},
             </if>
             <if test ='null != wxpayNotifyUrl'>
-                #{wxpayNotifyUrl}
+                #{wxpayNotifyUrl},
+            </if>
+            <if test ='null != auditlevel'>
+                #{auditlevel},
+            </if>
+            <if test ='null != forbidden'>
+                #{forbidden}
             </if>
         </trim>
     </insert>
@@ -381,7 +397,9 @@
             <if test ='null != wxpayAppId'>`wxpayAppId` = #{wxpayAppId},</if>
             <if test ='null != wxpayMchId'>`wxpayMchId` = #{wxpayMchId},</if>
             <if test ='null != wxpayKey'>`wxpayKey` = #{wxpayKey},</if>
-            <if test ='null != wxpayNotifyUrl'>`wxpayNotifyUrl` = #{wxpayNotifyUrl}</if>
+            <if test ='null != wxpayNotifyUrl'>`wxpayNotifyUrl` = #{wxpayNotifyUrl},</if>
+            <if test ='null != auditlevel'>`auditlevel` = #{auditlevel},</if>
+            <if test ='null != forbidden'>`forbidden` = #{forbidden}</if>
         </set>
         WHERE `id` = #{id}
     </update>

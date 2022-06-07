@@ -210,6 +210,7 @@ public class TypechoCommentsController {
             if(uStatus==0){
                 return Result.getResultJson(0,"用户未登录或Token验证失败",null);
             }
+            String cstatus = "approved";
             TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
             String title = apiconfig.getWebinfoTitle();
 
@@ -267,14 +268,73 @@ public class TypechoCommentsController {
                 jsonToMap.put("agent",agent);
                 jsonToMap.put("ip",ip);
                 //下面这个属性控制评论状态，判断是否已经有评论过审，有则直接通过审核，没有则默认审核状态
+                Integer auditlevel = apiconfig.getAuditlevel();
 
-                TypechoComments ucomment = new TypechoComments();
-                ucomment.setAuthorId(Integer.parseInt(map.get("uid").toString()));
-                ucomment.setStatus("approved");
-                List<TypechoComments> ucommentList = service.selectList(ucomment);
-                if(ucommentList.size()>0){
-                    jsonToMap.put("status","approved");
-                    //给文章作者发送消息
+                if(auditlevel.equals(0)){
+                    //为0不审核
+                    cstatus = "approved";
+                } else if(auditlevel.equals(1)){
+                    //为1第一次评论审核
+                    TypechoComments ucomment = new TypechoComments();
+                    ucomment.setAuthorId(Integer.parseInt(map.get("uid").toString()));
+                    ucomment.setStatus("approved");
+                    List<TypechoComments> ucommentList = service.selectList(ucomment);
+                    if(ucommentList.size()>0) {
+                        cstatus = "approved";
+                    }else{
+                        cstatus = "waiting";
+                    }
+                } else if(auditlevel.equals(2)){
+                    //为2违禁词匹配审核
+                    String forbidden = apiconfig.getForbidden();
+                    String text = jsonToMap.get("text").toString();
+                    if(forbidden!=null){
+                        if(forbidden.indexOf(",") != -1){
+                            String[] strarray=forbidden.split(",");
+                            for (int i = 0; i < strarray.length; i++){
+                                String str = strarray[i];
+                                if(text.indexOf(str) != -1){
+                                    cstatus = "waiting";
+                                }
+                                break;
+                            }
+                        }else{
+                            if(text.indexOf(forbidden) != -1){
+                                cstatus = "waiting";
+                            }
+                        }
+                    }else{
+                        cstatus = "approved";
+                    }
+
+                } else if(auditlevel.equals(3)){
+                    //为2违禁词匹配拦截
+                    String forbidden = apiconfig.getForbidden();
+                    String text = jsonToMap.get("text").toString();
+                    if(forbidden!=null){
+                        if(forbidden.indexOf(",") != -1){
+                            String[] strarray=forbidden.split(",");
+                            for (int i = 0; i < strarray.length; i++){
+                                String str = strarray[i];
+                                if(text.indexOf(str) != -1){
+                                    return Result.getResultJson(0,"存在违规内容，评论发布失败",null);
+                                }
+                                break;
+                            }
+                        }else{
+                            if(text.indexOf(forbidden) != -1){
+                                return Result.getResultJson(0,"存在违规内容，评论发布失败",null);
+                            }
+                        }
+                    }else{
+                        cstatus = "approved";
+                    }
+                }else{
+                    cstatus = "waiting";
+                }
+
+                if(cstatus.equals("approved")){
+                    //如果评论是发布状态，就给文章作者发送消息
                     if(isEmail.equals(1)){
                         try{
                             TypechoUsers author = usersService.selectByKey(contents.getAuthorId());
@@ -319,8 +379,6 @@ public class TypechoCommentsController {
 
 
 
-                }else{
-                    jsonToMap.put("status","waiting");
                 }
 
                 insert = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoComments.class);
@@ -331,12 +389,15 @@ public class TypechoCommentsController {
                 contents.setCommentsNum(cnum);
                 contentsService.update(contents);
             }
-
             int rows = service.insert(insert);
+            String addtext ="";
+            if(cstatus == "waiting"){
+                addtext = "，将在审核通过后显示！";
+            }
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );
             response.put("data" , rows);
-            response.put("msg"  , rows > 0 ? "发布成功" : "发布失败");
+            response.put("msg"  , rows > 0 ? "发布成功"+addtext : "发布失败");
             return response.toString();
         }catch (Exception e){
             System.out.println(e);

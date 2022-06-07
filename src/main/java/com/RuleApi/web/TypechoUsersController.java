@@ -1000,12 +1000,13 @@ public class TypechoUsersController {
             if (uStatus == 0) {
                 return Result.getResultJson(0, "用户未登录或Token验证失败", null);
             }
+            Integer isForbidden = 0;
             if (StringUtils.isNotBlank(params)) {
-
+                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
                 jsonToMap = JSONObject.parseObject(JSON.parseObject(params).toString());
                 //根据验证码判断是否要修改邮箱
                 if (jsonToMap.get("code") != null && jsonToMap.get("mail") != null) {
-                    TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+
                     Integer isEmail = apiconfig.getIsEmail();
                     if(isEmail.equals(1)){
                         String email = jsonToMap.get("mail").toString();
@@ -1036,7 +1037,28 @@ public class TypechoUsersController {
                 if (isName.size() == 0) {
                     return Result.getResultJson(0, "用户不存在", null);
                 }
-
+                if(jsonToMap.get("introduce") != null){
+                    String introduce = jsonToMap.get("introduce").toString();
+                    String forbidden = apiconfig.getForbidden();
+                    if(forbidden!=null){
+                        if(forbidden.indexOf(",") != -1){
+                            String[] strarray=forbidden.split(",");
+                            for (int i = 0; i < strarray.length; i++){
+                                String str = strarray[i];
+                                if(introduce.indexOf(str) != -1){
+                                    isForbidden = 1;
+                                    jsonToMap.remove("introduce");
+                                }
+                                break;
+                            }
+                        }else{
+                            if(introduce.indexOf(forbidden) != -1){
+                                isForbidden = 1;
+                                jsonToMap.remove("introduce");
+                            }
+                        }
+                    }
+                }
 
                 jsonToMap.remove("name");
                 jsonToMap.remove("group");
@@ -1061,10 +1083,14 @@ public class TypechoUsersController {
                 //执行成功后，如果邮箱发生了改变，则重新登陆
                 redisHelp.delete(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
             }
+            String responseText = "操作成功";
+            if(isForbidden == 1){
+                responseText = "简介存在违禁词，该字段未修改。";
+            }
             JSONObject response = new JSONObject();
             response.put("code", rows > 0 ? 1 : 0);
             response.put("data", rows);
-            response.put("msg", rows > 0 ? "操作成功" : "操作失败");
+            response.put("msg", rows > 0 ? responseText : "操作失败");
             return response.toString();
         } catch (Exception e) {
             System.out.println(e);

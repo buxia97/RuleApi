@@ -40,7 +40,8 @@
         `address`,
         `pay`,
         `customize`,
-        `vip`
+        `vip`,
+        `avatar`
     </sql>
 
     <!-- 插入数据 -->

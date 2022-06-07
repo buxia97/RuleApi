@@ -330,6 +330,22 @@ public class InstallController {
         }else{
             text+="API配置中心模块已经存在，无需添加。";
         }
+        //查询配置中心表是否存在auditlevel字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'auditlevel';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD auditlevel integer(2) DEFAULT 1;");
+            text+="配置中心模块，字段auditlevel添加完成。";
+        }else{
+            text+="配置中心模块，字段auditlevel已经存在，无需添加。";
+        }
+        //查询配置中心表是否存在forbidden字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'forbidden';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD forbidden text;");
+            text+="配置中心模块，字段forbidden添加完成。";
+        }else{
+            text+="配置中心模块，字段forbidden已经存在，无需添加。";
+        }
         //添加邀请码模块
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_invitation';", Integer.class);
         if (i == 0){
