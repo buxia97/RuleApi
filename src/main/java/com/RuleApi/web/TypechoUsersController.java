@@ -445,6 +445,37 @@ public class TypechoUsersController {
                     return Result.getResultJson(0, "登录配置异常，请检查相关设置", null);
                 }
             }
+            //QQ也要走两步判断
+            if(jsonToMap.get("appLoginType").toString().equals("qq")){
+                if(jsonToMap.get("type").toString().equals("applets")){
+                    //如果是小程序，走官方接口获取accessToken和openid
+                    if (jsonToMap.get("js_code") == null) {
+                        return Result.getResultJson(0, "APP配置异常，请检查相关设置", null);
+                    }
+                    String js_code = jsonToMap.get("js_code").toString();
+
+                    String requestUrl = "https://api.q.qq.com/sns/jscode2session?appid="+apiconfig.getQqAppletsAppid()+"&secret="+apiconfig.getQqAppletsSecret()+"&js_code="+js_code+"&grant_type=authorization_code";
+                    String res = HttpClient.doGet(requestUrl);
+                    if(res==null){
+                        return Result.getResultJson(0, "接口配置异常，请检查相关设置", null);
+                    }
+
+                    HashMap data = JSON.parseObject(res, HashMap.class);
+                    if(data.get("unionid")==null){
+                        return Result.getResultJson(0, "接口配置异常，请检查相关设置", null);
+                    }
+                    jsonToMap.put("accessToken",data.get("unionid"));
+                    jsonToMap.put("openId",data.get("openid"));
+                }else {
+                    if (jsonToMap.get("accessToken") == null) {
+                        return Result.getResultJson(0, "登录配置异常，请检查相关设置", null);
+                    }
+                }
+            }else{
+                if (jsonToMap.get("accessToken") == null) {
+                    return Result.getResultJson(0, "登录配置异常，请检查相关设置", null);
+                }
+            }
             TypechoUserapi userapi = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoUserapi.class);
             String accessToken = userapi.getAccessToken();
             String loginType = userapi.getAppLoginType();
@@ -521,6 +552,10 @@ public class TypechoUsersController {
                 if(isInvite.equals(1)){
                     return Result.getResultJson(0, "当前注册需要邀请码，请采用普通方式注册！", null);
                 }
+
+                if (jsonToMap.get("headImgUrl") != null) {
+
+                }
                 TypechoUsers regUser = new TypechoUsers();
                 String name = baseFull.createRandomStr(5) + baseFull.createRandomStr(4);
                 String p = baseFull.createRandomStr(9);
@@ -532,6 +567,9 @@ public class TypechoUsersController {
                 regUser.setGroupKey("subscriber");
                 regUser.setScreenName(userapi.getNickName());
                 regUser.setPassword(passwd.replaceAll("(\\\r\\\n|\\\r|\\\n|\\\n\\\r)", ""));
+                if (jsonToMap.get("headImgUrl") != null) {
+                    regUser.setAvatar(jsonToMap.get("headImgUrl").toString());
+                }
                 Integer to = service.insert(regUser);
                 //注册完成后，增加绑定
                 Integer uid = regUser.getUid();
@@ -600,6 +638,7 @@ public class TypechoUsersController {
             } else {
                 return Result.getResultJson(0, "请输入正确的参数", null);
             }
+            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
             //如果是微信，则走两步判断，是小程序还是APP
             if(jsonToMap.get("appLoginType").toString().equals("weixin")){
                 if(jsonToMap.get("type").toString().equals("applets")){
@@ -608,7 +647,7 @@ public class TypechoUsersController {
                         return Result.getResultJson(0, "APP配置异常，请检查相关设置", null);
                     }
                     String js_code = jsonToMap.get("js_code").toString();
-                    TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+
                     String requestUrl = "https://api.weixin.qq.com/sns/jscode2session?appid="+apiconfig.getAppletsAppid()+"&secret="+apiconfig.getAppletsSecret()+"&js_code="+js_code+"&grant_type=authorization_code";
                     String res = HttpClient.doGet(requestUrl);
                     if(res==null){
@@ -631,7 +670,37 @@ public class TypechoUsersController {
                     return Result.getResultJson(0, "登录配置异常，请检查相关设置", null);
                 }
             }
+            //QQ也要走两步判断
+            if(jsonToMap.get("appLoginType").toString().equals("qq")){
+                if(jsonToMap.get("type").toString().equals("applets")){
+                    //如果是小程序，走官方接口获取accessToken和openid
+                    if (jsonToMap.get("js_code") == null) {
+                        return Result.getResultJson(0, "APP配置异常，请检查相关设置", null);
+                    }
+                    String js_code = jsonToMap.get("js_code").toString();
 
+                    String requestUrl = "https://api.q.qq.com/sns/jscode2session?appid="+apiconfig.getQqAppletsAppid()+"&secret="+apiconfig.getQqAppletsSecret()+"&js_code="+js_code+"&grant_type=authorization_code";
+                    String res = HttpClient.doGet(requestUrl);
+                    if(res==null){
+                        return Result.getResultJson(0, "接口配置异常，请检查相关设置", null);
+                    }
+
+                    HashMap data = JSON.parseObject(res, HashMap.class);
+                    if(data.get("unionid")==null){
+                        return Result.getResultJson(0, "接口配置异常，请检查相关设置", null);
+                    }
+                    jsonToMap.put("accessToken",data.get("unionid"));
+                    jsonToMap.put("openId",data.get("openid"));
+                }else {
+                    if (jsonToMap.get("accessToken") == null) {
+                        return Result.getResultJson(0, "登录配置异常，请检查相关设置", null);
+                    }
+                }
+            }else{
+                if (jsonToMap.get("accessToken") == null) {
+                    return Result.getResultJson(0, "登录配置异常，请检查相关设置", null);
+                }
+            }
             TypechoUserapi userapi = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoUserapi.class);
             Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
             Integer uid = Integer.parseInt(map.get("uid").toString());

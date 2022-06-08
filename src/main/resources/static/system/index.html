@@ -262,12 +262,20 @@
 					微信支付是微信官方提供的支付接口，<span class="text-red">证书文件apiclient_cert.p12请放在服务器/opt/weixin/文件夹</span>
 				</div>
 				<div class="form-box">
-					<p>小程序APPID<span>可不填，负责小程序登录</span></p>
+					<p>微信小程序APPID<span>可不填，负责微信小程序登录</span></p>
 					<input type="text" class="input-text" v-model="appletsAppid" placeholder="请输入appletsAppid"/>
 				</div>
 				<div class="form-box">
-					<p>小程序Secret<span>可不填，负责小程序登录</span></p>
+					<p>微信小程序Secret<span>可不填，负责微信小程序登录</span></p>
 					<input type="text" class="input-text" v-model="appletsSecret" placeholder="请输入appletsSecret"/>
+				</div>
+				<div class="form-box">
+					<p>QQ小程序APPID<span>可不填，负责QQ小程序登录</span></p>
+					<input type="text" class="input-text" v-model="qqAppletsAppid" placeholder="请输入qqAppletsAppid"/>
+				</div>
+				<div class="form-box">
+					<p>QQ小程序Secret<span>可不填，负责QQ小程序登录</span></p>
+					<input type="text" class="input-text" v-model="qqAppletsSecret" placeholder="请输入qqAppletsSecret"/>
 				</div>
 				<div class="form-box">
 					<p>公众号APP Id</p>

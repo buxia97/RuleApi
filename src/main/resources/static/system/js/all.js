@@ -76,6 +76,8 @@ var vm = new Vue({
 		//微信支付
 		appletsAppid:'',
 		appletsSecret:'',
+		qqAppletsAppid:'',
+		qqAppletsSecret:'',
 		wxpayAppId:'',
 		wxpayMchId:'',
 		wxpayKey:'',
@@ -213,6 +215,8 @@ var vm = new Vue({
 					//微信支付
 					that.appletsAppid=res.data.data.appletsAppid;
 					that.appletsSecret=res.data.data.appletsSecret;
+					that.qqAppletsAppid=res.data.data.qqAppletsAppid;
+					that.qqAppletsSecret=res.data.data.qqAppletsSecret;
 					that.wxpayAppId=res.data.data.wxpayAppId;
 					that.wxpayMchId=res.data.data.wxpayMchId;
 					that.wxpayKey=res.data.data.wxpayKey;
@@ -356,6 +360,8 @@ var vm = new Vue({
 				pexelsKey:that.pexelsKey,
 				isEmail:that.isEmail,
 				isInvite:that.isInvite,
+				auditlevel:that.auditlevel,
+				forbidden:that.forbidden,
 			}
 			axios.get(url,{
 				params:{
@@ -589,6 +595,8 @@ var vm = new Vue({
 				wxpayNotifyUrl:that.wxpayNotifyUrl,
 				appletsAppid:that.appletsAppid,
 				appletsSecret:that.appletsSecret,
+				qqAppletsAppid:that.qqAppletsAppid,
+				qqAppletsSecret:that.qqAppletsSecret,
 			}
 			axios.get(url,{
 				params:{

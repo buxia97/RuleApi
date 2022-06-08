@@ -195,6 +195,16 @@ public class TypechoApiconfig implements Serializable {
     private String appletsSecret;
 
     /**
+     * qqAppletsAppid
+     */
+    private String qqAppletsAppid;
+
+    /**
+     * qqAppletsSecret
+     */
+    private String qqAppletsSecret;
+
+    /**
      * wxpayAppId  
      */
     private String wxpayAppId;

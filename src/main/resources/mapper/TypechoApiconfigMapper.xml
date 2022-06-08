@@ -40,6 +40,8 @@
         <result column="alipayNotifyUrl" property="alipayNotifyUrl" />
         <result column="appletsAppid" property="appletsAppid" />
         <result column="appletsSecret" property="appletsSecret" />
+        <result column="qqAppletsAppid" property="qqAppletsAppid" />
+        <result column="qqAppletsSecret" property="qqAppletsSecret" />
         <result column="wxpayAppId" property="wxpayAppId" />
         <result column="wxpayMchId" property="wxpayMchId" />
         <result column="wxpayKey" property="wxpayKey" />
@@ -85,6 +87,8 @@
         `alipayNotifyUrl`,
         `appletsAppid`,
         `appletsSecret`,
+        `qqAppletsAppid`,
+        `qqAppletsSecret`,
         `wxpayAppId`,
         `wxpayMchId`,
         `wxpayKey`,
@@ -204,6 +208,12 @@
             </if>
             <if test ='null != appletsSecret'>
                 `appletsSecret`,
+            </if>
+            <if test ='null != qqAppletsAppid'>
+                `qqAppletsAppid`,
+            </if>
+            <if test ='null != qqAppletsSecret'>
+                `qqAppletsSecret`,
             </if>
             <if test ='null != wxpayAppId'>
                 `wxpayAppId`,
@@ -333,6 +343,12 @@
             <if test ='null != appletsSecret'>
                 #{appletsSecret},
             </if>
+            <if test ='null != qqAppletsAppid'>
+                #{qqAppletsAppid},
+            </if>
+            <if test ='null != qqAppletsSecret'>
+                #{qqAppletsSecret},
+            </if>
             <if test ='null != wxpayAppId'>
                 #{wxpayAppId},
             </if>
@@ -394,6 +410,8 @@
             <if test ='null != alipayNotifyUrl'>`alipayNotifyUrl` = #{alipayNotifyUrl},</if>
             <if test ='null != appletsAppid'>`appletsAppid` = #{appletsAppid},</if>
             <if test ='null != appletsSecret'>`appletsSecret` = #{appletsSecret},</if>
+            <if test ='null != qqAppletsAppid'>`qqAppletsAppid` = #{qqAppletsAppid},</if>
+            <if test ='null != qqAppletsSecret'>`qqAppletsSecret` = #{qqAppletsSecret},</if>
             <if test ='null != wxpayAppId'>`wxpayAppId` = #{wxpayAppId},</if>
             <if test ='null != wxpayMchId'>`wxpayMchId` = #{wxpayMchId},</if>
             <if test ='null != wxpayKey'>`wxpayKey` = #{wxpayKey},</if>
