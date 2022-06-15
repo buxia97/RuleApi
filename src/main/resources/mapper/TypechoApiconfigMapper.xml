@@ -425,7 +425,7 @@
     <!-- 主键查询 -->
     <select id="selectByKey" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List" />
-        FROM typecho_apiconfig
+        FROM ${prefix}_apiconfig
         WHERE `id` = #{key}
     </select>
 
