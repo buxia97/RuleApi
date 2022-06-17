@@ -248,7 +248,7 @@
 					<textarea type="text" class="text" v-model="alipayPublicKey" placeholder="请输入支付宝公钥"></textarea>
 				</div>
 				<div class="form-box">
-					<p>回调地址<span class="text-gray">请将127.0.0.1:8081部分替换为自己的API域名</span></p>
+					<p>回调地址<span class="text-gray">范例：http://127.0.0.1:8081/pay/notify 请将127.0.0.1:8081部分替换为自己的API域名，需要注意区分https和http</span></p>
 					<input type="text" class="input-text" v-model="alipayNotifyUrl" placeholder="请输入回调地址"/>
 				</div>
 				<div class="form-btn">
@@ -290,7 +290,7 @@
 					<textarea type="text" class="text" v-model="wxpayKey" placeholder="请输入支付密钥"></textarea>
 				</div>
 				<div class="form-box">
-					<p>回调地址<span class="text-gray">请将127.0.0.1:8081部分替换为自己的API域名</span></p>
+					<p>回调地址<span class="text-gray">范例：http://127.0.0.1:8081/pay/wxPayNotify 请将127.0.0.1:8081部分替换为自己的API域名，需要注意区分https和http<</span></p>
 					<input type="text" class="input-text" v-model="wxpayNotifyUrl" placeholder="请输入回调地址"/>
 				</div>
 				<div class="form-btn">

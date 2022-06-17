@@ -313,7 +313,7 @@ public class PayController {
         //交易类型
         data.put("trade_type", "APP");
         //附加数据，在查询API和支付通知中原样返回，该字段主要用于商户携带订单的自定义数据
-        data.put("attach", "");
+        data.put("attach", "shop");
         data.put("sign", WXPayUtil.generateSignature(data, apiconfig.getWxpayKey(),
                 WXPayConstants.SignType.MD5));
         //使用官方API请求预付订单
