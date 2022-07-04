@@ -287,9 +287,14 @@ public class TypechoContentsController {
                             name = author.getScreenName();
                         }
                         String avatar = apiconfig.getWebinfoAvatar() + "null";
-                        if(author.getMail()!=""){
-                            avatar = baseFull.getAvatar(apiconfig.getWebinfoAvatar(), author.getMail());
+                        if(author.getAvatar()!=""){
+                            avatar = author.getAvatar();
+                        }else{
+                            if(author.getMail()!=""){
+                                avatar = baseFull.getAvatar(apiconfig.getWebinfoAvatar(), author.getMail());
+                            }
                         }
+
                         authorInfo.put("name",name);
                         authorInfo.put("avatar",avatar);
                         authorInfo.put("customize",author.getCustomize());

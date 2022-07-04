@@ -346,6 +346,22 @@ public class InstallController {
         }else{
             text+="配置中心模块，字段forbidden已经存在，无需添加。";
         }
+        //查询配置中心表是否存在qqAppletsAppid字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'qqAppletsAppid';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD qqAppletsAppid varchar(500) DEFAULT NULL;");
+            text+="配置中心模块，字段qqAppletsAppid添加完成。";
+        }else{
+            text+="配置中心模块，字段qqAppletsAppid已经存在，无需添加。";
+        }
+        //查询配置中心表是否存在qqAppletsSecret字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'qqAppletsSecret';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD qqAppletsSecret varchar(500) DEFAULT NULL;");
+            text+="配置中心模块，字段qqAppletsSecret添加完成。";
+        }else{
+            text+="配置中心模块，字段qqAppletsSecret已经存在，无需添加。";
+        }
         //添加邀请码模块
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_invitation';", Integer.class);
         if (i == 0){
