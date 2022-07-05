@@ -464,7 +464,7 @@ public class TypechoCommentsController {
             //String group = (String) redisHelp.getValue("userInfo"+token,"group",redisTemplate);
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             String group = map.get("group").toString();
-            if(!group.equals("administrator")){
+            if(!group.equals("administrator")&&!group.equals("editor")){
                 return Result.getResultJson(0,"你没有操作权限",null);
             }
             TypechoComments comments = service.selectByKey(key);

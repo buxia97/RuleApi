@@ -39,7 +39,7 @@ public class baseFull {
         List<String> imageList = new ArrayList<String>();
         for (int i = 0; i < containedUrls.size(); i++) {
             String word = containedUrls.get(i);
-            if(word.indexOf(".jpg") != -1||word.indexOf(".jpeg") != -1||word.indexOf(".png") != -1||word.indexOf(".bmp") != -1||word.indexOf(".gif") != -1){
+            if(word.indexOf(".jpg") != -1||word.indexOf(".JPG") != -1||word.indexOf(".jpeg") != -1||word.indexOf(".png") != -1||word.indexOf(".PNG") != -1||word.indexOf(".bmp") != -1||word.indexOf(".gif") != -1||word.indexOf(".GIF") != -1){
                 imageList.add(word.replaceAll("\\)",""));
             }
         }

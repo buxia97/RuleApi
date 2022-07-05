@@ -229,7 +229,7 @@ public class TypechoContentsController {
                 aid = redisHelp.getValue(this.dataprefix+"_"+"userInfo"+token,"uid",redisTemplate).toString();
                 Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
                 String group = map.get("group").toString();
-                if(!group.equals("administrator")){
+                if(!group.equals("administrator")&&!group.equals("editor")){
                     object.put("authorId",aid);
                 }
 
@@ -416,7 +416,7 @@ public class TypechoContentsController {
                 //除管理员外，文章默认待审核
                 Map userMap =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
                 String group = userMap.get("group").toString();
-                if(!group.equals("administrator")){
+                if(!group.equals("administrator")&&!group.equals("editor")){
                     jsonToMap.put("status","waiting");
                 }else{
                     jsonToMap.put("status","publish");
@@ -552,7 +552,7 @@ public class TypechoContentsController {
                 Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
                 Integer uid =Integer.parseInt(map.get("uid").toString());
                 String group = map.get("group").toString();
-                if(!group.equals("administrator")){
+                if(!group.equals("administrator")&&!group.equals("editor")){
                     TypechoContents info = service.selectByKey(jsonToMap.get("cid").toString());
                     Integer authorId = info.getAuthorId();
                     if(uid!=authorId){
@@ -734,7 +734,7 @@ public class TypechoContentsController {
             //String group = (String) redisHelp.getValue("userInfo"+token,"group",redisTemplate);
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             String group = map.get("group").toString();
-            if(!group.equals("administrator")){
+            if(!group.equals("administrator")&&!group.equals("editor")){
                 return Result.getResultJson(0,"你没有操作权限",null);
             }
             TypechoContents info = service.selectByKey(key);

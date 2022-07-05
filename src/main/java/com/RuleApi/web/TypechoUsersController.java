@@ -1183,6 +1183,11 @@ public class TypechoUsersController {
             if (uStatus == 0) {
                 return Result.getResultJson(0, "用户未登录或Token验证失败", null);
             }
+            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            String group = map.get("group").toString();
+            if(!group.equals("administrator")&&!group.equals("editor")){
+                return Result.getResultJson(0,"你没有操作权限",null);
+            }
             String name = "";
             if (StringUtils.isNotBlank(params)) {
 
@@ -1203,7 +1208,10 @@ public class TypechoUsersController {
 
 
                 jsonToMap.remove("name");
-                jsonToMap.remove("group");
+                String groupText = jsonToMap.get("group").toString();
+                if(!groupText.equals("administrator")&&!groupText.equals("editor")&&!groupText.equals("contributor")&&!groupText.equals("subscriber")){
+                    return Result.getResultJson(0, "用户组不正确", null);
+                }
                 //部分字段不允许修改
 
                 jsonToMap.remove("created");

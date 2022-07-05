@@ -164,6 +164,10 @@ public class TypechoShopController {
             insert = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoShop.class);
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer uid  = Integer.parseInt(map.get("uid").toString());
+            String group = map.get("group").toString();
+            if(group.equals("administrator")||group.equals("editor")){
+                jsonToMap.put("status","1");
+            }
             //判断用户是否绑定了邮箱
             TypechoUsers users = usersService.selectByKey(uid);
             if(users.getMail()==null){
@@ -206,15 +210,18 @@ public class TypechoShopController {
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer uid  = Integer.parseInt(map.get("uid").toString());
             String group = map.get("group").toString();
-            if(!group.equals("administrator")){
+            if(!group.equals("administrator")&&!group.equals("editor")){
                 Integer sid = Integer.parseInt(jsonToMap.get("id").toString());
                 TypechoShop info = service.selectByKey(sid);
                 Integer aid = info.getUid();
                 if(!aid.equals(uid)){
                     return Result.getResultJson(0,"你无权进行此操作",null);
                 }
+                jsonToMap.put("status","0");
+            }else{
+                jsonToMap.put("status","1");
             }
-            jsonToMap.put("status","0");
+
             jsonToMap.remove("created");
             update = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoShop.class);
         }
@@ -272,7 +279,7 @@ public class TypechoShopController {
         Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         Integer uid  = Integer.parseInt(map.get("uid").toString());
         String group = map.get("group").toString();
-        if(!group.equals("administrator")){
+        if(!group.equals("administrator")&&!group.equals("editor")){
             Integer sid = Integer.parseInt(key);
             TypechoShop info = service.selectByKey(sid);
             Integer aid = info.getUid();
