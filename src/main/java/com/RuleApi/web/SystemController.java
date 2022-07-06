@@ -293,7 +293,7 @@ public class SystemController {
         }
     }
     /***
-     * Redis配置，包括数据浅醉
+     * Redis配置，包括数据前缀
      */
     @RequestMapping(value = "/setupRedis")
     @ResponseBody

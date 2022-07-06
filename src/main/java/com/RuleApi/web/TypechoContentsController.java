@@ -395,7 +395,7 @@ public class TypechoContentsController {
                 if(jsonToMap.get("text")==null){
                     jsonToMap.put("text","暂无内容");
                 }else{
-                    if(jsonToMap.get("text").toString().length()>30000){
+                    if(jsonToMap.get("text").toString().length()>60000){
                         return Result.getResultJson(0,"超出最大文章内容长度",null);
                     }
                     //满足typecho的要求，加入markdown申明

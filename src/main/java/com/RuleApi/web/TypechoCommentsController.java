@@ -430,9 +430,11 @@ public class TypechoCommentsController {
                 if(jsonToMap.get("coid")==null){
                     return Result.getResultJson(0,"请传入评论id",null);
                 }
+                jsonToMap.remove("parent");
                 jsonToMap.remove("ownerId");
                 jsonToMap.remove("created");
                 jsonToMap.remove("type");
+                jsonToMap.remove("cid");
                 jsonToMap.remove("agent");
                 jsonToMap.remove("ip");
             }

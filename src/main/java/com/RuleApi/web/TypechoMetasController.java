@@ -292,5 +292,46 @@ public class TypechoMetasController {
         }
 
     }
+    /***
+     * 修改分类和标签
+     */
+    @RequestMapping(value = "/addMeta")
+    @ResponseBody
+    public String addMeta(@RequestParam(value = "params", required = false) String  params,@RequestParam(value = "token", required = false) String  token) {
+        try{
+            Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
+            if (uStatus == 0) {
+                return Result.getResultJson(0, "用户未登录或Token验证失败", null);
+            }
+            Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+            String group = map.get("group").toString();
+            if (!group.equals("administrator")) {
+                return Result.getResultJson(0, "你没有操作权限", null);
+            }
+            TypechoMetas insert = new TypechoMetas();
+            Map jsonToMap =null;
+            if (StringUtils.isNotBlank(params)) {
+                jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
+                String type = jsonToMap.get("type").toString();
+                if(!type.equals("category")&&!type.equals("tag")){
+                    return Result.getResultJson(0, "类型参数不正确", null);
+                }
+                //为了数据稳定性考虑，禁止修改类型
+                insert = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoMetas.class);
+            }
+
+            int rows = service.insert(insert);
+            JSONObject response = new JSONObject();
+            response.put("code" , rows);
+            response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
+            return response.toString();
+        }catch (Exception e){
+            JSONObject response = new JSONObject();
+            response.put("code" , 0);
+            response.put("msg"  , "操作失败");
+            return response.toString();
+        }
+
+    }
 
 }

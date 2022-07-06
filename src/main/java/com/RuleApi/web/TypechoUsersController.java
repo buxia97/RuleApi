@@ -419,30 +419,30 @@ public class TypechoUsersController {
                 if(jsonToMap.get("type").toString().equals("applets")){
                     //如果是小程序，走官方接口获取accessToken和openid
                     if (jsonToMap.get("js_code") == null) {
-                        return Result.getResultJson(0, "APP配置异常，请检查相关设置", null);
+                        return Result.getResultJson(0, "APP配置异常，js_code参数不存在", null);
                     }
                     String js_code = jsonToMap.get("js_code").toString();
 
                     String requestUrl = "https://api.weixin.qq.com/sns/jscode2session?appid="+apiconfig.getAppletsAppid()+"&secret="+apiconfig.getAppletsSecret()+"&js_code="+js_code+"&grant_type=authorization_code";
                     String res = HttpClient.doGet(requestUrl);
                     if(res==null){
-                        return Result.getResultJson(0, "接口配置异常，请检查相关设置", null);
+                        return Result.getResultJson(0, "接口配置异常，微信官方接口请求失败", null);
                     }
 
                     HashMap data = JSON.parseObject(res, HashMap.class);
                     if(data.get("unionid")==null){
-                        return Result.getResultJson(0, "接口配置异常，请检查相关设置", null);
+                        return Result.getResultJson(0, "接口配置异常，unionid获取失败", null);
                     }
                     jsonToMap.put("accessToken",data.get("unionid"));
                     jsonToMap.put("openId",data.get("openid"));
                 }else {
                     if (jsonToMap.get("accessToken") == null) {
-                        return Result.getResultJson(0, "登录配置异常，请检查相关设置", null);
+                        return Result.getResultJson(0, "登录配置异常，accessToken参数不存在", null);
                     }
                 }
             }else{
                 if (jsonToMap.get("accessToken") == null) {
-                    return Result.getResultJson(0, "登录配置异常，请检查相关设置", null);
+                    return Result.getResultJson(0, "登录配置异常，accessToken参数不存在", null);
                 }
             }
             //QQ也要走两步判断
@@ -450,30 +450,30 @@ public class TypechoUsersController {
                 if(jsonToMap.get("type").toString().equals("applets")){
                     //如果是小程序，走官方接口获取accessToken和openid
                     if (jsonToMap.get("js_code") == null) {
-                        return Result.getResultJson(0, "APP配置异常，请检查相关设置", null);
+                        return Result.getResultJson(0, "APP配置异常，js_code参数不存在", null);
                     }
                     String js_code = jsonToMap.get("js_code").toString();
 
                     String requestUrl = "https://api.q.qq.com/sns/jscode2session?appid="+apiconfig.getQqAppletsAppid()+"&secret="+apiconfig.getQqAppletsSecret()+"&js_code="+js_code+"&grant_type=authorization_code";
                     String res = HttpClient.doGet(requestUrl);
                     if(res==null){
-                        return Result.getResultJson(0, "接口配置异常，请检查相关设置", null);
+                        return Result.getResultJson(0, "接口配置异常，QQ官方接口请求失败", null);
                     }
 
                     HashMap data = JSON.parseObject(res, HashMap.class);
                     if(data.get("unionid")==null){
-                        return Result.getResultJson(0, "接口配置异常，请检查相关设置", null);
+                        return Result.getResultJson(0, "接口配置异常，unionid获取失败", null);
                     }
                     jsonToMap.put("accessToken",data.get("unionid"));
                     jsonToMap.put("openId",data.get("openid"));
                 }else {
                     if (jsonToMap.get("accessToken") == null) {
-                        return Result.getResultJson(0, "登录配置异常，请检查相关设置", null);
+                        return Result.getResultJson(0, "登录配置异常，accessToken参数不存在", null);
                     }
                 }
             }else{
                 if (jsonToMap.get("accessToken") == null) {
-                    return Result.getResultJson(0, "登录配置异常，请检查相关设置", null);
+                    return Result.getResultJson(0, "登录配置异常，accessToken参数不存在", null);
                 }
             }
             TypechoUserapi userapi = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoUserapi.class);
