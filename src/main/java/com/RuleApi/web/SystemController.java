@@ -1,8 +1,5 @@
 package com.RuleApi.web;
-import com.RuleApi.common.ApiResult;
-import com.RuleApi.common.EditFile;
-import com.RuleApi.common.ResultAll;
-import com.RuleApi.common.ResultCode;
+import com.RuleApi.common.*;
 import com.RuleApi.entity.TypechoApiconfig;
 import com.RuleApi.service.TypechoApiconfigService;
 import com.alibaba.fastjson.JSON;
@@ -11,11 +8,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.system.ApplicationHome;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import com.RuleApi.common.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.*;
@@ -33,13 +32,22 @@ public class SystemController {
 
     ResultAll Result = new ResultAll();
     EditFile editFile = new EditFile();
+    HttpClient HttpClient = new HttpClient();
+    RedisHelp redisHelp =new RedisHelp();
+
 
     @Autowired
     private TypechoApiconfigService apiconfigService;
 
+    @Autowired
+    private RedisTemplate redisTemplate;
+
 
     @Value("${webinfo.key}")
     private String key;
+
+    @Value("${web.prefix}")
+    private String dataprefix;
     /**
      * 密钥配置
      * */
@@ -625,6 +633,32 @@ public class SystemController {
         JSONObject response = new JSONObject();
         response.put("code" , rows);
         response.put("msg"  , rows > 0 ? "修改成功，当前配置已生效！" : "修改失败");
+        return response.toString();
+    }
+    /***
+     * 获取新版本
+     */
+    @RequestMapping(value = "/apiNewVersion")
+    @ResponseBody
+    public String apiNewVersion() {
+        String apiNewVersion = redisHelp.getRedis(this.dataprefix+"_"+"apiNewVersion",redisTemplate);
+        HashMap data = new HashMap();
+        if(apiNewVersion==null) {
+            String requestUrl = "https://www.ruletree.club/ruleApiInfo.php";
+            String res = HttpClient.doGet(requestUrl);
+            if (res == null) {
+                return Result.getResultJson(0, "获取服务端信息失败", null);
+            }
+            data = JSON.parseObject(res, HashMap.class);
+            redisHelp.delete(this.dataprefix+"_"+"apiNewVersion",redisTemplate);
+            redisHelp.setRedis(this.dataprefix+"_"+"apiNewVersion",res,600,redisTemplate);
+        }else{
+            data = JSON.parseObject(apiNewVersion, HashMap.class);
+        }
+        JSONObject response = new JSONObject();
+        response.put("code" , 1);
+        response.put("msg"  , "");
+        response.put("data", data);
         return response.toString();
     }
 }
