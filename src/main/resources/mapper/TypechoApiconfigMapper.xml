@@ -48,6 +48,7 @@
         <result column="wxpayNotifyUrl" property="wxpayNotifyUrl" />
         <result column="auditlevel" property="auditlevel" />
         <result column="forbidden" property="forbidden" />
+        <result column="fields" property="fields" />
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -94,7 +95,8 @@
         `wxpayKey`,
         `wxpayNotifyUrl`,
         `auditlevel`,
-        `forbidden`
+        `forbidden`,
+        `fields`
     </sql>
 
     <!-- 插入数据 -->
@@ -231,7 +233,10 @@
                 `auditlevel`,
             </if>
             <if test ='null != forbidden'>
-                `forbidden`
+                `forbidden`,
+            </if>
+            <if test ='null != fields'>
+                `fields`
             </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
@@ -365,7 +370,10 @@
                 #{auditlevel},
             </if>
             <if test ='null != forbidden'>
-                #{forbidden}
+                #{forbidden},
+            </if>
+            <if test ='null != fields'>
+                #{fields}
             </if>
         </trim>
     </insert>
@@ -417,7 +425,8 @@
             <if test ='null != wxpayKey'>`wxpayKey` = #{wxpayKey},</if>
             <if test ='null != wxpayNotifyUrl'>`wxpayNotifyUrl` = #{wxpayNotifyUrl},</if>
             <if test ='null != auditlevel'>`auditlevel` = #{auditlevel},</if>
-            <if test ='null != forbidden'>`forbidden` = #{forbidden}</if>
+            <if test ='null != forbidden'>`forbidden` = #{forbidden},</if>
+            <if test ='null != fields'>`fields` = #{fields}</if>
         </set>
         WHERE `id` = #{id}
     </update>

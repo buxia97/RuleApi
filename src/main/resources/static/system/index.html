@@ -42,6 +42,9 @@
 						<a href="javascript:;" @click="toPage(9)" :class="page=='9'?'active':''">微信</a>
 					</div>
 				</div>
+				<div class="menu-box" @click="toPage(14)" :class="page=='14'?'active':''">
+					<a href="javascript:;">小程序设置</a>
+				</div>
 				<div class="menu-box" @click="toPage(8)" :class="page=='8'?'active':''">
 					<a href="javascript:;">编辑配置文件<font class="text-red">*</font></a>
 				</div>
@@ -91,6 +94,10 @@
 				<div class="form-box">
 					<p>违禁词<span class="text-gray text-red">违禁词将用于评论审核，个性签名拦截。根据英文逗号”,“进行分割，不要存在换行或者空格。</span></p>
 					<textarea type="text" class="text" v-model="forbidden" placeholder="请输入违禁词"></textarea>
+				</div>
+				<div class="form-box">
+					<p>文章自定义字段<span class="text-gray">输入字段的名称，根据英文逗号”,“进行分割。配置后，可通过自定义字段接口为文章设置自定义字段。</span></p>
+					<input type="text" class="input-text" v-model="fields" placeholder="请输入自定义字段"/>
 				</div>
 				<div class="form-btn">
 					<button type="button" class="input-text" class="btn" @click="saveWebinfo()">保存数据</button>
@@ -401,6 +408,32 @@
 				</div>
 			</div>
 			<!--APIkey配置结束-->
+			<!--小程序配置-->
+			<div class="form-main" v-if="page==14">
+				<div class="form-box">
+					在这里设置小程序相关的信息
+				</div>
+				<div class="form-box">
+					<p>微信小程序APPID<span>可不填，负责微信小程序登录</span></p>
+					<input type="text" class="input-text" v-model="appletsAppid" placeholder="请输入appletsAppid"/>
+				</div>
+				<div class="form-box">
+					<p>微信小程序Secret<span>可不填，负责微信小程序登录</span></p>
+					<input type="text" class="input-text" v-model="appletsSecret" placeholder="请输入appletsSecret"/>
+				</div>
+				<div class="form-box">
+					<p>QQ小程序APPID<span>可不填，负责QQ小程序登录</span></p>
+					<input type="text" class="input-text" v-model="qqAppletsAppid" placeholder="请输入qqAppletsAppid"/>
+				</div>
+				<div class="form-box">
+					<p>QQ小程序Secret<span>可不填，负责QQ小程序登录</span></p>
+					<input type="text" class="input-text" v-model="qqAppletsSecret" placeholder="请输入qqAppletsSecret"/>
+				</div>
+				<div class="form-btn">
+					<button type="button" class="input-text" class="btn" @click="saveApplets()">保存数据</button>
+				</div>
+			</div>
+			<!--小程序配置结束-->
 			<!--配置文件更新-->
 			<div class="form-text" v-if="page==8">
 				<div class="form-box">

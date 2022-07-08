@@ -775,6 +775,64 @@ public class TypechoContentsController {
         }
     }
     /***
+     * 文章自定义字段设置
+     */
+    @RequestMapping(value = "/setFields")
+    @ResponseBody
+    public String setFields(@RequestParam(value = "cid", required = false) Integer  cid,@RequestParam(value = "name", required = false) String  name,@RequestParam(value = "strvalue", required = false) String  strvalue,  @RequestParam(value = "token", required = false) String  token) {
+        try {
+            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+            if(uStatus==0){
+                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+            }
+            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+            String fieldstext = apiconfig.getFields();
+            Integer status = 1;
+            if(fieldstext!=null){
+                if(fieldstext.indexOf(",") != -1){
+                    String[] strarray=fieldstext.split(",");
+                    for (int i = 0; i < strarray.length; i++){
+                        String str = strarray[i];
+                        if(name.indexOf(str) != -1){
+                            status = 0;
+                        }
+                        break;
+                    }
+                }else{
+                    if(name.indexOf(fieldstext) != -1){
+                        status = 0;
+                    }
+                }
+            }else{
+                status = 0;
+            }
+            if(status==0){
+                return Result.getResultJson(0,"操作失败，字段未被定义",null);
+            }
+            TypechoFields fields = new TypechoFields();
+            fields.setCid(cid);
+            fields.setType("str");
+            fields.setName(name);
+            //判断是否存在
+            Integer isFields = fieldsService.total(fields);
+            fields.setStrValue(strvalue);
+            Integer rows;
+            if(isFields>0){
+                rows = fieldsService.update(fields);
+            }else{
+                rows = fieldsService.insert(fields);
+            }
+
+            JSONObject response = new JSONObject();
+            response.put("code" ,rows > 0 ? 1: 0 );
+            response.put("data" , rows);
+            response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
+            return response.toString();
+        }catch (Exception e){
+            return Result.getResultJson(0,"操作失败",null);
+        }
+    }
+    /***
      * 文章推荐
      */
     @RequestMapping(value = "/toRecommend")

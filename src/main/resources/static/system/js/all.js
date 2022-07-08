@@ -86,7 +86,10 @@ var vm = new Vue({
 		applicationText:"",
 		//评论配置
 		auditlevel:"",
-		forbidden:""
+		forbidden:"",
+		//自定义字段
+		fields:""
+
 	},
 	created(){
 		var that = this;
@@ -234,6 +237,8 @@ var vm = new Vue({
 					//评论模块
 					that.auditlevel=res.data.data.auditlevel;
 					that.forbidden=res.data.data.forbidden;
+					//自定义字段
+					that.fields=res.data.data.fields;
 
 				}else{
 					that.outSystem();
@@ -362,6 +367,7 @@ var vm = new Vue({
 				isInvite:that.isInvite,
 				auditlevel:that.auditlevel,
 				forbidden:that.forbidden,
+				fields:that.fields
 			}
 			axios.get(url,{
 				params:{
@@ -593,6 +599,27 @@ var vm = new Vue({
 				wxpayMchId:that.wxpayMchId,
 				wxpayKey:that.wxpayKey,
 				wxpayNotifyUrl:that.wxpayNotifyUrl,
+			}
+			axios.get(url,{
+				params:{
+					"webkey":that.webkey,
+					"params":JSON.stringify(that.removeObjectEmptyKey(data))
+				}
+			}).then(function(res){
+				that.toAlert(res.data.msg);
+				if(res.data.code==1){
+					that.getAll();
+				}else{
+					that.outSystem();
+				}
+			}).catch(function (error) {
+				console.log(error);
+			});
+		},
+		saveApplets(){
+			var that = this;
+			var url = "/system/apiConfigUpdate"
+			var data={
 				appletsAppid:that.appletsAppid,
 				appletsSecret:that.appletsSecret,
 				qqAppletsAppid:that.qqAppletsAppid,

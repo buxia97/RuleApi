@@ -233,4 +233,9 @@ public class TypechoApiconfig implements Serializable {
      * forbidden
      */
     private String forbidden;
+
+    /**
+     * fields
+     */
+    private String fields;
 }
