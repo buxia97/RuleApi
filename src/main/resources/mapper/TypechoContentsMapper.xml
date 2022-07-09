@@ -23,6 +23,8 @@
         <result column="parent" property="parent" />
         <result column="views" property="views" />
         <result column="likes" property="likes" />
+        <result column="isrecommend" property="isrecommend" />
+        <result column="istop" property="istop" />
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -45,8 +47,8 @@
         `parent`,
         `views`,
         `likes`,
-        `isrecommend`
-
+        `isrecommend`,
+        `istop`
     </sql>
 
     <!-- 插入数据 -->
@@ -208,7 +210,8 @@
             <if test ='null != parent'>`parent` = #{parent},</if>
             <if test ='null != views'>`views` = #{views},</if>
             <if test ='null != likes'>`likes` = #{likes},</if>
-            <if test ='null != isrecommend'>`isrecommend` = #{isrecommend}</if>
+            <if test ='null != isrecommend'>`isrecommend` = #{isrecommend},</if>
+            <if test ='null != istop'>`istop` = #{istop},</if>
         </set>
         WHERE `cid` = #{cid}
     </update>
@@ -363,6 +366,9 @@
             </if>
             <if test ='null != typechoContents.isrecommend'>
                 and `isrecommend` = #{typechoContents.isrecommend}
+            </if>
+            <if test ='null != typechoContents.istop'>
+                and `istop` = #{typechoContents.istop}
             </if>
             <if test ='"" != searchKey'>
                 and CONCAT(IFNULL(`title`,''),IFNULL(`text`,'')) LIKE '%${searchKey}%'

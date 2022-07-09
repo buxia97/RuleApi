@@ -1212,6 +1212,7 @@ public class TypechoUsersController {
                 if(!groupText.equals("administrator")&&!groupText.equals("editor")&&!groupText.equals("contributor")&&!groupText.equals("subscriber")){
                     return Result.getResultJson(0, "用户组不正确", null);
                 }
+                jsonToMap.put("groupKey",groupText);
                 //部分字段不允许修改
 
                 jsonToMap.remove("created");

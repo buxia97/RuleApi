@@ -83,6 +83,14 @@ public class InstallController {
         }else{
             text+="内容模块，字段isrecommend已经存在，无需添加。";
         }
+        //查询文章表是否存在istop字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_contents' and column_name = 'istop';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_contents ADD istop integer(2) DEFAULT 0;");
+            text+="内容模块，字段istop添加完成。";
+        }else{
+            text+="内容模块，字段istop已经存在，无需添加。";
+        }
         //查询用户表是否存在introduce字段
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_users' and column_name = 'introduce';", Integer.class);
         if (i == 0){
@@ -365,7 +373,7 @@ public class InstallController {
         //查询配置中心表是否存在fields字段
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'fields';", Integer.class);
         if (i == 0){
-            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD fields varchar(500) DEFAULT 'Pictype';");
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD fields varchar(500) DEFAULT 'abcimg';");
             text+="配置中心模块，字段fields添加完成。";
         }else{
             text+="配置中心模块，字段fields已经存在，无需添加。";

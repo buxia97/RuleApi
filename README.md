@@ -28,6 +28,12 @@ https://www.ruletree.club/archives/2824/
 
 https://www.ruletree.club/archives/2649/
 
+## 相关应用
+
+[Typecho独立会员中心，前后端分离，充值付费功能集成，APP扫码登录](https://www.ruletree.club/archives/2979/)
+
+[RuleApp文章博客，VIP会员体系，写作投稿积分商城，多支付支持，多平台兼容](https://ext.dcloud.net.cn/plugin?id=6909)
+
 ## 协议及申明
 
 当您下载使用本项目（RuleApi）时，则视为同意该协议。本项目（RuleApi）开源免费，允许商业应用，二次开发售卖等。但在以二次开发售卖为目的时，请在项目中注明或者告知用户项目源于RuleApp，并附上RuleApp开源地址链接。当然，开发者没有任何办法去验证或者查询，但希望每个使用本项目的人，能够遵守这条协议，这就是对开发者最大的帮助。

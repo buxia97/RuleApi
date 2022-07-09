@@ -325,12 +325,11 @@ public class TypechoContentsController {
                     json.put("tag",tags);
                     json.remove("password");
 
-
-
                     jsonList.add(json);
-                    redisHelp.delete(this.dataprefix+"_"+"contentsList_"+page+"_"+limit+"_"+searchParams+"_"+order+"_"+searchKey+"_"+random+"_"+aid,redisTemplate);
-                    redisHelp.setList(this.dataprefix+"_"+"contentsList_"+page+"_"+limit+"_"+searchParams+"_"+order+"_"+searchKey+"_"+random+"_"+aid,jsonList,this.contentCache,redisTemplate);
+
                 }
+                redisHelp.delete(this.dataprefix+"_"+"contentsList_"+page+"_"+limit+"_"+searchParams+"_"+order+"_"+searchKey+"_"+random+"_"+aid,redisTemplate);
+                redisHelp.setList(this.dataprefix+"_"+"contentsList_"+page+"_"+limit+"_"+searchParams+"_"+order+"_"+searchKey+"_"+random+"_"+aid,jsonList,this.contentCache,redisTemplate);
             }
         }catch (Exception e){
 
@@ -850,6 +849,10 @@ public class TypechoContentsController {
                 return Result.getResultJson(0,"你没有操作权限",null);
             }
             TypechoContents info = service.selectByKey(key);
+            Long date = System.currentTimeMillis();
+            String time = String.valueOf(date).substring(0,10);
+            Integer modified = Integer.parseInt(time);
+            info.setModified(modified);
             info.setCid(Integer.parseInt(key));
             info.setIsrecommend(recommend);
             Integer rows = service.update(info);
@@ -864,6 +867,42 @@ public class TypechoContentsController {
         }
     }
 
+    /***
+     * 文章推荐
+     */
+    @RequestMapping(value = "/addTop")
+    @ResponseBody
+    public String addTop(@RequestParam(value = "key", required = false) String  key,@RequestParam(value = "istop", required = false) Integer  istop, @RequestParam(value = "token", required = false) String  token) {
+        try {
+            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+            if(uStatus==0){
+                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+            }
+
+            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            String group = map.get("group").toString();
+            if(!group.equals("administrator")){
+                return Result.getResultJson(0,"你没有操作权限",null);
+            }
+            TypechoContents info = service.selectByKey(key);
+            //生成typecho数据库格式的修改时间戳
+            Long date = System.currentTimeMillis();
+            String time = String.valueOf(date).substring(0,10);
+            Integer modified = Integer.parseInt(time);
+            info.setModified(modified);
+            info.setCid(Integer.parseInt(key));
+            info.setIstop(istop);
+            Integer rows = service.update(info);
+
+            JSONObject response = new JSONObject();
+            response.put("code" ,rows > 0 ? 1: 0 );
+            response.put("data" , rows);
+            response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
+            return response.toString();
+        }catch (Exception e){
+            return Result.getResultJson(0,"操作失败",null);
+        }
+    }
     /**
      * 文章是否评论过（用于回复可见）
      * */
@@ -957,7 +996,7 @@ public class TypechoContentsController {
         //String group = (String) redisHelp.getValue("userInfo"+token,"group",redisTemplate);
         Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         String group = map.get("group").toString();
-        if(!group.equals("administrator")){
+        if(!group.equals("administrator")&&!group.equals("editor")){
             return Result.getResultJson(0,"你没有操作权限",null);
         }
         JSONObject data = new JSONObject();
