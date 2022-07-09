@@ -115,10 +115,10 @@ public class TypechoMetasController {
                             name = author.getScreenName();
                         }
                         String avatar = apiconfig.getWebinfoAvatar() + "null";
-                        if(author.getAvatar()!=""){
+                        if(author.getAvatar()!=""&&author.getAvatar()!=null){
                             avatar = author.getAvatar();
                         }else{
-                            if(author.getMail()!=""){
+                            if(author.getMail()!=""&&author.getMail()!=null){
                                 avatar = baseFull.getAvatar(apiconfig.getWebinfoAvatar(), author.getMail());
                             }
                         }

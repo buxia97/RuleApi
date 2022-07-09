@@ -93,7 +93,7 @@ public class UploadController {
         String newFileName = UUID.randomUUID()+eName;
         Calendar cal = Calendar.getInstance();
         int year = cal.get(Calendar.YEAR);
-        int month=cal.get(Calendar.MONTH);
+        int month=cal.get(Calendar.MONTH)+1;
         int day=cal.get(Calendar.DATE);
         // 1 初始化用户身份信息(secretId, secretKey)
         COSCredentials cred = new BasicCOSCredentials(apiconfig.getCosAccessKey(), apiconfig.getCosSecretKey());
@@ -182,7 +182,7 @@ public class UploadController {
 
         Calendar cal = Calendar.getInstance();
         int year = cal.get(Calendar.YEAR);
-        int month=cal.get(Calendar.MONTH);
+        int month=cal.get(Calendar.MONTH)+1;
         int day=cal.get(Calendar.DATE);
 
         /**/
@@ -231,7 +231,7 @@ public class UploadController {
         //生成时间，用于创建目录
         Calendar cal = Calendar.getInstance();
         int year = cal.get(Calendar.YEAR);
-        int month=cal.get(Calendar.MONTH);
+        int month=cal.get(Calendar.MONTH)+1;
         int day=cal.get(Calendar.DATE);
         //获取文件名称
         String filename = file.getOriginalFilename();
