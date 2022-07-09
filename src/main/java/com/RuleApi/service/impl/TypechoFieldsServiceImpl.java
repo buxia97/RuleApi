@@ -37,8 +37,8 @@ public class TypechoFieldsServiceImpl implements TypechoFieldsService {
     }
 
     @Override
-    public int delete(Object key) {
-    	return dao.delete(key);
+    public int delete(Integer cid,String name) {
+    	return dao.delete(cid,name);
     }
 
     @Override

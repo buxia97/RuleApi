@@ -85,6 +85,7 @@
     <update id="update" parameterType="com.RuleApi.entity.TypechoFields">
         UPDATE ${prefix}_fields
         <set>
+            <if test ='null != cid'>`cid` = #{cid},</if>
             <if test ='null != name'>`name` = #{name},</if>
             <if test ='null != type'>`type` = #{type},</if>
             <if test ='null != strValue'>`str_value` = #{strValue},</if>
@@ -97,7 +98,7 @@
     <!-- 删除 -->
     <delete id="delete">
         DELETE FROM ${prefix}_fields
-        WHERE `cid` = #{key}
+        WHERE `cid` = #{cid} and `name` = #{name}
     </delete>
 
     <!-- 批量删除 -->

@@ -33,7 +33,7 @@ public interface TypechoFieldsDao {
     /**
      * [删除]
      **/
-    int delete(Object key);
+    int delete(Integer cid,String name);
 
     /**
      * [批量删除]

@@ -218,6 +218,8 @@ public class TypechoContentsController {
         if(limit>50){
             limit = 50;
         }
+        List cacheList = new ArrayList();
+        String group = "";
         if (StringUtils.isNotBlank(searchParams)) {
             JSONObject object = JSON.parseObject(searchParams);
             //如果不是登陆状态，那么只显示开放状态文章。如果是，则查询自己发布的文章
@@ -228,7 +230,7 @@ public class TypechoContentsController {
             }else{
                 aid = redisHelp.getValue(this.dataprefix+"_"+"userInfo"+token,"uid",redisTemplate).toString();
                 Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
-                String group = map.get("group").toString();
+                group = map.get("group").toString();
                 if(!group.equals("administrator")&&!group.equals("editor")){
                     object.put("authorId",aid);
                 }
@@ -239,8 +241,10 @@ public class TypechoContentsController {
 
         }
         List jsonList = new ArrayList();
-
-        List cacheList = redisHelp.getList(this.dataprefix+"_"+"contentsList_"+page+"_"+limit+"_"+searchParams+"_"+order+"_"+searchKey+"_"+random+"_"+aid,redisTemplate);
+        //管理员和编辑以登录状态请求时，不调用缓存
+        if(!group.equals("administrator")&&!group.equals("editor")) {
+            cacheList = redisHelp.getList(this.dataprefix + "_" + "contentsList_" + page + "_" + limit + "_" + searchParams + "_" + order + "_" + searchKey + "_" + random + "_" + aid, redisTemplate);
+        }
         //监听异常，如果有异常则调用redis缓存中的list，如果无异常也调用redis，但是会更新数据
         try{
             if(cacheList.size()>0){
@@ -711,7 +715,7 @@ public class TypechoContentsController {
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );
             response.put("data" , rows);
-            response.put("msg"  , rows > 0 ? "操作成功，缓存缘故，数据可能存在延迟" : "操作失败");
+            response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
             return response.toString();
         }catch (Exception e){
             return Result.getResultJson(0,"操作失败",null);
@@ -817,7 +821,8 @@ public class TypechoContentsController {
             fields.setStrValue(strvalue);
             Integer rows;
             if(isFields>0){
-                rows = fieldsService.update(fields);
+                fieldsService.delete(cid,name);
+                rows = fieldsService.insert(fields);
             }else{
                 rows = fieldsService.insert(fields);
             }
@@ -825,9 +830,10 @@ public class TypechoContentsController {
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );
             response.put("data" , rows);
-            response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
+            response.put("msg"  , "操作成功");
             return response.toString();
         }catch (Exception e){
+            System.out.print(e);
             return Result.getResultJson(0,"操作失败",null);
         }
     }
