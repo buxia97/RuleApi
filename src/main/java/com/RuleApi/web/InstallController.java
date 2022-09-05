@@ -373,7 +373,7 @@ public class InstallController {
         //查询配置中心表是否存在fields字段
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'fields';", Integer.class);
         if (i == 0){
-            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD fields varchar(500) DEFAULT 'abcimg';");
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD fields varchar(500) DEFAULT 'able';");
             text+="配置中心模块，字段fields添加完成。";
         }else{
             text+="配置中心模块，字段fields已经存在，无需添加。";

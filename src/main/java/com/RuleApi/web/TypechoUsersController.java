@@ -1208,11 +1208,14 @@ public class TypechoUsersController {
 
 
                 jsonToMap.remove("name");
-                String groupText = jsonToMap.get("group").toString();
-                if(!groupText.equals("administrator")&&!groupText.equals("editor")&&!groupText.equals("contributor")&&!groupText.equals("subscriber")){
-                    return Result.getResultJson(0, "用户组不正确", null);
+                if(jsonToMap.get("group")!=null){
+                    String groupText = jsonToMap.get("group").toString();
+                    if(!groupText.equals("administrator")&&!groupText.equals("editor")&&!groupText.equals("contributor")&&!groupText.equals("subscriber")&&!groupText.equals("visitor")){
+                        return Result.getResultJson(0, "用户组不正确", null);
+                    }
+                    jsonToMap.put("groupKey",groupText);
                 }
-                jsonToMap.put("groupKey",groupText);
+
                 //部分字段不允许修改
 
                 jsonToMap.remove("created");
@@ -1520,7 +1523,28 @@ public class TypechoUsersController {
         response.put("msg", rows > 0 ? "操作成功" : "操作失败");
         return response.toString();
     }
+    /**
+     * 退出登录
+     * **/
+    @RequestMapping(value = "/signOut")
+    @ResponseBody
+    public String signOut(@RequestParam(value = "token", required = false) String  token) {
+        try {
+            Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
+            if (uStatus == 0) {
+                return Result.getResultJson(0, "用户未登录或Token验证失败", null);
+            }
+            Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+            String name = map.get("name").toString();
+            redisHelp.delete(this.dataprefix + "_" + "userkey" + name, redisTemplate);
+            redisHelp.delete(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+            return Result.getResultJson(1, "退出成功", null);
+        }catch (Exception e){
+            System.out.println(e);
+            return Result.getResultJson(0, "退出失败", null);
+        }
 
+    }
     /**
      * 扫码登陆-生成二维码
      **/
@@ -1538,7 +1562,7 @@ public class TypechoUsersController {
             QRCodeUtil.createCodeToOutputStream(res.toString(), response.getOutputStream());
             System.out.println("成功生成二维码!");
         } catch (IOException e) {
-            System.out.println("发生错误");
+            System.out.println(e);
         }
     }
 
