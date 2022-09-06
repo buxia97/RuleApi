@@ -376,10 +376,15 @@ public class TypechoContentsController {
                 //获取发布者信息
                 Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
                 String uid = map.get("uid").toString();
-                //判断用户是否绑定了邮箱
-                TypechoUsers users = usersService.selectByKey(uid);
-                if(users.getMail()==null){
-                    return Result.getResultJson(0,"发布文章前，请先绑定邮箱",null);
+                //判断是否开启邮箱验证
+                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+                Integer isEmail = apiconfig.getIsEmail();
+                if(isEmail.equals(1)) {
+                    //判断用户是否绑定了邮箱
+                    TypechoUsers users = usersService.selectByKey(uid);
+                    if (users.getMail() == null) {
+                        return Result.getResultJson(0, "发布文章前，请先绑定邮箱", null);
+                    }
                 }
                 //生成typecho数据库格式的创建时间戳
                 Long date = System.currentTimeMillis();
@@ -953,17 +958,23 @@ public class TypechoContentsController {
      * */
     @RequestMapping(value = "/ImagePexels")
     @ResponseBody
-    public String ImagePexels() {
-        String cacheImage = redisHelp.getRedis(this.dataprefix+"_"+"ImagePexels",redisTemplate);
+    public String ImagePexels(@RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
+                              @RequestParam(value = "searchKey"        , required = false, defaultValue = "") String searchKey) {
+        String cacheImage = redisHelp.getRedis(this.dataprefix+"_"+"ImagePexels_"+searchKey+"_"+page,redisTemplate);
         String imgList = "";
         TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
         if(cacheImage==null){
-            imgList = HttpClient.doGetImg("https://api.pexels.com/v1/curated?per_page=40",apiconfig.getPexelsKey());
+            if(searchKey==""){
+                imgList = HttpClient.doGetImg("https://api.pexels.com/v1/curated?per_page=40&page="+page,apiconfig.getPexelsKey());
+            }else{
+                imgList = HttpClient.doGetImg("https://api.pexels.com/v1/search?per_page=40&query="+searchKey+"&page="+page,apiconfig.getPexelsKey());
+            }
+
             if(imgList==null){
                 return Result.getResultJson(0,"图片接口异常",null);
             }
             redisHelp.delete(this.dataprefix+"_"+"ImagePexels",redisTemplate);
-            redisHelp.setRedis(this.dataprefix+"_"+"ImagePexels",imgList,43200,redisTemplate);
+            redisHelp.setRedis(this.dataprefix+"_"+"ImagePexels_"+searchKey+"_"+page,imgList,43200,redisTemplate);
         }else{
             imgList = cacheImage;
         }
