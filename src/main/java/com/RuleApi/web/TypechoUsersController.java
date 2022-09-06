@@ -104,13 +104,16 @@ public class TypechoUsersController {
                            @RequestParam(value = "order", required = false, defaultValue = "") String order,
                            @RequestParam(value = "limit", required = false, defaultValue = "15") Integer limit) {
         TypechoUsers query = new TypechoUsers();
+
+        if(limit>50){
+            limit = 50;
+        }
+        Integer total = 0;
         if (StringUtils.isNotBlank(searchParams)) {
             JSONObject object = JSON.parseObject(searchParams);
             object.remove("password");
             query = object.toJavaObject(TypechoUsers.class);
-        }
-        if(limit>50){
-            limit = 50;
+            total = service.total(query);
         }
         List jsonList = new ArrayList();
 
@@ -165,7 +168,7 @@ public class TypechoUsersController {
         response.put("msg", "");
         response.put("data", null != jsonList ? jsonList : new JSONArray());
         response.put("count", jsonList.size());
-
+        response.put("total", total);
         return response.toString();
     }
 
@@ -1381,6 +1384,7 @@ public class TypechoUsersController {
         if(limit>50){
             limit = 50;
         }
+        Integer total = 0;
         TypechoUserlog query = new TypechoUserlog();
         if (StringUtils.isNotBlank(searchParams)) {
 
@@ -1402,7 +1406,7 @@ public class TypechoUsersController {
 
                 query.setCid(Integer.parseInt(object.get("cid").toString()));
             }
-
+            total = userlogService.total(query);
 
         }
 
@@ -1422,6 +1426,7 @@ public class TypechoUsersController {
         response.put("msg", "");
         response.put("data", null != jsonList ? jsonList : new JSONArray());
         response.put("count", jsonList.size());
+        response.put("total", total);
         return response.toString();
     }
 
@@ -1713,10 +1718,12 @@ public class TypechoUsersController {
         if (!group.equals("administrator")) {
             return Result.getResultJson(0, "你没有操作权限", null);
         }
+        Integer total = 0;
         TypechoInvitation query = new TypechoInvitation();
         if (StringUtils.isNotBlank(searchParams)) {
             JSONObject object = JSON.parseObject(searchParams);
             query = object.toJavaObject(TypechoInvitation.class);
+            total = invitationService.total(query);
         }
 
         PageList<TypechoInvitation> pageList = invitationService.selectPage(query, page, limit);
@@ -1725,6 +1732,7 @@ public class TypechoUsersController {
         response.put("msg"  , "");
         response.put("data" , null != pageList.getList() ? pageList.getList() : new JSONArray());
         response.put("count", pageList.getTotalCount());
+        response.put("total", total);
         return response.toString();
     }
     /***

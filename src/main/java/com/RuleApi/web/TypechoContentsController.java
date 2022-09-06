@@ -220,6 +220,7 @@ public class TypechoContentsController {
         }
         List cacheList = new ArrayList();
         String group = "";
+        Integer total = 0;
         if (StringUtils.isNotBlank(searchParams)) {
             JSONObject object = JSON.parseObject(searchParams);
             //如果不是登陆状态，那么只显示开放状态文章。如果是，则查询自己发布的文章
@@ -238,6 +239,7 @@ public class TypechoContentsController {
             }
 
             query = object.toJavaObject(TypechoContents.class);
+            total = service.total(query);
 
         }
         List jsonList = new ArrayList();
@@ -348,6 +350,7 @@ public class TypechoContentsController {
         response.put("msg"  , "");
         response.put("data" , null != jsonList ? jsonList : new JSONArray());
         response.put("count", jsonList.size());
+        response.put("total", total);
         return response.toString();
     }
 

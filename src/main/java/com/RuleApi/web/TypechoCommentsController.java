@@ -84,6 +84,7 @@ public class TypechoCommentsController {
             limit = 50;
         }
         Integer uid = 0;
+        Integer total = 0;
         if (StringUtils.isNotBlank(searchParams)) {
             JSONObject object = JSON.parseObject(searchParams);
             //如果不是管理员，则只查询开放状态评论
@@ -99,6 +100,7 @@ public class TypechoCommentsController {
                 }
             }
             query = object.toJavaObject(TypechoComments.class);
+            total = service.total(query);
         }
         List jsonList = new ArrayList();
         List cacheList = redisHelp.getList(this.dataprefix+"_"+"searchParams_"+page+"_"+limit+"_"+searchKey+"_"+searchParams+"_"+uid+"_"+order,redisTemplate);
@@ -192,6 +194,7 @@ public class TypechoCommentsController {
         response.put("msg"  , "");
         response.put("data" , null != jsonList ? jsonList : new JSONArray());
         response.put("count", jsonList.size());
+        response.put("total", total);
         return response.toString();
     }
 

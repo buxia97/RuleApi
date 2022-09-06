@@ -250,10 +250,10 @@ public class PayController {
         }
         Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         Integer uid =Integer.parseInt(map.get("uid").toString());
-
+        Integer total = 0;
         TypechoPaylog query = new TypechoPaylog();
         query.setUid(uid);
-
+        total = paylogService.total(query);
         List<TypechoPaylog> list = new ArrayList();
         List cacheList = redisHelp.getList(this.dataprefix+"_"+"payLogList_"+page+"_"+limit+"_"+uid,redisTemplate);
         try{
@@ -275,6 +275,7 @@ public class PayController {
         response.put("msg"  , "");
         response.put("data" , null != list ? list : new JSONArray());
         response.put("count", list.size());
+        response.put("total", total);
         return response.toString();
     }
     /**
@@ -501,6 +502,7 @@ public class PayController {
         if (uStatus == 0) {
             return Result.getResultJson(0, "用户未登录或Token验证失败", null);
         }
+        Integer total = 0;
         Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
         String group = map.get("group").toString();
         if (!group.equals("administrator")) {
@@ -510,6 +512,7 @@ public class PayController {
         if (StringUtils.isNotBlank(searchParams)) {
             JSONObject object = JSON.parseObject(searchParams);
             query = object.toJavaObject(TypechoPaykey.class);
+            total = paykeyService.total(query);
         }
 
         PageList<TypechoPaykey> pageList = paykeyService.selectPage(query, page, limit,searchKey);
@@ -518,6 +521,7 @@ public class PayController {
         response.put("msg"  , "");
         response.put("data" , null != pageList.getList() ? pageList.getList() : new JSONArray());
         response.put("count", pageList.getTotalCount());
+        response.put("total", total);
         return response.toString();
     }
     @RequestMapping(value = "/tokenPayExcel")

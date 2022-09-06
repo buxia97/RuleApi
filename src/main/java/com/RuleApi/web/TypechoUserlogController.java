@@ -127,12 +127,14 @@ public class TypechoUserlogController {
         if(limit>50){
             limit = 50;
         }
+        Integer total = 0;
         Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         Integer uid =Integer.parseInt(map.get("uid").toString());
 
         TypechoUserlog query = new TypechoUserlog();
         query.setUid(uid);
         query.setType("mark");
+        total = service.total(query);
 
         List jsonList = new ArrayList();
         List cacheList = redisHelp.getList(this.dataprefix+"_"+"markList_"+page+"_"+limit+"_"+uid,redisTemplate);
@@ -216,6 +218,7 @@ public class TypechoUserlogController {
         response.put("msg"  , "");
         response.put("data" , null != jsonList ? jsonList : new JSONArray());
         response.put("count", jsonList.size());
+        response.put("total", total);
         return response.toString();
     }
     /***
@@ -237,9 +240,11 @@ public class TypechoUserlogController {
         if(limit>50){
             limit = 50;
         }
+        Integer total = 0;
         TypechoUserlog query = new TypechoUserlog();
         query.setUid(uid);
         query.setType("reward");
+        total = service.total(query);
         PageList<TypechoUserlog> pageList = service.selectPage(query, page, limit);
 
 
@@ -248,6 +253,7 @@ public class TypechoUserlogController {
         response.put("msg"  , "");
         response.put("data" , null != pageList.getList() ? pageList.getList() : new JSONArray());
         response.put("count", pageList.getList());
+        response.put("total", total);
         return response.toString();
     }
     /***
@@ -516,11 +522,11 @@ public class TypechoUserlogController {
         }
         Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         Integer uid =Integer.parseInt(map.get("uid").toString());
-
+        Integer total = 0;
         TypechoUserlog query = new TypechoUserlog();
         query.setUid(uid);
         query.setType("buy");
-
+        total = service.total(query);
         List jsonList = new ArrayList();
         List cacheList = redisHelp.getList(this.dataprefix+"_"+"orderList_"+page+"_"+limit+"_"+uid,redisTemplate);
         try{
@@ -565,6 +571,7 @@ public class TypechoUserlogController {
         response.put("msg"  , "");
         response.put("data" , null != jsonList ? jsonList : new JSONArray());
         response.put("count", jsonList.size());
+        response.put("total", total);
         return response.toString();
     }
     /***
@@ -585,11 +592,11 @@ public class TypechoUserlogController {
         }
         Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         Integer uid =Integer.parseInt(map.get("uid").toString());
-
+        Integer total = 0;
         TypechoUserlog query = new TypechoUserlog();
         query.setToid(uid);
         query.setType("buy");
-
+        total = service.total(query);
         List jsonList = new ArrayList();
         List cacheList = redisHelp.getList(this.dataprefix+"_"+"orderSellList_"+page+"_"+limit+"_"+uid,redisTemplate);
         try{
@@ -639,6 +646,7 @@ public class TypechoUserlogController {
         response.put("msg"  , "");
         response.put("data" , null != jsonList ? jsonList : new JSONArray());
         response.put("count", jsonList.size());
+        response.put("total", total);
         return response.toString();
     }
 

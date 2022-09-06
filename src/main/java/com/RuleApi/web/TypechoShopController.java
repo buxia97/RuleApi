@@ -72,9 +72,11 @@ public class TypechoShopController {
         if(limit>50){
             limit = 50;
         }
+        Integer total = 0;
         if (StringUtils.isNotBlank(searchParams)) {
             JSONObject object = JSON.parseObject(searchParams);
             query = object.toJavaObject(TypechoShop.class);
+            total = service.total(query);
         }
 
         PageList<TypechoShop> pageList = service.selectPage(query, page, limit,searchKey);
@@ -90,6 +92,7 @@ public class TypechoShopController {
         response.put("msg"  , "");
         response.put("data" , null != jsonList ? jsonList : new JSONArray());
         response.put("count", jsonList.size());
+        response.put("total", total);
         return response.toString();
     }
 
