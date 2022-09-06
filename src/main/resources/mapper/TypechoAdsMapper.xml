@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.RuleApi.dao.TypechoAdsDao">
+
+    <resultMap id="BaseResultMap" type="com.RuleApi.entity.TypechoAds" >
+        <result column="aid" property="aid" />
+        <result column="name" property="name" />
+        <result column="type" property="type" />
+        <result column="img" property="img" />
+        <result column="close" property="close" />
+        <result column="created" property="created" />
+        <result column="price" property="price" />
+        <result column="intro" property="intro" />
+        <result column="urltype" property="urltype" />
+        <result column="url" property="url" />
+        <result column="uid" property="uid" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        `aid`,
+        `name`,
+        `type`,
+        `img`,
+        `close`,
+        `created`,
+        `price`,
+        `intro`,
+        `urltype`,
+        `url`,
+        `uid`
+    </sql>
+
+    <!-- 插入数据 -->
+    <insert id="insert" parameterType="com.RuleApi.entity.TypechoAds">
+        INSERT INTO ${prefix}_ads
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test ='null != aid'>
+                `aid`,
+            </if>
+            <if test ='null != name'>
+                `name`,
+            </if>
+            <if test ='null != type'>
+                `type`,
+            </if>
+            <if test ='null != img'>
+                `img`,
+            </if>
+            <if test ='null != close'>
+                `close`,
+            </if>
+            <if test ='null != created'>
+                `created`,
+            </if>
+            <if test ='null != price'>
+                `price`,
+            </if>
+            <if test ='null != intro'>
+                `intro`,
+            </if>
+            <if test ='null != urltype'>
+                `urltype`,
+            </if>
+            <if test ='null != url'>
+                `url`,
+            </if>
+            <if test ='null != uid'>
+                `uid`
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test ='null != aid'>
+                #{aid},
+            </if>
+            <if test ='null != name'>
+                #{name},
+            </if>
+            <if test ='null != type'>
+                #{type},
+            </if>
+            <if test ='null != img'>
+                #{img},
+            </if>
+            <if test ='null != close'>
+                #{close},
+            </if>
+            <if test ='null != created'>
+                #{created},
+            </if>
+            <if test ='null != price'>
+                #{price},
+            </if>
+            <if test ='null != intro'>
+                #{intro},
+            </if>
+            <if test ='null != urltype'>
+                #{urltype},
+            </if>
+            <if test ='null != url'>
+                #{url},
+            </if>
+            <if test ='null != uid'>
+                #{uid}
+            </if>
+        </trim>
+    </insert>
+
+
+    <!-- 更新 -->
+    <update id="update" parameterType="com.RuleApi.entity.TypechoAds">
+        UPDATE ${prefix}_ads
+        <set>
+            <if test ='null != name'>`name` = #{name},</if>
+            <if test ='null != type'>`type` = #{type},</if>
+            <if test ='null != img'>`img` = #{img},</if>
+            <if test ='null != close'>`close` = #{close},</if>
+            <if test ='null != created'>`created` = #{created},</if>
+            <if test ='null != price'>`price` = #{price},</if>
+            <if test ='null != intro'>`intro` = #{intro},</if>
+            <if test ='null != urltype'>`urltype` = #{urltype},</if>
+            <if test ='null != url'>`url` = #{url},</if>
+            <if test ='null != uid'>`url` = #{uid}</if>
+        </set>
+        WHERE `aid` = #{aid}
+    </update>
+
+    <!-- 删除 -->
+    <delete id="delete">
+        DELETE FROM ${prefix}_ads
+        WHERE `aid` = #{key}
+    </delete>
+
+    <!-- 主键查询 -->
+    <select id="selectByKey" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM ${prefix}_ads
+        WHERE `aid` = #{key}
+    </select>
+
+    <!-- 条件查询 -->
+    <select id="selectList" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM ${prefix}_ads
+        <where>
+            <if test ='null != aid'>
+                and `aid` = #{aid}
+            </if>
+            <if test ='null != name'>
+                and `name` = #{name}
+            </if>
+            <if test ='null != type'>
+                and `type` = #{type}
+            </if>
+            <if test ='null != img'>
+                and `img` = #{img}
+            </if>
+            <if test ='null != close'>
+                and `close` = #{close}
+            </if>
+            <if test ='null != created'>
+                and `created` = #{created}
+            </if>
+            <if test ='null != price'>
+                and `price` = #{price}
+            </if>
+            <if test ='null != intro'>
+                and `intro` = #{intro}
+            </if>
+            <if test ='null != urltype'>
+                and `urltype` = #{urltype}
+            </if>
+            <if test ='null != url'>
+                and `url` = #{url}
+            </if>
+            <if test ='null != uid'>
+                and `uid` = #{uid}
+            </if>
+        </where>
+    </select>
+
+    <!-- 分页条件查询 -->
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM ${prefix}_ads
+        <where>
+            <if test ='null != typechoAds.aid'>
+                and `aid` = #{typechoAds.aid}
+            </if>
+            <if test ='null != typechoAds.name'>
+                and `name` = #{typechoAds.name}
+            </if>
+            <if test ='null != typechoAds.type'>
+                and `type` = #{typechoAds.type}
+            </if>
+            <if test ='null != typechoAds.img'>
+                and `img` = #{typechoAds.img}
+            </if>
+            <if test ='null != typechoAds.close'>
+                and `close` = #{typechoAds.close}
+            </if>
+            <if test ='null != typechoAds.created'>
+                and `created` = #{typechoAds.created}
+            </if>
+            <if test ='null != typechoAds.price'>
+                and `price` = #{typechoAds.price}
+            </if>
+            <if test ='null != typechoAds.intro'>
+                and `intro` = #{typechoAds.intro}
+            </if>
+            <if test ='null != typechoAds.urltype'>
+                and `urltype` = #{typechoAds.urltype}
+            </if>
+            <if test ='null != typechoAds.url'>
+                and `url` = #{typechoAds.url}
+            </if>
+            <if test ='null != typechoAds.uid'>
+                and `uid` = #{typechoAds.uid}
+            </if>
+        </where>
+        limit #{page,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
+    </select>
+
+    <!-- 总量查询 -->
+    <select id="total" resultType="java.lang.Integer">
+        SELECT count(*) FROM ${prefix}_ads
+        <where>
+            <if test ='null != aid'>
+                and `aid` = #{aid}
+            </if>
+            <if test ='null != name'>
+                and `name` = #{name}
+            </if>
+            <if test ='null != type'>
+                and `type` = #{type}
+            </if>
+            <if test ='null != img'>
+                and `img` = #{img}
+            </if>
+            <if test ='null != close'>
+                and `close` = #{close}
+            </if>
+            <if test ='null != created'>
+                and `created` = #{created}
+            </if>
+            <if test ='null != price'>
+                and `price` = #{price}
+            </if>
+            <if test ='null != intro'>
+                and `intro` = #{intro}
+            </if>
+            <if test ='null != urltype'>
+                and `urltype` = #{urltype}
+            </if>
+            <if test ='null != url'>
+                and `url` = #{url}
+            </if>
+            <if test ='null != uid'>
+                and `uid` = #{uid}
+            </if>
+        </where>
+    </select>
+</mapper>

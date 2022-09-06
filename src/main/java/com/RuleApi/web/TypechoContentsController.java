@@ -183,6 +183,8 @@ public class TypechoContentsController {
 
                 }
                 redisHelp.setRedis(this.dataprefix+"_"+"isRead"+"_"+ip+"_"+agent+"_"+key,"yes",900,redisTemplate);
+                redisHelp.delete(this.dataprefix+"_"+"contentsInfo_"+key+"_"+isMd,redisTemplate);
+                redisHelp.setKey(this.dataprefix+"_"+"contentsInfo_"+key+"_"+isMd,contensjson,this.contentInfoCache,redisTemplate);
             }
 
         }catch (Exception e){
@@ -190,8 +192,7 @@ public class TypechoContentsController {
                 contensjson = cacheInfo;
             }
         }
-        redisHelp.delete(this.dataprefix+"_"+"contentsInfo_"+key+"_"+isMd,redisTemplate);
-        redisHelp.setKey(this.dataprefix+"_"+"contentsInfo_"+key+"_"+isMd,contensjson,this.contentInfoCache,redisTemplate);
+
         JSONObject concentInfo = JSON.parseObject(JSON.toJSONString(contensjson),JSONObject.class);
         return concentInfo.toJSONString();
         //return new ApiResult<>(ResultCode.success.getCode(), typechoContents, ResultCode.success.getDescr(), request.getRequestURI());
