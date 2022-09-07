@@ -88,8 +88,14 @@ var vm = new Vue({
 		auditlevel:"",
 		forbidden:"",
 		//自定义字段
-		fields:""
-
+		fields:"",
+		//付费广告
+		pushAdsPrice:"",
+		pushAdsNum:"",
+		bannerAdsPrice:"",
+		bannerAdsNum:"",
+		startAdsPrice:"",
+		startAdsNum:"",
 	},
 	created(){
 		var that = this;
@@ -239,6 +245,13 @@ var vm = new Vue({
 					that.forbidden=res.data.data.forbidden;
 					//自定义字段
 					that.fields=res.data.data.fields;
+					//付费广告
+					that.pushAdsPrice=res.data.data.pushAdsPrice;
+					that.pushAdsNum=res.data.data.pushAdsNum;
+					that.bannerAdsPrice=res.data.data.bannerAdsPrice;
+					that.bannerAdsNum=res.data.data.bannerAdsNum;
+					that.startAdsPrice=res.data.data.startAdsPrice;
+					that.startAdsNum=res.data.data.startAdsNum;
 
 				}else{
 					that.outSystem();
@@ -624,6 +637,33 @@ var vm = new Vue({
 				appletsSecret:that.appletsSecret,
 				qqAppletsAppid:that.qqAppletsAppid,
 				qqAppletsSecret:that.qqAppletsSecret,
+			}
+			axios.get(url,{
+				params:{
+					"webkey":that.webkey,
+					"params":JSON.stringify(that.removeObjectEmptyKey(data))
+				}
+			}).then(function(res){
+				that.toAlert(res.data.msg);
+				if(res.data.code==1){
+					that.getAll();
+				}else{
+					that.outSystem();
+				}
+			}).catch(function (error) {
+				console.log(error);
+			});
+		},
+		saveAds(){
+			var that = this;
+			var url = "/system/apiConfigUpdate"
+			var data={
+				pushAdsPrice:that.pushAdsPrice,
+				pushAdsNum:that.pushAdsNum,
+				bannerAdsPrice:that.bannerAdsPrice,
+				bannerAdsNum:that.bannerAdsNum,
+				startAdsPrice:that.startAdsPrice,
+				startAdsNum:that.startAdsNum,
 			}
 			axios.get(url,{
 				params:{

@@ -49,6 +49,13 @@
         <result column="auditlevel" property="auditlevel" />
         <result column="forbidden" property="forbidden" />
         <result column="fields" property="fields" />
+
+        <result column="pushAdsPrice" property="pushAdsPrice" />
+        <result column="pushAdsNum" property="pushAdsNum" />
+        <result column="bannerAdsPrice" property="bannerAdsPrice" />
+        <result column="bannerAdsNum" property="bannerAdsNum" />
+        <result column="startAdsPrice" property="startAdsPrice" />
+        <result column="startAdsNum" property="startAdsNum" />
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -96,7 +103,14 @@
         `wxpayNotifyUrl`,
         `auditlevel`,
         `forbidden`,
-        `fields`
+        `fields`,
+
+        `pushAdsPrice`,
+        `pushAdsNum`,
+        `bannerAdsPrice`,
+        `bannerAdsNum`,
+        `startAdsPrice`,
+        `startAdsNum`
     </sql>
 
     <!-- 插入数据 -->
@@ -236,7 +250,26 @@
                 `forbidden`,
             </if>
             <if test ='null != fields'>
-                `fields`
+                `fields`,
+            </if>
+
+            <if test ='null != pushAdsPrice'>
+                `pushAdsPrice`,
+            </if>
+            <if test ='null != pushAdsNum'>
+                `pushAdsNum`,
+            </if>
+            <if test ='null != bannerAdsPrice'>
+                `bannerAdsPrice`,
+            </if>
+            <if test ='null != bannerAdsNum'>
+                `bannerAdsNum`,
+            </if>
+            <if test ='null != startAdsPrice'>
+                `startAdsPrice`,
+            </if>
+            <if test ='null != startAdsNum'>
+                `startAdsNum`
             </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
@@ -373,7 +406,25 @@
                 #{forbidden},
             </if>
             <if test ='null != fields'>
-                #{fields}
+                #{fields},
+            </if>
+            <if test ='null != pushAdsPrice'>
+                #{pushAdsPrice},
+            </if>
+            <if test ='null != pushAdsNum'>
+                #{pushAdsNum},
+            </if>
+            <if test ='null != bannerAdsPrice'>
+                #{bannerAdsPrice},
+            </if>
+            <if test ='null != bannerAdsNum'>
+                #{bannerAdsNum},
+            </if>
+            <if test ='null != startAdsPrice'>
+                #{startAdsPrice},
+            </if>
+            <if test ='null != startAdsNum'>
+                #{startAdsNum}
             </if>
         </trim>
     </insert>
@@ -426,7 +477,13 @@
             <if test ='null != wxpayNotifyUrl'>`wxpayNotifyUrl` = #{wxpayNotifyUrl},</if>
             <if test ='null != auditlevel'>`auditlevel` = #{auditlevel},</if>
             <if test ='null != forbidden'>`forbidden` = #{forbidden},</if>
-            <if test ='null != fields'>`fields` = #{fields}</if>
+            <if test ='null != fields'>`fields` = #{fields},</if>
+            <if test ='null != pushAdsPrice'>`pushAdsPrice` = #{pushAdsPrice},</if>
+            <if test ='null != pushAdsNum'>`pushAdsNum` = #{pushAdsNum},</if>
+            <if test ='null != bannerAdsPrice'>`bannerAdsPrice` = #{bannerAdsPrice},</if>
+            <if test ='null != bannerAdsNum'>`bannerAdsNum` = #{bannerAdsNum},</if>
+            <if test ='null != startAdsPrice'>`startAdsPrice` = #{startAdsPrice},</if>
+            <if test ='null != startAdsNum'>`startAdsNum` = #{startAdsNum}</if>
         </set>
         WHERE `id` = #{id}
     </update>

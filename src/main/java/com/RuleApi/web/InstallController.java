@@ -164,6 +164,11 @@ public class InstallController {
         }else{
             text+="标签分类模块，字段isrecommend已经存在，无需添加。";
         }
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+        }
         //判断用户日志表是否存在
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_userlog';", Integer.class);
         if (i == 0){
@@ -204,7 +209,11 @@ public class InstallController {
         }else{
             text+="社会化登录模块已经存在，无需添加。";
         }
-
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+        }
 
         //积分商品&积分阅读模块
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_shop';", Integer.class);
@@ -269,7 +278,11 @@ public class InstallController {
         }else{
             text+="资产日志模块已经存在，无需添加。";
         }
-
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+        }
         //添加卡密充值模块
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_paykey';", Integer.class);
         if (i == 0){
@@ -285,6 +298,11 @@ public class InstallController {
             text+="卡密充值模块创建完成。";
         }else{
             text+="卡密充值模块已经存在，无需添加。";
+        }
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
         }
         //添加API配置中心模块
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig';", Integer.class);
@@ -377,6 +395,54 @@ public class InstallController {
             text+="配置中心模块，字段fields添加完成。";
         }else{
             text+="配置中心模块，字段fields已经存在，无需添加。";
+        }
+        //查询配置中心表是否存在pushAdsPrice字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'pushAdsPrice';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `pushAdsPrice` int(11) NOT NULL DEFAULT '100' COMMENT '推流广告价格(积分/天)'");
+            text+="配置中心模块，字段pushAdsPrice添加完成。";
+        }else{
+            text+="配置中心模块，字段pushAdsPrice已经存在，无需添加。";
+        }
+        //查询配置中心表是否存在pushAdsNum字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'pushAdsNum';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `pushAdsNum` int(11) NOT NULL DEFAULT '10' COMMENT '推流广告数量'");
+            text+="配置中心模块，字段pushAdsNum添加完成。";
+        }else{
+            text+="配置中心模块，字段pushAdsNum已经存在，无需添加。";
+        }
+        //查询配置中心表是否存在bannerAdsPrice字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'bannerAdsPrice';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `bannerAdsPrice` int(11) NOT NULL DEFAULT '100' COMMENT '横幅广告价格(积分/天)'");
+            text+="配置中心模块，字段bannerAdsPrice添加完成。";
+        }else{
+            text+="配置中心模块，字段bannerAdsPrice已经存在，无需添加。";
+        }
+        //查询配置中心表是否存在bannerAdsNum字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'bannerAdsNum';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `bannerAdsNum` int(11) NOT NULL DEFAULT '5' COMMENT '横幅广告数量'");
+            text+="配置中心模块，字段bannerAdsNum添加完成。";
+        }else{
+            text+="配置中心模块，字段bannerAdsNum已经存在，无需添加。";
+        }
+        //查询配置中心表是否存在startAdsPrice字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'startAdsPrice';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `startAdsPrice` int(11) NOT NULL DEFAULT '100' COMMENT '启动图广告价格(积分/天)'");
+            text+="配置中心模块，字段startAdsPrice添加完成。";
+        }else{
+            text+="配置中心模块，字段startAdsPrice已经存在，无需添加。";
+        }
+        //查询配置中心表是否存在startAdsNum字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'startAdsNum';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `startAdsNum` int(11) NOT NULL DEFAULT '1' COMMENT '启动图广告数量'");
+            text+="配置中心模块，字段startAdsNum添加完成。";
+        }else{
+            text+="配置中心模块，字段startAdsNum已经存在，无需添加。";
         }
         //添加邀请码模块
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_invitation';", Integer.class);

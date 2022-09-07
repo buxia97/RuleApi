@@ -237,7 +237,7 @@ public class TypechoUsersController {
     }
 
     /***
-     * 表单查询
+     * 用户信息
      */
     @RequestMapping(value = "/userInfo")
     @ResponseBody

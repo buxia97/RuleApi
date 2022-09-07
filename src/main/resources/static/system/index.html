@@ -42,6 +42,9 @@
 						<a href="javascript:;" @click="toPage(9)" :class="page=='9'?'active':''">微信</a>
 					</div>
 				</div>
+				<div class="menu-box" @click="toPage(15)" :class="page=='15'?'active':''">
+					<a href="javascript:;">广告设置</a>
+				</div>
 				<div class="menu-box" @click="toPage(14)" :class="page=='14'?'active':''">
 					<a href="javascript:;">小程序设置</a>
 				</div>
@@ -414,19 +417,19 @@
 					在这里设置小程序相关的信息
 				</div>
 				<div class="form-box">
-					<p>微信小程序APPID<span>可不填，负责微信小程序登录</span></p>
+					<p>微信小程序APPID<span class="text-gray">可不填，负责微信小程序登录</span></p>
 					<input type="text" class="input-text" v-model="appletsAppid" placeholder="请输入appletsAppid"/>
 				</div>
 				<div class="form-box">
-					<p>微信小程序Secret<span>可不填，负责微信小程序登录</span></p>
+					<p>微信小程序Secret<span class="text-gray">可不填，负责微信小程序登录</span></p>
 					<input type="text" class="input-text" v-model="appletsSecret" placeholder="请输入appletsSecret"/>
 				</div>
 				<div class="form-box">
-					<p>QQ小程序APPID<span>可不填，负责QQ小程序登录</span></p>
+					<p>QQ小程序APPID<span class="text-gray">可不填，负责QQ小程序登录</span></p>
 					<input type="text" class="input-text" v-model="qqAppletsAppid" placeholder="请输入qqAppletsAppid"/>
 				</div>
 				<div class="form-box">
-					<p>QQ小程序Secret<span>可不填，负责QQ小程序登录</span></p>
+					<p>QQ小程序Secret<span class="text-gray">可不填，负责QQ小程序登录</span></p>
 					<input type="text" class="input-text" v-model="qqAppletsSecret" placeholder="请输入qqAppletsSecret"/>
 				</div>
 				<div class="form-btn">
@@ -434,6 +437,40 @@
 				</div>
 			</div>
 			<!--小程序配置结束-->
+			<!--广告模块配置-->
+			<div class="form-main" v-if="page==15">
+				<div class="form-box">
+					在这里设置付费广告位的价格和数量，为了用户体验考虑，请设置为推荐的数量。
+				</div>
+				<div class="form-box">
+					<p>文章推流广告价格（积分/天）</p>
+					<input type="number" class="input-text" v-model="pushAdsPrice" placeholder="请输入文章推流广告价格"/>
+				</div>
+				<div class="form-box">
+					<p>文章推流广告位数量<span class="text-gray">随机在文章列表加载刷新时显示，建议数量为10</span></p>
+					<input type="number" class="input-text" v-model="pushAdsNum" placeholder="请输入文章推流广告位数量"/>
+				</div>
+				<div class="form-box">
+					<p>横幅广告价格（积分/天）</p>
+					<input type="number" class="input-text" v-model="bannerAdsPrice" placeholder="请输入横幅广告价格"/>
+				</div>
+				<div class="form-box">
+					<p>横幅广告数量<span class="text-gray">在APP不同位置随机展现（代码可自己添加），建议数量为5</span></p>
+					<input type="number" class="input-text" v-model="bannerAdsNum" placeholder="请输入横幅广告数量"/>
+				</div>
+				<div class="form-box">
+					<p>启动图广告价格（积分/天）</p>
+					<input type="number" class="input-text" v-model="startAdsPrice" placeholder="请输入启动图广告价格"/>
+				</div>
+				<div class="form-box">
+					<p>启动图广告数量<span class="text-gray">会消耗用户流量进行缓存，建议数量为1</span></p>
+					<input type="number" class="input-text" v-model="startAdsNum" placeholder="请输入启动图广告数量"/>
+				</div>
+				<div class="form-btn">
+					<button type="button" class="input-text" class="btn" @click="saveAds()">保存数据</button>
+				</div>
+			</div>
+			<!--广告模块配置结束-->
 			<!--配置文件更新-->
 			<div class="form-text" v-if="page==8">
 				<div class="form-box">

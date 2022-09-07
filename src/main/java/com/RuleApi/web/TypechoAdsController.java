@@ -36,6 +36,18 @@ public class TypechoAdsController {
     TypechoAdsService service;
 
     @Autowired
+    private TypechoApiconfigService apiconfigService;
+
+    @Autowired
+    private TypechoUsersService usersService;
+
+    @Autowired
+    private TypechoUserlogService userlogService;
+
+    @Autowired
+    private TypechoPaylogService paylogService;
+
+    @Autowired
     private RedisTemplate redisTemplate;
 
     RedisHelp redisHelp =new RedisHelp();
@@ -90,9 +102,9 @@ public class TypechoAdsController {
     @ResponseBody
     public String formPage (@RequestParam(value = "searchParams", required = false) String  searchParams,
                             @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
-                            @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit) {
+                            @RequestParam(value = "limit"       , required = false, defaultValue = "100") Integer limit) {
         TypechoAds query = new TypechoAds();
-        if(limit>50){
+        if(limit>100){
             limit = 50;
         }
         Integer total = 0;
@@ -133,19 +145,87 @@ public class TypechoAdsController {
      */
     @RequestMapping(value = "/addAds")
     @ResponseBody
-    public String addAds(@RequestParam(value = "params", required = false) String  params, @RequestParam(value = "token", required = false) String  token) {
+    public String addAds(@RequestParam(value = "params", required = false) String  params,@RequestParam(value = "day", required = false, defaultValue = "0") Integer  day, @RequestParam(value = "token", required = false) String  token) {
         TypechoAds insert = null;
 
         Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
         }
+        if(day<=0){
+            return Result.getResultJson(0,"购买时间不正确",null);
+        }
+        Map jsonToMap =null;
         Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         String uid = map.get("uid").toString();
+        TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+        Integer price = 0;
+        Integer typeNum = 0;
         if (StringUtils.isNotBlank(params)) {
-            JSONObject object = JSON.parseObject(params);
-            insert = object.toJavaObject(TypechoAds.class);
+            jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
+            //获取广告价格
+            if(jsonToMap.get("type")==null){
+                return Result.getResultJson(0,"请选择广告类型",null);
+            }
+
+            String type = jsonToMap.get("type").toString();
+            if(!type.equals("0")&&!type.equals("1")&&!type.equals("2")){
+                return Result.getResultJson(0,"广告类型不正确",null);
+            }
+            if(type.equals("0")){
+                price = apiconfig.getPushAdsPrice();
+                typeNum = apiconfig.getPushAdsNum();
+            }
+            if(type.equals("1")){
+                price = apiconfig.getBannerAdsPrice();
+                typeNum = apiconfig.getBannerAdsNum();
+            }
+            if(type.equals("2")){
+                price = apiconfig.getStartAdsPrice();
+                typeNum = apiconfig.getStartAdsNum();
+            }
+            //获取当前广告数量和总数量
+            TypechoAds num = new TypechoAds();
+            num.setType(Integer.parseInt(type));
+            Integer total = service.total(num);
+            if(typeNum <= total){
+                return Result.getResultJson(0,"该广告位已售完",null);
+            }
+            //判断余额是否足够
+            price = price * day;
+            TypechoUsers usersinfo =usersService.selectByKey(uid);
+            Integer oldAssets =usersinfo.getAssets();
+            if(price>oldAssets){
+                return Result.getResultJson(0,"积分余额不足",null);
+            }
+            Long date = System.currentTimeMillis();
+            String created = String.valueOf(date).substring(0,10);
+            Integer days = 86400;
+            Integer closeTime = Integer.parseInt(created) + days*day;
+            jsonToMap.put("close",closeTime);
+            jsonToMap.put("price",price);
+            jsonToMap.put("created",created);
+            insert = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoAds.class);
+
+            //扣除积分
+            Integer Assets = oldAssets - price;
+            usersinfo.setAssets(Assets);
+            usersService.update(usersinfo);
+
+            //生成购买者资产日志
+            TypechoPaylog paylog = new TypechoPaylog();
+            paylog.setStatus(1);
+            paylog.setCreated(Integer.parseInt(created));
+            paylog.setUid(Integer.parseInt(uid));
+            paylog.setOutTradeNo(created+"buyads");
+            paylog.setTotalAmount("-"+price);
+            paylog.setPaytype("buyads");
+            paylog.setSubject("开通广告位");
+            paylogService.insert(paylog);
+        }else{
+            return Result.getResultJson(0,"参数不正确",null);
         }
+        insert.setStatus(0);
         insert.setUid(Integer.parseInt(uid));
         int rows = service.insert(insert);
 
@@ -169,11 +249,17 @@ public class TypechoAdsController {
         }
         Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         String uid = map.get("uid").toString();
+        Map jsonToMap =null;
         if (StringUtils.isNotBlank(params)) {
-            JSONObject object = JSON.parseObject(params);
-            update = object.toJavaObject(TypechoAds.class);
+            jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
+            jsonToMap.remove("close");
+            jsonToMap.remove("created");
+            jsonToMap.remove("price");
+            update = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoAds.class);
         }
         update.setUid(Integer.parseInt(uid));
+        //广告修改也要审核
+        update.setStatus(0);
         int rows = service.update(update);
 
         JSONObject response = new JSONObject();

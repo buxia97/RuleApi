@@ -238,4 +238,34 @@ public class TypechoApiconfig implements Serializable {
      * fields
      */
     private String fields;
+
+    /**
+     * pushAdsPrice
+     */
+    private Integer pushAdsPrice;
+
+    /**
+     * pushAdsNum
+     */
+    private Integer pushAdsNum;
+
+    /**
+     * bannerAdsPrice
+     */
+    private Integer bannerAdsPrice;
+
+    /**
+     * bannerAdsNum
+     */
+    private Integer bannerAdsNum;
+
+    /**
+     * startAdsPrice
+     */
+    private Integer startAdsPrice;
+
+    /**
+     * startAdsNum
+     */
+    private Integer startAdsNum;
 }

@@ -68,4 +68,9 @@ public class TypechoAds implements Serializable {
      * 发布人
      */
     private Integer uid;
+
+    /**
+     * 状态
+     */
+    private Integer status;
 }
