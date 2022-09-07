@@ -1072,6 +1072,8 @@ public class TypechoUsersController {
             if (uStatus == 0) {
                 return Result.getResultJson(0, "用户未登录或Token验证失败", null);
             }
+            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            String uid = map.get("uid").toString();
             Integer isForbidden = 0;
             if (StringUtils.isNotBlank(params)) {
                 TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
@@ -1143,8 +1145,10 @@ public class TypechoUsersController {
                 //jsonToMap.remove("introduce");
                 jsonToMap.remove("assets");
                 update = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoUsers.class);
+            }else{
+                return Result.getResultJson(0, "参数不正确", null);
             }
-
+            update.setUid(Integer.parseInt(uid));
             int rows = service.update(update);
 
             if (rows > 0 && jsonToMap.get("password") != null) {

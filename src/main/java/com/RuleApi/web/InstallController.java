@@ -459,6 +459,28 @@ public class InstallController {
         }else{
             text+="邀请码模块已经存在，无需添加。";
         }
+        //添加付费广告模块
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_ads';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("CREATE TABLE `"+prefix+"_ads` (" +
+                    "  `aid` int(11) NOT NULL AUTO_INCREMENT," +
+                    "  `name` varchar(255) DEFAULT '' COMMENT '广告名称'," +
+                    "  `type` int(11) DEFAULT '0' COMMENT '广告类型（0推流，1横幅，2启动图）'," +
+                    "  `img` varchar(500) DEFAULT NULL COMMENT '广告缩略图'," +
+                    "  `close` int(10) DEFAULT '0' COMMENT '0代表永久，其它代表结束时间'," +
+                    "  `created` int(10) unsigned DEFAULT '0' COMMENT '创建时间'," +
+                    "  `price` int(11) unsigned DEFAULT '0' COMMENT '购买价格'," +
+                    "  `intro` varchar(500) DEFAULT '' COMMENT '广告简介'," +
+                    "  `urltype` int(11) DEFAULT '0' COMMENT '0为APP内部打开，1为跳出APP'," +
+                    "  `url` text COMMENT '跳转Url'," +
+                    "  `uid` int(11) DEFAULT '-1' COMMENT '发布人'," +
+                    "  `status` int(2) DEFAULT '0' COMMENT '0审核中，1已公开'," +
+                    "  PRIMARY KEY (`aid`)" +
+                    ") ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='广告表';");
+            text+="付费广告模块创建完成。";
+        }else{
+            text+="付费广告模块已经存在，无需添加。";
+        }
         text+=" ------ 执行结束，安装执行完成";
 
         redisHelp.setRedis(this.dataprefix+"_"+"isInstall","1",600,redisTemplate);

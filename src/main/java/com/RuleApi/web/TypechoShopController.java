@@ -547,7 +547,7 @@ public class TypechoShopController {
         shop.setId(Integer.parseInt(sid));
         Integer num  = service.total(shop);
         if(num < 1){
-            return Result.getResultJson(0,"你无权限添加他人的商品",null);
+            return Result.getResultJson(0,"你无权限修改他人的商品",null);
         }
         shop.setCid(Integer.parseInt(cid));
         int rows =  service.update(shop);
