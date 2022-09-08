@@ -121,6 +121,7 @@ public class TypechoAdsController {
                 cacheList = redisHelp.getList(this.dataprefix + "_" + "adsList_" + page + "_" + limit + "_" + searchParams, redisTemplate);
             }
 
+
             if(cacheList.size()>0){
                 jsonList = cacheList;
             }else{
@@ -128,9 +129,21 @@ public class TypechoAdsController {
                     JSONObject object = JSON.parseObject(searchParams);
                     query = object.toJavaObject(TypechoAds.class);
                 }
+                //无token访问则传公开广告数据，已登录用户除管理员外只能查询自己的广告
+                if(uStatus==0){
+                    query.setStatus(1);
+                }else{
+                    Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+                    String uid = map.get("uid").toString();
+                    String group = map.get("group").toString();
+                    if (!group.equals("administrator")) {
+                        query.setUid(Integer.parseInt(uid));
+                    }
+                }
                 total = service.total(query);
                 PageList<TypechoAds> pageList = service.selectPage(query, page, limit);
                 jsonList = pageList.getList();
+
                 redisHelp.delete(this.dataprefix + "_" + "adsList_" + page + "_" + limit + "_" + searchParams,redisTemplate);
                 //为了性能和用户体验，广告数据缓存10分钟
                 redisHelp.setList(this.dataprefix + "_" + "adsList_" + page + "_" + limit + "_" + searchParams,jsonList,600,redisTemplate);
@@ -322,5 +335,42 @@ public class TypechoAdsController {
         response.put("data" , rows);
         response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
         return response.toString();
+    }
+
+    /***
+     * 广告配置信息
+     */
+    @RequestMapping(value = "/adsConfig")
+    @ResponseBody
+    public String adsConfig () {
+        Map adsConfigJSon = new HashMap<String, String>();
+        try{
+            Map cacheInfo = redisHelp.getMapValue(this.dataprefix+"_adsConfig",redisTemplate);
+
+            if(cacheInfo.size()>0){
+                adsConfigJSon = cacheInfo;
+            }else{
+                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+                Integer pushAdsPrice = apiconfig.getPushAdsPrice();
+                Integer pushAdsNum = apiconfig.getPushAdsNum();
+                Integer bannerAdsPrice = apiconfig.getBannerAdsPrice();
+                Integer bannerAdsNum = apiconfig.getBannerAdsNum();
+                Integer startAdsPrice = apiconfig.getStartAdsPrice();
+                Integer startAdsNum = apiconfig.getStartAdsNum();
+                adsConfigJSon.put("pushAdsPrice",pushAdsPrice);
+                adsConfigJSon.put("pushAdsNum",pushAdsNum);
+                adsConfigJSon.put("bannerAdsPrice",bannerAdsPrice);
+                adsConfigJSon.put("bannerAdsNum",bannerAdsNum);
+                adsConfigJSon.put("startAdsPrice",startAdsPrice);
+                adsConfigJSon.put("startAdsNum",startAdsNum);
+                redisHelp.delete(this.dataprefix+"_adsConfig",redisTemplate);
+                redisHelp.setKey(this.dataprefix+"_adsConfig",adsConfigJSon,600,redisTemplate);
+            }
+
+        }catch (Exception e){
+            System.out.println(e);
+        }
+        JSONObject adsInfo = JSON.parseObject(JSON.toJSONString(adsConfigJSon),JSONObject.class);
+        return adsInfo.toJSONString();
     }
 }
