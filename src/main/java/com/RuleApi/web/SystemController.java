@@ -1,6 +1,8 @@
 package com.RuleApi.web;
 import com.RuleApi.common.*;
+import com.RuleApi.entity.TypechoAds;
 import com.RuleApi.entity.TypechoApiconfig;
+import com.RuleApi.service.TypechoAdsService;
 import com.RuleApi.service.TypechoApiconfigService;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -19,6 +21,7 @@ import com.RuleApi.common.*;
 import javax.servlet.http.HttpServletRequest;
 import java.io.*;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 
@@ -38,6 +41,9 @@ public class SystemController {
 
     @Autowired
     private TypechoApiconfigService apiconfigService;
+
+    @Autowired
+    private TypechoAdsService adsService;
 
     @Autowired
     private RedisTemplate redisTemplate;
@@ -660,5 +666,38 @@ public class SystemController {
         response.put("msg"  , "");
         response.put("data", data);
         return response.toString();
+    }
+    /***
+     * 外部任务(广告)
+     */
+    @RequestMapping(value = "/taskAds")
+    @ResponseBody
+    public String taskAds(@RequestParam(value = "webkey", required = false) String  webkey) {
+        if(!webkey.equals(this.key)){
+            return Result.getResultJson(0,"请输入正确的访问key",null);
+        }
+        TypechoAds ads = new TypechoAds();
+        ads.setStatus(1);
+        try {
+            List<TypechoAds> adsList = adsService.selectList(ads);
+            for (int i = 0; i < adsList.size(); i++) {
+                TypechoAds info = adsList.get(i);
+                Integer close = info.getClose();
+                Long date = System.currentTimeMillis();
+                String created = String.valueOf(date).substring(0,10);
+                Integer curTime = Integer.parseInt(created);
+                //如果当前时间大于到期时间，广告变为到期状态
+                if(curTime>close){
+                    info.setStatus(2);
+                    adsService.update(info);
+                }
+
+            }
+            return Result.getResultJson(1, "执行成功", null);
+        }catch (Exception e){
+            System.out.println(e);
+            return Result.getResultJson(1, "执行失败", null);
+        }
+
     }
 }

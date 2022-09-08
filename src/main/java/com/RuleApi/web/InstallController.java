@@ -474,7 +474,7 @@ public class InstallController {
                     "  `urltype` int(11) DEFAULT '0' COMMENT '0为APP内部打开，1为跳出APP'," +
                     "  `url` text COMMENT '跳转Url'," +
                     "  `uid` int(11) DEFAULT '-1' COMMENT '发布人'," +
-                    "  `status` int(2) DEFAULT '0' COMMENT '0审核中，1已公开'," +
+                    "  `status` int(2) DEFAULT '0' COMMENT '0审核中，1已公开，2已到期'," +
                     "  PRIMARY KEY (`aid`)" +
                     ") ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='广告表';");
             text+="付费广告模块创建完成。";
