@@ -175,7 +175,7 @@ public class TypechoAdsController {
                 return Result.getResultJson(0,"用户未登录或Token验证失败",null);
             }
             if(day<=0){
-                return Result.getResultJson(0,"购买时间不正确",null);
+                return Result.getResultJson(0,"购买天数不正确",null);
             }
             Map jsonToMap =null;
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
@@ -239,9 +239,9 @@ public class TypechoAdsController {
                 paylog.setStatus(1);
                 paylog.setCreated(Integer.parseInt(created));
                 paylog.setUid(Integer.parseInt(uid));
-                paylog.setOutTradeNo(created+"buyads");
+                paylog.setOutTradeNo(created+"buyAds");
                 paylog.setTotalAmount("-"+price);
-                paylog.setPaytype("buyads");
+                paylog.setPaytype("buyAds");
                 paylog.setSubject("开通广告位");
                 paylogService.insert(paylog);
             }else{
@@ -315,7 +315,7 @@ public class TypechoAdsController {
     }
 
     /***
-     * 表单删除
+     * 广告删除
      */
     @RequestMapping(value = "/deleteAds")
     @ResponseBody
@@ -337,6 +337,72 @@ public class TypechoAdsController {
         return response.toString();
     }
 
+    /***
+     * 广告续期
+     */
+    @RequestMapping(value = "/renewalAds")
+    @ResponseBody
+    public String renewalAds(@RequestParam(value = "id", required = false) String  id, @RequestParam(value = "token", required = false) String  token,@RequestParam(value = "day", required = false, defaultValue = "0") Integer  day) {
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+        if(uStatus==0){
+            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+        }
+        Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+        String group = map.get("group").toString();
+        if (!group.equals("administrator")) {
+            return Result.getResultJson(0, "你没有操作权限", null);
+        }
+        if(day<=0){
+            return Result.getResultJson(0,"购买天数不正确",null);
+        }
+        TypechoAds ads = service.selectByKey(id);
+        TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+        Integer type = ads.getType();
+        Integer price = 0;
+        if(type.equals(0)){
+            price = apiconfig.getPushAdsPrice();
+        }
+        if(type.equals(1)){
+            price = apiconfig.getBannerAdsPrice();
+        }
+        if(type.equals(2)){
+            price = apiconfig.getStartAdsPrice();
+        }
+        //计算价格
+        Integer cost = price * day;
+        Integer newPrice = ads.getPrice();
+        newPrice = newPrice + cost;
+        ads.setPrice(newPrice);
+        //计算时间
+        Long date = System.currentTimeMillis();
+        Integer curTime = Integer.parseInt(String.valueOf(date).substring(0,10));
+        Integer closeTime = ads.getClose();
+        Integer days = 86400;
+        if(closeTime > curTime){
+            closeTime = closeTime + days*day;
+        }else{
+            closeTime = curTime + days*day;
+        }
+        ads.setClose(closeTime);
+        //获取用户ID并插入日志数据库
+        Integer uid = ads.getUid();
+        TypechoPaylog paylog = new TypechoPaylog();
+        paylog.setStatus(1);
+        paylog.setCreated(curTime);
+        paylog.setUid(uid);
+        paylog.setOutTradeNo(curTime+"renewalAds");
+        paylog.setTotalAmount(""+cost);
+        paylog.setPaytype("renewalAds");
+        paylog.setSubject("系统赠送广告位时间"+day+"天");
+        paylogService.insert(paylog);
+        //修改广告信息
+        Integer rows = service.update(ads);
+        JSONObject response = new JSONObject();
+        response.put("code" ,rows > 0 ? 1: 0 );
+        response.put("data" , rows);
+        response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
+        return response.toString();
+    }
     /***
      * 广告配置信息
      */
