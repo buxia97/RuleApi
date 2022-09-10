@@ -26,10 +26,6 @@ public class TypechoAdsServiceImpl implements TypechoAdsService {
         return dao.insert(typechoAds);
     }
 
-    @Override
-    public int batchInsert(List<TypechoAds> list) {
-    	return dao.batchInsert(list);
-    }
 
     @Override
     public int update(TypechoAds typechoAds) {
@@ -41,10 +37,6 @@ public class TypechoAdsServiceImpl implements TypechoAdsService {
     	return dao.delete(key);
     }
 
-    @Override
-    public int batchDelete(List<Object> keys) {
-        return dao.batchDelete(keys);
-    }
 
 	@Override
 	public TypechoAds selectByKey(Object key) {
@@ -57,7 +49,7 @@ public class TypechoAdsServiceImpl implements TypechoAdsService {
 	}
 
 	@Override
-	public PageList<TypechoAds> selectPage(TypechoAds typechoAds, Integer offset, Integer pageSize) {
+	public PageList<TypechoAds> selectPage(TypechoAds typechoAds, Integer offset, Integer pageSize,String searchKey) {
 		PageList<TypechoAds> pageList = new PageList<>();
 
 		int total = this.total(typechoAds);
@@ -71,7 +63,7 @@ public class TypechoAdsServiceImpl implements TypechoAdsService {
 
 		int page = (offset - 1) * pageSize;
 
-		List<TypechoAds> list = dao.selectPage(typechoAds, page, pageSize);
+		List<TypechoAds> list = dao.selectPage(typechoAds, page, pageSize,searchKey);
 
 		pageList.setList(list);
 		pageList.setStartPageNo(offset);

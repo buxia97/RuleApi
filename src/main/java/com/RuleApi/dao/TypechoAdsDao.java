@@ -20,10 +20,6 @@ public interface TypechoAdsDao {
      **/
     int insert(TypechoAds typechoAds);
 
-    /**
-     * [批量新增]
-     **/
-    int batchInsert(List<TypechoAds> list);
 
     /**
      * [更新]
@@ -35,10 +31,6 @@ public interface TypechoAdsDao {
      **/
     int delete(Object key);
 
-    /**
-     * [批量删除]
-     **/
-    int batchDelete(List<Object> list);
 
     /**
      * [主键查询]
@@ -53,7 +45,7 @@ public interface TypechoAdsDao {
     /**
      * [分页条件查询]
      **/
-    List<TypechoAds> selectPage (@Param("typechoAds") TypechoAds typechoAds, @Param("page") Integer page, @Param("pageSize") Integer pageSize);
+    List<TypechoAds> selectPage (@Param("typechoAds") TypechoAds typechoAds, @Param("page") Integer page, @Param("pageSize") Integer pageSize, @Param("searchKey") String searchKey);
 
     /**
      * [总量查询]

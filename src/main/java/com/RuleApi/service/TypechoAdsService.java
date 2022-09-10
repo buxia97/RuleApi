@@ -17,12 +17,6 @@ public interface TypechoAdsService {
      * [新增]
      **/
     int insert(TypechoAds typechoAds);
-
-    /**
-     * [批量新增]
-     **/
-    int batchInsert(List<TypechoAds> list);
-
     /**
      * [更新]
      **/
@@ -32,11 +26,6 @@ public interface TypechoAdsService {
      * [删除]
      **/
     int delete(Object key);
-
-    /**
-     * [批量删除]
-     **/
-    int batchDelete(List<Object> keys);
 
     /**
      * [主键查询]
@@ -51,7 +40,7 @@ public interface TypechoAdsService {
     /**
      * [分页条件查询]
      **/
-    PageList<TypechoAds> selectPage (TypechoAds typechoAds, Integer page, Integer pageSize);
+    PageList<TypechoAds> selectPage (TypechoAds typechoAds, Integer page, Integer pageSize,String searchKey);
 
     /**
      * [总量查询]

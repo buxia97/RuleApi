@@ -105,6 +105,7 @@ public class TypechoAdsController {
     @RequestMapping(value = "/adsList")
     @ResponseBody
     public String formPage (@RequestParam(value = "searchParams", required = false) String  searchParams,
+                            @RequestParam(value = "searchKey"        , required = false, defaultValue = "") String searchKey,
                             @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
                             @RequestParam(value = "limit"       , required = false, defaultValue = "100") Integer limit,
                             @RequestParam(value = "token", required = false) String  token) {
@@ -118,7 +119,7 @@ public class TypechoAdsController {
         try{
             Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
             if(uStatus==0){
-                cacheList = redisHelp.getList(this.dataprefix + "_" + "adsList_" + page + "_" + limit + "_" + searchParams, redisTemplate);
+                cacheList = redisHelp.getList(this.dataprefix + "_" + "adsList_" + page + "_" + limit + "_" + searchParams+"_"+searchKey, redisTemplate);
             }
 
 
@@ -141,12 +142,12 @@ public class TypechoAdsController {
                     }
                 }
                 total = service.total(query);
-                PageList<TypechoAds> pageList = service.selectPage(query, page, limit);
+                PageList<TypechoAds> pageList = service.selectPage(query, page, limit,searchKey);
                 jsonList = pageList.getList();
 
-                redisHelp.delete(this.dataprefix + "_" + "adsList_" + page + "_" + limit + "_" + searchParams,redisTemplate);
+                redisHelp.delete(this.dataprefix + "_" + "adsList_" + page + "_" + limit + "_" + searchParams+"_"+searchKey,redisTemplate);
                 //为了性能和用户体验，广告数据缓存10分钟
-                redisHelp.setList(this.dataprefix + "_" + "adsList_" + page + "_" + limit + "_" + searchParams,jsonList,600,redisTemplate);
+                redisHelp.setList(this.dataprefix + "_" + "adsList_" + page + "_" + limit + "_" + searchParams+"_"+searchKey,jsonList,600,redisTemplate);
             }
         }catch (Exception e){
             System.out.println(e);
@@ -436,7 +437,10 @@ public class TypechoAdsController {
         }catch (Exception e){
             System.out.println(e);
         }
-        JSONObject adsInfo = JSON.parseObject(JSON.toJSONString(adsConfigJSon),JSONObject.class);
-        return adsInfo.toJSONString();
+        JSONObject response = new JSONObject();
+        response.put("code" ,1 );
+        response.put("data" , adsConfigJSon);
+        response.put("msg"  , "");
+        return response.toString();
     }
 }
