@@ -39,7 +39,7 @@ public class baseFull {
         List<String> imageList = new ArrayList<String>();
         for (int i = 0; i < containedUrls.size(); i++) {
             String word = containedUrls.get(i);
-            if(word.indexOf(".jpg") != -1||word.indexOf(".JPG") != -1||word.indexOf(".jpeg") != -1||word.indexOf(".png") != -1||word.indexOf(".PNG") != -1||word.indexOf(".bmp") != -1||word.indexOf(".gif") != -1||word.indexOf(".GIF") != -1){
+            if(word.indexOf(".ico") != -1||word.indexOf(".jpg") != -1||word.indexOf(".JPG") != -1||word.indexOf(".jpeg") != -1||word.indexOf(".png") != -1||word.indexOf(".PNG") != -1||word.indexOf(".bmp") != -1||word.indexOf(".gif") != -1||word.indexOf(".GIF") != -1||word.indexOf(".webp") != -1||word.indexOf(".WEBP") != -1){
                 imageList.add(word.replaceAll("\\)",""));
             }
         }
@@ -94,7 +94,7 @@ public class baseFull {
         List<String> imageCode = new ArrayList<String>();
         for (int i = 0; i < containedUrls.size(); i++) {
             String word = containedUrls.get(i);
-            if(word.indexOf(".jpg") != -1||word.indexOf(".JPG") != -1||word.indexOf(".jpeg") != -1||word.indexOf(".png") != -1||word.indexOf(".PNG") != -1||word.indexOf(".bmp") != -1||word.indexOf(".gif") != -1||word.indexOf(".GIF") != -1){
+            if(word.indexOf(".ico") != -1||word.indexOf(".jpg") != -1||word.indexOf(".JPG") != -1||word.indexOf(".jpeg") != -1||word.indexOf(".png") != -1||word.indexOf(".PNG") != -1||word.indexOf(".bmp") != -1||word.indexOf(".gif") != -1||word.indexOf(".GIF") != -1||word.indexOf(".webp") != -1||word.indexOf(".WEBP") != -1){
                 imageCode.add(word.replaceAll("\\)",""));
             }
         }

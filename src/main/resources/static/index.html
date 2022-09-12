@@ -32,18 +32,126 @@
                 margin-bottom:20px;}
             .newVer a{text-decoration: none;
                 color:#2299DD;}
+            .install-box{
+                position: fixed;
+                top: 0px;
+                left: 0px;
+                z-index: 999;
+                width: 100%;
+                height: 100vh;
+                display: none;
+            }
+            .install-box.show{
+                display: block;
+            }
+            .install-bg{
+                position: fixed;
+                top: 0px;
+                left: 0px;
+                z-index: 888;
+                width: 100%;
+                background: #000;
+                opacity: 0.4;
+                height: 100vh;
+            }
+            .install-main{
+                position: fixed;
+                top: 25%;
+                left: 0px;
+                z-index: 888;
+                width: 100%;
+                padding: 0px 10px;
+            }
+            .install-concent{
+                background: #fff;
+                overflow: hidden;
+                max-width: 500px;
+                height: auto;
+                border-radius: 5px;
+                margin: 0 auto;
+                padding: 0px 20px 20px 20px;
+
+            }
+            .install-concent .install-title{
+                text-align: center;
+                line-height: 60px;
+                height: 60px;
+                font-size: 17px;
+                font-weight: bold;
+                margin-bottom: 15px;
+            }
+            .install-text{
+                max-height: 180px;
+                overflow: auto;
+                min-height: 80px;
+            }
+            .install-form{
+                width: 250px;
+                margin: 0 auto;
+                overflow: hidden;
+                height: 35px;
+                border: solid 1px #0f6bac;
+            }
+            .install-form input{
+                display: block;
+                border: none;
+                outline: none;
+                width: 190px;
+                height: 35px;
+                padding: 0px 10px;
+                box-sizing: border-box;
+                float: left;
+            }
+            .install-form button{
+                display: block;
+                border: none;
+                outline: none;
+                width: 58px;
+                height: 35px;
+                padding: 0px 10px;
+                box-sizing: border-box;
+                float: left;
+                background: #0f6bac;
+                color: #fff;
+            }
+            .install-loading{
+                text-align: center;
+                font-size: 16px;
+                padding-top: 15px;
+                color: #e61f19;
+                font-weight: bold;
+            }
+            .install-btn{
+                text-align: center;
+            }
+            .install-btn button{
+                width: 110px;
+                height: 40px;
+                background: none;
+                color: #333;
+                border: none;
+                outline: none;
+                border-radius: 4px;
+                font-size: 15px;
+                margin-top: 10px;
+            }
+            .install-installData{
+                width: 100%;
+                word-break:break-all;
+            }
+
         </style>
     </head>
 <body>
 <div id="app">
     <div class="main">
         <h1>Rule<span>Api</span></h1>
-        <p class="version">当前版本：V1.2.3 beta</p>
+        <p class="version">当前版本：V1.2.4 beta</p>
         <p class="newVer">
             最新版本：<a href="javascript:;" @click="toNewVer()">{{newVer}}</a>
         </p>
         <p class="install">
-            <a href="/install/newInstall" target="_blank" style="color:#e54d42;font-weight: bold">初次安装及更新执行</a>|
+            <a href="javascript:;" style="color:#e54d42;font-weight: bold" @click="toInstall=1">初次安装及更新执行</a>|
             <a href="/system/index.html" style="color:#1276c1;font-weight: bold" target="_blank">可视化配置中心</a>
         </p>
         <p class="links">
@@ -54,6 +162,31 @@
         </p>
 
     </div>
+    <div class="install-box" :class="toInstall==1?'show':''">
+        <div class="install-bg"></div>
+        <div class="install-main">
+            <div class="install-concent">
+                <div class="install-title">
+                    安装及更新
+                </div>
+                <div class="install-text">
+                    <div class="install-form" v-if="isIntall==0">
+                        <input type="text" v-model="key" placeholder="请输入访问KEY">
+                        <button type="button" @click="Install()">确认</button>
+                    </div>
+                    <div class="install-loading" v-if="isIntall==1">
+                        执行中，请勿关闭或刷新页面
+                    </div>
+                    <div class="install-installData" v-if="isIntall==2">
+                        {{installData}}
+                    </div>
+                </div>
+                <div class="install-btn">
+                    <button type="button" @click="closeInstall()">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 <script src="system/js/vue.js"></script>
 <script src="system/js/axios.js"></script>
@@ -63,6 +196,10 @@
         data: {
             newVer:"",
             newVerUrl:"",
+            toInstall:0,
+            isIntall:0,
+            key:"",
+            installData:""
         },
         created(){
             var that = this;
@@ -84,6 +221,32 @@
                     }
                 }).catch(function (error) {
                     console.log(error);
+                });
+            },
+            closeInstall(){
+                var that = this;
+                that.toInstall=0;
+                that.isIntall=0;
+                that.key="";
+                that.installData="";
+            },
+            Install(){
+                var that = this;
+                if(that.key==""){
+                    return false;
+                }
+                that.isIntall=1;
+                var url = "/install/newInstall?webkey="+that.key
+                axios.get(url,{
+                    params:{}
+                }).then(function(res){
+                    that.key="";
+                    that.isIntall=2;
+                   that.installData = res.data;
+                }).catch(function (error) {
+                    that.key="";
+                    that.isIntall=2;
+                    that.installData = "请检查您的浏览器网络";
                 });
             },
             toNewVer(){

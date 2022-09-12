@@ -339,6 +339,32 @@ public class TypechoAdsController {
     }
 
     /***
+     * 广告审核
+     */
+    @RequestMapping(value = "/auditAds")
+    @ResponseBody
+    public String auditAds(@RequestParam(value = "id", required = false) String  id, @RequestParam(value = "token", required = false) String  token) {
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+        if(uStatus==0){
+            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+        }
+        Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+        String group = map.get("group").toString();
+        if (!group.equals("administrator")) {
+            return Result.getResultJson(0, "你没有操作权限", null);
+        }
+        TypechoAds ads = service.selectByKey(id);
+        ads.setStatus(1);
+        Integer rows = service.update(ads);
+
+        JSONObject response = new JSONObject();
+        response.put("code" ,rows > 0 ? 1: 0 );
+        response.put("data" , rows);
+        response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
+        return response.toString();
+    }
+
+    /***
      * 广告续期
      */
     @RequestMapping(value = "/renewalAds")

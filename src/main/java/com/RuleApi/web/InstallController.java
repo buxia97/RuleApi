@@ -30,13 +30,19 @@ public class InstallController {
     @Value("${web.prefix}")
     private String dataprefix;
 
+    @Value("${webinfo.key}")
+    private String key;
+
     RedisHelp redisHelp =new RedisHelp();
     /***
      * 文章删除
      */
     @RequestMapping(value = "/newInstall")
     @ResponseBody
-    public String newInstall() {
+    public String newInstall(@RequestParam(value = "webkey", required = false,defaultValue = "") String  webkey) {
+        if(!webkey.equals(this.key)){
+            return "请输入正确的访问KEY。如果忘记，可在服务器/opt/application.properties中查看";
+        }
         try {
             String isInstall = redisHelp.getRedis(this.dataprefix+"_"+"isInstall",redisTemplate);
             if(isInstall!=null){
@@ -45,7 +51,6 @@ public class InstallController {
         }catch (Exception e){
             return "Redis连接失败或未安装";
         }
-
         Integer i = 1;
         //判断typecho是否安装，或者数据表前缀是否正确
 
