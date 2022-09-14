@@ -716,6 +716,7 @@ public class PayController {
                 //再返回数据
                 JSONObject toResponse = new JSONObject();
                 toResponse.put("code" ,1);
+                toResponse.put("payapi" ,apiconfig.getEpayUrl());
                 toResponse.put("data" , jsonMap);
                 toResponse.put("msg"  , "获取成功");
                 return toResponse.toString();
@@ -754,7 +755,7 @@ public class PayController {
 
         System.err.println(params);
         try{
-            if(params.get("trade_status").toString().equals("TRADE_SUCCESS")){
+            if(params.get("trade_status").equals("TRADE_SUCCESS")){
                 TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
                 //支付完成后，写入充值日志
                 String trade_no = params.get("trade_no");
