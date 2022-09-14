@@ -240,9 +240,10 @@ public class TypechoContentsController {
             }
 
             query = object.toJavaObject(TypechoContents.class);
-            total = service.total(query);
+
 
         }
+        total = service.total(query);
         List jsonList = new ArrayList();
         //管理员和编辑以登录状态请求时，不调用缓存
         if(!group.equals("administrator")&&!group.equals("editor")) {
@@ -960,18 +961,22 @@ public class TypechoContentsController {
     @RequestMapping(value = "/ImagePexels")
     @ResponseBody
     public String ImagePexels(@RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
-                              @RequestParam(value = "searchKey"        , required = false, defaultValue = "") String searchKey) {
+                              @RequestParam(value = "searchKey"        , required = false) String searchKey) {
         String cacheImage = redisHelp.getRedis(this.dataprefix+"_"+"ImagePexels_"+searchKey+"_"+page,redisTemplate);
         String imgList = "";
         TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
         if(cacheImage==null){
-            if(searchKey==""){
-                imgList = HttpClient.doGetImg("https://api.pexels.com/v1/curated?per_page=40&page="+page,apiconfig.getPexelsKey());
+            if(searchKey==null){
+                imgList = HttpClient.doGetImg("https://api.pexels.com/v1/curated?per_page=15&page="+page,apiconfig.getPexelsKey());
             }else{
-                imgList = HttpClient.doGetImg("https://api.pexels.com/v1/search?per_page=40&query="+searchKey+"&page="+page,apiconfig.getPexelsKey());
+                imgList = HttpClient.doGetImg("https://api.pexels.com/v1/search?per_page=15&query="+searchKey+"&page="+page,apiconfig.getPexelsKey());
             }
 
             if(imgList==null){
+                return Result.getResultJson(0,"图片接口异常",null);
+            }
+            HashMap  jsonMap = JSON.parseObject(imgList, HashMap.class);
+            if(jsonMap.get("code")!=null||jsonMap.get("error")!=null){
                 return Result.getResultJson(0,"图片接口异常",null);
             }
             redisHelp.delete(this.dataprefix+"_"+"ImagePexels",redisTemplate);
