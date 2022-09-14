@@ -397,7 +397,7 @@
 					<button type="button" class="input-text" class="btn" @click="saveAssets()">保存数据</button>
 				</div>
 			</div>
-			<!--APIkey配置结束-->
+			<!--支付模块配置结束-->
 			<!--APIkey配置-->
 			<div class="form-main" v-if="page==13">
 				<div class="form-box">
@@ -472,6 +472,32 @@
 				</div>
 			</div>
 			<!--广告模块配置结束-->
+			<!-- 易支付模块配置-->
+			<div class="form-main" v-if="page==16">
+				<div class="form-box">
+					易支付接口可支持所有核心程序为彩虹易支付的第三方支付平台。不过，为了财产安全，对于非官方的支付渠道，请谨慎选择。
+				</div>
+				<div class="form-box">
+					<p>易支付接口地址<span class="text-gray">输入易支付平台的接口地址</span></p>
+					<input type="text" class="input-text" v-model="epayUrl" placeholder="请输入易支付接口地址"/>
+				</div>
+				<div class="form-box">
+					<p>易支付商户ID</p>
+					<input type="number" class="input-text" v-model="epayPid" placeholder="请输入易支付商户ID"/>
+				</div>
+				<div class="form-box">
+					<p>易支付商户密钥</p>
+					<input type="text" class="input-text" v-model="epayKey" placeholder="请输入易支付商户密钥"/>
+				</div>
+				<div class="form-box">
+					<p>易支付回调地址<span class="text-gray">根据您的接口域名和访问协议进行填写，如：http://127.0.0.1/pay/EPayNotify</span></p>
+					<input type="text" class="input-text" v-model="epayNotifyUrl" placeholder="请输入易支付回调地址"/>
+				</div>
+				<div class="form-btn">
+					<button type="button" class="input-text" class="btn" @click="saveEpay()">保存数据</button>
+				</div>
+			</div>
+			<!--易支付模块配置结束-->
 			<!--配置文件更新-->
 			<div class="form-text" v-if="page==8">
 				<div class="form-box">

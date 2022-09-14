@@ -96,6 +96,12 @@ var vm = new Vue({
 		bannerAdsNum:"",
 		startAdsPrice:"",
 		startAdsNum:"",
+
+		//易支付
+		epayUrl:"",
+		epayPid:"",
+		epayKey:"",
+		epayNotifyUrl:"",
 	},
 	created(){
 		var that = this;
@@ -252,6 +258,12 @@ var vm = new Vue({
 					that.bannerAdsNum=res.data.data.bannerAdsNum;
 					that.startAdsPrice=res.data.data.startAdsPrice;
 					that.startAdsNum=res.data.data.startAdsNum;
+					//易支付
+
+					that.epayUrl=res.data.data.epayUrl;
+					that.epayPid=res.data.data.epayPid;
+					that.epayKey=res.data.data.epayKey;
+					that.epayNotifyUrl=res.data.data.epayNotifyUrl;
 
 				}else{
 					that.outSystem();
@@ -681,6 +693,32 @@ var vm = new Vue({
 				console.log(error);
 			});
 		},
+		saveEpay(){
+			var that = this;
+			var url = "/system/apiConfigUpdate"
+			var data={
+				epayUrl:that.epayUrl,
+				epayPid:that.epayPid,
+				epayKey:that.epayKey,
+				epayNotifyUrl:that.epayNotifyUrl,
+			}
+			axios.get(url,{
+				params:{
+					"webkey":that.webkey,
+					"params":JSON.stringify(that.removeObjectEmptyKey(data))
+				}
+			}).then(function(res){
+				that.toAlert(res.data.msg);
+				if(res.data.code==1){
+					that.getAll();
+				}else{
+					that.outSystem();
+				}
+			}).catch(function (error) {
+				console.log(error);
+			});
+		},
+
 		saveConfig(){
 			var that = this;
 			var url = "/system/setupConfig"
