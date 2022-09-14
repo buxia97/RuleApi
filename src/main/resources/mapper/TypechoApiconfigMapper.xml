@@ -56,6 +56,11 @@
         <result column="bannerAdsNum" property="bannerAdsNum" />
         <result column="startAdsPrice" property="startAdsPrice" />
         <result column="startAdsNum" property="startAdsNum" />
+
+        <result column="epayUrl" property="epayUrl" />
+        <result column="epayPid" property="epayPid" />
+        <result column="epayKey" property="epayKey" />
+        <result column="epayNotifyUrl" property="epayNotifyUrl" />
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -110,7 +115,12 @@
         `bannerAdsPrice`,
         `bannerAdsNum`,
         `startAdsPrice`,
-        `startAdsNum`
+        `startAdsNum`,
+
+        `epayUrl`,
+        `epayPid`,
+        `epayKey`,
+        `epayNotifyUrl`
     </sql>
 
     <!-- 插入数据 -->
@@ -269,7 +279,19 @@
                 `startAdsPrice`,
             </if>
             <if test ='null != startAdsNum'>
-                `startAdsNum`
+                `startAdsNum`,
+            </if>
+            <if test ='null != epayUrl'>
+                `epayUrl`,
+            </if>
+            <if test ='null != epayPid'>
+                `epayPid`,
+            </if>
+            <if test ='null != epayKey'>
+                `epayKey`,
+            </if>
+            <if test ='null != epayNotifyUrl'>
+                `epayNotifyUrl`
             </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
@@ -424,7 +446,19 @@
                 #{startAdsPrice},
             </if>
             <if test ='null != startAdsNum'>
-                #{startAdsNum}
+                #{startAdsNum},
+            </if>
+            <if test ='null != epayUrl'>
+                #{epayUrl},
+            </if>
+            <if test ='null != epayPid'>
+                #{epayPid},
+            </if>
+            <if test ='null != epayKey'>
+                #{epayKey},
+            </if>
+            <if test ='null != epayNotifyUrl'>
+                #{epayNotifyUrl}
             </if>
         </trim>
     </insert>
@@ -483,7 +517,12 @@
             <if test ='null != bannerAdsPrice'>`bannerAdsPrice` = #{bannerAdsPrice},</if>
             <if test ='null != bannerAdsNum'>`bannerAdsNum` = #{bannerAdsNum},</if>
             <if test ='null != startAdsPrice'>`startAdsPrice` = #{startAdsPrice},</if>
-            <if test ='null != startAdsNum'>`startAdsNum` = #{startAdsNum}</if>
+            <if test ='null != startAdsNum'>`startAdsNum` = #{startAdsNum},</if>
+
+            <if test ='null != epayUrl'>`epayUrl` = #{epayUrl},</if>
+            <if test ='null != epayPid'>`epayPid` = #{epayPid},</if>
+            <if test ='null != epayKey'>`epayKey` = #{epayKey},</if>
+            <if test ='null != epayNotifyUrl'>`epayNotifyUrl` = #{epayNotifyUrl}</if>
         </set>
         WHERE `id` = #{id}
     </update>

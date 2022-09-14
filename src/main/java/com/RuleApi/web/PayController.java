@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Controller;
+import org.springframework.util.DigestUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -66,6 +67,7 @@ public class PayController {
 
     RedisHelp redisHelp =new RedisHelp();
     ResultAll Result = new ResultAll();
+    HttpClient HttpClient = new HttpClient();
     UserStatus UStatus = new UserStatus();
 
 
@@ -189,6 +191,7 @@ public class PayController {
                 TypechoPaylog paylog = new TypechoPaylog();
                 //根据订单和发起人，是否有数据库对应，来是否充值成功
                 paylog.setOutTradeNo(out_trade_no);
+                paylog.setStatus(0);
                 List<TypechoPaylog> logList= paylogService.selectList(paylog);
                 if(logList.size() > 0){
                     Integer pid = logList.get(0).getPid();
@@ -640,6 +643,158 @@ public class PayController {
             response.put("code" , 0);
             response.put("msg"  , "卡密充值失败");
             return response.toString();
+        }
+
+    }
+
+    /**
+     * 彩虹易支付相关
+     * **/
+    @RequestMapping(value = "/EPay")
+    @ResponseBody
+    public String EPay(@RequestParam(value = "type", required = false) String type,@RequestParam(value = "money", required = false) Integer money,@RequestParam(value = "device", required = false) String device,@RequestParam(value = "token", required = false) String  token,HttpServletRequest request) {
+        if(type==null&&money==null&&money==null&&device==null){
+            return Result.getResultJson(0,"参数不正确",null);
+        }
+        try{
+            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+            if(uStatus==0){
+                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+            }
+            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+            String url = apiconfig.getEpayUrl();
+            Date now = new Date();
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss");//可以方便地修改日期格式
+            String timeID = dateFormat.format(now);
+            String outTradeNo=timeID+"Epay_"+type;
+            String  clientip = baseFull.getIpAddr(request);
+            Map<String,String> sign = new HashMap<>();
+            sign.put("pid",apiconfig.getEpayPid().toString());
+            sign.put("type",type.toString());
+            sign.put("out_trade_no",outTradeNo);
+            sign.put("notify_url",apiconfig.getEpayNotifyUrl());
+            sign.put("clientip",clientip);
+            sign.put("name","在线充值金额");
+            sign.put("money",money.toString());
+            sign = sortByKey(sign);
+            String signStr = "";
+            for(Map.Entry<String,String> m :sign.entrySet()){
+                signStr += m.getKey() + "=" +m.getValue()+"&";
+            }
+            signStr = signStr.substring(0,signStr.length()-1);
+            signStr += apiconfig.getEpayKey();
+            signStr = DigestUtils.md5DigestAsHex(signStr.getBytes());
+            sign.put("sign_type","MD5");
+            sign.put("sign",signStr);
+
+            String param = "";
+            for(Map.Entry<String,String> m :sign.entrySet()){
+                param += m.getKey() + "=" +m.getValue()+"&";
+            }
+            param = param.substring(0,param.length()-1);
+            String data = HttpClient.doPost(url+"mapi.php",param);
+            if(data==null){
+                return Result.getResultJson(0,"易支付接口请求失败，请检查配置",null);
+            }
+            HashMap  jsonMap = JSON.parseObject(data, HashMap.class);
+            if(jsonMap.get("code").toString().equals("1")){
+                //先生成订单
+                Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+                Integer uid  = Integer.parseInt(map.get("uid").toString());
+                Long date = System.currentTimeMillis();
+                String created = String.valueOf(date).substring(0,10);
+                TypechoPaylog paylog = new TypechoPaylog();
+                Integer TotalAmount = money * apiconfig.getScale();
+                paylog.setStatus(0);
+                paylog.setCreated(Integer.parseInt(created));
+                paylog.setUid(uid);
+                paylog.setOutTradeNo(outTradeNo);
+                paylog.setTotalAmount(TotalAmount.toString());
+                paylog.setPaytype("ePay_"+type);
+                paylog.setSubject("扫码支付");
+                paylogService.insert(paylog);
+                //再返回数据
+                JSONObject toResponse = new JSONObject();
+                toResponse.put("code" ,1);
+                toResponse.put("data" , jsonMap);
+                toResponse.put("msg"  , "获取成功");
+                return toResponse.toString();
+            }else {
+                return Result.getResultJson(0,jsonMap.get("msg").toString(),null);
+            }
+        }catch (Exception e){
+            System.out.println(e);
+            return Result.getResultJson(0,"接口异常，请检查配置",null);
+        }
+
+
+    }
+    public static <K extends Comparable<? super K>, V > Map<K, V> sortByKey(Map<K, V> map) {
+        Map<K, V> result = new LinkedHashMap<>();
+
+        map.entrySet().stream()
+                .sorted(Map.Entry.<K, V>comparingByKey()).forEachOrdered(e -> result.put(e.getKey(), e.getValue()));
+        return result;
+    }
+    @RequestMapping(value = "/EPayNotify", method = RequestMethod.POST)
+    @ResponseBody
+    public String EPayNotify(HttpServletRequest request,
+                         HttpServletResponse response) throws AlipayApiException {
+        Map<String, String> params = new HashMap<String, String>();
+        Map requestParams = request.getParameterMap();
+        for (Iterator iter = requestParams.keySet().iterator(); iter.hasNext(); ) {
+            String name = (String) iter.next();
+            String[] values = (String[]) requestParams.get(name);
+            String valueStr = "";
+            for (int i = 0; i < values.length; i++) {
+                valueStr = (i == values.length - 1) ? valueStr + values[i] : valueStr + values[i] + ",";
+            }
+            params.put(name, valueStr);
+        }
+
+        System.err.println(params);
+        try{
+            if(params.get("trade_status").toString().equals("TRADE_SUCCESS")){
+                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+                //支付完成后，写入充值日志
+                String trade_no = params.get("trade_no");
+                String out_trade_no = params.get("out_trade_no");
+                String total_amount = params.get("money");
+                Integer scale = apiconfig.getScale();
+                Integer integral = Double.valueOf(total_amount).intValue() * scale;
+
+                Long date = System.currentTimeMillis();
+                String created = String.valueOf(date).substring(0,10);
+                TypechoPaylog paylog = new TypechoPaylog();
+                //根据订单和发起人，是否有数据库对应，来是否充值成功
+                paylog.setOutTradeNo(out_trade_no);
+                paylog.setStatus(0);
+                List<TypechoPaylog> logList= paylogService.selectList(paylog);
+                if(logList.size() > 0){
+                    Integer pid = logList.get(0).getPid();
+                    Integer uid = logList.get(0).getUid();
+                    paylog.setStatus(1);
+                    paylog.setTradeNo(trade_no);
+                    paylog.setPid(pid);
+                    paylog.setCreated(Integer.parseInt(created));
+                    paylogService.update(paylog);
+                    //订单修改后，插入用户表
+                    TypechoUsers users = usersService.selectByKey(uid);
+                    Integer oldAssets = users.getAssets();
+                    Integer assets = oldAssets + integral;
+                    users.setAssets(assets);
+                    usersService.update(users);
+                    return "success";
+                }else{
+                    System.out.println("数据库不存在订单");
+                    return "fail";
+                }
+            }else{
+                return "fail";
+            }
+        }catch (Exception e){
+            System.out.println(e);
+            return "fail";
         }
 
     }

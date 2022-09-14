@@ -361,6 +361,11 @@ public class InstallController {
         }else{
             text+="API配置中心模块已经存在，无需添加。";
         }
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+        }
         //查询配置中心表是否存在auditlevel字段
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'auditlevel';", Integer.class);
         if (i == 0){
@@ -444,10 +449,42 @@ public class InstallController {
         //查询配置中心表是否存在startAdsNum字段
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'startAdsNum';", Integer.class);
         if (i == 0){
-            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `startAdsNum` int(11) NOT NULL DEFAULT '1' COMMENT '启动图广告数量'");
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `startAdsNum` int(11) COMMENT '启动图广告数量'");
             text+="配置中心模块，字段startAdsNum添加完成。";
         }else{
             text+="配置中心模块，字段startAdsNum已经存在，无需添加。";
+        }
+        //查询配置中心表是否存在epayUrl字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'epayUrl';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `epayUrl` varchar(500) DEFAULT '' COMMENT '易支付接口地址'");
+            text+="配置中心模块，字段epayUrl添加完成。";
+        }else{
+            text+="配置中心模块，字段epayUrl已经存在，无需添加。";
+        }
+        //查询配置中心表是否存在epayPid字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'epayPid';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `epayPid` int(11) COMMENT '易支付商户ID'");
+            text+="配置中心模块，字段epayPid添加完成。";
+        }else{
+            text+="配置中心模块，字段epayPid已经存在，无需添加。";
+        }
+        //查询配置中心表是否存在epayKey字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'epayKey';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `epayKey` varchar(300) DEFAULT '' COMMENT '易支付商户密钥'");
+            text+="配置中心模块，字段epayKey添加完成。";
+        }else{
+            text+="配置中心模块，字段epayKey已经存在，无需添加。";
+        }
+        //查询配置中心表是否存在epayNotifyUrl字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'epayNotifyUrl';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `epayNotifyUrl` varchar(500) DEFAULT '' COMMENT '易支付回调地址'");
+            text+="配置中心模块，字段epayNotifyUrl添加完成。";
+        }else{
+            text+="配置中心模块，字段epayNotifyUrl已经存在，无需添加。";
         }
         //添加邀请码模块
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_invitation';", Integer.class);

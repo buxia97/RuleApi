@@ -268,4 +268,25 @@ public class TypechoApiconfig implements Serializable {
      * startAdsNum
      */
     private Integer startAdsNum;
+
+    /**
+     * epayUrl
+     */
+    private String epayUrl;
+
+    /**
+     * epayPid
+     */
+    private Integer epayPid;
+
+    /**
+     * epayKey
+     */
+    private String epayKey;
+
+    /**
+     * epayNotifyUrl
+     */
+    private String epayNotifyUrl;
+
 }
