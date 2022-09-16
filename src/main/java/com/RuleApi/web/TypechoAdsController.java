@@ -181,6 +181,7 @@ public class TypechoAdsController {
             Map jsonToMap =null;
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             String uid = map.get("uid").toString();
+            String group = map.get("group").toString();
             TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
             Integer price = 0;
             Integer typeNum = 0;
@@ -248,7 +249,11 @@ public class TypechoAdsController {
             }else{
                 return Result.getResultJson(0,"参数不正确",null);
             }
-            insert.setStatus(0);
+            if(!group.equals("administrator")&&!group.equals("editor")) {
+                insert.setStatus(0);
+            }else{
+                insert.setStatus(1);
+            }
             insert.setUid(Integer.parseInt(uid));
             int rows = service.insert(insert);
             JSONObject response = new JSONObject();
@@ -306,7 +311,9 @@ public class TypechoAdsController {
         }
         update.setUid(Integer.parseInt(uid));
         //广告修改也要审核
-        update.setStatus(0);
+        if(!group.equals("administrator")&&!group.equals("editor")) {
+            update.setStatus(0);
+        }
         int rows = service.update(update);
 
         JSONObject response = new JSONObject();
