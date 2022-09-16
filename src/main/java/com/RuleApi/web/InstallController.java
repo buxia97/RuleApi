@@ -449,7 +449,7 @@ public class InstallController {
         //查询配置中心表是否存在startAdsNum字段
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'startAdsNum';", Integer.class);
         if (i == 0){
-            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `startAdsNum` int(11) COMMENT '启动图广告数量'");
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `startAdsNum` int(11) NOT NULL DEFAULT '1' COMMENT '启动图广告数量'");
             text+="配置中心模块，字段startAdsNum添加完成。";
         }else{
             text+="配置中心模块，字段startAdsNum已经存在，无需添加。";

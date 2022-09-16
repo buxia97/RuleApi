@@ -444,18 +444,29 @@ public class TypechoAdsController {
                 adsConfigJSon = cacheInfo;
             }else{
                 TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+                TypechoAds ads = new TypechoAds();
+                ads.setStatus(1);
                 Integer pushAdsPrice = apiconfig.getPushAdsPrice();
                 Integer pushAdsNum = apiconfig.getPushAdsNum();
+                ads.setType(0);
+                Integer pushAdsOldNum = service.total(ads);
+                Integer pushAdsCurNum = pushAdsNum - pushAdsOldNum;
                 Integer bannerAdsPrice = apiconfig.getBannerAdsPrice();
                 Integer bannerAdsNum = apiconfig.getBannerAdsNum();
+                ads.setType(1);
+                Integer bannerAdsOldNum = service.total(ads);
+                Integer bannerAdsCurNum = bannerAdsNum - bannerAdsOldNum;
                 Integer startAdsPrice = apiconfig.getStartAdsPrice();
                 Integer startAdsNum = apiconfig.getStartAdsNum();
+                ads.setType(2);
+                Integer startAdsOldNum = service.total(ads);
+                Integer startAdsCurNum = startAdsNum - startAdsOldNum;
                 adsConfigJSon.put("pushAdsPrice",pushAdsPrice);
-                adsConfigJSon.put("pushAdsNum",pushAdsNum);
+                adsConfigJSon.put("pushAdsNum",pushAdsCurNum);
                 adsConfigJSon.put("bannerAdsPrice",bannerAdsPrice);
-                adsConfigJSon.put("bannerAdsNum",bannerAdsNum);
+                adsConfigJSon.put("bannerAdsNum",bannerAdsCurNum);
                 adsConfigJSon.put("startAdsPrice",startAdsPrice);
-                adsConfigJSon.put("startAdsNum",startAdsNum);
+                adsConfigJSon.put("startAdsNum",startAdsCurNum);
                 redisHelp.delete(this.dataprefix+"_adsConfig",redisTemplate);
                 redisHelp.setKey(this.dataprefix+"_adsConfig",adsConfigJSon,600,redisTemplate);
             }

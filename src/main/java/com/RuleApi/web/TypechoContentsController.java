@@ -373,6 +373,12 @@ public class TypechoContentsController {
             if(uStatus==0){
                 return Result.getResultJson(0,"用户未登录或Token验证失败",null);
             }
+            String isRepeated = redisHelp.getRedis(token+"_isRepeated",redisTemplate);
+            if(isRepeated==null){
+                redisHelp.setRedis(token+"_isRepeated","1",5,redisTemplate);
+            }else{
+                return Result.getResultJson(0,"你的操作太频繁了",null);
+            }
             if (StringUtils.isNotBlank(params)) {
                 jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
                 //获取发布者信息

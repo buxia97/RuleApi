@@ -139,6 +139,12 @@ public class TypechoShopController {
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
         }
+        String isRepeated = redisHelp.getRedis(token+"_isRepeated",redisTemplate);
+        if(isRepeated==null){
+            redisHelp.setRedis(token+"_isRepeated","1",5,redisTemplate);
+        }else{
+            return Result.getResultJson(0,"你的操作太频繁了",null);
+        }
         Map jsonToMap =null;
         TypechoShop insert = null;
         if (StringUtils.isNotBlank(params)) {

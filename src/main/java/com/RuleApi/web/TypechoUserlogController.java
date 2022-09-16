@@ -290,6 +290,12 @@ public class TypechoUserlogController {
                     if(uStatus==0){
                         return Result.getResultJson(0,"请先登录哦",null);
                     }
+                    String isRepeated = redisHelp.getRedis(token+"_isRepeated",redisTemplate);
+                    if(isRepeated==null){
+                        redisHelp.setRedis(token+"_isRepeated","1",5,redisTemplate);
+                    }else{
+                        return Result.getResultJson(0,"你的操作太频繁了",null);
+                    }
                 }
                 Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
                 Integer uid = 0;
@@ -428,6 +434,8 @@ public class TypechoUserlogController {
                         paylog.setPaytype("toReward");
                         paylog.setSubject("打赏作品");
                         paylogService.insert(paylog);
+                    }else{
+                        return Result.getResultJson(0,"你不可以打赏自己的作品！",null);
                     }
 
 
