@@ -150,7 +150,7 @@ public class HttpClient {
 
     public static String doGetImg(String httpurl,String pexelsKey) {
         //HttpURLConnection神奇的无法传递Authorization，所以使用curl了
-        String[] cmds = {"curl", "-H", "Authorization:"+pexelsKey, "-H", "Cache-Control: max-age=0", "--compressed", httpurl};
+        String[] cmds = {"curl", "-H", "Authorization:"+pexelsKey, httpurl};
 
         ProcessBuilder process = new ProcessBuilder(cmds);
         Process p;

@@ -19,6 +19,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.*;
 
 import org.commonmark.node.*;
@@ -967,15 +969,30 @@ public class TypechoContentsController {
     @RequestMapping(value = "/ImagePexels")
     @ResponseBody
     public String ImagePexels(@RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
-                              @RequestParam(value = "searchKey"        , required = false) String searchKey) {
+                              @RequestParam(value = "searchKey"        , required = false) String searchKey,HttpServletRequest request) {
+        String  ip = baseFull.getIpAddr(request);
+        String  agent =  request.getHeader("User-Agent");
+        String isRepeated = redisHelp.getRedis(agent+"_isRepeated_"+ip,redisTemplate);
+        if(isRepeated==null){
+            redisHelp.setRedis(agent+"_isRepeated_"+ip,"1",5,redisTemplate);
+        }else{
+            return Result.getResultJson(0,"你的操作太频繁了",null);
+        }
+
         String cacheImage = redisHelp.getRedis(this.dataprefix+"_"+"ImagePexels_"+searchKey+"_"+page,redisTemplate);
         String imgList = "";
         TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
         if(cacheImage==null){
             if(searchKey==null){
+
                 imgList = HttpClient.doGetImg("https://api.pexels.com/v1/curated?per_page=15&page="+page,apiconfig.getPexelsKey());
             }else{
-                imgList = HttpClient.doGetImg("https://api.pexels.com/v1/search?per_page=15&query="+searchKey+"&page="+page,apiconfig.getPexelsKey());
+//                try {
+//                    searchKey = URLEncoder.encode(searchKey,"UTF-8");
+//                } catch (UnsupportedEncodingException e) {
+//                    e.printStackTrace();
+//                }
+                imgList = HttpClient.doGetImg("https://api.pexels.com/v1/search?query="+searchKey+"&page="+page,apiconfig.getPexelsKey());
             }
 
             if(imgList==null){
@@ -986,7 +1003,7 @@ public class TypechoContentsController {
                 return Result.getResultJson(0,"图片接口异常",null);
             }
             redisHelp.delete(this.dataprefix+"_"+"ImagePexels",redisTemplate);
-            redisHelp.setRedis(this.dataprefix+"_"+"ImagePexels_"+searchKey+"_"+page,imgList,43200,redisTemplate);
+            redisHelp.setRedis(this.dataprefix+"_"+"ImagePexels_"+searchKey+"_"+page,imgList,21600,redisTemplate);
         }else{
             imgList = cacheImage;
         }

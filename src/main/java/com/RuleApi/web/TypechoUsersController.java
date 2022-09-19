@@ -241,7 +241,7 @@ public class TypechoUsersController {
      */
     @RequestMapping(value = "/userInfo")
     @ResponseBody
-    public String userInfo(@RequestParam(value = "key", required = false) String key) {
+    public String userInfo(@RequestParam(value = "key", required = false) String key,@RequestParam(value = "token", required = false, defaultValue = "") String token) {
         try {
             TypechoUsers info = service.selectByKey(key);
             Map json = JSONObject.parseObject(JSONObject.toJSONString(info), Map.class);
@@ -265,7 +265,12 @@ public class TypechoUsersController {
             json.remove("password");
             json.remove("address");
             json.remove("pay");
-            json.remove("assets");
+            Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+            String group = map.get("group").toString();
+            if (!group.equals("administrator")) {
+                json.remove("assets");
+            }
+
             TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
             if(json.get("avatar")==null){
                 if (json.get("mail") != null) {
