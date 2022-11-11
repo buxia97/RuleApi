@@ -221,6 +221,7 @@ public class TypechoContentsController {
         if(limit>50){
             limit = 50;
         }
+
         List cacheList = new ArrayList();
         String group = "";
         Integer total = 0;
@@ -576,7 +577,7 @@ public class TypechoContentsController {
                 if(!group.equals("administrator")&&!group.equals("editor")){
                     TypechoContents info = service.selectByKey(jsonToMap.get("cid").toString());
                     Integer authorId = info.getAuthorId();
-                    if(uid!=authorId){
+                    if(!uid.equals(authorId)){
                         return Result.getResultJson(0,"你无权操作此文章",null);
                     }
                 }

@@ -45,21 +45,17 @@ public class QRCodeUtil {
     public static void createCodeToFile(String codeContent, File codeImgFileSaveDir, String fileName) {
         try {
             if (codeContent == null || "".equals(codeContent)) {
-                log.info("二维码内容为空，不进行操作...");
                 return;
             }
             codeContent = codeContent.trim();
             if (codeImgFileSaveDir == null || codeImgFileSaveDir.isFile()) {
                 codeImgFileSaveDir = FileSystemView.getFileSystemView().getHomeDirectory();
-                log.info("二维码图片存在目录为空，默认放在桌面...");
             }
             if (!codeImgFileSaveDir.exists()) {
                 codeImgFileSaveDir.mkdirs();
-                log.info("二维码图片存在目录不存在，开始创建...");
             }
             if (fileName == null || "".equals(fileName)) {
                 fileName = new Date().getTime() + ".png";
-                log.info("二维码图片文件名为空，随机生成 png 格式图片...");
             }
 
             BufferedImage bufferedImage = getBufferedImage(codeContent);
@@ -72,7 +68,6 @@ public class QRCodeUtil {
             File codeImgFile = new File(codeImgFileSaveDir, fileName);
             ImageIO.write(bufferedImage, "png", codeImgFile);
 
-            log.info("二维码图片生成成功：" + codeImgFile.getPath());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -91,7 +86,6 @@ public class QRCodeUtil {
     public static void createCodeToOutputStream(String codeContent, OutputStream outputStream) {
         try {
             if (codeContent == null || "".equals(codeContent.trim())) {
-                log.info("二维码内容为空，不进行操作...");
                 return;
             }
             codeContent = codeContent.trim();
@@ -101,10 +95,8 @@ public class QRCodeUtil {
              * 区别就是以一句，输出到输出流中，如果第三个参数是 File，则输出到文件中
              */
             ImageIO.write(bufferedImage, "png", outputStream);
-            log.info("二维码图片生成到输出流成功...");
         } catch (Exception e) {
             e.printStackTrace();
-            log.error("发生错误: {}!", e.getMessage());
         }
     }
 
@@ -193,7 +185,6 @@ public class QRCodeUtil {
             e.printStackTrace();
         } catch (NotFoundException e) {
             e.printStackTrace();
-            log.error("图片非二维码图片, 路径是: {}!", file.getPath());
         }
         return resultStr;
     }
@@ -239,10 +230,8 @@ public class QRCodeUtil {
             resultStr = result.getText();
         } catch (IOException e) {
             e.printStackTrace();
-            log.error("二维码图片地址错误, 地址是: {}!", url);
         } catch (NotFoundException e) {
             e.printStackTrace();
-            log.error("图片非二维码图片, 地址是: {}!", url);
         }
         return resultStr;
     }

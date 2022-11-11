@@ -424,30 +424,30 @@ public class TypechoUsersController {
             Integer isInvite = apiconfig.getIsInvite();
             //如果是微信，则走两步判断，是小程序还是APP
             if(jsonToMap.get("appLoginType").toString().equals("weixin")){
-                if(jsonToMap.get("type").toString().equals("applets")){
-                    //如果是小程序，走官方接口获取accessToken和openid
+                //if(jsonToMap.get("type").toString().equals("applets")){
+                    //走官方接口获取accessToken和openid
                     if (jsonToMap.get("js_code") == null) {
                         return Result.getResultJson(0, "APP配置异常，js_code参数不存在", null);
                     }
                     String js_code = jsonToMap.get("js_code").toString();
 
-                    String requestUrl = "https://api.weixin.qq.com/sns/jscode2session?appid="+apiconfig.getAppletsAppid()+"&secret="+apiconfig.getAppletsSecret()+"&js_code="+js_code+"&grant_type=authorization_code";
+                    String requestUrl = "https://api.weixin.qq.com/sns/jscode2session?appid="+apiconfig.getAppletsAppid()+"&secret="+apiconfig.getAppletsSecret()+"&code="+js_code+"&grant_type=authorization_code";
                     String res = HttpClient.doGet(requestUrl);
                     if(res==null){
                         return Result.getResultJson(0, "接口配置异常，微信官方接口请求失败", null);
                     }
-
+                    System.out.println("微信接口返回"+res);
                     HashMap data = JSON.parseObject(res, HashMap.class);
-                    if(data.get("unionid")==null){
-                        return Result.getResultJson(0, "接口配置异常，unionid获取失败", null);
+                    if(data.get("openid")==null){
+                        return Result.getResultJson(0, "接口配置异常，openid获取失败", null);
                     }
-                    jsonToMap.put("accessToken",data.get("unionid"));
+                    jsonToMap.put("accessToken",data.get("openid"));
                     jsonToMap.put("openId",data.get("openid"));
-                }else {
-                    if (jsonToMap.get("accessToken") == null) {
-                        return Result.getResultJson(0, "登录配置异常，accessToken参数不存在", null);
-                    }
-                }
+//                }else {
+//                    if (jsonToMap.get("accessToken") == null) {
+//                        return Result.getResultJson(0, "登录配置异常，accessToken参数不存在", null);
+//                    }
+//                }
             }else{
                 if (jsonToMap.get("accessToken") == null) {
                     return Result.getResultJson(0, "登录配置异常，accessToken参数不存在", null);
@@ -464,6 +464,7 @@ public class TypechoUsersController {
 
                     String requestUrl = "https://api.q.qq.com/sns/jscode2session?appid="+apiconfig.getQqAppletsAppid()+"&secret="+apiconfig.getQqAppletsSecret()+"&js_code="+js_code+"&grant_type=authorization_code";
                     String res = HttpClient.doGet(requestUrl);
+                    System.out.println("QQ接口返回"+res);
                     if(res==null){
                         return Result.getResultJson(0, "接口配置异常，QQ官方接口请求失败", null);
                     }
