@@ -543,7 +543,9 @@ public class TypechoUsersController {
                 if (user.getLogged() == 0) {
                     updateLogin.put("activated", userTime);
                 }
+
                 TypechoUsers updateuser = JSON.parseObject(JSON.toJSONString(updateLogin), TypechoUsers.class);
+
                 Integer rows = service.update(updateuser);
 
                 //删除之前的token后，存入redis(防止积累导致内存溢出，超时时间默认是24小时)
@@ -593,6 +595,7 @@ public class TypechoUsersController {
                 jsonToMap.put("token", name + DigestUtils.md5DigestAsHex(Token.getBytes()));
                 jsonToMap.put("time", regdate);
                 jsonToMap.put("group", "contributor");
+                jsonToMap.put("groupKey", "contributor");
                 jsonToMap.put("mail", "");
                 jsonToMap.put("url", "");
                 jsonToMap.put("screenName", userapi.getNickName());
@@ -856,6 +859,7 @@ public class TypechoUsersController {
                 String userTime = String.valueOf(date).substring(0, 10);
                 jsonToMap.put("created", userTime);
                 jsonToMap.put("group", "contributor");
+                jsonToMap.put("groupKey", "contributor");
 
                 jsonToMap.put("password", passwd);
                 //jsonToMap.remove("introduce");
