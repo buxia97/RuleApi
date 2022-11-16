@@ -266,10 +266,15 @@ public class TypechoUsersController {
             json.remove("address");
             json.remove("pay");
             Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
-            String group = map.get("group").toString();
-            if (!group.equals("administrator")) {
+            if(map.size()>0){
+                String group = map.get("group").toString();
+                if (!group.equals("administrator")) {
+                    json.remove("assets");
+                }
+            }else{
                 json.remove("assets");
             }
+
 
             TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
             if(json.get("avatar")==null){
@@ -289,6 +294,7 @@ public class TypechoUsersController {
 
             return response.toString();
         } catch (Exception e) {
+            System.out.println(e);
             JSONObject response = new JSONObject();
 
             response.put("code", 0);
