@@ -131,7 +131,7 @@ public class SystemController {
             return response.toString();
         } catch (Exception e) {
             e.printStackTrace();
-            return Result.getResultJson(0,"请输入正确的访问key",null);
+            return Result.getResultJson(0,"配置文件读取出错",null);
         }
     }
     /***

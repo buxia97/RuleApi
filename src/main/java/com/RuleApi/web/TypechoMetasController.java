@@ -66,6 +66,7 @@ public class TypechoMetasController {
     ResultAll Result = new ResultAll();
     baseFull baseFull = new baseFull();
     UserStatus UStatus = new UserStatus();
+    EditFile editFile = new EditFile();
     /***
      * 查询分类或标签下的文章
      *
@@ -274,6 +275,7 @@ public class TypechoMetasController {
             if (!group.equals("administrator")) {
                 return Result.getResultJson(0, "你没有操作权限", null);
             }
+            String logUid = map.get("uid").toString();
             TypechoMetas update = new TypechoMetas();
             Map jsonToMap =null;
             if (StringUtils.isNotBlank(params)) {
@@ -284,6 +286,7 @@ public class TypechoMetasController {
             }
 
             int rows = service.update(update);
+            editFile.setLog("管理员"+logUid+"请求修改分类"+jsonToMap.get("mid").toString());
             JSONObject response = new JSONObject();
             response.put("code" , rows);
             response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
@@ -312,6 +315,7 @@ public class TypechoMetasController {
             if (!group.equals("administrator")) {
                 return Result.getResultJson(0, "你没有操作权限", null);
             }
+            String logUid = map.get("uid").toString();
             TypechoMetas insert = new TypechoMetas();
             Map jsonToMap =null;
             if (StringUtils.isNotBlank(params)) {
@@ -325,6 +329,7 @@ public class TypechoMetasController {
             }
 
             int rows = service.insert(insert);
+            editFile.setLog("管理员"+logUid+"请求添加分类");
             JSONObject response = new JSONObject();
             response.put("code" , rows);
             response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");

@@ -58,6 +58,7 @@ public class TypechoShopController {
     RedisHelp redisHelp =new RedisHelp();
     ResultAll Result = new ResultAll();
     UserStatus UStatus = new UserStatus();
+    EditFile editFile = new EditFile();
 
     /***
      * 商品列表
@@ -147,6 +148,8 @@ public class TypechoShopController {
         }
         Map jsonToMap =null;
         TypechoShop insert = null;
+        Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+        Integer uid  = Integer.parseInt(map.get("uid").toString());
         if (StringUtils.isNotBlank(params)) {
             jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
             Integer price = 0;
@@ -171,8 +174,6 @@ public class TypechoShopController {
                 jsonToMap.put("vipDiscount",vipDiscount);
             }
             insert = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoShop.class);
-            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
-            Integer uid  = Integer.parseInt(map.get("uid").toString());
             String group = map.get("group").toString();
             if(group.equals("administrator")||group.equals("editor")){
                 jsonToMap.put("status","1");
@@ -187,7 +188,7 @@ public class TypechoShopController {
         }
 
         int rows = service.insert(insert);
-
+        editFile.setLog("用户"+uid+"请求添加商品");
         JSONObject response = new JSONObject();
         response.put("code" , rows);
         response.put("msg"  , rows > 0 ? "添加成功" : "添加失败");
@@ -206,6 +207,8 @@ public class TypechoShopController {
         }
         TypechoShop update = null;
         Map jsonToMap =null;
+        Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+        Integer uid  = Integer.parseInt(map.get("uid").toString());
         if (StringUtils.isNotBlank(params)) {
             jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
             Integer price = 0;
@@ -216,8 +219,6 @@ public class TypechoShopController {
                 }
             }
             // 查询发布者是不是自己，如果是管理员则跳过
-            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
-            Integer uid  = Integer.parseInt(map.get("uid").toString());
             String group = map.get("group").toString();
             if(!group.equals("administrator")&&!group.equals("editor")){
                 Integer sid = Integer.parseInt(jsonToMap.get("id").toString());
@@ -236,7 +237,7 @@ public class TypechoShopController {
         }
 
         int rows = service.update(update);
-
+        editFile.setLog("用户"+uid+"请求修改商品");
         JSONObject response = new JSONObject();
         response.put("code" , rows);
         response.put("msg"  , rows > 0 ? "修改成功" : "修改失败");
@@ -268,6 +269,7 @@ public class TypechoShopController {
         }
 
         int rows =  service.delete(key);
+        editFile.setLog("用户"+uid+"请求删除商品"+key);
         JSONObject response = new JSONObject();
         response.put("code" , rows);
         response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
@@ -300,7 +302,7 @@ public class TypechoShopController {
         shop.setId(Integer.parseInt(key));
         shop.setStatus(1);
         Integer rows = service.update(shop);
-
+        editFile.setLog("管理员"+uid+"请求审核商品"+key);
         JSONObject response = new JSONObject();
         response.put("code" , rows);
         response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");

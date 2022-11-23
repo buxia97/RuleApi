@@ -659,30 +659,30 @@ public class TypechoUsersController {
             TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
             //如果是微信，则走两步判断，是小程序还是APP
             if(jsonToMap.get("appLoginType").toString().equals("weixin")){
-                if(jsonToMap.get("type").toString().equals("applets")){
+                //if(jsonToMap.get("type").toString().equals("applets")){
                     //如果是小程序，走官方接口获取accessToken和openid
                     if (jsonToMap.get("js_code") == null) {
                         return Result.getResultJson(0, "APP配置异常，请检查相关设置", null);
                     }
                     String js_code = jsonToMap.get("js_code").toString();
 
-                    String requestUrl = "https://api.weixin.qq.com/sns/jscode2session?appid="+apiconfig.getAppletsAppid()+"&secret="+apiconfig.getAppletsSecret()+"&js_code="+js_code+"&grant_type=authorization_code";
+                    String requestUrl = "https://api.weixin.qq.com/sns/jscode2session?appid="+apiconfig.getAppletsAppid()+"&secret="+apiconfig.getAppletsSecret()+"&code="+js_code+"&grant_type=authorization_code";
                     String res = HttpClient.doGet(requestUrl);
                     if(res==null){
                         return Result.getResultJson(0, "接口配置异常，请检查相关设置", null);
                     }
 
                     HashMap data = JSON.parseObject(res, HashMap.class);
-                    if(data.get("unionid")==null){
+                    if(data.get("openid")==null){
                         return Result.getResultJson(0, "接口配置异常，请检查相关设置", null);
                     }
-                    jsonToMap.put("accessToken",data.get("unionid"));
+                    jsonToMap.put("accessToken",data.get("openid"));
                     jsonToMap.put("openId",data.get("openid"));
-                }else {
-                    if (jsonToMap.get("accessToken") == null) {
-                        return Result.getResultJson(0, "登录配置异常，请检查相关设置", null);
-                    }
-                }
+//                }else {
+//                    if (jsonToMap.get("accessToken") == null) {
+//                        return Result.getResultJson(0, "登录配置异常，请检查相关设置", null);
+//                    }
+//                }
             }else{
                 if (jsonToMap.get("accessToken") == null) {
                     return Result.getResultJson(0, "登录配置异常，请检查相关设置", null);

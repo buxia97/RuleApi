@@ -1,5 +1,7 @@
 package com.RuleApi.web;
 
+import com.RuleApi.common.EditFile;
+import com.RuleApi.common.RedisHelp;
 import com.RuleApi.common.ResultAll;
 import com.RuleApi.common.UserStatus;
 import com.RuleApi.entity.TypechoApiconfig;
@@ -51,12 +53,15 @@ public class UploadController {
     private String dataprefix;
 
 
+
     @Autowired
     private TypechoApiconfigService apiconfigService;
 
     @Autowired
     private RedisTemplate redisTemplate;
 
+    EditFile editFile = new EditFile();
+    RedisHelp redisHelp =new RedisHelp();
     ResultAll Result = new ResultAll();
     UserStatus UStatus = new UserStatus();
 
@@ -71,6 +76,8 @@ public class UploadController {
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
         }
+        Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+        Integer uid =Integer.parseInt(map.get("uid").toString());
         if(file == null){
             return new UploadMsg(0,"文件为空",null);
         }
@@ -117,9 +124,11 @@ public class UploadController {
             //return new UploadMsg(1,"上传成功",this.path + putObjectRequest.getKey());
             Map<String,String> info =new HashMap<String, String>();
             info.put("url",apiconfig.getCosPath() + putObjectRequest.getKey());
+            editFile.setLog("用户"+uid+"通过cosUpload成功上传了图片");
             return Result.getResultJson(1,"上传成功",info);
 
         } catch (IOException e) {
+            editFile.setLog("用户"+uid+"通过cosUpload上传图片失败");
             return Result.getResultJson(0,"上传失败",null);
         }finally {
             // 关闭客户端(关闭后台线程)
@@ -152,6 +161,8 @@ public class UploadController {
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
         }
+        Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+        Integer uid =Integer.parseInt(map.get("uid").toString());
         TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
 
         String filename = file.getOriginalFilename();
@@ -195,10 +206,12 @@ public class UploadController {
 
             Map<String,String> info =new HashMap<String, String>();
             info.put("url",apiconfig.getWebinfoUploadUrl()+"upload"+"/"+year+"/"+month+"/"+day+"/"+newfile);
+            editFile.setLog("用户"+uid+"通过localUpload成功上传了图片");
             return Result.getResultJson(1,"上传成功",info);
         } catch (IOException e) {
             e.printStackTrace();
         }
+        editFile.setLog("用户"+uid+"通过localUpload上传图片失败");
         return Result.getResultJson(0,"上传失败",null);
     }
 
@@ -212,6 +225,8 @@ public class UploadController {
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
         }
+        Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+        Integer uid =Integer.parseInt(map.get("uid").toString());
         TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
         //获取上传文件MultipartFile
         //返回上传到oss的路径
@@ -257,6 +272,7 @@ public class UploadController {
         String url = apiconfig.getAliyunUrlPrefix()+key;
         Map<String,String> info =new HashMap<String, String>();
         info.put("url",url);
+        editFile.setLog("用户"+uid+"通过ossUpload成功上传了图片");
         return Result.getResultJson(1,"上传成功",info);
     }
     /**
@@ -269,6 +285,8 @@ public class UploadController {
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
         }
+        Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+        Integer uid =Integer.parseInt(map.get("uid").toString());
         String oldFileName = file.getOriginalFilename();
         //检查是否是图片
         BufferedImage bi = null;
@@ -360,10 +378,12 @@ public class UploadController {
             ftpClient.disconnect();
             Map<String,String> info =new HashMap<String, String>();
             info.put("url",apiconfig.getWebinfoUploadUrl()+key);
+            editFile.setLog("用户"+uid+"通过ftpUpload成功上传了图片");
             return Result.getResultJson(1,"上传成功",info);
 
         } catch (Exception e) {
             e.printStackTrace();
+            editFile.setLog("用户"+uid+"通过ftpUpload上传图片失败");
             return Result.getResultJson(0,"上传失败",null);
         }
 

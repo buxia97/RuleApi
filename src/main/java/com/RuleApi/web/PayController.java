@@ -243,7 +243,7 @@ public class PayController {
      * */
     @RequestMapping(value = "/payLogList")
     @ResponseBody
-    public String orderSellList (@RequestParam(value = "token", required = false) String  token) {
+    public String payLogList (@RequestParam(value = "token", required = false) String  token) {
 
         String page = "1";
         String limit = "30";
@@ -273,6 +273,37 @@ public class PayController {
                 list = cacheList;
             }
         }
+        JSONObject response = new JSONObject();
+        response.put("code" , 1);
+        response.put("msg"  , "");
+        response.put("data" , null != list ? list : new JSONArray());
+        response.put("count", list.size());
+        response.put("total", total);
+        return response.toString();
+    }
+    /**
+     * 财务记录(管理员)
+     * */
+    @RequestMapping(value = "/financeList")
+    @ResponseBody
+    public String financeList (@RequestParam(value = "token", required = false) String  token,
+                               @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
+                               @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit) {
+
+        Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
+        if (uStatus == 0) {
+            return Result.getResultJson(0, "用户未登录或Token验证失败", null);
+        }
+        Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+        String group = map.get("group").toString();
+        if (!group.equals("administrator")) {
+            return Result.getResultJson(0, "你没有操作权限", null);
+        }
+        Integer total = 0;
+        TypechoPaylog query = new TypechoPaylog();
+        total = paylogService.total(query);
+        PageList<TypechoPaylog> pageList = paylogService.selectPage(query, page, limit);
+        List<TypechoPaylog> list = pageList.getList();
         JSONObject response = new JSONObject();
         response.put("code" , 1);
         response.put("msg"  , "");
@@ -737,7 +768,8 @@ public class PayController {
                 .sorted(Map.Entry.<K, V>comparingByKey()).forEachOrdered(e -> result.put(e.getKey(), e.getValue()));
         return result;
     }
-    @RequestMapping(value = "/EPayNotify", method = RequestMethod.POST)
+
+    @RequestMapping(value = "/EPayNotify")
     @ResponseBody
     public String EPayNotify(HttpServletRequest request,
                          HttpServletResponse response) throws AlipayApiException {

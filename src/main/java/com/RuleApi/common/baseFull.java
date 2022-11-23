@@ -13,6 +13,9 @@ import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+
+
+
 public class baseFull {
     //数组去重
     public Object[] threeClear(Object[] arr){
@@ -219,4 +222,7 @@ public class baseFull {
             return 0;
         }
     }
+
+
+
 }

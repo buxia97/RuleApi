@@ -86,6 +86,7 @@ public class TypechoContentsController {
     baseFull baseFull = new baseFull();
     UserStatus UStatus = new UserStatus();
     HttpClient HttpClient = new HttpClient();
+    EditFile editFile = new EditFile();
 
     /**
      * 查询文章详情
@@ -376,16 +377,18 @@ public class TypechoContentsController {
             if(uStatus==0){
                 return Result.getResultJson(0,"用户未登录或Token验证失败",null);
             }
+
             String isRepeated = redisHelp.getRedis(token+"_isRepeated",redisTemplate);
             if(isRepeated==null){
                 redisHelp.setRedis(token+"_isRepeated","1",5,redisTemplate);
             }else{
                 return Result.getResultJson(0,"你的操作太频繁了",null);
             }
+            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            Integer logUid =Integer.parseInt(map.get("uid").toString());
             if (StringUtils.isNotBlank(params)) {
                 jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
                 //获取发布者信息
-                Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
                 String uid = map.get("uid").toString();
                 //判断是否开启邮箱验证
                 TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
@@ -513,7 +516,6 @@ public class TypechoContentsController {
 
                 //处理完分类标签后，处理挂载的商品
                 if(sid>-1){
-                    Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
                     Integer uid  = Integer.parseInt(map.get("uid").toString());
                     //判断商品是不是自己的
                     TypechoShop shop = new TypechoShop();
@@ -529,7 +531,7 @@ public class TypechoContentsController {
 
             }
 
-
+            editFile.setLog("用户"+logUid+"请求发布了新文章");
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );
             response.put("data" , rows);
@@ -559,6 +561,8 @@ public class TypechoContentsController {
             if(uStatus==0){
                 return Result.getResultJson(0,"用户未登录或Token验证失败",null);
             }
+            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            Integer logUid =Integer.parseInt(map.get("uid").toString());
             if (StringUtils.isNotBlank(params)) {
                 jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
                 //生成typecho数据库格式的修改时间戳
@@ -571,7 +575,6 @@ public class TypechoContentsController {
                 }
 
                 //验证用户是否为作品的作者，以及权限
-                Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
                 Integer uid =Integer.parseInt(map.get("uid").toString());
                 String group = map.get("group").toString();
                 if(!group.equals("administrator")&&!group.equals("editor")){
@@ -675,7 +678,6 @@ public class TypechoContentsController {
 
                 //处理完分类标签后，处理挂载的商品
                 if(sid>-1){
-                    Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
                     Integer uid  = Integer.parseInt(map.get("uid").toString());
                     //判断商品是不是自己的
                     TypechoShop shop = new TypechoShop();
@@ -699,7 +701,7 @@ public class TypechoContentsController {
                 }
             }
 
-
+            editFile.setLog("用户"+logUid+"请求修改了文章"+cid);
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );
             response.put("data" , rows);
@@ -728,9 +730,11 @@ public class TypechoContentsController {
             if(!group.equals("administrator")){
                 return Result.getResultJson(0,"你没有操作权限",null);
             }
+            Integer logUid =Integer.parseInt(map.get("uid").toString());
             int rows = service.delete(key);
             //删除与分类的映射
             int st = relationshipsService.delete(key);
+            editFile.setLog("管理员"+logUid+"请求删除文章"+key);
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );
             response.put("data" , rows);
@@ -759,6 +763,7 @@ public class TypechoContentsController {
             if(!group.equals("administrator")&&!group.equals("editor")){
                 return Result.getResultJson(0,"你没有操作权限",null);
             }
+            Integer logUid =Integer.parseInt(map.get("uid").toString());
             TypechoContents info = service.selectByKey(key);
             info.setCid(Integer.parseInt(key));
             info.setStatus("publish");
@@ -786,7 +791,7 @@ public class TypechoContentsController {
             }
 
 
-
+            editFile.setLog("管理员"+logUid+"请求审核文章"+key);
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );
             response.put("data" , rows);
@@ -807,6 +812,8 @@ public class TypechoContentsController {
             if(uStatus==0){
                 return Result.getResultJson(0,"用户未登录或Token验证失败",null);
             }
+            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            Integer logUid =Integer.parseInt(map.get("uid").toString());
             TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
             String fieldstext = apiconfig.getFields();
             Integer status = 1;
@@ -845,7 +852,7 @@ public class TypechoContentsController {
             }else{
                 rows = fieldsService.insert(fields);
             }
-
+            editFile.setLog("用户"+logUid+"请求设置自定义字段");
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );
             response.put("data" , rows);
@@ -872,7 +879,8 @@ public class TypechoContentsController {
             String group = map.get("group").toString();
             if(!group.equals("administrator")){
                 return Result.getResultJson(0,"你没有操作权限",null);
-            }
+            };
+            Integer logUid =Integer.parseInt(map.get("uid").toString());
             TypechoContents info = service.selectByKey(key);
             Long date = System.currentTimeMillis();
             String time = String.valueOf(date).substring(0,10);
@@ -881,7 +889,7 @@ public class TypechoContentsController {
             info.setCid(Integer.parseInt(key));
             info.setIsrecommend(recommend);
             Integer rows = service.update(info);
-
+            editFile.setLog("管理员"+logUid+"请求推荐文章"+key);
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );
             response.put("data" , rows);
@@ -893,7 +901,7 @@ public class TypechoContentsController {
     }
 
     /***
-     * 文章推荐
+     * 文章置顶
      */
     @RequestMapping(value = "/addTop")
     @ResponseBody
@@ -909,6 +917,7 @@ public class TypechoContentsController {
             if(!group.equals("administrator")){
                 return Result.getResultJson(0,"你没有操作权限",null);
             }
+            Integer logUid =Integer.parseInt(map.get("uid").toString());
             TypechoContents info = service.selectByKey(key);
             //生成typecho数据库格式的修改时间戳
             Long date = System.currentTimeMillis();
@@ -918,7 +927,7 @@ public class TypechoContentsController {
             info.setCid(Integer.parseInt(key));
             info.setIstop(istop);
             Integer rows = service.update(info);
-
+            editFile.setLog("管理员"+logUid+"请求置顶文章"+key);
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );
             response.put("data" , rows);

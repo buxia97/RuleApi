@@ -54,6 +54,7 @@ public class TypechoAdsController {
     ResultAll Result = new ResultAll();
     baseFull baseFull = new baseFull();
     UserStatus UStatus = new UserStatus();
+    EditFile editFile = new EditFile();
 
 
 
@@ -256,6 +257,7 @@ public class TypechoAdsController {
             }
             insert.setUid(Integer.parseInt(uid));
             int rows = service.insert(insert);
+            editFile.setLog("用户"+uid+"请求发布了新广告");
             JSONObject response = new JSONObject();
             response.put("code" , rows);
             response.put("msg"  , rows > 0 ? "添加成功，等待管理员审核" : "添加失败");
@@ -315,7 +317,7 @@ public class TypechoAdsController {
             update.setStatus(0);
         }
         int rows = service.update(update);
-
+        editFile.setLog("用户"+uid+"请求修改了广告");
         JSONObject response = new JSONObject();
         response.put("code" , rows);
         response.put("msg"  , rows > 0 ? "修改成功，等待管理员审核" : "修改失败");
@@ -337,7 +339,9 @@ public class TypechoAdsController {
         if (!group.equals("administrator")) {
             return Result.getResultJson(0, "你没有操作权限", null);
         }
+        String uid = map.get("uid").toString();
         Integer rows =  service.delete(id);
+        editFile.setLog("管理员"+uid+"请求删除广告"+id);
         JSONObject response = new JSONObject();
         response.put("code" ,rows > 0 ? 1: 0 );
         response.put("data" , rows);
@@ -360,10 +364,11 @@ public class TypechoAdsController {
         if (!group.equals("administrator")) {
             return Result.getResultJson(0, "你没有操作权限", null);
         }
+        String uid = map.get("uid").toString();
         TypechoAds ads = service.selectByKey(id);
         ads.setStatus(1);
         Integer rows = service.update(ads);
-
+        editFile.setLog("管理员"+uid+"请求审核广告"+id);
         JSONObject response = new JSONObject();
         response.put("code" ,rows > 0 ? 1: 0 );
         response.put("data" , rows);
@@ -386,6 +391,7 @@ public class TypechoAdsController {
         if (!group.equals("administrator")) {
             return Result.getResultJson(0, "你没有操作权限", null);
         }
+        String logUid = map.get("uid").toString();
         if(day<=0){
             return Result.getResultJson(0,"购买天数不正确",null);
         }
@@ -430,6 +436,7 @@ public class TypechoAdsController {
         paylog.setSubject("系统赠送广告位时间"+day+"天");
         paylogService.insert(paylog);
         //修改广告信息
+        editFile.setLog("管理员"+uid+"请求续期广告"+id+"总计"+day+"天");
         Integer rows = service.update(ads);
         JSONObject response = new JSONObject();
         response.put("code" ,rows > 0 ? 1: 0 );
@@ -475,7 +482,7 @@ public class TypechoAdsController {
                 adsConfigJSon.put("startAdsPrice",startAdsPrice);
                 adsConfigJSon.put("startAdsNum",startAdsCurNum);
                 redisHelp.delete(this.dataprefix+"_adsConfig",redisTemplate);
-                redisHelp.setKey(this.dataprefix+"_adsConfig",adsConfigJSon,600,redisTemplate);
+                redisHelp.setKey(this.dataprefix+"_adsConfig",adsConfigJSon,5,redisTemplate);
             }
 
         }catch (Exception e){

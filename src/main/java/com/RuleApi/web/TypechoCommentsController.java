@@ -63,6 +63,7 @@ public class TypechoCommentsController {
     ResultAll Result = new ResultAll();
     UserStatus UStatus = new UserStatus();
     baseFull baseFull = new baseFull();
+    EditFile editFile = new EditFile();
 
     /***
      * 查询评论
@@ -213,6 +214,8 @@ public class TypechoCommentsController {
             if(uStatus==0){
                 return Result.getResultJson(0,"用户未登录或Token验证失败",null);
             }
+            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            Integer logUid =Integer.parseInt(map.get("uid").toString());
             String isRepeated = redisHelp.getRedis(token+"_isRepeated",redisTemplate);
             if(isRepeated==null){
                 redisHelp.setRedis(token+"_isRepeated","1",5,redisTemplate);
@@ -236,7 +239,6 @@ public class TypechoCommentsController {
                 Integer isEmail = apiconfig.getIsEmail();
 
                 //获取发布者信息
-                Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
                 Integer cuid =Integer.parseInt(map.get("uid").toString());
                 Long date = System.currentTimeMillis();
                 String created = String.valueOf(date).substring(0,10);
@@ -403,6 +405,7 @@ public class TypechoCommentsController {
             if(cstatus == "waiting"){
                 addtext = "，将在审核通过后显示！";
             }
+            editFile.setLog("用户"+logUid+"提交发布评论，IP："+ip);
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );
             response.put("data" , rows);
@@ -432,6 +435,7 @@ public class TypechoCommentsController {
             if(!group.equals("administrator")){
                 return Result.getResultJson(0,"你没有操作权限",null);
             }
+            Integer logUid =Integer.parseInt(map.get("uid").toString());
             Map jsonToMap =new HashMap();
             //String group = (String) redisHelp.getValue("userInfo"+token,"group",redisTemplate);
             if (StringUtils.isNotBlank(params)) {
@@ -449,6 +453,7 @@ public class TypechoCommentsController {
             }
             TypechoComments comments = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoComments.class);
             Integer rows = service.update(comments);
+            editFile.setLog("管理员"+logUid+"修改了评论"+jsonToMap.get("coid"));
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );
             response.put("data" , rows);
@@ -475,6 +480,7 @@ public class TypechoCommentsController {
             //String group = (String) redisHelp.getValue("userInfo"+token,"group",redisTemplate);
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             String group = map.get("group").toString();
+            Integer logUid =Integer.parseInt(map.get("uid").toString());
             if(!group.equals("administrator")&&!group.equals("editor")){
                 return Result.getResultJson(0,"你没有操作权限",null);
             }
@@ -529,7 +535,7 @@ public class TypechoCommentsController {
             }
 
 
-
+            editFile.setLog("管理员"+logUid+"审核了评论"+key);
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );
             response.put("data" , rows);
@@ -557,7 +563,7 @@ public class TypechoCommentsController {
             if(!group.equals("administrator")){
                 return Result.getResultJson(0,"你没有操作权限",null);
             }
-
+            Integer logUid =Integer.parseInt(map.get("uid").toString());
             //更新文章评论数量
             TypechoComments comments = service.selectByKey(key);
             Integer cid = comments.getCid();
@@ -570,6 +576,7 @@ public class TypechoCommentsController {
             contentsService.update(contents);
 
             int rows = service.delete(key);
+            editFile.setLog("管理员"+logUid+"删除了评论"+key);
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );
             response.put("data" , rows);
