@@ -159,7 +159,7 @@ public class TypechoCommentsController {
                         Long date = System.currentTimeMillis();
                         String curTime = String.valueOf(date).substring(0, 10);
                         Integer viptime  = userinfo.getVip();
-                        if(viptime>Integer.parseInt(curTime)||viptime.equals(1)){
+                        if(viptime>Integer.parseInt(curTime)){
                             json.put("isvip", 1);
                         }
                         if(viptime.equals(1)){

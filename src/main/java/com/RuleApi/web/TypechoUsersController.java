@@ -124,9 +124,10 @@ public class TypechoUsersController {
             } else {
                 TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
                 PageList<TypechoUsers> pageList = service.selectPage(query, page, limit, searchKey, order);
-                List list = pageList.getList();
+                List<TypechoUsers> list = pageList.getList();
                 for (int i = 0; i < list.size(); i++) {
                     Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
+                    TypechoUsers userInfo = list.get(i);
                     //获取用户等级
                     Integer uid = Integer.parseInt(json.get("uid").toString());
                     TypechoComments comments = new TypechoComments();
@@ -145,7 +146,17 @@ public class TypechoUsersController {
                             json.put("avatar", apiconfig.getWebinfoAvatar() + "null");
                         }
                     }
-
+                    json.put("isvip", 0);
+                    Long date = System.currentTimeMillis();
+                    String curTime = String.valueOf(date).substring(0, 10);
+                    Integer viptime  = userInfo.getVip();
+                    if(viptime>Integer.parseInt(curTime)){
+                        json.put("isvip", 1);
+                    }
+                    if(viptime.equals(1)){
+                        //永久VIP
+                        json.put("isvip", 2);
+                    }
 
 
                     jsonList.add(json);
@@ -1482,6 +1493,18 @@ public class TypechoUsersController {
                 user.setAssets(assets);
                 service.update(user);
                 userlog.setCid(0);
+                //添加财务记录
+                Long date = System.currentTimeMillis();
+                String curTime = String.valueOf(date).substring(0, 10);
+                TypechoPaylog paylog = new TypechoPaylog();
+                paylog.setStatus(1);
+                paylog.setCreated(Integer.parseInt(curTime));
+                paylog.setUid(uid);
+                paylog.setOutTradeNo(curTime+"withdraw");
+                paylog.setTotalAmount("-"+num);
+                paylog.setPaytype("withdraw");
+                paylog.setSubject("申请提现");
+                paylogService.insert(paylog);
             } else {
                 userlog.setCid(-2);
             }

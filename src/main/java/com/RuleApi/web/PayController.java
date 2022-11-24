@@ -20,6 +20,7 @@ import org.apache.poi.hssf.usermodel.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.DigestUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -42,6 +43,8 @@ import java.util.regex.Pattern;
 @RequestMapping(value = "/pay")
 public class PayController {
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @Autowired
     private RedisTemplate redisTemplate;
@@ -64,6 +67,9 @@ public class PayController {
 
     @Value("${web.prefix}")
     private String dataprefix;
+
+    @Value("${mybatis.configuration.variables.prefix}")
+    private String prefix;
 
     RedisHelp redisHelp =new RedisHelp();
     ResultAll Result = new ResultAll();
@@ -286,7 +292,8 @@ public class PayController {
      * */
     @RequestMapping(value = "/financeList")
     @ResponseBody
-    public String financeList (@RequestParam(value = "token", required = false) String  token,
+    public String financeList (@RequestParam(value = "searchParams", required = false) String  searchParams,
+                               @RequestParam(value = "token", required = false) String  token,
                                @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
                                @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit) {
 
@@ -301,7 +308,11 @@ public class PayController {
         }
         Integer total = 0;
         TypechoPaylog query = new TypechoPaylog();
-        total = paylogService.total(query);
+        if (StringUtils.isNotBlank(searchParams)) {
+            JSONObject object = JSON.parseObject(searchParams);
+            query = object.toJavaObject(TypechoPaylog.class);
+            total = paylogService.total(query);
+        }
         PageList<TypechoPaylog> pageList = paylogService.selectPage(query, page, limit);
         List<TypechoPaylog> list = pageList.getList();
         JSONObject response = new JSONObject();
@@ -312,6 +323,29 @@ public class PayController {
         response.put("total", total);
         return response.toString();
     }
+    /**
+     * 财务记录(管理员)
+     * */
+    @RequestMapping(value = "/financeTotal")
+    @ResponseBody
+    public String financeTotal (@RequestParam(value = "token", required = false) String  token){
+        Map financeData = new HashMap<String, Integer>();
+        Integer recharge = jdbcTemplate.queryForObject("SELECT SUM(total_amount) FROM '"+prefix+"_paylog' where `status` = 1 and (`subject` = '扫码支付' or `subject` = '微信APP支付' or `subject` = '卡密充值' or `subject` = '系统充值');", Integer.class);
+        Integer trade = jdbcTemplate.queryForObject("SELECT SUM(total_amount) FROM '"+prefix+"_paylog' where `status` = 1 and (`paytype` = 'buyshop' or `paytype` = 'buyvip' or `paytype` = 'toReward' or `paytype` = 'buyAds');", Integer.class);
+        Integer withdraw = jdbcTemplate.queryForObject("SELECT SUM(total_amount) FROM '"+prefix+"_paylog' where `status` = 1 and (`paytype` = 'withdraw' or `subject` = '系统扣款');", Integer.class);
+        Integer income = jdbcTemplate.queryForObject("SELECT SUM(total_amount) FROM '"+prefix+"_paylog' where `status` = 1 and (`paytype` = 'clock' or `paytype` = 'sellshop' or `paytype` = 'reward');", Integer.class);
+        trade = trade * -1;
+        financeData.put("recharge",recharge);
+        financeData.put("trade",trade);
+        financeData.put("withdraw",withdraw);
+        financeData.put("income",income);
+        JSONObject response = new JSONObject();
+        response.put("code" ,1 );
+        response.put("data" , financeData);
+        response.put("msg"  , "");
+        return response.toString();
+    }
+
     /**
      * 微信支付
      * */
