@@ -12,6 +12,7 @@ import com.alipay.api.DefaultAlipayClient;
 import com.alipay.api.internal.util.AlipaySignature;
 import com.alipay.api.request.AlipayTradePrecreateRequest;
 import com.alipay.api.response.AlipayTradePrecreateResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.wxpay.sdk.WXPay;
 import com.github.wxpay.sdk.WXPayConstants;
 import com.github.wxpay.sdk.WXPayUtil;
@@ -59,8 +60,6 @@ public class PayController {
     @Autowired
     private TypechoPaykeyService paykeyService;
 
-    @Autowired(required = false)
-    private WxPayService wxpayService;
 
     @Autowired
     private TypechoApiconfigService apiconfigService;
@@ -361,137 +360,88 @@ public class PayController {
     @RequestMapping(value = "/WxPay")
     @ResponseBody
     public String wxAdd(HttpServletRequest request,@RequestParam(value = "price", required = false) Integer price,@RequestParam(value = "token", required = false) String  token) throws Exception {
-        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-        if(uStatus==0){
-            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-        }
-        Pattern pattern = Pattern.compile("[0-9]*");
-        if(!pattern.matcher(price.toString()).matches()){
-            return Result.getResultJson(0,"充值金额必须为正整数",null);
-        }
-        if(price <= 0){
-            return Result.getResultJson(0,"充值金额不正确",null);
+        Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
+        if (uStatus == 0) {
+            return Result.getResultJson(0, "用户未登录或Token验证失败", null);
         }
         TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
-        WXConfigUtil config = new WXConfigUtil();
-        WXPay wxpay = new WXPay(config);
-        Map<String, String> data = new HashMap<>();
-        //生成商户订单号，不可重复
-        data.put("appid", apiconfig.getWxpayAppId());
-        data.put("mch_id", apiconfig.getWxpayMchId());
-        data.put("nonce_str", WXPayUtil.generateNonceStr());
-        String body = "订单支付";
-        data.put("body", body);
-        data.put("out_trade_no", System.currentTimeMillis()+ "");
-        data.put("total_fee", String.valueOf((int)(price)));
-        //自己的服务器IP地址
-        data.put("spbill_create_ip", request.getRemoteAddr());
-        //异步通知地址（请注意必须是外网）
-        data.put("notify_url", apiconfig.getWxpayNotifyUrl());
-        //交易类型
-        data.put("trade_type", "APP");
-        //附加数据，在查询API和支付通知中原样返回，该字段主要用于商户携带订单的自定义数据
-        data.put("attach", "shop");
-        data.put("sign", WXPayUtil.generateSignature(data, apiconfig.getWxpayKey(),
-                WXPayConstants.SignType.MD5));
-        //使用官方API请求预付订单
-        Map<String, String> response = wxpay.unifiedOrder(data);
-        System.out.println(response);
-        if ("SUCCESS".equals(response.get("return_code"))) {
-            //主要返回以下5个参数
-            Map<String, String> param = new HashMap<>();
-            param.put("appid",apiconfig.getWxpayAppId());
-            param.put("partnerid", response.get("mch_id"));
-            param.put("prepayid", response.get("prepay_id"));
-            param.put("package", "Sign=WXPay");
-            param.put("noncestr", WXPayUtil.generateNonceStr());
-            param.put("timestamp", System.currentTimeMillis() / 1000 + "");
-            param.put("sign", WXPayUtil.generateSignature(param, config.getKey(),
-                    WXPayConstants.SignType.MD5));
-            System.out.println(param);
+        //商户订单号
+        Date now = new Date();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss");//可以方便地修改日期格式
+        String timeID = dateFormat.format(now);
+        String outTradeNo = timeID+"WxPay";
+        Map<String, String> data = WeChatPayUtils.native_payment_order(price.toString(), "微信商品下单", outTradeNo);
+        if("200".equals(data.get("code"))){
             //先生成订单
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer uid  = Integer.parseInt(map.get("uid").toString());
             Long date = System.currentTimeMillis();
             String created = String.valueOf(date).substring(0,10);
-            Integer TotalAmount = price * apiconfig.getScale();
             TypechoPaylog paylog = new TypechoPaylog();
+            Integer TotalAmount = price * apiconfig.getScale();
             paylog.setStatus(0);
             paylog.setCreated(Integer.parseInt(created));
             paylog.setUid(uid);
-            paylog.setOutTradeNo(response.get("out_trade_no"));
+            paylog.setOutTradeNo(outTradeNo);
             paylog.setTotalAmount(TotalAmount.toString());
-            paylog.setPaytype("WXPay");
-            paylog.setSubject("微信APP支付");
+            paylog.setPaytype("WxPay");
+            paylog.setSubject("扫码支付");
             paylogService.insert(paylog);
+            //再返回二维码
+            data.put("outTradeNo", outTradeNo);
+            data.put("totalAmount", price.toString());
 
-
-            JSONObject res = new JSONObject();
-            res.put("code" , 1);
-            res.put("msg"  , "");
-            res.put("data" , param);
-            return response.toString();
-        }else {
-            return Result.getResultJson(0,"支付失败",null);
+            JSONObject toResponse = new JSONObject();
+            toResponse.put("code" ,1);
+            toResponse.put("data" , data);
+            toResponse.put("msg"  , "获取成功");
+            return toResponse.toString();
+        } else {
+            JSONObject toResponse = new JSONObject();
+            toResponse.put("code", 0);
+            toResponse.put("data", "");
+            toResponse.put("msg", "请求失败");
+            return toResponse.toString();
         }
+
     }
     /**
      * 微信回调
      * */
     @RequestMapping(value = "/wxPayNotify")
     @ResponseBody
-    public String wxPayNotify(HttpServletRequest request) {
+    public String wxPayNotify(
+            HttpServletRequest request,
+            HttpServletResponse response) throws Exception {
         TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
-        String resXml = "";
-        try {
-
-            InputStream inputStream = request.getInputStream();
-            //将InputStream转换成xmlString
-            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-            StringBuilder sb = new StringBuilder();
-            String line = null;
-            try {
-
-                while ((line = reader.readLine()) != null) {
-
-                    sb.append(line + "\n");
-                }
-            } catch (IOException e) {
-
-                System.out.println(e.getMessage());
-            } finally {
-
-                try {
-
-                    inputStream.close();
-                } catch (IOException e) {
-
-                    e.printStackTrace();
-                }
-            }
-            resXml = sb.toString();
-
+        Map<String, Object> map = new ObjectMapper().readValue(request.getInputStream(), Map.class);
+        Map<String, Object> dataMap = WeChatPayUtils.paramDecodeForAPIV3(map);
+        //判断是否⽀付成功
+        if("SUCCESS".equals(dataMap.get("trade_state"))){
             //支付完成后，写入充值日志
-            String out_trade_no = request.getParameter("out_trade_no");
-            String total_amount = request.getParameter("total_fee");
-            Integer scale = apiconfig.getScale();
-            Integer integral = Double.valueOf(total_amount).intValue() * scale;
+            String trade_no = dataMap.get("transaction_id").toString();
+            String out_trade_no = dataMap.get("out_trade_no").toString();
+
 
             Long date = System.currentTimeMillis();
             String created = String.valueOf(date).substring(0,10);
             TypechoPaylog paylog = new TypechoPaylog();
             //根据订单和发起人，是否有数据库对应，来是否充值成功
             paylog.setOutTradeNo(out_trade_no);
+            paylog.setStatus(0);
             List<TypechoPaylog> logList= paylogService.selectList(paylog);
             if(logList.size() > 0){
                 Integer pid = logList.get(0).getPid();
                 Integer uid = logList.get(0).getUid();
                 paylog.setStatus(1);
-                paylog.setTradeNo(out_trade_no);
+                paylog.setTradeNo(trade_no);
                 paylog.setPid(pid);
                 paylog.setCreated(Integer.parseInt(created));
                 paylogService.update(paylog);
                 //订单修改后，插入用户表
+                String total_amount = logList.get(0).getTotalAmount();
+                Integer scale = apiconfig.getScale();
+                Integer integral = Double.valueOf(total_amount).intValue() * scale;
                 TypechoUsers users = usersService.selectByKey(uid);
                 Integer oldAssets = users.getAssets();
                 Integer assets = oldAssets + integral;
@@ -499,19 +449,32 @@ public class PayController {
                 usersService.update(users);
             }else{
                 System.out.println("数据库不存在订单");
-                String result = "<xml>" + "<return_code><![CDATA[FAIL]]></return_code>" + "<return_msg><![CDATA[报文为空]]></return_msg>" + "</xml> ";
-                return result;
+                Map<String, String> returnMap = new HashMap<>();
+                returnMap.put("code", "FALL");
+                returnMap.put("message", "");
+                //将返回微信的对象转换为xml
+                String returnXml = WeChatPayUtils.mapToXml(returnMap);
+                return returnXml;
             }
 
-            //写入本地方法
-            String result = wxpayService.payBack(resXml);
-            return result;
-        } catch (Exception e) {
-
-            System.out.println("微信手机支付失败:" + e.getMessage());
-            String result = "<xml>" + "<return_code><![CDATA[FAIL]]></return_code>" + "<return_msg><![CDATA[报文为空]]></return_msg>" + "</xml> ";
-            return result;
+            //给微信发送我已接收通知的响应
+            //创建给微信响应的对象
+            Map<String, String> returnMap = new HashMap<>();
+            returnMap.put("code", "SUCCESS");
+            returnMap.put("message", "成功");
+            //将返回微信的对象转换为xml
+            String returnXml = WeChatPayUtils.mapToXml(returnMap);
+            return returnXml;
         }
+        //支付失败
+        //创建给微信响应的对象
+        Map<String, String> returnMap = new HashMap<>();
+        returnMap.put("code", "FALL");
+        returnMap.put("message", "");
+        //将返回微信的对象转换为xml
+        String returnXml = WeChatPayUtils.mapToXml(returnMap);
+        return returnXml;
+
     }
 
     /**
