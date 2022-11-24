@@ -329,11 +329,20 @@ public class PayController {
     @RequestMapping(value = "/financeTotal")
     @ResponseBody
     public String financeTotal (@RequestParam(value = "token", required = false) String  token){
+        Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
+        if (uStatus == 0) {
+            return Result.getResultJson(0, "用户未登录或Token验证失败", null);
+        }
+        Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+        String group = map.get("group").toString();
+        if (!group.equals("administrator")) {
+            return Result.getResultJson(0, "你没有操作权限", null);
+        }
         Map financeData = new HashMap<String, Integer>();
-        Integer recharge = jdbcTemplate.queryForObject("SELECT SUM(total_amount) FROM '"+prefix+"_paylog' where `status` = 1 and (`subject` = '扫码支付' or `subject` = '微信APP支付' or `subject` = '卡密充值' or `subject` = '系统充值');", Integer.class);
-        Integer trade = jdbcTemplate.queryForObject("SELECT SUM(total_amount) FROM '"+prefix+"_paylog' where `status` = 1 and (`paytype` = 'buyshop' or `paytype` = 'buyvip' or `paytype` = 'toReward' or `paytype` = 'buyAds');", Integer.class);
-        Integer withdraw = jdbcTemplate.queryForObject("SELECT SUM(total_amount) FROM '"+prefix+"_paylog' where `status` = 1 and (`paytype` = 'withdraw' or `subject` = '系统扣款');", Integer.class);
-        Integer income = jdbcTemplate.queryForObject("SELECT SUM(total_amount) FROM '"+prefix+"_paylog' where `status` = 1 and (`paytype` = 'clock' or `paytype` = 'sellshop' or `paytype` = 'reward');", Integer.class);
+        Integer recharge = jdbcTemplate.queryForObject("SELECT SUM(total_amount) FROM `"+prefix+"_paylog` where `status` = 1 and (`subject` = '扫码支付' or `subject` = '微信APP支付' or `subject` = '卡密充值' or `subject` = '系统充值');", Integer.class);
+        Integer trade = jdbcTemplate.queryForObject("SELECT SUM(total_amount) FROM `"+prefix+"_paylog` where `status` = 1 and (`paytype` = 'buyshop' or `paytype` = 'buyvip' or `paytype` = 'toReward' or `paytype` = 'buyAds');", Integer.class);
+        Integer withdraw = jdbcTemplate.queryForObject("SELECT SUM(total_amount) FROM `"+prefix+"_paylog` where `status` = 1 and (`paytype` = 'withdraw' or `subject` = '系统扣款');", Integer.class);
+        Integer income = jdbcTemplate.queryForObject("SELECT SUM(total_amount) FROM `"+prefix+"_paylog` where `status` = 1 and (`paytype` = 'clock' or `paytype` = 'sellshop' or `paytype` = 'reward');", Integer.class);
         trade = trade * -1;
         financeData.put("recharge",recharge);
         financeData.put("trade",trade);
