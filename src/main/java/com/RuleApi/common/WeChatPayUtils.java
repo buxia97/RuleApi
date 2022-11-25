@@ -1,4 +1,6 @@
 package com.RuleApi.common;
+import com.RuleApi.entity.TypechoApiconfig;
+import com.RuleApi.service.TypechoApiconfigService;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.github.wxpay.sdk.WXPayUtil;
@@ -54,38 +56,27 @@ public class WeChatPayUtils {
     /*公众号/小程序信息*/
     //appId
     private static final String APP_ID = "";
-    //secret
-    private static final String APP_SECRET = "";
 
-    /*商户信息*/
-    //商户号mch_id
-    private static final String MCH_ID = "";
-    //商户私钥mch_key
-    private static final String MCH_KEY = "下载证书的***key.pem文件内容";
-    //商户证书序列号
-    private static final String MCH_SERIAL_NO = "";
-    //API3私钥
-    private static final String MCH_API_V3_KEY = "";
 
     /*支付信息*/
     //native 统一下单API
-    public static final String NATIVE_PAY_API = "";
+    public static final String NATIVE_PAY_API = "https://api.mch.weixin.qq.com/v3/pay/transactions/native";
     //native 商户订单号查单API
-    public static final String NATIVE_PAY_OUT_TRADE_NO_QUERY_ORDER_API ="";
-    //native 微信系统订单号查单API
-    public static final String NATIVE_PAY_TRANSACTIONS_ID_QUERY_ORDER_API = "";
+    public static final String NATIVE_PAY_OUT_TRADE_NO_QUERY_ORDER_API ="https://api.mch.weixin.qq.com/v3/pay/transactions/id/";
+
     //货币类型
     public static final String CURRENCY_CNY = "CNY";
-    //支付类型
-    public static final String TRADE_TYPE = "NATIVE";
-    //异步回调地址
-    public static final String NOTIFY_URL = "";
+
 
     /**
      * NATIVE获取CloseableHttpClient
      */
-    private static CloseableHttpClient initHttpClient(){
+    private static CloseableHttpClient initHttpClient(TypechoApiconfig apiconfig){
         PrivateKey merchantPrivateKey = null;
+        String MCH_ID = apiconfig.getWxpayMchId();
+        String MCH_KEY = apiconfig.getWxpayKey();
+        String MCH_SERIAL_NO = apiconfig.getMchSerialNo();
+        String MCH_API_V3_KEY = apiconfig.getMchApiV3Key();
         try {
             merchantPrivateKey = PemUtil
                     .loadPrivateKey(new ByteArrayInputStream(MCH_KEY.getBytes("utf-8")));
@@ -110,6 +101,7 @@ public class WeChatPayUtils {
             return httpClient;
         } catch (Exception e){
             e.printStackTrace();
+            System.out.println(e);
         }
         return null;
     }
@@ -120,10 +112,11 @@ public class WeChatPayUtils {
      * @param body
      * @return
      */
-    public static Map<String, String> native_payment_order(String money, String body, String outTradeNo) {
+    public static Map<String, String> native_payment_order(String money, String body, String outTradeNo,TypechoApiconfig apiconfig) {
         try {
-            CloseableHttpClient httpClient = initHttpClient();
-
+            CloseableHttpClient httpClient = initHttpClient(apiconfig);
+            String MCH_ID = apiconfig.getWxpayMchId();
+            String NOTIFY_URL = apiconfig.getWxpayNotifyUrl();
             HttpPost httpPost = new HttpPost(NATIVE_PAY_API);
             // 请求body参数
             String reqdata = "{"
@@ -136,7 +129,7 @@ public class WeChatPayUtils {
                     + "\"description\":\"" + body + "\","
                     + "\"notify_url\":\"" + NOTIFY_URL + "\","
                     + "\"out_trade_no\":\"" + outTradeNo + "\","
-                    + "\"goods_tag\":\"课程购买\","
+                    + "\"goods_tag\":\"商品购买\","
                     + "\"appid\":\"" + APP_ID + "\""
                     + "}";
             StringEntity entity = new StringEntity(reqdata, "utf-8");
@@ -186,8 +179,9 @@ public class WeChatPayUtils {
      * @param outTradeNo 商户订单号
      * @return
      */
-    public static Map<String, String> native_query_order(String outTradeNo) {
+    public static Map<String, String> native_query_order(String outTradeNo,TypechoApiconfig apiconfig) {
         CloseableHttpResponse response = null;
+        String MCH_ID = apiconfig.getWxpayMchId();
         try {
             String url = NATIVE_PAY_OUT_TRADE_NO_QUERY_ORDER_API + outTradeNo;
             //请求URL
@@ -198,7 +192,7 @@ public class WeChatPayUtils {
             //完成签名并执行请求
             HttpGet httpGet = new HttpGet(uriBuilder.build());
             httpGet.addHeader("Accept", "application/json");
-            response = initHttpClient().execute(httpGet);
+            response = initHttpClient(apiconfig).execute(httpGet);
             int statusCode = response.getStatusLine().getStatusCode();
             Map<String, String> resultMap = new HashMap<>();
             if (statusCode == 200) {
@@ -250,7 +244,8 @@ public class WeChatPayUtils {
      * @param map
      * @return
      */
-    public static Map<String, Object> paramDecodeForAPIV3(Map<String, Object> map){
+    public static Map<String, Object> paramDecodeForAPIV3(Map<String, Object> map,TypechoApiconfig apiconfig){
+        String MCH_API_V3_KEY = apiconfig.getMchApiV3Key();
         //使用微信SDK提供的AesUtil工具类和APIV3密钥进行签名验证
         AesUtil aesUtil = new AesUtil(MCH_API_V3_KEY.getBytes(StandardCharsets.UTF_8));
         JSONObject paramsObj = new JSONObject(map);

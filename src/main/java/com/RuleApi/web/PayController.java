@@ -117,7 +117,7 @@ public class PayController {
                 "    \"out_trade_no\":\"" + order_no + "\"," +
                 "    \"total_amount\":\"" + total_fee + "\"," +
                 "    \"body\":\"" + body + "\"," +
-                "    \"subject\":\"扫码支付\"," +
+                "    \"subject\":\"商品购买\"," +
                 "    \"timeout_express\":\"90m\"}");//设置业务参数
         request.setNotifyUrl(apiconfig.getAlipayNotifyUrl());
         AlipayTradePrecreateResponse response = alipayClient.execute(request);//通过alipayClient调用API，获得对应的response类
@@ -365,12 +365,14 @@ public class PayController {
             return Result.getResultJson(0, "用户未登录或Token验证失败", null);
         }
         TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+
+
         //商户订单号
         Date now = new Date();
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss");//可以方便地修改日期格式
         String timeID = dateFormat.format(now);
         String outTradeNo = timeID+"WxPay";
-        Map<String, String> data = WeChatPayUtils.native_payment_order(price.toString(), "微信商品下单", outTradeNo);
+        Map<String, String> data = WeChatPayUtils.native_payment_order(price.toString(), "微信商品下单", outTradeNo,apiconfig);
         if("200".equals(data.get("code"))){
             //先生成订单
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
@@ -415,7 +417,7 @@ public class PayController {
             HttpServletResponse response) throws Exception {
         TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
         Map<String, Object> map = new ObjectMapper().readValue(request.getInputStream(), Map.class);
-        Map<String, Object> dataMap = WeChatPayUtils.paramDecodeForAPIV3(map);
+        Map<String, Object> dataMap = WeChatPayUtils.paramDecodeForAPIV3(map,apiconfig);
         //判断是否⽀付成功
         if("SUCCESS".equals(dataMap.get("trade_state"))){
             //支付完成后，写入充值日志
@@ -467,6 +469,7 @@ public class PayController {
             return returnXml;
         }
         //支付失败
+        System.out.println("微信支付失败");
         //创建给微信响应的对象
         Map<String, String> returnMap = new HashMap<>();
         returnMap.put("code", "FALL");

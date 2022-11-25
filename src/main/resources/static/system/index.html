@@ -17,7 +17,7 @@
 					<a href="javascript:;">基本信息</a>
 				</div>
 				<div class="menu-box">
-					<a href="javascript:;">系统参数设置</a>
+					<a href="javascript:;">系统设置</a>
 					<div class="menu-box-sub">
 						<a href="javascript:;" @click="toPage(13)" :class="page=='13'?'active':''">APIKEY</a>
 						<a href="javascript:;" @click="toPage(2)" :class="page=='2'?'active':''">邮箱配置</a>
@@ -27,7 +27,7 @@
 					</div>
 				</div>
 				<div class="menu-box">
-					<a href="javascript:;">远程存储设置</a>
+					<a href="javascript:;">存储设置</a>
 					<div class="menu-box-sub">
 						<a href="javascript:;" @click="toPage(5)" :class="page=='5'?'active':''">COS设置</a>
 						<a href="javascript:;" @click="toPage(6)" :class="page=='6'?'active':''">OSS设置</a>
@@ -35,7 +35,7 @@
 					</div>
 				</div>
 				<div class="menu-box">
-					<a href="javascript:;">支付模块设置</a>
+					<a href="javascript:;">财务设置</a>
 					<div class="menu-box-sub">
 						<a href="javascript:;" @click="toPage(12)" :class="page=='12'?'active':''">模块配置</a>
 						<a href="javascript:;" @click="toPage(7)" :class="page=='7'?'active':''">支付宝</a>
@@ -270,23 +270,7 @@
 			<!--微信支付设置-->
 			<div class="form-main" v-if="page==9">
 				<div class="form-box">
-					微信支付是微信官方提供的支付接口，<span class="text-red">证书文件apiclient_cert.p12请放在服务器/opt/weixin/文件夹</span>
-				</div>
-				<div class="form-box">
-					<p>微信小程序APPID<span>可不填，负责微信小程序登录</span></p>
-					<input type="text" class="input-text" v-model="appletsAppid" placeholder="请输入appletsAppid"/>
-				</div>
-				<div class="form-box">
-					<p>微信小程序Secret<span>可不填，负责微信小程序登录</span></p>
-					<input type="text" class="input-text" v-model="appletsSecret" placeholder="请输入appletsSecret"/>
-				</div>
-				<div class="form-box">
-					<p>QQ小程序APPID<span>可不填，负责QQ小程序登录</span></p>
-					<input type="text" class="input-text" v-model="qqAppletsAppid" placeholder="请输入qqAppletsAppid"/>
-				</div>
-				<div class="form-box">
-					<p>QQ小程序Secret<span>可不填，负责QQ小程序登录</span></p>
-					<input type="text" class="input-text" v-model="qqAppletsSecret" placeholder="请输入qqAppletsSecret"/>
+					微信支付是微信官方提供的支付接口，<span class="text-red">目前采用Native模式生成二维码并唤醒微信</span>
 				</div>
 				<div class="form-box">
 					<p>公众号APP Id</p>
@@ -297,11 +281,20 @@
 					<input type="text" class="input-text" v-model="wxpayMchId" placeholder="请输入商户号"/>
 				</div>
 				<div class="form-box">
+					<p>商户证书序列号</p>
+					<input type="text" class="input-text" v-model="mchSerialNo" placeholder="请输入商户证书序列号"/>
+				</div>
+
+				<div class="form-box">
 					<p>支付密钥</p>
-					<textarea type="text" class="text" v-model="wxpayKey" placeholder="请输入支付密钥"></textarea>
+					<textarea type="text" class="text" v-model="wxpayKey" placeholder="请输入支付密钥，证书的***key.pem文件内容"></textarea>
 				</div>
 				<div class="form-box">
-					<p>回调地址<span class="text-gray">范例：http://127.0.0.1:8081/pay/wxPayNotify 请将127.0.0.1:8081部分替换为自己的API域名，需要注意区分https和http<</span></p>
+					<p>API3私钥</p>
+					<input type="text" class="input-text" v-model="mchApiV3Key" placeholder="请输入API3私钥"/>
+				</div>
+				<div class="form-box">
+					<p>回调地址<span class="text-gray">范例：http://127.0.0.1:8081/pay/wxPayNotify 请将127.0.0.1:8081部分替换为自己的API域名，需要注意区分https和http</span></p>
 					<input type="text" class="input-text" v-model="wxpayNotifyUrl" placeholder="请输入回调地址"/>
 				</div>
 				<div class="form-btn">

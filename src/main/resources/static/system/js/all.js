@@ -82,6 +82,8 @@ var vm = new Vue({
 		wxpayMchId:'',
 		wxpayKey:'',
 		wxpayNotifyUrl:'',
+		mchSerialNo:'',
+		mchApiV3Key:'',
 		//配置信息
 		applicationText:"",
 		//评论配置
@@ -236,6 +238,9 @@ var vm = new Vue({
 					that.wxpayMchId=res.data.data.wxpayMchId;
 					that.wxpayKey=res.data.data.wxpayKey;
 					that.wxpayNotifyUrl=res.data.data.wxpayNotifyUrl;
+
+					that.mchSerialNo=res.data.data.mchSerialNo;
+					that.mchApiV3Key=res.data.data.mchApiV3Key;
 
 					//支付模块
 					that.scale = res.data.data.scale;
@@ -624,6 +629,8 @@ var vm = new Vue({
 				wxpayMchId:that.wxpayMchId,
 				wxpayKey:that.wxpayKey,
 				wxpayNotifyUrl:that.wxpayNotifyUrl,
+				mchSerialNo:that.mchSerialNo,
+				mchApiV3Key:that.mchApiV3Key,
 			}
 			axios.get(url,{
 				params:{

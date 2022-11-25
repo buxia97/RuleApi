@@ -61,6 +61,8 @@
         <result column="epayPid" property="epayPid" />
         <result column="epayKey" property="epayKey" />
         <result column="epayNotifyUrl" property="epayNotifyUrl" />
+        <result column="mchSerialNo" property="mchSerialNo" />
+        <result column="mchApiV3Key" property="mchApiV3Key" />
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -106,6 +108,9 @@
         `wxpayMchId`,
         `wxpayKey`,
         `wxpayNotifyUrl`,
+        `mchSerialNo`,
+        `mchApiV3Key`,
+
         `auditlevel`,
         `forbidden`,
         `fields`,
@@ -253,6 +258,12 @@
             <if test ='null != wxpayNotifyUrl'>
                 `wxpayNotifyUrl`,
             </if>
+            <if test ='null != mchSerialNo'>
+                `mchSerialNo`,
+            </if>
+            <if test ='null != mchApiV3Key'>
+                `mchApiV3Key`,
+            </if>
             <if test ='null != auditlevel'>
                 `auditlevel`,
             </if>
@@ -397,6 +408,7 @@
             <if test ='null != alipayNotifyUrl'>
                 #{alipayNotifyUrl},
             </if>
+
             <if test ='null != appletsAppid'>
                 #{appletsAppid},
             </if>
@@ -420,6 +432,12 @@
             </if>
             <if test ='null != wxpayNotifyUrl'>
                 #{wxpayNotifyUrl},
+            </if>
+            <if test ='null != mchSerialNo'>
+                #{mchSerialNo},
+            </if>
+            <if test ='null != mchApiV3Key'>
+                #{mchApiV3Key},
             </if>
             <if test ='null != auditlevel'>
                 #{auditlevel},
@@ -509,6 +527,8 @@
             <if test ='null != wxpayMchId'>`wxpayMchId` = #{wxpayMchId},</if>
             <if test ='null != wxpayKey'>`wxpayKey` = #{wxpayKey},</if>
             <if test ='null != wxpayNotifyUrl'>`wxpayNotifyUrl` = #{wxpayNotifyUrl},</if>
+            <if test ='null != mchSerialNo'>`mchSerialNo` = #{mchSerialNo},</if>
+            <if test ='null != mchApiV3Key'>`mchApiV3Key` = #{mchApiV3Key},</if>
             <if test ='null != auditlevel'>`auditlevel` = #{auditlevel},</if>
             <if test ='null != forbidden'>`forbidden` = #{forbidden},</if>
             <if test ='null != fields'>`fields` = #{fields},</if>

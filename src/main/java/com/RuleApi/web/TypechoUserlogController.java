@@ -704,6 +704,10 @@ public class TypechoUserlogController {
             if(clean.equals(6)){
                 jdbcTemplate.execute("DELETE FROM "+this.prefix+"_user WHERE activated < "+cleanUserTime+";");
             }
+            //未支付订单清理
+            if(clean.equals(7)){
+                jdbcTemplate.execute("DELETE FROM "+this.prefix+"_paylog WHERE status=0;");
+            }
             JSONObject response = new JSONObject();
             response.put("code" , 1);
             response.put("msg"  , "清理成功");

@@ -289,4 +289,15 @@ public class TypechoApiconfig implements Serializable {
      */
     private String epayNotifyUrl;
 
+    /**
+     * MchSerialNo
+     */
+    private String mchSerialNo;
+
+    /**
+     * mchApiV3Key
+     */
+    private String mchApiV3Key;
+
+
 }

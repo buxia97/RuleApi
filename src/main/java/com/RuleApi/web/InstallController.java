@@ -486,6 +486,22 @@ public class InstallController {
         }else{
             text+="配置中心模块，字段epayNotifyUrl已经存在，无需添加。";
         }
+        //查询配置中心表是否存在mchSerialNo字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'mchSerialNo';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `mchSerialNo` text COMMENT '微信支付商户证书序列号'");
+            text+="配置中心模块，字段mchSerialNo添加完成。";
+        }else{
+            text+="配置中心模块，字段mchSerialNo已经存在，无需添加。";
+        }
+        //查询配置中心表是否存在mchApiV3Key字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'mchApiV3Key';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `mchApiV3Key` text COMMENT '微信支付API3私钥'");
+            text+="配置中心模块，字段mchApiV3Key添加完成。";
+        }else{
+            text+="配置中心模块，字段mchApiV3Key已经存在，无需添加。";
+        }
         //添加邀请码模块
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_invitation';", Integer.class);
         if (i == 0){
