@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.*;
 
@@ -992,6 +993,14 @@ public class TypechoContentsController {
         String cacheImage = redisHelp.getRedis(this.dataprefix+"_"+"ImagePexels_"+searchKey+"_"+page,redisTemplate);
         String imgList = "";
         TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+        if(searchKey!=null){
+            try {
+                searchKey = URLDecoder.decode(searchKey, "utf-8");
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+        }
+
         if(cacheImage==null){
             if(searchKey==null){
 
