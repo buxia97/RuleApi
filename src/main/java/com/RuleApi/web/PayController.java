@@ -348,7 +348,6 @@ public class PayController {
         if(withdraw!=null){
             withdraw = withdraw * -1;
         }
-        withdraw = withdraw * -1;
         financeData.put("recharge",recharge);
         financeData.put("trade",trade);
         financeData.put("withdraw",withdraw);
