@@ -342,7 +342,12 @@ public class PayController {
         Integer trade = jdbcTemplate.queryForObject("SELECT SUM(total_amount) FROM `"+prefix+"_paylog` where `status` = 1 and (`paytype` = 'buyshop' or `paytype` = 'buyvip' or `paytype` = 'toReward' or `paytype` = 'buyAds');", Integer.class);
         Integer withdraw = jdbcTemplate.queryForObject("SELECT SUM(total_amount) FROM `"+prefix+"_paylog` where `status` = 1 and (`paytype` = 'withdraw' or `subject` = '系统扣款');", Integer.class);
         Integer income = jdbcTemplate.queryForObject("SELECT SUM(total_amount) FROM `"+prefix+"_paylog` where `status` = 1 and (`paytype` = 'clock' or `paytype` = 'sellshop' or `paytype` = 'reward');", Integer.class);
-        trade = trade * -1;
+        if(trade!=null){
+            trade = trade * -1;
+        }
+        if(withdraw!=null){
+            withdraw = withdraw * -1;
+        }
         withdraw = withdraw * -1;
         financeData.put("recharge",recharge);
         financeData.put("trade",trade);

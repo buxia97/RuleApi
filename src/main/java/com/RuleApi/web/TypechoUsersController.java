@@ -441,43 +441,52 @@ public class TypechoUsersController {
             Integer isInvite = apiconfig.getIsInvite();
             //如果是微信，则走两步判断，是小程序还是APP
             if(jsonToMap.get("appLoginType").toString().equals("weixin")){
-                //if(jsonToMap.get("type").toString().equals("applets")){
+
                     //走官方接口获取accessToken和openid
                     if (jsonToMap.get("js_code") == null) {
                         return Result.getResultJson(0, "APP配置异常，js_code参数不存在", null);
                     }
                     String js_code = jsonToMap.get("js_code").toString();
+                    if(jsonToMap.get("type").toString().equals("applets")){
+                        String requestUrl = "https://api.weixin.qq.com/sns/jscode2session?appid="+apiconfig.getAppletsAppid()+"&secret="+apiconfig.getAppletsSecret()+"&js_code="+js_code+"&grant_type=authorization_code";
+                        String res = HttpClient.doGet(requestUrl);
+                        if(res==null){
+                            return Result.getResultJson(0, "接口配置异常，微信官方接口请求失败", null);
+                        }
+                        System.out.println("微信登录小程序接口返回"+res);
+                        HashMap data = JSON.parseObject(res, HashMap.class);
+                        if(data.get("unionid")==null){
+                            return Result.getResultJson(0, "接口配置异常，小程序unionid获取失败", null);
+                        }
+                        jsonToMap.put("accessToken",data.get("unionid"));
+                        jsonToMap.put("openId",data.get("unionid"));
+                    }else{
+                        String requestUrl = "https://api.weixin.qq.com/sns/oauth2/access_token?appid="+apiconfig.getWxAppId()+"&secret="+apiconfig.getWxAppSecret()+"&code="+js_code+"&grant_type=authorization_code";
+                        String res = HttpClient.doGet(requestUrl);
+                        if(res==null){
+                            return Result.getResultJson(0, "接口配置异常，微信官方接口请求失败", null);
+                        }
+                        System.out.println("微信登录app接口返回"+res);
+                        HashMap data = JSON.parseObject(res, HashMap.class);
+                        if(data.get("openid")==null){
+                            return Result.getResultJson(0, "接口配置异常，openid获取失败", null);
+                        }
+                        jsonToMap.put("accessToken",data.get("openid"));
+                        jsonToMap.put("openId",data.get("openid"));
+                    }
 
-                    String requestUrl = "https://api.weixin.qq.com/sns/jscode2session?appid="+apiconfig.getAppletsAppid()+"&secret="+apiconfig.getAppletsSecret()+"&code="+js_code+"&grant_type=authorization_code";
-                    String res = HttpClient.doGet(requestUrl);
-                    if(res==null){
-                        return Result.getResultJson(0, "接口配置异常，微信官方接口请求失败", null);
-                    }
-                    System.out.println("微信接口返回"+res);
-                    HashMap data = JSON.parseObject(res, HashMap.class);
-                    if(data.get("openid")==null){
-                        return Result.getResultJson(0, "接口配置异常，openid获取失败", null);
-                    }
-                    jsonToMap.put("accessToken",data.get("openid"));
-                    jsonToMap.put("openId",data.get("openid"));
-//                }else {
-//                    if (jsonToMap.get("accessToken") == null) {
-//                        return Result.getResultJson(0, "登录配置异常，accessToken参数不存在", null);
-//                    }
-//                }
-            }else{
-                if (jsonToMap.get("accessToken") == null) {
-                    return Result.getResultJson(0, "登录配置异常，accessToken参数不存在", null);
-                }
+
             }
+
             //QQ也要走两步判断
             if(jsonToMap.get("appLoginType").toString().equals("qq")){
+                if (jsonToMap.get("js_code") == null) {
+                    return Result.getResultJson(0, "APP配置异常，js_code参数不存在", null);
+                }
+                String js_code = jsonToMap.get("js_code").toString();
                 if(jsonToMap.get("type").toString().equals("applets")){
                     //如果是小程序，走官方接口获取accessToken和openid
-                    if (jsonToMap.get("js_code") == null) {
-                        return Result.getResultJson(0, "APP配置异常，js_code参数不存在", null);
-                    }
-                    String js_code = jsonToMap.get("js_code").toString();
+
 
                     String requestUrl = "https://api.q.qq.com/sns/jscode2session?appid="+apiconfig.getQqAppletsAppid()+"&secret="+apiconfig.getQqAppletsSecret()+"&js_code="+js_code+"&grant_type=authorization_code";
                     String res = HttpClient.doGet(requestUrl);
@@ -487,15 +496,17 @@ public class TypechoUsersController {
                     }
 
                     HashMap data = JSON.parseObject(res, HashMap.class);
-                    if(data.get("unionid")==null){
+                    if(data.get("openid")==null){
                         return Result.getResultJson(0, "接口配置异常，unionid获取失败", null);
                     }
-                    jsonToMap.put("accessToken",data.get("unionid"));
+                    jsonToMap.put("accessToken",data.get("openid"));
                     jsonToMap.put("openId",data.get("openid"));
                 }else {
                     if (jsonToMap.get("accessToken") == null) {
                         return Result.getResultJson(0, "登录配置异常，accessToken参数不存在", null);
                     }
+                    jsonToMap.put("accessToken",jsonToMap.get("openId"));
+                    jsonToMap.put("openId",jsonToMap.get("openId"));
                 }
             }else{
                 if (jsonToMap.get("accessToken") == null) {
@@ -503,10 +514,10 @@ public class TypechoUsersController {
                 }
             }
             TypechoUserapi userapi = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoUserapi.class);
-            String accessToken = userapi.getAccessToken();
+            String openid = userapi.getOpenId();
             String loginType = userapi.getAppLoginType();
             TypechoUserapi isApi = new TypechoUserapi();
-            isApi.setAccessToken(accessToken);
+            isApi.setOpenId(openid);
             isApi.setAppLoginType(loginType);
             List<TypechoUserapi> apiList = userapiService.selectList(isApi);
             //大于0则走向登陆，小于0则进行注册
@@ -669,35 +680,43 @@ public class TypechoUsersController {
             }
             TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
             //如果是微信，则走两步判断，是小程序还是APP
+            //如果是微信，则走两步判断，是小程序还是APP
             if(jsonToMap.get("appLoginType").toString().equals("weixin")){
-                //if(jsonToMap.get("type").toString().equals("applets")){
-                    //如果是小程序，走官方接口获取accessToken和openid
-                    if (jsonToMap.get("js_code") == null) {
-                        return Result.getResultJson(0, "APP配置异常，请检查相关设置", null);
-                    }
-                    String js_code = jsonToMap.get("js_code").toString();
 
-                    String requestUrl = "https://api.weixin.qq.com/sns/jscode2session?appid="+apiconfig.getAppletsAppid()+"&secret="+apiconfig.getAppletsSecret()+"&code="+js_code+"&grant_type=authorization_code";
+                //走官方接口获取accessToken和openid
+                if (jsonToMap.get("js_code") == null) {
+                    return Result.getResultJson(0, "APP配置异常，js_code参数不存在", null);
+                }
+                String js_code = jsonToMap.get("js_code").toString();
+                if(jsonToMap.get("type").toString().equals("applets")){
+                    String requestUrl = "https://api.weixin.qq.com/sns/jscode2session?appid="+apiconfig.getAppletsAppid()+"&secret="+apiconfig.getAppletsSecret()+"&js_code="+js_code+"&grant_type=authorization_code";
                     String res = HttpClient.doGet(requestUrl);
                     if(res==null){
-                        return Result.getResultJson(0, "接口配置异常，请检查相关设置", null);
+                        return Result.getResultJson(0, "接口配置异常，微信官方接口请求失败", null);
                     }
-
+                    System.out.println("微信登录小程序接口返回"+res);
                     HashMap data = JSON.parseObject(res, HashMap.class);
                     if(data.get("openid")==null){
-                        return Result.getResultJson(0, "接口配置异常，请检查相关设置", null);
+                        return Result.getResultJson(0, "接口配置异常，小程序openid获取失败，错误码"+data.get("errcode").toString(), null);
                     }
                     jsonToMap.put("accessToken",data.get("openid"));
                     jsonToMap.put("openId",data.get("openid"));
-//                }else {
-//                    if (jsonToMap.get("accessToken") == null) {
-//                        return Result.getResultJson(0, "登录配置异常，请检查相关设置", null);
-//                    }
-//                }
-            }else{
-                if (jsonToMap.get("accessToken") == null) {
-                    return Result.getResultJson(0, "登录配置异常，请检查相关设置", null);
+                }else{
+                    String requestUrl = "https://api.weixin.qq.com/sns/oauth2/access_token?appid="+apiconfig.getWxAppId()+"&secret="+apiconfig.getWxAppSecret()+"&code="+js_code+"&grant_type=authorization_code";
+                    String res = HttpClient.doGet(requestUrl);
+                    if(res==null){
+                        return Result.getResultJson(0, "接口配置异常，微信官方接口请求失败", null);
+                    }
+                    System.out.println("微信登录app接口返回"+res);
+                    HashMap data = JSON.parseObject(res, HashMap.class);
+                    if(data.get("openid")==null){
+                        return Result.getResultJson(0, "接口配置异常，openid获取失败，错误码"+data.get("errcode").toString(), null);
+                    }
+                    jsonToMap.put("accessToken",data.get("openid"));
+                    jsonToMap.put("openId",data.get("openid"));
                 }
+
+
             }
             //QQ也要走两步判断
             if(jsonToMap.get("appLoginType").toString().equals("qq")){
@@ -718,12 +737,14 @@ public class TypechoUsersController {
                     if(data.get("unionid")==null){
                         return Result.getResultJson(0, "接口配置异常，请检查相关设置", null);
                     }
-                    jsonToMap.put("accessToken",data.get("unionid"));
+                    jsonToMap.put("accessToken",data.get("openid"));
                     jsonToMap.put("openId",data.get("openid"));
                 }else {
                     if (jsonToMap.get("accessToken") == null) {
                         return Result.getResultJson(0, "登录配置异常，请检查相关设置", null);
                     }
+                    jsonToMap.put("accessToken",jsonToMap.get("openId"));
+                    jsonToMap.put("openId",jsonToMap.get("openId"));
                 }
             }else{
                 if (jsonToMap.get("accessToken") == null) {

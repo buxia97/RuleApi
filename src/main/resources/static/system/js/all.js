@@ -74,6 +74,8 @@ var vm = new Vue({
 		alipayPublicKey:'',
 		alipayNotifyUrl:'',
 		//微信支付
+		wxAppId:'',
+		wxAppSecret:'',
 		appletsAppid:'',
 		appletsSecret:'',
 		qqAppletsAppid:'',
@@ -230,6 +232,8 @@ var vm = new Vue({
 					that.alipayNotifyUrl=res.data.data.alipayNotifyUrl;
 
 					//微信支付
+					that.wxAppId=res.data.data.wxAppId;
+					that.wxAppSecret=res.data.data.wxAppSecret;
 					that.appletsAppid=res.data.data.appletsAppid;
 					that.appletsSecret=res.data.data.appletsSecret;
 					that.qqAppletsAppid=res.data.data.qqAppletsAppid;
@@ -652,6 +656,8 @@ var vm = new Vue({
 			var that = this;
 			var url = "/system/apiConfigUpdate"
 			var data={
+				wxAppId:that.wxAppId,
+				wxAppSecret:that.wxAppSecret,
 				appletsAppid:that.appletsAppid,
 				appletsSecret:that.appletsSecret,
 				qqAppletsAppid:that.qqAppletsAppid,

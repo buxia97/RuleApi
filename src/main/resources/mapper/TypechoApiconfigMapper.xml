@@ -38,6 +38,9 @@
         <result column="alipayPrivateKey" property="alipayPrivateKey" />
         <result column="alipayPublicKey" property="alipayPublicKey" />
         <result column="alipayNotifyUrl" property="alipayNotifyUrl" />
+
+        <result column="wxAppId" property="wxAppId" />
+        <result column="wxAppSecret" property="wxAppSecret" />
         <result column="appletsAppid" property="appletsAppid" />
         <result column="appletsSecret" property="appletsSecret" />
         <result column="qqAppletsAppid" property="qqAppletsAppid" />
@@ -100,6 +103,9 @@
         `alipayPrivateKey`,
         `alipayPublicKey`,
         `alipayNotifyUrl`,
+
+        `wxAppId`,
+        `wxAppSecret`,
         `appletsAppid`,
         `appletsSecret`,
         `qqAppletsAppid`,
@@ -233,6 +239,12 @@
             </if>
             <if test ='null != alipayNotifyUrl'>
                 `alipayNotifyUrl`,
+            </if>
+            <if test ='null != wxAppId'>
+                `wxAppId`,
+            </if>
+            <if test ='null != wxAppSecret'>
+                `wxAppSecret`,
             </if>
             <if test ='null != appletsAppid'>
                 `appletsAppid`,
@@ -409,6 +421,12 @@
                 #{alipayNotifyUrl},
             </if>
 
+            <if test ='null != wxAppId'>
+                #{wxAppId},
+            </if>
+            <if test ='null != wxAppSecret'>
+                #{wxAppSecret},
+            </if>
             <if test ='null != appletsAppid'>
                 #{appletsAppid},
             </if>
@@ -519,6 +537,9 @@
             <if test ='null != alipayPrivateKey'>`alipayPrivateKey` = #{alipayPrivateKey},</if>
             <if test ='null != alipayPublicKey'>`alipayPublicKey` = #{alipayPublicKey},</if>
             <if test ='null != alipayNotifyUrl'>`alipayNotifyUrl` = #{alipayNotifyUrl},</if>
+
+            <if test ='null != wxAppId'>`wxAppId` = #{wxAppId},</if>
+            <if test ='null != wxAppSecret'>`wxAppSecret` = #{wxAppSecret},</if>
             <if test ='null != appletsAppid'>`appletsAppid` = #{appletsAppid},</if>
             <if test ='null != appletsSecret'>`appletsSecret` = #{appletsSecret},</if>
             <if test ='null != qqAppletsAppid'>`qqAppletsAppid` = #{qqAppletsAppid},</if>

@@ -185,6 +185,16 @@ public class TypechoApiconfig implements Serializable {
     private String alipayNotifyUrl;
 
     /**
+     * wxAppId
+     */
+    private String wxAppId;
+
+    /**
+     * wxAppSecret
+     */
+    private String wxAppSecret;
+
+    /**
      * appletsAppid  
      */
     private String appletsAppid;
