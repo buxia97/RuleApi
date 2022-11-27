@@ -45,6 +45,12 @@ public class TypechoCommentsController {
     private TypechoUsersService usersService;
 
     @Autowired
+    private TypechoMetasService metasService;
+
+    @Autowired
+    private TypechoRelationshipsService relationshipsService;
+
+    @Autowired
     private TypechoApiconfigService apiconfigService;
 
     @Autowired
@@ -119,7 +125,10 @@ public class TypechoCommentsController {
                 for (int i = 0; i < list.size(); i++) {
                     Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
                     String cid = json.get("cid").toString();
-                    TypechoContents contentsInfo = contentsService.selectByKey(cid);
+
+
+
+
                     //如果存在上级评论
                     Map<String, String> parentComments = new HashMap<String, String>();
                     if(Integer.parseInt(json.get("parent").toString())>0){
@@ -170,7 +179,33 @@ public class TypechoCommentsController {
 
 
                     json.put("parentComments",parentComments);
-                    json.put("contenTitle",contentsInfo.getTitle());
+
+                    TypechoContents contentsInfo = contentsService.selectByKey(cid);
+                    if(contentsInfo!=null){
+                        json.put("contenTitle",contentsInfo.getTitle());
+                        //加入文章数据
+                        Map contentsJson = new HashMap();
+                        contentsJson.put("cid",contentsInfo.getCid());
+                        contentsJson.put("slug",contentsInfo.getSlug());
+                        contentsJson.put("title",contentsInfo.getTitle());
+                        List<TypechoRelationships> relationships = relationshipsService.selectByKey(cid);
+                        if(relationships.size()>0){
+                            TypechoRelationships rinfo = relationships.get(0);
+                            Integer mid = rinfo.getMid();
+                            TypechoMetas cmetas = metasService.selectByKey(mid);
+                            if(cmetas!=null){
+                                List category = new ArrayList();
+                                Map metasInfo = JSONObject.parseObject(JSONObject.toJSONString(cmetas), Map.class);
+                                category.add(metasInfo);
+                                contentsJson.put("category",category);
+                            }
+                        }
+
+
+                        json.put("contentsInfo",contentsJson);
+                    }
+
+
                     jsonList.add(json);
                     if(uStatus!=0){
                         redisHelp.delete(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchKey+"_"+searchParams+"_"+uid+"_"+order,redisTemplate);

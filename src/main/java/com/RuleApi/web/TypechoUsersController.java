@@ -455,11 +455,11 @@ public class TypechoUsersController {
                         }
                         System.out.println("微信登录小程序接口返回"+res);
                         HashMap data = JSON.parseObject(res, HashMap.class);
-                        if(data.get("unionid")==null){
-                            return Result.getResultJson(0, "接口配置异常，小程序unionid获取失败", null);
+                        if(data.get("openid")==null){
+                            return Result.getResultJson(0, "接口配置异常，小程序openid获取失败", null);
                         }
-                        jsonToMap.put("accessToken",data.get("unionid"));
-                        jsonToMap.put("openId",data.get("unionid"));
+                        jsonToMap.put("accessToken",data.get("openid"));
+                        jsonToMap.put("openId",data.get("openid"));
                     }else{
                         String requestUrl = "https://api.weixin.qq.com/sns/oauth2/access_token?appid="+apiconfig.getWxAppId()+"&secret="+apiconfig.getWxAppSecret()+"&code="+js_code+"&grant_type=authorization_code";
                         String res = HttpClient.doGet(requestUrl);
@@ -499,7 +499,7 @@ public class TypechoUsersController {
 
                     HashMap data = JSON.parseObject(res, HashMap.class);
                     if(data.get("openid")==null){
-                        return Result.getResultJson(0, "接口配置异常，unionid获取失败", null);
+                        return Result.getResultJson(0, "接口配置异常，openid获取失败", null);
                     }
                     jsonToMap.put("accessToken",data.get("openid"));
                     jsonToMap.put("openId",data.get("openid"));
