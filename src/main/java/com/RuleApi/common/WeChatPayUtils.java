@@ -53,10 +53,6 @@ import java.util.*;
  * @author gxw
  */
 public class WeChatPayUtils {
-    /*公众号/小程序信息*/
-    //appId
-    private static final String APP_ID = "";
-
 
     /*支付信息*/
     //native 统一下单API
@@ -130,7 +126,7 @@ public class WeChatPayUtils {
                     + "\"notify_url\":\"" + NOTIFY_URL + "\","
                     + "\"out_trade_no\":\"" + outTradeNo + "\","
                     + "\"goods_tag\":\"商品购买\","
-                    + "\"appid\":\"" + APP_ID + "\""
+                    + "\"appid\":\"" + apiconfig.getWxAppId() + "\""
                     + "}";
             StringEntity entity = new StringEntity(reqdata, "utf-8");
             entity.setContentType("application/json");
