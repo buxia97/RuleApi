@@ -480,11 +480,13 @@ public class TypechoUsersController {
 
             //QQ也要走两步判断
             if(jsonToMap.get("appLoginType").toString().equals("qq")){
-                if (jsonToMap.get("js_code") == null) {
-                    return Result.getResultJson(0, "APP配置异常，js_code参数不存在", null);
-                }
-                String js_code = jsonToMap.get("js_code").toString();
+
+
                 if(jsonToMap.get("type").toString().equals("applets")){
+                    if (jsonToMap.get("js_code") == null) {
+                        return Result.getResultJson(0, "APP配置异常，js_code参数不存在", null);
+                    }
+                    String js_code = jsonToMap.get("js_code").toString();
                     //如果是小程序，走官方接口获取accessToken和openid
 
 

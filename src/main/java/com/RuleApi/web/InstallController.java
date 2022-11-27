@@ -52,14 +52,17 @@ public class InstallController {
             return "Redis连接失败或未安装";
         }
         Integer i = 1;
-        //判断typecho是否安装，或者数据表前缀是否正确
-
         String text = "执行信息 ------";
-        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_users';", Integer.class);
-        if (i == 0){
-            return "Typecho未安装或者数据表前缀不正确，请尝试安装typecho或者修改properties配置文件。";
-        }else{
-            text+="Typecho程序确认安装。";
+        //判断typecho是否安装，或者数据表前缀是否正确
+        try {
+            i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_users';", Integer.class);
+            if (i == 0){
+                return "Typecho未安装或者数据表前缀不正确，请尝试安装typecho或者修改properties配置文件。";
+            }else{
+                text+="Typecho程序确认安装。";
+            }
+        }catch (Exception e){
+            return "Mysql数据库连接失败或未安装";
         }
         //修改请求头
         jdbcTemplate.execute("ALTER TABLE "+prefix+"_comments MODIFY agent varchar(500);");
@@ -397,6 +400,22 @@ public class InstallController {
             text+="配置中心模块，字段qqAppletsSecret添加完成。";
         }else{
             text+="配置中心模块，字段qqAppletsSecret已经存在，无需添加。";
+        }
+        //查询配置中心表是否存在wxAppId字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'wxAppId';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD wxAppId varchar(500) DEFAULT NULL;");
+            text+="配置中心模块，字段wxAppId添加完成。";
+        }else{
+            text+="配置中心模块，字段wxAppId已经存在，无需添加。";
+        }
+        //查询配置中心表是否存在wxAppSecret字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'wxAppSecret';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD wxAppSecret varchar(500) DEFAULT NULL;");
+            text+="配置中心模块，字段wxAppSecret添加完成。";
+        }else{
+            text+="配置中心模块，字段wxAppSecret已经存在，无需添加。";
         }
         //查询配置中心表是否存在fields字段
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'fields';", Integer.class);
