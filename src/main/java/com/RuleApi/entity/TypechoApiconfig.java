@@ -309,5 +309,15 @@ public class TypechoApiconfig implements Serializable {
      */
     private String mchApiV3Key;
 
+    /**
+     * cloudUid
+     */
+    private String cloudUid;
+
+    /**
+     * cloudUrl
+     */
+    private String cloudUrl;
+
 
 }

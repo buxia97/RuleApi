@@ -24,6 +24,7 @@
 						<a href="javascript:;" @click="toPage(3)" :class="page=='3'?'active':''">Mysql设置</a>
 						<a href="javascript:;" @click="toPage(4)" :class="page=='4'?'active':''">Redis设置</a>
 						<a href="javascript:;" @click="toPage(11)" :class="page=='11'?'active':''">缓存设置</a>
+						<a href="javascript:;" @click="toPage(17)" :class="page=='17'?'active':''">CR云控</a>
 					</div>
 				</div>
 				<div class="menu-box">
@@ -498,6 +499,23 @@
 					<button type="button" class="input-text" class="btn" @click="saveEpay()">保存数据</button>
 				</div>
 			</div>
+			<!-- CR应用云控-->
+			<div class="form-main" v-if="page==17">
+				<div class="form-box">
+					CR应用云控平台为群友二开平台，可以通过第三方平台实时管控APP的各项配置，而无需重新打包。云控版本可以提升各方便便捷性，并在云控平台的支持下增加各种DIY功能，但可能导致小程序和应用商城上架受到影响，可以根据需求自行选择。
+				</div>
+				<div class="form-box">
+					<p>云控UID</p>
+					<input type="text" class="input-text" v-model="cloudUid" placeholder="请输入云控UID"/>
+				</div>
+				<div class="form-box">
+					<p>云控Url</p>
+					<input type="text" class="input-text" v-model="cloudUrl" placeholder="请输入云控Url"/>
+				</div>
+				<div class="form-btn">
+					<button type="button" class="input-text" class="btn" @click="saveCloud()">保存数据</button>
+				</div>
+			</div>
 			<!--易支付模块配置结束-->
 			<!--配置文件更新-->
 			<div class="form-text" v-if="page==8">
@@ -561,6 +579,6 @@
 
 <script src="js/vue.js"></script>
 <script src="js/axios.js"></script>
-<script src="js/all.js?v=20220429"></script>
+<script src="js/all.js?v=20221129"></script>
 </body>
 </html>

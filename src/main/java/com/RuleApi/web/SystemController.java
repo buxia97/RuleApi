@@ -700,4 +700,20 @@ public class SystemController {
         }
 
     }
+    /***
+     * CR云控信息
+     */
+    @RequestMapping(value = "/getCRCloud")
+    @ResponseBody
+    public String getCRCloud() {
+        TypechoApiconfig typechoApiconfig = apiconfigService.selectByKey(1);
+        JSONObject json = new JSONObject();
+        json.put("cloudUid", typechoApiconfig.getCloudUid());
+        json.put("cloudUrl", typechoApiconfig.getCloudUrl());
+        JSONObject response = new JSONObject();
+        response.put("code", 1);
+        response.put("msg", "");
+        response.put("data", json);
+        return response.toString();
+    }
 }

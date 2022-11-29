@@ -521,6 +521,22 @@ public class InstallController {
         }else{
             text+="配置中心模块，字段mchApiV3Key已经存在，无需添加。";
         }
+        //查询配置中心表是否存在cloudUid字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'cloudUid';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `cloudUid` varchar(255) DEFAULT '' COMMENT '云控UID'");
+            text+="配置中心模块，字段cloudUid添加完成。";
+        }else{
+            text+="配置中心模块，字段cloudUid已经存在，无需添加。";
+        }
+        //查询配置中心表是否存在cloudUrl字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'cloudUrl';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `cloudUrl` varchar(255) DEFAULT '' COMMENT '云控URL'");
+            text+="配置中心模块，字段cloudUrl添加完成。";
+        }else{
+            text+="配置中心模块，字段cloudUrl已经存在，无需添加。";
+        }
         //添加邀请码模块
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_invitation';", Integer.class);
         if (i == 0){

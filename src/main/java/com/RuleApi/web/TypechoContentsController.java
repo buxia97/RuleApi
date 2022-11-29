@@ -985,7 +985,7 @@ public class TypechoContentsController {
         String  agent =  request.getHeader("User-Agent");
         String isRepeated = redisHelp.getRedis(agent+"_isRepeated_"+ip,redisTemplate);
         if(isRepeated==null){
-            redisHelp.setRedis(agent+"_isRepeated_"+ip,"1",5,redisTemplate);
+            redisHelp.setRedis(agent+"_isRepeated_"+ip,"1",3,redisTemplate);
         }else{
             return Result.getResultJson(0,"你的操作太频繁了",null);
         }
@@ -1019,7 +1019,7 @@ public class TypechoContentsController {
             }
             HashMap  jsonMap = JSON.parseObject(imgList, HashMap.class);
             if(jsonMap.get("code")!=null||jsonMap.get("error")!=null){
-                return Result.getResultJson(0,"图片接口异常",null);
+                return Result.getResultJson(0,"图片获取失败，请重试",null);
             }
             redisHelp.delete(this.dataprefix+"_"+"ImagePexels",redisTemplate);
             redisHelp.setRedis(this.dataprefix+"_"+"ImagePexels_"+searchKey+"_"+page,imgList,21600,redisTemplate);

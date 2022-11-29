@@ -106,6 +106,10 @@ var vm = new Vue({
 		epayPid:"",
 		epayKey:"",
 		epayNotifyUrl:"",
+
+		//云控
+		cloudUid:"",
+		cloudUrl:""
 	},
 	created(){
 		var that = this;
@@ -273,6 +277,10 @@ var vm = new Vue({
 					that.epayPid=res.data.data.epayPid;
 					that.epayKey=res.data.data.epayKey;
 					that.epayNotifyUrl=res.data.data.epayNotifyUrl;
+
+					//云控
+					that.cloudUid=res.data.data.cloudUid;
+					that.cloudUrl=res.data.data.cloudUrl;
 
 				}else{
 					that.outSystem();
@@ -714,6 +722,29 @@ var vm = new Vue({
 				epayPid:that.epayPid,
 				epayKey:that.epayKey,
 				epayNotifyUrl:that.epayNotifyUrl,
+			}
+			axios.get(url,{
+				params:{
+					"webkey":that.webkey,
+					"params":JSON.stringify(that.removeObjectEmptyKey(data))
+				}
+			}).then(function(res){
+				that.toAlert(res.data.msg);
+				if(res.data.code==1){
+					that.getAll();
+				}else{
+					that.outSystem();
+				}
+			}).catch(function (error) {
+				console.log(error);
+			});
+		},
+		saveCloud(){
+			var that = this;
+			var url = "/system/apiConfigUpdate"
+			var data={
+				cloudUid:that.cloudUid,
+				cloudUrl:that.cloudUrl,
 			}
 			axios.get(url,{
 				params:{

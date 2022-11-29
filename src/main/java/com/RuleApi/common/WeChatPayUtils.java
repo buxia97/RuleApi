@@ -74,8 +74,7 @@ public class WeChatPayUtils {
         String MCH_SERIAL_NO = apiconfig.getMchSerialNo();
         String MCH_API_V3_KEY = apiconfig.getMchApiV3Key();
         try {
-            merchantPrivateKey = PemUtil
-                    .loadPrivateKey(new ByteArrayInputStream(MCH_KEY.getBytes("utf-8")));
+            merchantPrivateKey = PemUtil.loadPrivateKey(new ByteArrayInputStream(MCH_KEY.getBytes("utf-8")));
 //            //*加载证书管理器实例*//*
 //            // 加载平台证书（mchId：商户号,mchSerialNo：商户证书序列号,apiV3Key：V3密钥）
 //            AutoUpdateCertificatesVerifier verifier = new AutoUpdateCertificatesVerifier(
@@ -126,7 +125,7 @@ public class WeChatPayUtils {
                     + "\"notify_url\":\"" + NOTIFY_URL + "\","
                     + "\"out_trade_no\":\"" + outTradeNo + "\","
                     + "\"goods_tag\":\"商品购买\","
-                    + "\"appid\":\"" + apiconfig.getWxAppId() + "\""
+                    + "\"appid\":\"" + apiconfig.getWxpayAppId() + "\""
                     + "}";
             StringEntity entity = new StringEntity(reqdata, "utf-8");
             entity.setContentType("application/json");
@@ -137,6 +136,7 @@ public class WeChatPayUtils {
             CloseableHttpResponse response = null;
             Map<String, String> resultMap = new HashMap<>();
             try {
+                System.out.println(httpPost);
                 response = httpClient.execute(httpPost);
 
                 int statusCode = response.getStatusLine().getStatusCode();

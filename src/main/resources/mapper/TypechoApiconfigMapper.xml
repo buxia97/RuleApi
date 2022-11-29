@@ -66,6 +66,8 @@
         <result column="epayNotifyUrl" property="epayNotifyUrl" />
         <result column="mchSerialNo" property="mchSerialNo" />
         <result column="mchApiV3Key" property="mchApiV3Key" />
+        <result column="cloudUid" property="cloudUid" />
+        <result column="cloudUrl" property="cloudUrl" />
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -131,7 +133,9 @@
         `epayUrl`,
         `epayPid`,
         `epayKey`,
-        `epayNotifyUrl`
+        `epayNotifyUrl`,
+        `cloudUid`,
+        `cloudUrl`
     </sql>
 
     <!-- 插入数据 -->
@@ -314,7 +318,13 @@
                 `epayKey`,
             </if>
             <if test ='null != epayNotifyUrl'>
-                `epayNotifyUrl`
+                `epayNotifyUrl`,
+            </if>
+            <if test ='null != cloudUid'>
+                `cloudUid`,
+            </if>
+            <if test ='null != cloudUrl'>
+                `cloudUrl`
             </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
@@ -494,7 +504,13 @@
                 #{epayKey},
             </if>
             <if test ='null != epayNotifyUrl'>
-                #{epayNotifyUrl}
+                #{epayNotifyUrl},
+            </if>
+            <if test ='null != cloudUid'>
+                #{cloudUid},
+            </if>
+            <if test ='null != cloudUrl'>
+                #{cloudUrl}
             </if>
         </trim>
     </insert>
@@ -563,7 +579,9 @@
             <if test ='null != epayUrl'>`epayUrl` = #{epayUrl},</if>
             <if test ='null != epayPid'>`epayPid` = #{epayPid},</if>
             <if test ='null != epayKey'>`epayKey` = #{epayKey},</if>
-            <if test ='null != epayNotifyUrl'>`epayNotifyUrl` = #{epayNotifyUrl}</if>
+            <if test ='null != epayNotifyUrl'>`epayNotifyUrl` = #{epayNotifyUrl},</if>
+            <if test ='null != cloudUid'>`cloudUid` = #{cloudUid},</if>
+            <if test ='null != cloudUrl'>`cloudUrl` = #{cloudUrl}</if>
         </set>
         WHERE `id` = #{id}
     </update>
