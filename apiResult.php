@@ -16,7 +16,8 @@ if(isset($_GET['update'])){
     'version'=>$version,
     'versionIntro'=>$versionIntro,
     'versionUrl'=>$versionUrl,
-	'versionCode'=>$versionCode
+	'versionCode'=>$versionCode,
+	'announcement'=>$announcement
    );
    //输出json
    echo json_encode($result);
