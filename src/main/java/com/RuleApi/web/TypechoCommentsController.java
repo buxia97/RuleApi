@@ -343,7 +343,7 @@ public class TypechoCommentsController {
                                 if(text.indexOf(str) != -1){
                                     cstatus = "waiting";
                                 }
-                                break;
+
                             }
                         }else{
                             if(text.indexOf(forbidden) != -1){
@@ -366,7 +366,6 @@ public class TypechoCommentsController {
                                 if(text.indexOf(str) != -1){
                                     return Result.getResultJson(0,"存在违规内容，评论发布失败",null);
                                 }
-                                break;
                             }
                         }else{
                             if(text.indexOf(forbidden) != -1){
