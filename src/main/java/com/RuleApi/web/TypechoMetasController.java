@@ -239,9 +239,15 @@ public class TypechoMetasController {
      */
     @RequestMapping(value = "/metaInfo")
     @ResponseBody
-    public String metaInfo(@RequestParam(value = "key", required = false) String key) {
+    public String metaInfo(@RequestParam(value = "key", required = false) String key,@RequestParam(value = "slug", required = false, defaultValue = "") String slug) {
         try{
-            TypechoMetas metas = service.selectByKey(key);
+            TypechoMetas metas;
+            //优先处理slug
+            if(slug!=""){
+                metas = service.selectBySlug(slug);
+            }else{
+                metas = service.selectByKey(key);
+            }
             Map json = JSONObject.parseObject(JSONObject.toJSONString(metas), Map.class);
             JSONObject response = new JSONObject();
 

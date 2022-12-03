@@ -52,6 +52,11 @@ public class TypechoMetasServiceImpl implements TypechoMetasService {
 	}
 
 	@Override
+	public TypechoMetas selectBySlug(Object slug) {
+		return dao.selectBySlug(slug);
+	}
+
+	@Override
 	public List<TypechoMetas> selectList(TypechoMetas typechoMetas) {
 		return dao.selectList(typechoMetas);
 	}

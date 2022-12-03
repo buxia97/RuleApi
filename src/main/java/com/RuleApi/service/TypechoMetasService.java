@@ -44,6 +44,11 @@ public interface TypechoMetasService {
     TypechoMetas selectByKey(Object key);
 
     /**
+     * [slug查询]
+     **/
+    TypechoMetas selectBySlug(Object slug);
+
+    /**
      * [条件查询]
      **/
     List<TypechoMetas> selectList (TypechoMetas typechoMetas);

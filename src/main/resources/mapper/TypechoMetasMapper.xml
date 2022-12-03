@@ -138,6 +138,13 @@
         WHERE `mid` = #{key}
     </select>
 
+    <!-- slug查询 -->
+    <select id="selectBySlug" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM ${prefix}_metas
+        WHERE `slug` = #{slug}
+    </select>
+
     <!-- 条件查询 -->
     <select id="selectList" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List" />
