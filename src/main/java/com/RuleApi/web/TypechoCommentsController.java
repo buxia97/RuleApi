@@ -488,7 +488,7 @@ public class TypechoCommentsController {
             }
             TypechoComments comments = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoComments.class);
             Integer rows = service.update(comments);
-            editFile.setLog("管理员"+logUid+"修改了评论"+jsonToMap.get("coid"));
+            editFile.setLog("用户"+logUid+"修改了评论"+jsonToMap.get("coid"));
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );
             response.put("data" , rows);

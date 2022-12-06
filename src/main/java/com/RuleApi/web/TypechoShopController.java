@@ -178,10 +178,14 @@ public class TypechoShopController {
             if(group.equals("administrator")||group.equals("editor")){
                 jsonToMap.put("status","1");
             }
-            //判断用户是否绑定了邮箱
-            TypechoUsers users = usersService.selectByKey(uid);
-            if(users.getMail()==null){
-                return Result.getResultJson(0,"发布商品前，请先绑定邮箱",null);
+            //判断是否开启邮箱验证
+            Integer isEmail = apiconfig.getIsEmail();
+            if(isEmail.equals(1)) {
+                //判断用户是否绑定了邮箱
+                TypechoUsers users = usersService.selectByKey(uid);
+                if (users.getMail() == null) {
+                    return Result.getResultJson(0, "发布商品前，请先绑定邮箱", null);
+                }
             }
 
             insert.setUid(uid);
@@ -228,8 +232,6 @@ public class TypechoShopController {
                     return Result.getResultJson(0,"你无权进行此操作",null);
                 }
                 jsonToMap.put("status","0");
-            }else{
-                jsonToMap.put("status","1");
             }
 
             jsonToMap.remove("created");
@@ -425,9 +427,11 @@ public class TypechoShopController {
                 String email = minfo.getMail();
                 String name = minfo.getName();
                 String title = shopinfo.getTitle();
-                Integer bid = usersinfo.getUid();
-                MailService.send("您有新的商品订单，用户ID"+bid, "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><title></title><meta charset=\"utf-8\" /><style>*{padding:0px;margin:0px;box-sizing:border-box;}html{box-sizing:border-box;}body{font-size:15px;background:#fff}.main{margin:20px auto;max-width:500px;border:solid 1px #2299dd;overflow:hidden;}.main h1{display:block;width:100%;background:#2299dd;font-size:18px;color:#fff;text-align:center;padding:15px;}.text{padding:30px;}.text p{margin:10px 0px;line-height:25px;}.text p span{color:#2299dd;font-weight:bold;font-size:22px;margin-left:5px;}</style></head><body><div class=\"main\"><h1>商品订单</h1><div class=\"text\"><p>用户 "+name+"，你的商品<"+title+">有一个新的订单。</p><p>请及时打开APP进行处理！</p></div></div></body></html>",
-                        new String[] {email}, new String[] {});
+                if(email!=null){
+                    MailService.send("您有新的商品订单，用户"+name, "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><title></title><meta charset=\"utf-8\" /><style>*{padding:0px;margin:0px;box-sizing:border-box;}html{box-sizing:border-box;}body{font-size:15px;background:#fff}.main{margin:20px auto;max-width:500px;border:solid 1px #2299dd;overflow:hidden;}.main h1{display:block;width:100%;background:#2299dd;font-size:18px;color:#fff;text-align:center;padding:15px;}.text{padding:30px;}.text p{margin:10px 0px;line-height:25px;}.text p span{color:#2299dd;font-weight:bold;font-size:22px;margin-left:5px;}</style></head><body><div class=\"main\"><h1>商品订单</h1><div class=\"text\"><p>用户 "+name+"，你的商品<"+title+">有一个新的订单。</p><p>请及时打开APP进行处理！</p></div></div></body></html>",
+                            new String[] {email}, new String[] {});
+                }
+
             }catch (Exception e){
                 System.out.println("邮箱发信配置错误："+e);
             }
