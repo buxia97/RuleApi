@@ -1,6 +1,8 @@
 package com.RuleApi.web;
 
 import com.RuleApi.common.RedisHelp;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -35,7 +37,37 @@ public class InstallController {
 
     RedisHelp redisHelp =new RedisHelp();
     /***
-     * 文章删除
+     * 检测环境和应用
+     */
+    @RequestMapping(value = "/isInstall")
+    @ResponseBody
+    public String newInstall(){
+        Integer code = 1;
+        String msg = "安装正常";
+        try {
+            String isInstall = redisHelp.getRedis(this.dataprefix+"_"+"isInstall",redisTemplate);
+
+        }catch (Exception e){
+            code = 100;
+            msg =  "Redis连接失败或未安装";
+        }
+        try {
+            Integer i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_users';", Integer.class);
+            if (i == 0){
+                code = 101;
+                msg =  "Typecho未安装或者数据表前缀不正确。";
+            }
+        }catch (Exception e){
+            code = 102;
+            msg =  "Mysql数据库连接失败或未安装";
+        }
+        JSONObject response = new JSONObject();
+        response.put("code" , code);
+        response.put("msg"  ,msg);
+        return response.toString();
+    }
+    /***
+     * 新安装
      */
     @RequestMapping(value = "/newInstall")
     @ResponseBody

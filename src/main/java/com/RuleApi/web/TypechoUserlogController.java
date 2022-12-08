@@ -414,11 +414,7 @@ public class TypechoUserlogController {
                         return Result.getResultJson(0,"积分不足！",null);
                     }
                     Integer Assets = account - num;
-                    //扣除自己的积分
-                    TypechoUsers newUser = new TypechoUsers();
-                    newUser.setUid(uid);
-                    newUser.setAssets(Assets);
-                    usersService.update(newUser);
+
                     //获取作者信息
                     Integer cid = Integer.parseInt(jsonToMap.get("cid").toString());
                     TypechoContents curContents = contentsService.selectByKey(cid);
@@ -437,7 +433,11 @@ public class TypechoUserlogController {
                     }else{
                         return Result.getResultJson(0,"你不可以打赏自己的作品！",null);
                     }
-
+                    //扣除自己的积分
+                    TypechoUsers newUser = new TypechoUsers();
+                    newUser.setUid(uid);
+                    newUser.setAssets(Assets);
+                    usersService.update(newUser);
 
                     //给文章的作者增加积分
 

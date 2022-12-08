@@ -147,7 +147,7 @@ public class TypechoMetasController {
                     String text = contentsInfo.get("text").toString();
                     List imgList = baseFull.getImageSrc(text);
                     text = baseFull.toStrByChinese(text);
-                    contentsInfo.put("text",text.length()>200 ? text.substring(0,200) : text);
+                    contentsInfo.put("text",text.length()>400 ? text.substring(0,400) : text);
                     contentsInfo.put("images",imgList);
                     //加入自定义字段，分类和标签
                     //加入自定义字段信息，这里取消注释即可开启，但是数据库查询会消耗性能

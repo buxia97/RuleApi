@@ -333,7 +333,7 @@ public class TypechoContentsController {
                     text = baseFull.toStrByChinese(text);
 
                     json.put("images",imgList);
-                    json.put("text",text.length()>200 ? text.substring(0,200) : text);
+                    json.put("text",text.length()>400 ? text.substring(0,400) : text);
                     json.put("category",metas);
                     json.put("tag",tags);
                     json.remove("password");
