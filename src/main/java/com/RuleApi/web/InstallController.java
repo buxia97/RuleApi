@@ -1,6 +1,10 @@
 package com.RuleApi.web;
 
+import com.RuleApi.common.PHPass;
 import com.RuleApi.common.RedisHelp;
+import com.RuleApi.common.ResultAll;
+import com.RuleApi.entity.TypechoUsers;
+import com.RuleApi.service.TypechoUsersService;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +30,9 @@ public class InstallController {
     @Autowired
     private RedisTemplate redisTemplate;
 
+    @Autowired
+    private TypechoUsersService usersService;
+
     @Value("${mybatis.configuration.variables.prefix}")
     private String prefix;
 
@@ -35,13 +42,17 @@ public class InstallController {
     @Value("${webinfo.key}")
     private String key;
 
+
+
     RedisHelp redisHelp =new RedisHelp();
+    ResultAll Result = new ResultAll();
+    PHPass phpass = new PHPass(8);
     /***
      * 检测环境和应用
      */
     @RequestMapping(value = "/isInstall")
     @ResponseBody
-    public String newInstall(){
+    public String isInstall(){
         Integer code = 1;
         String msg = "安装正常";
         try {
@@ -64,6 +75,142 @@ public class InstallController {
         JSONObject response = new JSONObject();
         response.put("code" , code);
         response.put("msg"  ,msg);
+        return response.toString();
+    }
+    /***
+     * 安装Typecho数据库
+     */
+    @RequestMapping(value = "/typechoInstall")
+    @ResponseBody
+    public String typechoInstall(@RequestParam(value = "webkey", required = false,defaultValue = "") String  webkey,@RequestParam(value = "name", required = false,defaultValue = "") String  name,@RequestParam(value = "password", required = false,defaultValue = "") String  password) {
+        if(!webkey.equals(this.key)){
+            return "请输入正确的访问KEY。如果忘记，可在服务器/opt/application.properties中查看";
+        }
+        String text = "执行信息 ------";
+        Integer i = 1;
+        //判断typecho是否安装，或者数据表前缀是否正确
+        try {
+            i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_users';", Integer.class);
+            if (i > 0){
+                return Result.getResultJson(0,"Typecho数据库已载入，无需重试",null);
+            }
+        }catch (Exception e){
+            return Result.getResultJson(0,"Mysql数据库连接失败或未安装",null);
+        }
+        try {
+            //安装用户表
+            jdbcTemplate.execute("CREATE TABLE `"+prefix+"_users` (" +
+                    "  `uid` int(10) unsigned NOT NULL AUTO_INCREMENT," +
+                    "  `name` varchar(32) DEFAULT NULL," +
+                    "  `password` varchar(64) DEFAULT NULL," +
+                    "  `mail` varchar(200) DEFAULT NULL" +
+                    "  `url` varchar(200) DEFAULT NULL," +
+                    "  `screenName` varchar(32) DEFAULT NULL," +
+                    "  `created` int(10) unsigned DEFAULT '0'," +
+                    "  `activated` int(10) unsigned DEFAULT '0'," +
+                    "  `logged` int(10) unsigned DEFAULT '0'," +
+                    "  `group` varchar(16) DEFAULT 'visitor'," +
+                    "  `authCode` varchar(64) DEFAULT NULL," +
+                    "  PRIMARY KEY (`uid`)," +
+                    "  UNIQUE KEY `name` (`name`)," +
+                    "  UNIQUE KEY `mail` (`mail`)" +
+                    ") ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;");
+            text+="用户表创建完成。";
+            String passwd = phpass.HashPassword(password);
+            Long date = System.currentTimeMillis();
+            String userTime = String.valueOf(date).substring(0, 10);
+            TypechoUsers user = new TypechoUsers();
+            user.setName(name);
+            user.setPassword(passwd);
+            user.setCreated(Integer.parseInt(userTime));
+            user.setGroupKey("administrator");
+            usersService.insert(user);
+            text+="管理员"+name+"添加完成。";
+            //安装内容表
+            jdbcTemplate.execute("CREATE TABLE `"+prefix+"_contents` (" +
+                    "  `cid` int(10) unsigned NOT NULL AUTO_INCREMENT," +
+                    "  `title` varchar(200) DEFAULT NULL," +
+                    "  `slug` varchar(200) DEFAULT NULL," +
+                    "  `created` int(10) unsigned DEFAULT '0'," +
+                    "  `modified` int(10) unsigned DEFAULT '0'," +
+                    "  `text` longtext," +
+                    "  `order` int(10) unsigned DEFAULT '0'," +
+                    "  `authorId` int(10) unsigned DEFAULT '0'," +
+                    "  `template` varchar(32) DEFAULT NULL," +
+                    "  `type` varchar(16) DEFAULT 'post'," +
+                    "  `status` varchar(16) DEFAULT 'publish'," +
+                    "  `password` varchar(32) DEFAULT NULL," +
+                    "  `commentsNum` int(10) unsigned DEFAULT '0'," +
+                    "  `allowComment` char(1) DEFAULT '0'," +
+                    "  `allowPing` char(1) DEFAULT '0'," +
+                    "  `allowFeed` char(1) DEFAULT '0'," +
+                    "  `parent` int(10) unsigned DEFAULT '0'," +
+                    "  PRIMARY KEY (`cid`)," +
+                    "  UNIQUE KEY `slug` (`slug`)," +
+                    "  KEY `created` (`created`)" +
+                    ") ENGINE=MyISAM DEFAULT CHARSET=utf8;");
+            text+="内容表创建完成。";
+            //安装评论表
+            jdbcTemplate.execute("CREATE TABLE `"+prefix+"_comments` (" +
+                    "  `coid` int(10) unsigned NOT NULL AUTO_INCREMENT," +
+                    "  `cid` int(10) unsigned DEFAULT '0'," +
+                    "  `created` int(10) unsigned DEFAULT '0'," +
+                    "  `author` varchar(200) DEFAULT NULL," +
+                    "  `authorId` int(10) unsigned DEFAULT '0'," +
+                    "  `ownerId` int(10) unsigned DEFAULT '0'," +
+                    "  `mail` varchar(200) DEFAULT NULL," +
+                    "  `url` varchar(200) DEFAULT NULL," +
+                    "  `ip` varchar(64) DEFAULT NULL," +
+                    "  `agent` varchar(200) DEFAULT NULL," +
+                    "  `text` text," +
+                    "  `type` varchar(16) DEFAULT 'comment'," +
+                    "  `status` varchar(16) DEFAULT 'approved'," +
+                    "  `parent` int(10) unsigned DEFAULT '0'," +
+                    "  PRIMARY KEY (`coid`)," +
+                    "  KEY `cid` (`cid`)," +
+                    "  KEY `created` (`created`)" +
+                    ") ENGINE=MyISAM DEFAULT CHARSET=utf8;");
+            text+="评论表创建完成。";
+            //自定义字段表
+            jdbcTemplate.execute("CREATE TABLE `"+prefix+"_fields` (" +
+                    "  `cid` int(10) unsigned NOT NULL," +
+                    "  `name` varchar(200) NOT NULL," +
+                    "  `type` varchar(8) DEFAULT 'str'," +
+                    "  `str_value` text," +
+                    "  `int_value` int(10) DEFAULT '0'," +
+                    "  `float_value` float DEFAULT '0'," +
+                    "  PRIMARY KEY (`cid`,`name`)," +
+                    "  KEY `int_value` (`int_value`)," +
+                    "  KEY `float_value` (`float_value`)" +
+                    ") ENGINE=MyISAM DEFAULT CHARSET=utf8;");
+            text+="自定义字段表创建完成。";
+            //分类标签表
+            jdbcTemplate.execute("CREATE TABLE `"+prefix+"_metas` (" +
+                    "  `mid` int(10) unsigned NOT NULL AUTO_INCREMENT," +
+                    "  `name` varchar(200) DEFAULT NULL," +
+                    "  `slug` varchar(200) DEFAULT NULL," +
+                    "  `type` varchar(32) NOT NULL," +
+                    "  `description` varchar(200) DEFAULT NULL," +
+                    "  `count` int(10) unsigned DEFAULT '0'," +
+                    "  `order` int(10) unsigned DEFAULT '0'," +
+                    "  `parent` int(10) unsigned DEFAULT '0'," +
+                    "  PRIMARY KEY (`mid`)," +
+                    "  KEY `slug` (`slug`)" +
+                    ") ENGINE=MyISAM DEFAULT CHARSET=utf8;");
+            text+="分类标签表创建完成。";
+            //数据关联表
+            jdbcTemplate.execute("CREATE TABLE `"+prefix+"_relationships` (" +
+                    "  `cid` int(10) unsigned NOT NULL," +
+                    "  `mid` int(10) unsigned NOT NULL," +
+                    "  PRIMARY KEY (`cid`,`mid`)" +
+                    ") ENGINE=MyISAM DEFAULT CHARSET=utf8;");
+            text+="T数据关联表创建完成。";
+        }catch (Exception e){
+            return Result.getResultJson(0,"数据库语句执行失败，请检查数据库版本及服务器性能后重试。",null);
+        }
+        JSONObject response = new JSONObject();
+        response.put("code" , 1);
+        response.put("msg"  ,text);
         return response.toString();
     }
     /***
