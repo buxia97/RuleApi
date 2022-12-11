@@ -278,6 +278,14 @@ public class InstallController {
         }else{
             text+="内容模块，字段istop已经存在，无需添加。";
         }
+        //查询文章表是否存在isswiper字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_contents' and column_name = 'isswiper';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_contents ADD isswiper integer(2) DEFAULT 0;");
+            text+="内容模块，字段isswiper添加完成。";
+        }else{
+            text+="内容模块，字段isswiper已经存在，无需添加。";
+        }
         //查询用户表是否存在introduce字段
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_users' and column_name = 'introduce';", Integer.class);
         if (i == 0){
@@ -326,6 +334,15 @@ public class InstallController {
         }else{
             text+="用户模块，字段vip已经存在，无需添加。";
         }
+        //查询用户表是否存在experience字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_users' and column_name = 'experience';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_users ADD experience integer(11) DEFAULT 0;");
+            text+="用户模块，字段experience添加完成。";
+        }else{
+            text+="用户模块，字段experience已经存在，无需添加。";
+        }
+
         //查询用户表是否存在avatar字段
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_users' and column_name = 'avatar';", Integer.class);
         if (i == 0){
@@ -737,7 +754,7 @@ public class InstallController {
             jdbcTemplate.execute("CREATE TABLE `"+prefix+"_ads` (" +
                     "  `aid` int(11) NOT NULL AUTO_INCREMENT," +
                     "  `name` varchar(255) DEFAULT '' COMMENT '广告名称'," +
-                    "  `type` int(11) DEFAULT '0' COMMENT '广告类型（0推流，1横幅，2启动图）'," +
+                    "  `type` int(11) DEFAULT '0' COMMENT '广告类型（0推流，1横幅，2启动图，3轮播图）'," +
                     "  `img` varchar(500) DEFAULT NULL COMMENT '广告缩略图'," +
                     "  `close` int(10) DEFAULT '0' COMMENT '0代表永久，其它代表结束时间'," +
                     "  `created` int(10) unsigned DEFAULT '0' COMMENT '创建时间'," +

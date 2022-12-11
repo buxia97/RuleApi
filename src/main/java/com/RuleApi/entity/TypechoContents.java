@@ -119,5 +119,10 @@ public class TypechoContents implements Serializable {
      */
     private Integer istop;
 
+    /**
+     * isswiper
+     */
+    private Integer isswiper;
+
 
 }

@@ -21,6 +21,7 @@
         <result column="pay" property="pay" />
         <result column="customize" property="customize" />
         <result column="avatar" property="avatar" />
+        <result column="experience" property="experience" />
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -41,7 +42,8 @@
         `pay`,
         `customize`,
         `vip`,
-        `avatar`
+        `avatar`,
+        `experience`
     </sql>
 
     <!-- 插入数据 -->
@@ -167,7 +169,9 @@
             <if test ='null != pay'>`pay` = #{pay},</if>
             <if test ='null != customize'>`customize` = #{customize},</if>
             <if test ='null != vip'>`vip` = #{vip},</if>
-            <if test ='null != avatar'>`avatar` = #{avatar}</if>
+            <if test ='null != avatar'>`avatar` = #{avatar},</if>
+            <if test ='null != experience'>`experience` = #{experience}</if>
+
 
         </set>
         WHERE `uid` = #{uid}

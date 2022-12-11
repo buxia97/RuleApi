@@ -625,6 +625,8 @@ public class TypechoContentsController {
                 jsonToMap.remove("sid");
                 jsonToMap.remove("type");
                 jsonToMap.remove("isrecommend");
+                jsonToMap.remove("istop");
+                jsonToMap.remove("isswiper");
                 //状态重新变成待审核
                 if(!group.equals("administrator")){
                     jsonToMap.put("status","waiting");
@@ -865,7 +867,7 @@ public class TypechoContentsController {
         }
     }
     /***
-     * 文章推荐
+     * 文章推荐&加精
      */
     @RequestMapping(value = "/toRecommend")
     @ResponseBody

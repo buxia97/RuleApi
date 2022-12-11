@@ -43,8 +43,6 @@ public class TypechoUsersController {
 
     @Autowired
     private TypechoContentsService contentsService;
-
-
     @Autowired
     private TypechoCommentsService commentsService;
 
@@ -1194,6 +1192,8 @@ public class TypechoUsersController {
                 jsonToMap.remove("authCode");
                 //jsonToMap.remove("introduce");
                 jsonToMap.remove("assets");
+                jsonToMap.remove("experience");
+                jsonToMap.remove("vip");
                 update = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoUsers.class);
             }else{
                 return Result.getResultJson(0, "参数不正确", null);

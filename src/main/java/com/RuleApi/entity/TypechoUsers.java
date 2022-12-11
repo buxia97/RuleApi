@@ -98,6 +98,11 @@ public class TypechoUsers implements Serializable {
     private Integer vip;
 
     /**
+     * experience
+     */
+    private Integer experience;
+
+    /**
      * avatar
      */
     private String avatar;

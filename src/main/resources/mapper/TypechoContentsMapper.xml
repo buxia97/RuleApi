@@ -25,6 +25,7 @@
         <result column="likes" property="likes" />
         <result column="isrecommend" property="isrecommend" />
         <result column="istop" property="istop" />
+        <result column="isswiper" property="isswiper" />
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -48,7 +49,8 @@
         `views`,
         `likes`,
         `isrecommend`,
-        `istop`
+        `istop`,
+        `isswiper`
     </sql>
 
     <!-- 插入数据 -->
@@ -212,6 +214,8 @@
             <if test ='null != likes'>`likes` = #{likes},</if>
             <if test ='null != isrecommend'>`isrecommend` = #{isrecommend},</if>
             <if test ='null != istop'>`istop` = #{istop},</if>
+            <if test ='null != isswiper'>`isswiper` = #{isswiper}</if>
+
         </set>
         WHERE `cid` = #{cid}
     </update>
@@ -369,6 +373,9 @@
             </if>
             <if test ='null != typechoContents.istop'>
                 and `istop` = #{typechoContents.istop}
+            </if>
+            <if test ='null != typechoContents.isswiper'>
+                and `isswiper` = #{typechoContents.isswiper}
             </if>
             <if test ='"" != searchKey'>
                 and CONCAT(IFNULL(`title`,''),IFNULL(`text`,'')) LIKE '%${searchKey}%'
