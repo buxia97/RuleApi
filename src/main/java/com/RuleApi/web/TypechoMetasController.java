@@ -239,11 +239,11 @@ public class TypechoMetasController {
      */
     @RequestMapping(value = "/metaInfo")
     @ResponseBody
-    public String metaInfo(@RequestParam(value = "key", required = false) String key,@RequestParam(value = "slug", required = false, defaultValue = "") String slug) {
+    public String metaInfo(@RequestParam(value = "key", required = false) String key,@RequestParam(value = "slug", required = false) String slug) {
         try{
             TypechoMetas metas;
             //优先处理slug
-            if(slug!=""){
+            if(slug!=null){
                 metas = service.selectBySlug(slug);
             }else{
                 metas = service.selectByKey(key);
@@ -332,6 +332,14 @@ public class TypechoMetasController {
                 }
                 //为了数据稳定性考虑，禁止修改类型
                 insert = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoMetas.class);
+            }
+            //判断是否存在相同的分类或标签名称
+            TypechoMetas oldMeta = new TypechoMetas();
+            oldMeta.setName(insert.getName());
+            oldMeta.setType(insert.getType());
+            Integer isHave = service.total(oldMeta);
+            if(isHave>0){
+                return Result.getResultJson(0, "已存在同名数据", null);
             }
 
             int rows = service.insert(insert);
