@@ -435,9 +435,10 @@ public class TypechoCommentsController {
                 contents.setCommentsNum(cnum);
                 contentsService.update(contents);
             }
+            insert.setStatus(cstatus);
             int rows = service.insert(insert);
             String addtext ="";
-            if(cstatus == "waiting"){
+            if(cstatus.equals("waiting")){
                 addtext = "，将在审核通过后显示！";
             }
             editFile.setLog("用户"+logUid+"提交发布评论，IP："+ip);
