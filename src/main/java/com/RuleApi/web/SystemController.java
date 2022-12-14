@@ -37,6 +37,7 @@ public class SystemController {
     EditFile editFile = new EditFile();
     HttpClient HttpClient = new HttpClient();
     RedisHelp redisHelp =new RedisHelp();
+    GeTuiUtils geTuiUtils = new GeTuiUtils();
 
 
     @Autowired
@@ -716,4 +717,24 @@ public class SystemController {
         response.put("data", json);
         return response.toString();
     }
+    /***
+     * 发送状态栏通知
+     */
+    @RequestMapping(value = "/sendPushMsg")
+    @ResponseBody
+    public String sendPushMsg(@RequestParam(value = "webkey", required = false) String  webkey,
+                              @RequestParam(value = "cid", required = false) String  cid,
+                              @RequestParam(value = "title", required = false) String  title,
+                              @RequestParam(value = "content", required = false) String  content) {
+        if(!webkey.equals(this.key)){
+            return Result.getResultJson(0,"请输入正确的访问key",null);
+        }
+        try{
+            geTuiUtils.pushMsg1(cid,title,content);
+        }catch (Exception e){
+            return Result.getResultJson(1, "推送参数错误", null);
+        }
+        return Result.getResultJson(1, "发送成功", null);
+    }
+
 }

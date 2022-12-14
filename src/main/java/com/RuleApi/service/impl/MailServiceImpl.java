@@ -10,9 +10,6 @@ import javax.mail.internet.MimeUtility;
 
 import com.RuleApi.entity.TypechoApiconfig;
 import com.RuleApi.service.TypechoApiconfigService;
-import com.RuleApi.service.TypechoPaylogService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
@@ -27,7 +24,7 @@ import com.RuleApi.service.MailService;
 @PropertySource(value="classpath:application.properties", encoding="utf-8", ignoreResourceNotFound = true)
 public class MailServiceImpl implements MailService{
 
-    private final Logger log = LoggerFactory.getLogger(MailServiceImpl.class);
+
 
     @Value("${spring.mail.default-encoding}")
     public String defaultEncoding;
@@ -62,7 +59,7 @@ public class MailServiceImpl implements MailService{
                 //判断该资源是否存在，当不存在时仅仅会打印一条警告日志，不会中断处理程序。
                 // 也就是说在附件出现异常的情况下，邮件是可以正常发送的，所以请确定你发送的邮件附件在本机存在
                 if (!resource.exists()) {
-                    log.warn("邮件->{} 的附件->{} 不存在！", subject, attachmentFilePath);
+
                     //开启下一个资源的处理
                     throw new RuntimeException("邮件需要发送的附件不存在。");
                 }
@@ -73,7 +70,7 @@ public class MailServiceImpl implements MailService{
                     mimeMessageHelper.addAttachment(fileName, resource);
                 } catch (MessagingException e) {
                     e.printStackTrace();
-                    log.error("邮件->{} 添加附件->{} 出现异常->{}", subject, attachmentFilePath, e.getMessage());
+                    System.out.println(e);
                 }
             }
         }
@@ -103,14 +100,14 @@ public class MailServiceImpl implements MailService{
         mimeMessageHelper.setFrom(newEmailFromName + "<"+ username + ">");
 
         //设置邮件的主题
-        log.info("subject = " + subject);
+        System.out.println("subject = " + subject);
         mimeMessageHelper.setSubject(subject);
 
         //设置邮件的内容，区别是否是HTML邮件
         mimeMessageHelper.setText(content, true);//所有都以html格式发送
 
         //设置邮件的收件人
-        log.info("toEmails = " + toEmails);
+        System.out.println("toEmails = " + toEmails);
         mimeMessageHelper.setTo(toEmails);
 
         if(ccPeoples != null && ccPeoples.length > 0) {
