@@ -2,6 +2,7 @@ package com.RuleApi.web;
 import com.RuleApi.common.*;
 import com.RuleApi.entity.TypechoAds;
 import com.RuleApi.entity.TypechoApiconfig;
+import com.RuleApi.service.PushService;
 import com.RuleApi.service.TypechoAdsService;
 import com.RuleApi.service.TypechoApiconfigService;
 import com.alibaba.fastjson.JSON;
@@ -37,7 +38,6 @@ public class SystemController {
     EditFile editFile = new EditFile();
     HttpClient HttpClient = new HttpClient();
     RedisHelp redisHelp =new RedisHelp();
-    GeTuiUtils geTuiUtils = new GeTuiUtils();
 
 
     @Autowired
@@ -45,6 +45,9 @@ public class SystemController {
 
     @Autowired
     private TypechoAdsService adsService;
+
+    @Autowired
+    private PushService pushService;
 
     @Autowired
     private RedisTemplate redisTemplate;
@@ -729,11 +732,7 @@ public class SystemController {
         if(!webkey.equals(this.key)){
             return Result.getResultJson(0,"请输入正确的访问key",null);
         }
-        try{
-            geTuiUtils.pushMsg1(cid,title,content);
-        }catch (Exception e){
-            return Result.getResultJson(1, "推送参数错误", null);
-        }
+        pushService.sendPushMsg(cid,title,content,"payload","打开评论区");
         return Result.getResultJson(1, "发送成功", null);
     }
 
