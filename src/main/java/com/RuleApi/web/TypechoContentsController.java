@@ -6,6 +6,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.RuleApi.entity.*;
 import com.RuleApi.service.*;
+import net.dreamlu.mica.xss.core.XssCleanIgnore;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -365,6 +366,7 @@ public class TypechoContentsController {
      * 发布文章
      * @param params Bean对象JSON字符串
      */
+    @XssCleanIgnore
     @RequestMapping(value = "/contentsAdd")
     @ResponseBody
     public String contentsAdd(@RequestParam(value = "params", required = false) String  params, @RequestParam(value = "token", required = false) String  token) {
@@ -548,6 +550,7 @@ public class TypechoContentsController {
      * 文章修改
      * @param params Bean对象JSON字符串
      */
+    @XssCleanIgnore
     @RequestMapping(value = "/contentsUpdate")
     @ResponseBody
     public String contentsUpdate(@RequestParam(value = "params", required = false) String  params, @RequestParam(value = "token", required = false) String  token) {

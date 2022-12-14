@@ -6,6 +6,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.RuleApi.entity.*;
 import com.RuleApi.common.*;
 import com.RuleApi.service.*;
+import net.dreamlu.mica.xss.core.XssCleanIgnore;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -133,6 +134,7 @@ public class TypechoShopController {
     /***
      * 添加商品
      */
+    @XssCleanIgnore
     @RequestMapping(value = "/addShop")
     @ResponseBody
     public String addShop(@RequestParam(value = "params", required = false) String  params,@RequestParam(value = "token", required = false) String  token) {
@@ -202,6 +204,7 @@ public class TypechoShopController {
     /***
      * 修改商品
      */
+    @XssCleanIgnore
     @RequestMapping(value = "/editShop")
     @ResponseBody
     public String editShop(@RequestParam(value = "params", required = false) String  params,@RequestParam(value = "token", required = false) String  token) {
