@@ -99,11 +99,16 @@ public class SystemController {
     @RequestMapping(value = "/isKey")
     @ResponseBody
     public String isKey(@RequestParam(value = "webkey", required = false) String  webkey) {
-        if(!webkey.equals(this.key)){
-            return Result.getResultJson(0,"请输入正确的访问key",null);
-        }else{
-            return Result.getResultJson(1,"验证成功！",null);
+        try{
+            if(!webkey.equals(this.key)){
+                return Result.getResultJson(0,"请输入正确的访问key",null);
+            }else{
+                return Result.getResultJson(1,"验证成功！",null);
+            }
+        }catch (Exception e){
+            return Result.getResultJson(0,"请求参数不正确",null);
         }
+
     }
     /**
      * 配置文件读取

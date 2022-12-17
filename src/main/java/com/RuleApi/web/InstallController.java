@@ -64,7 +64,7 @@ public class InstallController {
         }
         try {
             Integer i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_users';", Integer.class);
-            if (i == 0){
+            if (i.equals(0)){
                 code = 101;
                 msg =  "Typecho未安装或者数据表前缀不正确。";
             }
@@ -82,9 +82,12 @@ public class InstallController {
      */
     @RequestMapping(value = "/typechoInstall")
     @ResponseBody
-    public String typechoInstall(@RequestParam(value = "webkey", required = false,defaultValue = "") String  webkey,@RequestParam(value = "name", required = false,defaultValue = "") String  name,@RequestParam(value = "password", required = false,defaultValue = "") String  password) {
+    public String typechoInstall(@RequestParam(value = "webkey", required = false,defaultValue = "") String  webkey,@RequestParam(value = "name", required = false) String  name,@RequestParam(value = "password", required = false) String  password) {
         if(!webkey.equals(this.key)){
-            return "请输入正确的访问KEY。如果忘记，可在服务器/opt/application.properties中查看";
+            return Result.getResultJson(0,"请输入正确的访问KEY。如果忘记，可在服务器/opt/application.properties中查看",null);
+        }
+        if(name==null||password==null){
+            return Result.getResultJson(0,"请求参数错误！",null);
         }
         String text = "执行信息 ------";
         Integer i = 1;
@@ -103,7 +106,7 @@ public class InstallController {
                     "  `uid` int(10) unsigned NOT NULL AUTO_INCREMENT," +
                     "  `name` varchar(32) DEFAULT NULL," +
                     "  `password` varchar(64) DEFAULT NULL," +
-                    "  `mail` varchar(200) DEFAULT NULL" +
+                    "  `mail` varchar(200) DEFAULT NULL," +
                     "  `url` varchar(200) DEFAULT NULL," +
                     "  `screenName` varchar(32) DEFAULT NULL," +
                     "  `created` int(10) unsigned DEFAULT '0'," +
@@ -204,8 +207,9 @@ public class InstallController {
                     "  `mid` int(10) unsigned NOT NULL," +
                     "  PRIMARY KEY (`cid`,`mid`)" +
                     ") ENGINE=MyISAM DEFAULT CHARSET=utf8;");
-            text+="T数据关联表创建完成。";
+            text+="数据关联表创建完成。";
         }catch (Exception e){
+            System.out.println(e);
             return Result.getResultJson(0,"数据库语句执行失败，请检查数据库版本及服务器性能后重试。",null);
         }
         JSONObject response = new JSONObject();
