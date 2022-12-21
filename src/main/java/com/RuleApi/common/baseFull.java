@@ -18,15 +18,16 @@ import java.util.regex.Pattern;
 
 public class baseFull {
     //数组去重
-    public Object[] threeClear(Object[] arr){
+    public Object[] threeClear(Object[] arr) {
         List list = new ArrayList();
-        for(int i=0;i<arr.length;i++){
-            if(!list.contains(arr[i])){
+        for (int i = 0; i < arr.length; i++) {
+            if (!list.contains(arr[i])) {
                 list.add(arr[i]);
             }
         }
         return list.toArray();
     }
+
     //获取字符串内图片地址
     public List<String> getImageSrc(String htmlCode) {
         List<String> containedUrls = new ArrayList<String>();
@@ -34,20 +35,20 @@ public class baseFull {
         Pattern pattern = Pattern.compile(urlRegex, Pattern.CASE_INSENSITIVE);
         Matcher urlMatcher = pattern.matcher(htmlCode);
 
-        while (urlMatcher.find())
-        {
+        while (urlMatcher.find()) {
             containedUrls.add(htmlCode.substring(urlMatcher.start(0),
                     urlMatcher.end(0)));
         }
         List<String> imageList = new ArrayList<String>();
         for (int i = 0; i < containedUrls.size(); i++) {
             String word = containedUrls.get(i);
-            if(word.indexOf(".ico") != -1||word.indexOf(".jpg") != -1||word.indexOf(".JPG") != -1||word.indexOf(".jpeg") != -1||word.indexOf(".png") != -1||word.indexOf(".PNG") != -1||word.indexOf(".bmp") != -1||word.indexOf(".gif") != -1||word.indexOf(".GIF") != -1||word.indexOf(".webp") != -1||word.indexOf(".WEBP") != -1){
-                imageList.add(word.replaceAll("\\)",""));
+            if (word.indexOf(".ico") != -1 || word.indexOf(".jpg") != -1 || word.indexOf(".JPG") != -1 || word.indexOf(".jpeg") != -1 || word.indexOf(".png") != -1 || word.indexOf(".PNG") != -1 || word.indexOf(".bmp") != -1 || word.indexOf(".gif") != -1 || word.indexOf(".GIF") != -1 || word.indexOf(".webp") != -1 || word.indexOf(".WEBP") != -1) {
+                imageList.add(word.replaceAll("\\)", ""));
             }
         }
         return imageList;
     }
+
     //获取markdown内图片引用
     public List<String> getImageCode(String htmlCode) {
         List<String> containedUrls = new ArrayList<String>();
@@ -55,8 +56,7 @@ public class baseFull {
         Pattern pattern = Pattern.compile(urlRegex, Pattern.CASE_INSENSITIVE);
         Matcher urlMatcher = pattern.matcher(htmlCode);
 
-        while (urlMatcher.find())
-        {
+        while (urlMatcher.find()) {
             containedUrls.add(htmlCode.substring(urlMatcher.start(0),
                     urlMatcher.end(0)));
         }
@@ -68,6 +68,7 @@ public class baseFull {
         }
         return codeList;
     }
+
     public static boolean isEmail(String string) {
         if (string == null)
             return false;
@@ -81,28 +82,29 @@ public class baseFull {
         else
             return false;
     }
+
     //获取markdown引用的图片地址
     public List<String> getImageMk(String htmlCode) {
         List<String> containedUrls = new ArrayList<String>();
-       // String urlRegex = "\\\\[\\\\d\\\\]:\\\\s(https?|http):((//)|(\\\\\\\\))+[\\\\w\\\\d:#@%/;$()~_?\\\\+-=\\\\\\\\\\\\.&]*";
+        // String urlRegex = "\\\\[\\\\d\\\\]:\\\\s(https?|http):((//)|(\\\\\\\\))+[\\\\w\\\\d:#@%/;$()~_?\\\\+-=\\\\\\\\\\\\.&]*";
         String urlRegex = "\\[\\d\\]:\\s(https?|http):((//)|(\\\\))+[\\w\\d:#@%/;$()~_?\\+-=\\\\\\.&]*";
         Pattern pattern = Pattern.compile(urlRegex, Pattern.CASE_INSENSITIVE);
         Matcher urlMatcher = pattern.matcher(htmlCode);
 
-        while (urlMatcher.find())
-        {
+        while (urlMatcher.find()) {
             containedUrls.add(htmlCode.substring(urlMatcher.start(0),
                     urlMatcher.end(0)));
         }
         List<String> imageCode = new ArrayList<String>();
         for (int i = 0; i < containedUrls.size(); i++) {
             String word = containedUrls.get(i);
-            if(word.indexOf(".ico") != -1||word.indexOf(".jpg") != -1||word.indexOf(".JPG") != -1||word.indexOf(".jpeg") != -1||word.indexOf(".png") != -1||word.indexOf(".PNG") != -1||word.indexOf(".bmp") != -1||word.indexOf(".gif") != -1||word.indexOf(".GIF") != -1||word.indexOf(".webp") != -1||word.indexOf(".WEBP") != -1){
-                imageCode.add(word.replaceAll("\\)",""));
+            if (word.indexOf(".ico") != -1 || word.indexOf(".jpg") != -1 || word.indexOf(".JPG") != -1 || word.indexOf(".jpeg") != -1 || word.indexOf(".png") != -1 || word.indexOf(".PNG") != -1 || word.indexOf(".bmp") != -1 || word.indexOf(".gif") != -1 || word.indexOf(".GIF") != -1 || word.indexOf(".webp") != -1 || word.indexOf(".WEBP") != -1) {
+                imageCode.add(word.replaceAll("\\)", ""));
             }
         }
         return imageCode;
     }
+
     //获取ip地址
     public static String getIpAddr(HttpServletRequest request) {
         String ipAddress = null;
@@ -135,35 +137,38 @@ public class baseFull {
                 }
             }
         } catch (Exception e) {
-            ipAddress="";
+            ipAddress = "";
         }
         // ipAddress = this.getRequest().getRemoteAddr();
 
         return ipAddress;
     }
+
     /**
      * 提取字符串中文字符
+     *
      * @param text
      * @return
      */
-    public static String toStrByChinese(String text){
-        text=text.replaceAll("\\[hide(([\\s\\S])*?)\\[\\/hide\\]", "");
-        text=text.replaceAll("\\{hide(([\\s\\S])*?)\\{\\/hide\\}", "");
-        text=text.replaceAll("(\\\r\\\n|\\\r|\\\n|\\\n\\\r)", "");
-        text=text.replaceAll("\\s*", "");
-        text=text.replaceAll("</?[^>]+>", "");
+    public static String toStrByChinese(String text) {
+        text = text.replaceAll("\\[hide(([\\s\\S])*?)\\[\\/hide\\]", "");
+        text = text.replaceAll("\\{hide(([\\s\\S])*?)\\{\\/hide\\}", "");
+        text = text.replaceAll("(\\\r\\\n|\\\r|\\\n|\\\n\\\r)", "");
+        text = text.replaceAll("\\s*", "");
+        text = text.replaceAll("</?[^>]+>", "");
         //去掉文章开头的图片插入
-        text=text.replaceAll("((https?|http):((//)|(\\\\))+[\\w\\d:#@%/;$()~_?\\+-=\\\\\\.&]*)","");
-        text=text.replaceAll("((!\\[)[\\s\\S]+?(\\]\\[)[\\s\\S]+?(\\]))", "");
-        text=text.replaceAll("((!\\[)[\\s\\S]+?(\\]))", "");
-        text=text.replaceAll("\\(", "");
-        text=text.replaceAll("\\)", "");
-        text=text.replaceAll("\\[", "");
-        text=text.replaceAll("\\]", "");
+        text = text.replaceAll("((https?|http):((//)|(\\\\))+[\\w\\d:#@%/;$()~_?\\+-=\\\\\\.&]*)", "");
+        text = text.replaceAll("((!\\[)[\\s\\S]+?(\\]\\[)[\\s\\S]+?(\\]))", "");
+        text = text.replaceAll("((!\\[)[\\s\\S]+?(\\]))", "");
+        text = text.replaceAll("\\(", "");
+        text = text.replaceAll("\\)", "");
+        text = text.replaceAll("\\[", "");
+        text = text.replaceAll("\\]", "");
         return text;
     }
+
     //生成随机英文字符串
-    public static String createRandomStr(int length){
+    public static String createRandomStr(int length) {
         String str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         Random random = new Random();
         StringBuffer stringBuffer = new StringBuffer();
@@ -173,56 +178,77 @@ public class baseFull {
         }
         return stringBuffer.toString();
     }
+
     //随机数
-    protected long generateRandomNumber(int n){
-        if(n<1){
+    protected long generateRandomNumber(int n) {
+        if (n < 1) {
             throw new IllegalArgumentException("随机数位数必须大于0");
         }
-        return (long)(Math.random()*9*Math.pow(10,n-1)) + (long)Math.pow(10,n-1);
+        return (long) (Math.random() * 9 * Math.pow(10, n - 1)) + (long) Math.pow(10, n - 1);
     }
+
     //头像获取
-    public static String getAvatar(String url,String email){
+    public static String getAvatar(String url, String email) {
         String avatar = "";
         String qqUrl = "https://thirdqq.qlogo.cn/g?b=qq&nk=";
         String regex = "[1-9][0-9]{8,10}\\@[q][q]\\.[c][o][m]";
-        if(email.matches(regex)){
+        if (email.matches(regex)) {
             String[] qqArr = email.split("@");
             String qq = qqArr[0];
-            avatar = qqUrl+ qq+"&s=100";
-        }else {
-            avatar = url+ DigestUtils.md5DigestAsHex(email.getBytes());
+            avatar = qqUrl + qq + "&s=100";
+        } else {
+            avatar = url + DigestUtils.md5DigestAsHex(email.getBytes());
         }
         return avatar;
 
     }
+    //判断是否有敏感代码
+    public Integer haveCode(String text) {
+        try {
+            if (text.indexOf("<script>") != -1) {
+                return 1;
+            }
+            if (text.indexOf("eval(") != -1) {
+                return 1;
+            }
+            if (text.indexOf("<iframe>") != -1) {
+                return 1;
+            }
+            if (text.indexOf("<frame>") != -1) {
+                return 1;
+            }
+            return 0;
+        } catch (Exception e) {
+            return 0;
+        }
+
+    }
     //生成lv等级
-    public static Integer getLv(Integer num){
+    public static Integer getLv(Integer num) {
         Integer lv = 0;
         try {
-            if(num<10){
+            if (num < 10) {
                 lv = 0;
-            }else if(num>=10&&num<50){
+            } else if (num >= 10 && num < 50) {
                 lv = 1;
-            }else if(num>=50&&num<200){
+            } else if (num >= 50 && num < 200) {
                 lv = 2;
-            }else if(num>=200&&num<500){
+            } else if (num >= 200 && num < 500) {
                 lv = 3;
-            }else if(num>=500&&num<1000){
+            } else if (num >= 500 && num < 1000) {
                 lv = 4;
-            }else if(num>=1000&&num<2000){
+            } else if (num >= 1000 && num < 2000) {
                 lv = 5;
-            }else if(num>=2000&&num<5000){
+            } else if (num >= 2000 && num < 5000) {
                 lv = 6;
-            }else if(num>=5000){
+            } else if (num >= 5000) {
                 lv = 7;
             }
             return lv;
 
-        }catch (Exception e){
+        } catch (Exception e) {
             return 0;
         }
     }
-
-
 
 }

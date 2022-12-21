@@ -428,13 +428,19 @@ public class TypechoContentsController {
                     }
                     //满足typecho的要求，加入markdown申明
                     String text = jsonToMap.get("text").toString();
+                    //是否开启代码拦截
+                    if(apiconfig.getDisableCode().equals(1)){
+                        if(baseFull.haveCode(text).equals(1)){
+                            return Result.getResultJson(0,"你的内容包含敏感代码，请修改后重试！",null);
+                        }
+                    }
                     boolean status = text.contains("<!--markdown-->");
                     if(!status){
                         text = "<!--markdown-->"+text;
                         jsonToMap.put("text",text);
                     }
                 }
-                //
+
 
                 //写入创建时间和作者
                 jsonToMap.put("created",userTime);
@@ -568,6 +574,7 @@ public class TypechoContentsController {
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer logUid =Integer.parseInt(map.get("uid").toString());
             if (StringUtils.isNotBlank(params)) {
+                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
                 jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
                 //生成typecho数据库格式的修改时间戳
                 Long date = System.currentTimeMillis();
@@ -604,6 +611,12 @@ public class TypechoContentsController {
                 }else{
                     //满足typecho的要求，加入markdown申明
                     String text = jsonToMap.get("text").toString();
+                    //是否开启代码拦截
+                    if(apiconfig.getDisableCode().equals(1)){
+                        if(baseFull.haveCode(text).equals(1)){
+                            return Result.getResultJson(0,"你的内容包含敏感代码，请修改后重试！",null);
+                        }
+                    }
                     boolean status = text.contains("<!--markdown-->");
                     if(!status){
                         text = "<!--markdown-->"+text;

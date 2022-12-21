@@ -89,6 +89,12 @@ public class InstallController {
         if(name==null||password==null){
             return Result.getResultJson(0,"请求参数错误！",null);
         }
+        String isRepeated = redisHelp.getRedis("isTypechoInstall",redisTemplate);
+        if(isRepeated==null){
+            redisHelp.setRedis("isTypechoInstall","1",15,redisTemplate);
+        }else{
+            return Result.getResultJson(0,"你的操作太频繁了",null);
+        }
         String text = "执行信息 ------";
         Integer i = 1;
         //判断typecho是否安装，或者数据表前缀是否正确
@@ -354,6 +360,14 @@ public class InstallController {
             text+="用户模块，字段avatar添加完成。";
         }else{
             text+="用户模块，字段avatar已经存在，无需添加。";
+        }
+        //查询用户表是否存在clientId字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_users' and column_name = 'clientId';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_users ADD clientId varchar(255) DEFAULT NULL;");
+            text+="用户模块，字段clientId添加完成。";
+        }else{
+            text+="用户模块，字段clientId已经存在，无需添加。";
         }
 
         //查询分类标签表是否存在imgurl字段
@@ -736,6 +750,38 @@ public class InstallController {
             text+="配置中心模块，字段cloudUrl添加完成。";
         }else{
             text+="配置中心模块，字段cloudUrl已经存在，无需添加。";
+        }
+        //查询配置中心表是否存在pushAppId字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'pushAppId';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `pushAppId` varchar(255) DEFAULT '' COMMENT 'pushAppId'");
+            text+="配置中心模块，字段pushAppId添加完成。";
+        }else{
+            text+="配置中心模块，字段pushAppId已经存在，无需添加。";
+        }
+        //查询配置中心表是否存在pushAppKey字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'pushAppKey';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `pushAppKey` varchar(255) DEFAULT '' COMMENT 'pushAppKey'");
+            text+="配置中心模块，字段pushAppKey添加完成。";
+        }else{
+            text+="配置中心模块，字段pushAppKey已经存在，无需添加。";
+        }
+        //查询配置中心表是否存在pushMasterSecret字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'pushMasterSecret';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `pushMasterSecret` varchar(255) DEFAULT '' COMMENT 'pushMasterSecret'");
+            text+="配置中心模块，字段pushMasterSecret添加完成。";
+        }else{
+            text+="配置中心模块，字段pushMasterSecret已经存在，无需添加。";
+        }
+        //查询配置中心表是否存在disableCode字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'disableCode';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `disableCode` int(2) DEFAULT '0' COMMENT '是否禁用代码'");
+            text+="配置中心模块，字段disableCode添加完成。";
+        }else{
+            text+="配置中心模块，字段disableCode已经存在，无需添加。";
         }
         //添加邀请码模块
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_invitation';", Integer.class);

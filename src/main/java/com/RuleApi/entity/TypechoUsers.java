@@ -106,4 +106,9 @@ public class TypechoUsers implements Serializable {
      * avatar
      */
     private String avatar;
+
+    /**
+     * clientId
+     */
+    private Integer clientId;
 }

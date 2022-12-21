@@ -109,7 +109,14 @@ var vm = new Vue({
 
 		//云控
 		cloudUid:"",
-		cloudUrl:""
+		cloudUrl:"",
+
+		//通知和开关
+		pushAppId:"",
+		pushAppKey:"",
+		pushMasterSecret:"",
+		disableCode:0
+
 	},
 	created(){
 		var that = this;
@@ -323,6 +330,12 @@ var vm = new Vue({
 					that.contentInfoCache=res.data.data.contentCache;
 					that.CommentCache=res.data.data.CommentCache;
 					that.userCache=res.data.data.userCache;
+
+					//通知和开关
+					that.pushAppId=res.data.data.pushAppId;
+					that.pushAppKey=res.data.data.pushAppKey;
+					that.pushMasterSecret=res.data.data.pushMasterSecret;
+					that.disableCode=res.data.data.disableCode;
 				}else{
 					that.outSystem();
 				}
@@ -409,7 +422,8 @@ var vm = new Vue({
 				isInvite:that.isInvite,
 				auditlevel:that.auditlevel,
 				forbidden:that.forbidden,
-				fields:that.fields
+				fields:that.fields,
+				disableCode:that.disableCode
 			}
 			axios.get(url,{
 				params:{
@@ -762,7 +776,30 @@ var vm = new Vue({
 				console.log(error);
 			});
 		},
-
+		savePush(){
+			var that = this;
+			var url = "/system/apiConfigUpdate"
+			var data={
+				pushAppId:that.pushAppId,
+				pushAppKey:that.pushAppKey,
+				pushMasterSecret:that.pushMasterSecret
+			}
+			axios.get(url,{
+				params:{
+					"webkey":that.webkey,
+					"params":JSON.stringify(that.removeObjectEmptyKey(data))
+				}
+			}).then(function(res){
+				that.toAlert(res.data.msg);
+				if(res.data.code==1){
+					that.getAll();
+				}else{
+					that.outSystem();
+				}
+			}).catch(function (error) {
+				console.log(error);
+			});
+		},
 		saveConfig(){
 			var that = this;
 			var url = "/system/setupConfig"

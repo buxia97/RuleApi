@@ -273,6 +273,7 @@ public class TypechoUsersController {
             }
             json.remove("password");
             json.remove("address");
+            json.remove("clientId");
             json.remove("pay");
             Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
             if(map.size()>0){
@@ -1328,6 +1329,7 @@ public class TypechoUsersController {
             comments.setAuthorId(uid);
             Integer lv = commentsService.total(comments);
             json.remove("password");
+            json.remove("clientId");
             //判断是否为VIP
             json.put("isvip", 0);
             Long date = System.currentTimeMillis();

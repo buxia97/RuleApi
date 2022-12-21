@@ -25,6 +25,7 @@
 						<a href="javascript:;" @click="toPage(4)" :class="page=='4'?'active':''">Redis设置</a>
 						<a href="javascript:;" @click="toPage(11)" :class="page=='11'?'active':''">缓存设置</a>
 						<a href="javascript:;" @click="toPage(17)" :class="page=='17'?'active':''">CR云控</a>
+						<a href="javascript:;" @click="toPage(17)" :class="page=='18'?'active':''">uniPush</a>
 					</div>
 				</div>
 				<div class="menu-box">
@@ -103,6 +104,10 @@
 				<div class="form-box">
 					<p>文章自定义字段<span class="text-gray">输入字段的名称，根据英文逗号”,“进行分割。配置后，可通过自定义字段接口为文章设置自定义字段。</span></p>
 					<input type="text" class="input-text" v-model="fields" placeholder="请输入自定义字段"/>
+				</div>
+				<div class="form-box">
+					<p>敏感代码禁用模式<span class="text-gray text-red">设置为1，则发布文章，商品，评论，都将禁用js或者嵌套代码。</span></p>
+					<textarea type="text" class="text" v-model="disableCode" placeholder="设置代码禁用模式"></textarea>
 				</div>
 				<div class="form-btn">
 					<button type="button" class="input-text" class="btn" @click="saveWebinfo()">保存数据</button>
@@ -515,6 +520,28 @@
 				</div>
 				<div class="form-btn">
 					<button type="button" class="input-text" class="btn" @click="saveCloud()">保存数据</button>
+				</div>
+			</div>
+			<!-- CR应用云控结束-->
+			<!-- uniPush-->
+			<div class="form-main" v-if="page==18">
+				<div class="form-box">
+					uniPush 是DCloud 联合个推公司推出的集成型统一推送服务，配置后可实现安卓和IOS原生app的推送服务。
+				</div>
+				<div class="form-box">
+					<p>pushAppId</p>
+					<input type="text" class="input-text" v-model="pushAppId" placeholder="请输入pushAppId"/>
+				</div>
+				<div class="form-box">
+					<p>pushAppKey</p>
+					<input type="text" class="input-text" v-model="pushAppKey" placeholder="请输入pushAppKey"/>
+				</div>
+				<div class="form-box">
+					<p>pushMasterSecret</p>
+					<input type="text" class="input-text" v-model="pushMasterSecret" placeholder="请输入pushMasterSecret"/>
+				</div>
+				<div class="form-btn">
+					<button type="button" class="input-text" class="btn" @click="savePush()">保存数据</button>
 				</div>
 			</div>
 			<!-- CR应用云控结束-->

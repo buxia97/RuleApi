@@ -60,6 +60,7 @@ public class TypechoShopController {
     ResultAll Result = new ResultAll();
     UserStatus UStatus = new UserStatus();
     EditFile editFile = new EditFile();
+    baseFull baseFull = new baseFull();
 
     /***
      * 商品列表
@@ -153,6 +154,7 @@ public class TypechoShopController {
         Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         Integer uid  = Integer.parseInt(map.get("uid").toString());
         if (StringUtils.isNotBlank(params)) {
+            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
             jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
             Integer price = 0;
             if(jsonToMap.get("price")!=null){
@@ -166,11 +168,25 @@ public class TypechoShopController {
             Long date = System.currentTimeMillis();
             String userTime = String.valueOf(date).substring(0,10);
 
+            if(jsonToMap.get("text")==null){
+                return Result.getResultJson(0,"内容不能为空",null);
+            }else{
+                if(jsonToMap.get("text").toString().length()>10000){
+                    return Result.getResultJson(0,"超出最大内容长度",null);
+                }
+            }
+            //是否开启代码拦截
+            if(apiconfig.getDisableCode().equals(1)){
+                String text = jsonToMap.get("text").toString();
+                if(baseFull.haveCode(text).equals(1)){
+                    return Result.getResultJson(0,"你的内容包含敏感代码，请修改后重试！",null);
+                }
+            }
 
             jsonToMap.put("created",userTime);
 
             //如果用户不设置VIP折扣，则调用系统设置
-            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+
             Double vipDiscount = Double.valueOf(apiconfig.getVipDiscount());
             if(jsonToMap.get("vipDiscount")==null){
                 jsonToMap.put("vipDiscount",vipDiscount);
@@ -217,6 +233,7 @@ public class TypechoShopController {
         Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         Integer uid  = Integer.parseInt(map.get("uid").toString());
         if (StringUtils.isNotBlank(params)) {
+            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
             jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
             Integer price = 0;
             if(jsonToMap.get("price")!=null){
@@ -235,6 +252,20 @@ public class TypechoShopController {
                     return Result.getResultJson(0,"你无权进行此操作",null);
                 }
                 jsonToMap.put("status","0");
+            }
+            if(jsonToMap.get("text")==null){
+                return Result.getResultJson(0,"内容不能为空",null);
+            }else{
+                if(jsonToMap.get("text").toString().length()>10000){
+                    return Result.getResultJson(0,"超出最大内容长度",null);
+                }
+            }
+            //是否开启代码拦截
+            if(apiconfig.getDisableCode().equals(1)){
+                String text = jsonToMap.get("text").toString();
+                if(baseFull.haveCode(text).equals(1)){
+                    return Result.getResultJson(0,"你的内容包含敏感代码，请修改后重试！",null);
+                }
             }
 
             jsonToMap.remove("created");

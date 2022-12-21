@@ -305,7 +305,13 @@ public class TypechoCommentsController {
                         return Result.getResultJson(0,"请先绑定邮箱！",null);
                     }
                 }
-
+                //是否开启代码拦截
+                if(apiconfig.getDisableCode().equals(1)){
+                    String text = jsonToMap.get("text").toString();
+                    if(baseFull.haveCode(text).equals(1)){
+                        return Result.getResultJson(0,"你的内容包含敏感代码，请修改后重试！",null);
+                    }
+                }
                 //根据cid获取文章作者信息
                 String cid = jsonToMap.get("cid").toString();
                 TypechoContents contents = contentsService.selectByKey(cid);
@@ -475,9 +481,24 @@ public class TypechoCommentsController {
             Map jsonToMap =new HashMap();
             //String group = (String) redisHelp.getValue("userInfo"+token,"group",redisTemplate);
             if (StringUtils.isNotBlank(params)) {
+                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
                 jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
                 if(jsonToMap.get("coid")==null){
                     return Result.getResultJson(0,"请传入评论id",null);
+                }
+                if(jsonToMap.get("text")==null){
+                    return Result.getResultJson(0,"评论不能为空",null);
+                }else{
+                    if(jsonToMap.get("text").toString().length()>1500){
+                        return Result.getResultJson(0,"超出最大评论长度",null);
+                    }
+                }
+                //是否开启代码拦截
+                if(apiconfig.getDisableCode().equals(1)){
+                    String text = jsonToMap.get("text").toString();
+                    if(baseFull.haveCode(text).equals(1)){
+                        return Result.getResultJson(0,"你的内容包含敏感代码，请修改后重试！",null);
+                    }
                 }
                 jsonToMap.remove("parent");
                 jsonToMap.remove("ownerId");

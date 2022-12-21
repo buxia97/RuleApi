@@ -22,6 +22,7 @@
         <result column="customize" property="customize" />
         <result column="avatar" property="avatar" />
         <result column="experience" property="experience" />
+        <result column="clientId" property="clientId" />
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -43,7 +44,8 @@
         `customize`,
         `vip`,
         `avatar`,
-        `experience`
+        `experience`,
+        `clientId`
     </sql>
 
     <!-- 插入数据 -->
@@ -84,7 +86,10 @@
                 `authCode`,
             </if>
             <if test ='null != avatar'>
-                `avatar`
+                `avatar`,
+            </if>
+            <if test ='null != clientId'>
+                `clientId`
             </if>
 
         </trim>
@@ -123,7 +128,10 @@
                 #{authCode},
             </if>
             <if test ='null != avatar'>
-                #{avatar}
+                #{avatar},
+            </if>
+            <if test ='null != clientId'>
+                #{clientId}
             </if>
 
         </trim>
@@ -171,6 +179,7 @@
             <if test ='null != vip'>`vip` = #{vip},</if>
             <if test ='null != avatar'>`avatar` = #{avatar},</if>
             <if test ='null != experience'>`experience` = #{experience}</if>
+            <if test ='null != clientId'>`clientId` = #{clientId}</if>
 
 
         </set>
@@ -277,6 +286,9 @@
             </if>
             <if test ='null != typechoUsers.authCode'>
                 and `authCode` = #{typechoUsers.authCode}
+            </if>
+            <if test ='null != typechoUsers.experience'>
+                and `experience` = #{typechoUsers.experience}
             </if>
             <if test ='null != typechoUsers.vip'>
                 and `vip` > 0

@@ -319,5 +319,27 @@ public class TypechoApiconfig implements Serializable {
      */
     private String cloudUrl;
 
+    /**
+     * pushAppId
+     */
+    private String pushAppId;
+
+    /**
+     * pushAppKey
+     */
+    private String pushAppKey;
+
+
+    /**
+     * pushMasterSecret
+     */
+    private String pushMasterSecret;
+
+
+    /**
+     * disableCode
+     */
+    private Integer disableCode;
+
 
 }

@@ -68,6 +68,10 @@
         <result column="mchApiV3Key" property="mchApiV3Key" />
         <result column="cloudUid" property="cloudUid" />
         <result column="cloudUrl" property="cloudUrl" />
+        <result column="pushAppId" property="pushAppId" />
+        <result column="pushAppKey" property="pushAppKey" />
+        <result column="pushMasterSecret" property="pushMasterSecret" />
+        <result column="disableCode" property="disableCode" />
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -135,7 +139,12 @@
         `epayKey`,
         `epayNotifyUrl`,
         `cloudUid`,
-        `cloudUrl`
+        `cloudUrl`,
+
+        `pushAppId`,
+        `pushAppKey`,
+        `pushMasterSecret`,
+        `disableCode`
     </sql>
 
     <!-- 插入数据 -->
@@ -324,7 +333,19 @@
                 `cloudUid`,
             </if>
             <if test ='null != cloudUrl'>
-                `cloudUrl`
+                `cloudUrl`,
+            </if>
+            <if test ='null != pushAppId'>
+                `pushAppId`,
+            </if>
+            <if test ='null != pushAppKey'>
+                `pushAppKey`,
+            </if>
+            <if test ='null != pushMasterSecret'>
+                `pushMasterSecret`,
+            </if>
+            <if test ='null != disableCode'>
+                `disableCode`
             </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
@@ -510,7 +531,19 @@
                 #{cloudUid},
             </if>
             <if test ='null != cloudUrl'>
-                #{cloudUrl}
+                #{cloudUrl},
+            </if>
+            <if test ='null != pushAppId'>
+                #{pushAppId},
+            </if>
+            <if test ='null != pushAppKey'>
+                #{pushAppKey},
+            </if>
+            <if test ='null != pushMasterSecret'>
+                #{pushMasterSecret},
+            </if>
+            <if test ='null != disableCode'>
+                #{disableCode}
             </if>
         </trim>
     </insert>
@@ -581,7 +614,12 @@
             <if test ='null != epayKey'>`epayKey` = #{epayKey},</if>
             <if test ='null != epayNotifyUrl'>`epayNotifyUrl` = #{epayNotifyUrl},</if>
             <if test ='null != cloudUid'>`cloudUid` = #{cloudUid},</if>
-            <if test ='null != cloudUrl'>`cloudUrl` = #{cloudUrl}</if>
+            <if test ='null != cloudUrl'>`cloudUrl` = #{cloudUrl},</if>
+
+            <if test ='null != pushAppId'>`pushAppId` = #{pushAppId},</if>
+            <if test ='null != pushAppKey'>`pushAppKey` = #{pushAppKey},</if>
+            <if test ='null != pushMasterSecret'>`pushMasterSecret` = #{pushMasterSecret},</if>
+            <if test ='null != disableCode'>`disableCode` = #{disableCode}</if>
         </set>
         WHERE `id` = #{id}
     </update>
