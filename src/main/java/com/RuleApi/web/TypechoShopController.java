@@ -192,10 +192,50 @@ public class TypechoShopController {
                 jsonToMap.put("vipDiscount",vipDiscount);
             }
             insert = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoShop.class);
-            String group = map.get("group").toString();
-            if(group.equals("administrator")||group.equals("editor")){
+
+
+//
+//            if(group.equals("administrator")||group.equals("editor")){
+//                jsonToMap.put("status","1");
+//            }
+            //根据后台的开关判断
+            Integer contentAuditlevel = apiconfig.getContentAuditlevel();
+            if(contentAuditlevel.equals(0)){
                 jsonToMap.put("status","1");
             }
+            if(contentAuditlevel.equals(1)){
+                String forbidden = apiconfig.getForbidden();
+                String text = jsonToMap.get("text").toString();
+                if(forbidden!=null){
+                    if(forbidden.indexOf(",") != -1){
+                        String[] strarray=forbidden.split(",");
+                        for (int i = 0; i < strarray.length; i++){
+                            String str = strarray[i];
+                            if(text.indexOf(str) != -1){
+                                jsonToMap.put("status","0");
+                            }
+
+                        }
+                    }else{
+                        if(text.indexOf(forbidden) != -1){
+                            jsonToMap.put("status","0");
+                        }
+                    }
+                }else{
+                    jsonToMap.put("status","1");
+                }
+
+            }
+            if(contentAuditlevel.equals(2)){
+                //除管理员外，商品默认待审核
+                String group = map.get("group").toString();
+                if(!group.equals("administrator")&&!group.equals("editor")){
+                    jsonToMap.put("status","0");
+                }else{
+                    jsonToMap.put("status","1");
+                }
+            }
+
             //判断是否开启邮箱验证
             Integer isEmail = apiconfig.getIsEmail();
             if(isEmail.equals(1)) {
@@ -251,7 +291,43 @@ public class TypechoShopController {
                 if(!aid.equals(uid)){
                     return Result.getResultJson(0,"你无权进行此操作",null);
                 }
-                jsonToMap.put("status","0");
+//                jsonToMap.put("status","0");
+            }
+            //根据后台的开关判断
+            Integer contentAuditlevel = apiconfig.getContentAuditlevel();
+            if(contentAuditlevel.equals(0)){
+                jsonToMap.put("status","1");
+            }
+            if(contentAuditlevel.equals(1)){
+                String forbidden = apiconfig.getForbidden();
+                String text = jsonToMap.get("text").toString();
+                if(forbidden!=null){
+                    if(forbidden.indexOf(",") != -1){
+                        String[] strarray=forbidden.split(",");
+                        for (int i = 0; i < strarray.length; i++){
+                            String str = strarray[i];
+                            if(text.indexOf(str) != -1){
+                                jsonToMap.put("status","0");
+                            }
+
+                        }
+                    }else{
+                        if(text.indexOf(forbidden) != -1){
+                            jsonToMap.put("status","0");
+                        }
+                    }
+                }else{
+                    jsonToMap.put("status","1");
+                }
+
+            }
+            if(contentAuditlevel.equals(2)){
+                //除管理员外，商品默认待审核
+                if(!group.equals("administrator")&&!group.equals("editor")){
+                    jsonToMap.put("status","0");
+                }else{
+                    jsonToMap.put("status","1");
+                }
             }
             if(jsonToMap.get("text")==null){
                 return Result.getResultJson(0,"内容不能为空",null);

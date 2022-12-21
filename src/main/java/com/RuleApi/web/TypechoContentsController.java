@@ -447,13 +447,45 @@ public class TypechoContentsController {
                 jsonToMap.put("authorId",uid);
 
 
-                //除管理员外，文章默认待审核
-                Map userMap =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
-                String group = userMap.get("group").toString();
-                if(!group.equals("administrator")&&!group.equals("editor")){
-                    jsonToMap.put("status","waiting");
-                }else{
+
+
+                //根据后台的开关判断
+                Integer contentAuditlevel = apiconfig.getContentAuditlevel();
+                if(contentAuditlevel.equals(0)){
                     jsonToMap.put("status","publish");
+                }
+                if(contentAuditlevel.equals(1)){
+                    String forbidden = apiconfig.getForbidden();
+                    String text = jsonToMap.get("text").toString();
+                    if(forbidden!=null){
+                        if(forbidden.indexOf(",") != -1){
+                            String[] strarray=forbidden.split(",");
+                            for (int i = 0; i < strarray.length; i++){
+                                String str = strarray[i];
+                                if(text.indexOf(str) != -1){
+                                    jsonToMap.put("status","waiting");
+                                }
+
+                            }
+                        }else{
+                            if(text.indexOf(forbidden) != -1){
+                                jsonToMap.put("status","waiting");
+                            }
+                        }
+                    }else{
+                        jsonToMap.put("status","publish");
+                    }
+
+                }
+                if(contentAuditlevel.equals(2)){
+                    //除管理员外，文章默认待审核
+                    Map userMap =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+                    String group = userMap.get("group").toString();
+                    if(!group.equals("administrator")&&!group.equals("editor")){
+                        jsonToMap.put("status","waiting");
+                    }else{
+                        jsonToMap.put("status","publish");
+                    }
                 }
 
                 //部分字段不允许定义
@@ -539,12 +571,15 @@ public class TypechoContentsController {
 
 
             }
-
+            String resText = "发布成功";
+            if(jsonToMap.get("status").equals("waiting")){
+                resText = "文章将在审核后发布！";
+            }
             editFile.setLog("用户"+logUid+"请求发布了新文章");
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );
             response.put("data" , rows);
-            response.put("msg"  , rows > 0 ? "添加成功" : "添加失败");
+            response.put("msg"  , rows > 0 ? resText : "发布失败");
             return response.toString();
         }catch (Exception e){
             System.out.println(e);
@@ -643,9 +678,45 @@ public class TypechoContentsController {
                 jsonToMap.remove("isrecommend");
                 jsonToMap.remove("istop");
                 jsonToMap.remove("isswiper");
-                //状态重新变成待审核
-                if(!group.equals("administrator")){
-                    jsonToMap.put("status","waiting");
+//                //状态重新变成待审核
+//                if(!group.equals("administrator")){
+//                    jsonToMap.put("status","waiting");
+//                }
+                //根据后台的开关判断
+                Integer contentAuditlevel = apiconfig.getContentAuditlevel();
+                if(contentAuditlevel.equals(0)){
+                    jsonToMap.put("status","publish");
+                }
+                if(contentAuditlevel.equals(1)){
+                    String forbidden = apiconfig.getForbidden();
+                    String text = jsonToMap.get("text").toString();
+                    if(forbidden!=null){
+                        if(forbidden.indexOf(",") != -1){
+                            String[] strarray=forbidden.split(",");
+                            for (int i = 0; i < strarray.length; i++){
+                                String str = strarray[i];
+                                if(text.indexOf(str) != -1){
+                                    jsonToMap.put("status","waiting");
+                                }
+
+                            }
+                        }else{
+                            if(text.indexOf(forbidden) != -1){
+                                jsonToMap.put("status","waiting");
+                            }
+                        }
+                    }else{
+                        jsonToMap.put("status","publish");
+                    }
+
+                }
+                if(contentAuditlevel.equals(2)){
+                    //除管理员外，文章默认待审核
+                    if(!group.equals("administrator")&&!group.equals("editor")){
+                        jsonToMap.put("status","waiting");
+                    }else{
+                        jsonToMap.put("status","publish");
+                    }
                 }
 
                 update = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoContents.class);
@@ -721,10 +792,14 @@ public class TypechoContentsController {
             }
 
             editFile.setLog("用户"+logUid+"请求修改了文章"+cid);
+            String resText = "修改成功";
+            if(jsonToMap.get("status").equals("waiting")){
+                resText = "文章将在审核后发布！";
+            }
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );
             response.put("data" , rows);
-            response.put("msg"  , rows > 0 ? "修改成功" : "修改失败");
+            response.put("msg"  , rows > 0 ? resText : "修改失败");
             return response.toString();
         }catch (Exception e){
             System.out.println(e);
@@ -745,9 +820,19 @@ public class TypechoContentsController {
             }
             //String group = (String) redisHelp.getValue("userInfo"+token,"group",redisTemplate);
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            Integer uid  = Integer.parseInt(map.get("uid").toString());
             String group = map.get("group").toString();
             if(!group.equals("administrator")){
-                return Result.getResultJson(0,"你没有操作权限",null);
+                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+                if(apiconfig.getAllowDelete().equals(0)){
+                    return Result.getResultJson(0,"系统禁止删除文章",null);
+                }
+                TypechoContents contents = service.selectByKey(key);
+                Integer aid = contents.getAuthorId();
+                if(!aid.equals(uid)){
+                    return Result.getResultJson(0,"你无权进行此操作",null);
+                }
+//                jsonToMap.put("status","0");
             }
             Integer logUid =Integer.parseInt(map.get("uid").toString());
             int rows = service.delete(key);

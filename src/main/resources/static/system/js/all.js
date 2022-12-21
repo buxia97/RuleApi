@@ -115,7 +115,9 @@ var vm = new Vue({
 		pushAppId:"",
 		pushAppKey:"",
 		pushMasterSecret:"",
-		disableCode:0
+		disableCode:"",
+		allowDelete:"",
+		contentAuditlevel:"",
 
 	},
 	created(){
@@ -336,6 +338,8 @@ var vm = new Vue({
 					that.pushAppKey=res.data.data.pushAppKey;
 					that.pushMasterSecret=res.data.data.pushMasterSecret;
 					that.disableCode=res.data.data.disableCode;
+					that.allowDelete=res.data.data.allowDelete;
+					that.contentAuditlevel=res.data.data.contentAuditlevel;
 				}else{
 					that.outSystem();
 				}
@@ -423,7 +427,9 @@ var vm = new Vue({
 				auditlevel:that.auditlevel,
 				forbidden:that.forbidden,
 				fields:that.fields,
-				disableCode:that.disableCode
+				disableCode:that.disableCode,
+				allowDelete:that.allowDelete,
+				contentAuditlevel:that.contentAuditlevel
 			}
 			axios.get(url,{
 				params:{

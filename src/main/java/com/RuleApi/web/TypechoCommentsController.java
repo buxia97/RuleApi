@@ -139,6 +139,8 @@ public class TypechoCommentsController {
                             parentComments.put("text",parent.getText());
                             parentComments.put("created",JSONObject.toJSONString(parent.getCreated()));
 
+                        }else{
+                            parentComments.put("text","评论已删除");
                         }
                     }
 
@@ -204,6 +206,8 @@ public class TypechoCommentsController {
 
 
                         json.put("contentsInfo",contentsJson);
+                    }else{
+                        json.put("contenTitle","文章已删除");
                     }
 
 
@@ -616,11 +620,24 @@ public class TypechoCommentsController {
             }
             //String group = (String) redisHelp.getValue("userInfo"+token,"group",redisTemplate);
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            Integer uid  = Integer.parseInt(map.get("uid").toString());
+            // 查询发布者是不是自己，如果是管理员则跳过
             String group = map.get("group").toString();
             if(!group.equals("administrator")){
-                return Result.getResultJson(0,"你没有操作权限",null);
+                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+                if(apiconfig.getAllowDelete().equals(0)){
+                    return Result.getResultJson(0,"系统禁止删除评论",null);
+                }
+                TypechoComments comments = service.selectByKey(key);
+                Integer aid = comments.getAuthorId();
+                if(!aid.equals(uid)){
+                    return Result.getResultJson(0,"你无权进行此操作",null);
+                }
+//                jsonToMap.put("status","0");
             }
             Integer logUid =Integer.parseInt(map.get("uid").toString());
+
+            int rows = service.delete(key);
             //更新文章评论数量
             TypechoComments comments = service.selectByKey(key);
             Integer cid = comments.getCid();
@@ -632,7 +649,7 @@ public class TypechoCommentsController {
             contents.setCommentsNum(total);
             contentsService.update(contents);
 
-            int rows = service.delete(key);
+
             editFile.setLog("管理员"+logUid+"删除了评论"+key);
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );

@@ -783,6 +783,22 @@ public class InstallController {
         }else{
             text+="配置中心模块，字段disableCode已经存在，无需添加。";
         }
+        //查询配置中心表是否存在allowDelete字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'allowDelete';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `allowDelete` int(2) DEFAULT '0' COMMENT '是否允许用户删除文章或评论'");
+            text+="配置中心模块，字段allowDelete添加完成。";
+        }else{
+            text+="配置中心模块，字段allowDelete已经存在，无需添加。";
+        }
+        //查询配置中心表是否存在allowDelete字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'contentAuditlevel';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `contentAuditlevel` int(2) DEFAULT '2' COMMENT '内容审核模式'");
+            text+="配置中心模块，字段contentAuditlevel添加完成。";
+        }else{
+            text+="配置中心模块，字段contentAuditlevel已经存在，无需添加。";
+        }
         //添加邀请码模块
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_invitation';", Integer.class);
         if (i == 0){

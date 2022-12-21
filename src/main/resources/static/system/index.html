@@ -98,6 +98,10 @@
 					<input type="text" class="input-text" v-model="auditlevel" placeholder="设置评论审核等级"/>
 				</div>
 				<div class="form-box">
+					<p>内容审核等级<span class="text-gray">0不审核，1违禁词匹配审核，2除管理人员外默认全部审核</span></p>
+					<input type="text" class="input-text" v-model="contentAuditlevel" placeholder="设置内容审核等级"/>
+				</div>
+				<div class="form-box">
 					<p>违禁词<span class="text-gray text-red">违禁词将用于评论审核，个性签名拦截。根据英文逗号”,“进行分割，不要存在换行或者空格。</span></p>
 					<textarea type="text" class="text" v-model="forbidden" placeholder="请输入违禁词"></textarea>
 				</div>
@@ -108,6 +112,10 @@
 				<div class="form-box">
 					<p>敏感代码禁用模式<span class="text-gray text-red">设置为1，则发布文章，商品，评论，都将禁用js或者嵌套代码。</span></p>
 					<textarea type="text" class="text" v-model="disableCode" placeholder="设置代码禁用模式"></textarea>
+				</div>
+				<div class="form-box">
+					<p>用户删除权限<span class="text-gray">允许用户删除自己的内容（评论，文章），0为禁止，1为允许</span></p>
+					<input type="text" class="input-text" v-model="allowDelete" placeholder="设置用户删除权限"/>
 				</div>
 				<div class="form-btn">
 					<button type="button" class="input-text" class="btn" @click="saveWebinfo()">保存数据</button>

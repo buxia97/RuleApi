@@ -341,5 +341,18 @@ public class TypechoApiconfig implements Serializable {
      */
     private Integer disableCode;
 
+    /**
+     * allowDelete
+     */
+    private Integer allowDelete;
+
+    /**
+     * contentAuditlevel
+     */
+    private Integer contentAuditlevel;
+
+
+
+
 
 }

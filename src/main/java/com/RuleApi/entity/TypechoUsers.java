@@ -110,5 +110,5 @@ public class TypechoUsers implements Serializable {
     /**
      * clientId
      */
-    private Integer clientId;
+    private String clientId;
 }

@@ -72,6 +72,8 @@
         <result column="pushAppKey" property="pushAppKey" />
         <result column="pushMasterSecret" property="pushMasterSecret" />
         <result column="disableCode" property="disableCode" />
+        <result column="allowDelete" property="allowDelete" />
+        <result column="contentAuditlevel" property="contentAuditlevel" />
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -144,7 +146,9 @@
         `pushAppId`,
         `pushAppKey`,
         `pushMasterSecret`,
-        `disableCode`
+        `disableCode`,
+        `allowDelete`,
+        `contentAuditlevel`
     </sql>
 
     <!-- 插入数据 -->
@@ -345,7 +349,13 @@
                 `pushMasterSecret`,
             </if>
             <if test ='null != disableCode'>
-                `disableCode`
+                `disableCode`,
+            </if>
+            <if test ='null != allowDelete'>
+                `allowDelete`,
+            </if>
+            <if test ='null != contentAuditlevel'>
+                `contentAuditlevel`
             </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
@@ -543,7 +553,13 @@
                 #{pushMasterSecret},
             </if>
             <if test ='null != disableCode'>
-                #{disableCode}
+                #{disableCode},
+            </if>
+            <if test ='null != allowDelete'>
+                #{allowDelete},
+            </if>
+            <if test ='null != contentAuditlevel'>
+                #{contentAuditlevel}
             </if>
         </trim>
     </insert>
@@ -619,7 +635,9 @@
             <if test ='null != pushAppId'>`pushAppId` = #{pushAppId},</if>
             <if test ='null != pushAppKey'>`pushAppKey` = #{pushAppKey},</if>
             <if test ='null != pushMasterSecret'>`pushMasterSecret` = #{pushMasterSecret},</if>
-            <if test ='null != disableCode'>`disableCode` = #{disableCode}</if>
+            <if test ='null != disableCode'>`disableCode` = #{disableCode},</if>
+            <if test ='null != allowDelete'>`allowDelete` = #{allowDelete},</if>
+            <if test ='null != contentAuditlevel'>`contentAuditlevel` = #{contentAuditlevel}</if>
         </set>
         WHERE `id` = #{id}
     </update>
