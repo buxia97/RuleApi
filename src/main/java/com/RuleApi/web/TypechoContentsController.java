@@ -228,6 +228,7 @@ public class TypechoContentsController {
         List cacheList = new ArrayList();
         String group = "";
         Integer total = 0;
+
         if (StringUtils.isNotBlank(searchParams)) {
             JSONObject object = JSON.parseObject(searchParams);
             //如果不是登陆状态，那么只显示开放状态文章。如果是，则查询自己发布的文章
@@ -389,6 +390,7 @@ public class TypechoContentsController {
             }
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer logUid =Integer.parseInt(map.get("uid").toString());
+            Integer isWaiting = 0;
             if (StringUtils.isNotBlank(params)) {
                 jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
                 //获取发布者信息
@@ -464,12 +466,13 @@ public class TypechoContentsController {
                                 String str = strarray[i];
                                 if(text.indexOf(str) != -1){
                                     jsonToMap.put("status","waiting");
+                                    isWaiting = 1;
                                 }
-
                             }
                         }else{
                             if(text.indexOf(forbidden) != -1){
                                 jsonToMap.put("status","waiting");
+                                isWaiting = 1;
                             }
                         }
                     }else{
@@ -513,7 +516,7 @@ public class TypechoContentsController {
             service.update(slugUpdate);
 
             if(rows > 0) {
-                if (category != "") {
+                if (category.length()>0) {
                     Integer result = category.indexOf(",");
                     if (result != -1) {
                         String[] categoryList = category.split(",");
@@ -533,7 +536,7 @@ public class TypechoContentsController {
                         }
                     }
                 }
-                if (tag != "") {
+                if (tag.length()>0) {
                     Integer result = tag.indexOf(",");
                     if (result != -1) {
                         String[] tagList = tag.split(",");
@@ -572,9 +575,10 @@ public class TypechoContentsController {
 
             }
             String resText = "发布成功";
-            if(jsonToMap.get("status").equals("waiting")){
+            if(isWaiting>0){
                 resText = "文章将在审核后发布！";
             }
+
             editFile.setLog("用户"+logUid+"请求发布了新文章");
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );
@@ -607,6 +611,7 @@ public class TypechoContentsController {
                 return Result.getResultJson(0,"用户未登录或Token验证失败",null);
             }
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            Integer isWaiting = 0;
             Integer logUid =Integer.parseInt(map.get("uid").toString());
             if (StringUtils.isNotBlank(params)) {
                 TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
@@ -793,7 +798,7 @@ public class TypechoContentsController {
 
             editFile.setLog("用户"+logUid+"请求修改了文章"+cid);
             String resText = "修改成功";
-            if(jsonToMap.get("status").equals("waiting")){
+            if(isWaiting>0){
                 resText = "文章将在审核后发布！";
             }
             JSONObject response = new JSONObject();

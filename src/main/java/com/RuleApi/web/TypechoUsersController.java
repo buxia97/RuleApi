@@ -1198,7 +1198,7 @@ public class TypechoUsersController {
                                     isForbidden = 1;
                                     jsonToMap.remove("introduce");
                                 }
-                                break;
+                                //break;
                             }
                         }else{
                             if(introduce.indexOf(forbidden) != -1){
