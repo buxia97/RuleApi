@@ -1197,6 +1197,33 @@ public class TypechoContentsController {
 
     }
     /***
+     * 注册系统配置信息
+     */
+    @RequestMapping(value = "/contentConfig")
+    @ResponseBody
+    public String contentConfig() {
+        Map contentConfig = new HashMap<String, String>();
+        try{
+            Map cacheInfo = redisHelp.getMapValue(this.dataprefix+"_contentConfig",redisTemplate);
+
+            if(cacheInfo.size()>0){
+                contentConfig = cacheInfo;
+            }else{
+                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+                contentConfig.put("allowDelete",apiconfig.getAllowDelete());
+                redisHelp.delete(this.dataprefix+"_contentConfig",redisTemplate);
+                redisHelp.setKey(this.dataprefix+"_contentConfig",contentConfig,5,redisTemplate);
+            }
+        }catch (Exception e){
+            System.out.println(e);
+        }
+        JSONObject response = new JSONObject();
+        response.put("code" , 1);
+        response.put("data" , contentConfig);
+        response.put("msg"  , "");
+        return response.toString();
+    }
+    /***
      * 全站统计
      */
     @RequestMapping(value = "/allData")

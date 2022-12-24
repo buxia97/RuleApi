@@ -635,9 +635,6 @@ public class TypechoCommentsController {
                 }
 //                jsonToMap.put("status","0");
             }
-            Integer logUid =Integer.parseInt(map.get("uid").toString());
-
-            int rows = service.delete(key);
             //更新文章评论数量
             TypechoComments comments = service.selectByKey(key);
             Integer cid = comments.getCid();
@@ -648,9 +645,12 @@ public class TypechoCommentsController {
             contents.setCid(cid);
             contents.setCommentsNum(total);
             contentsService.update(contents);
+            //删除
+            int rows = service.delete(key);
 
 
-            editFile.setLog("管理员"+logUid+"删除了评论"+key);
+
+            editFile.setLog("用户"+uid+"删除了评论"+key);
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );
             response.put("data" , rows);
