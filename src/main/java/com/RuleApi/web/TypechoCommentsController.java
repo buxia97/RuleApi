@@ -647,9 +647,6 @@ public class TypechoCommentsController {
             contentsService.update(contents);
             //删除
             int rows = service.delete(key);
-
-
-
             editFile.setLog("用户"+uid+"删除了评论"+key);
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );

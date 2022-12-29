@@ -62,6 +62,12 @@ public class TypechoUsersController {
     private TypechoInvitationService invitationService;
 
     @Autowired
+    private TypechoInboxService inboxService;
+
+    @Autowired
+    private PushService pushService;
+
+    @Autowired
     MailService MailService;
 
     @Autowired
@@ -1237,7 +1243,7 @@ public class TypechoUsersController {
                 redisHelp.delete(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
             }
             String responseText = "操作成功";
-            if(isForbidden == 1){
+            if(isForbidden.equals(1)){
                 responseText = "简介存在违禁词，该字段未修改。";
             }
             JSONObject response = new JSONObject();
@@ -1890,4 +1896,89 @@ public class TypechoUsersController {
         response.flushBuffer();
         workbook.write(response.getOutputStream());
     }
+    /***
+     * 用户收件箱
+     *
+     */
+    @RequestMapping(value = "/inbox")
+    @ResponseBody
+    public String formPage (@RequestParam(value = "token", required = false) String  token,
+                            @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
+                            @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit) {
+        TypechoInbox query = new TypechoInbox();
+        Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
+        if (uStatus == 0) {
+            return Result.getResultJson(0, "用户未登录或Token验证失败", null);
+        }
+
+        Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+        Integer uid =Integer.parseInt(map.get("uid").toString());
+        query.setTouid(uid);
+        Integer total = inboxService.total(query);
+
+        PageList<TypechoInbox> pageList = inboxService.selectPage(query, page, limit);
+        JSONObject response = new JSONObject();
+        response.put("code" , 0);
+        response.put("msg"  , "");
+        response.put("data" , null != pageList.getList() ? pageList.getList() : new JSONArray());
+        response.put("count", pageList.getTotalCount());
+        response.put("total", total);
+        return response.toString();
+    }
+
+    /***
+     * 向指定用户发送消息
+     */
+    @RequestMapping(value = "/sendUser")
+    @ResponseBody
+    public String formInsert(@RequestParam(value = "token", required = false) String  token,
+                             @RequestParam(value = "uid", required = false, defaultValue = "1") Integer uid,
+                             @RequestParam(value = "text", required = false, defaultValue = "1") String text) {
+        try{
+            Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
+            if (uStatus == 0) {
+                return Result.getResultJson(0, "用户未登录或Token验证失败", null);
+            }
+            Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+            String group = map.get("group").toString();
+            if (!group.equals("administrator")) {
+                return Result.getResultJson(0, "你没有操作权限", null);
+            }
+            if(text.length()<1){
+                return Result.getResultJson(0, "发送内容不能为空", null);
+            }
+            TypechoUsers user = service.selectByKey(uid);
+            if(user==null){
+                return Result.getResultJson(0, "该用户不存在", null);
+            }else{
+                //如果用户存在客户端id，则发送app通知
+                if(user.getClientId()!=null){
+                    TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+                    String title = apiconfig.getWebinfoTitle();
+                    pushService.sendPushMsg(user.getClientId(),title,text,"payload","system");
+                }
+            }
+            Integer muid =Integer.parseInt(map.get("uid").toString());
+            Long date = System.currentTimeMillis();
+            String created = String.valueOf(date).substring(0,10);
+            TypechoInbox insert = new TypechoInbox();
+            insert.setUid(muid);
+            insert.setTouid(uid);
+            insert.setType("system");
+            insert.setText(text);
+            insert.setCreated(Integer.parseInt(created));
+            int rows = inboxService.insert(insert);
+
+            JSONObject response = new JSONObject();
+            response.put("code" , rows);
+            response.put("msg"  , rows > 0 ? "发送失败" : "发送失败");
+            return response.toString();
+        }catch (Exception e){
+            System.out.println(e);
+            return Result.getResultJson(0, "发送失败", null);
+        }
+
+    }
+
+
 }
