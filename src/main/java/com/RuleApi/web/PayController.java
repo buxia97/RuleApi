@@ -323,7 +323,7 @@ public class PayController {
         return response.toString();
     }
     /**
-     * 财务记录(管理员)
+     * 财务统计(管理员)
      * */
     @RequestMapping(value = "/financeTotal")
     @ResponseBody

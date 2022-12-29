@@ -173,6 +173,7 @@
                 and `created` = #{typechoInbox.created}
             </if>
         </where>
+        order by created desc
         limit #{page,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
     </select>
 

@@ -853,7 +853,7 @@ public class TypechoContentsController {
             insert.setUid(uid);
             insert.setTouid(contents.getAuthorId());
             insert.setType("system");
-            insert.setText("你的文章已被删除："+contents.getTitle());
+            insert.setText("你的文章【"+contents.getTitle()+"】已被删除");
             insert.setCreated(Integer.parseInt(created));
             inboxService.insert(insert);
 
@@ -925,7 +925,7 @@ public class TypechoContentsController {
             insert.setUid(uid);
             insert.setTouid(info.getAuthorId());
             insert.setType("system");
-            insert.setText("你的文章已审核通过："+info.getTitle());
+            insert.setText("你的文章【"+info.getTitle()+"】已审核通过");
             insert.setCreated(Integer.parseInt(created));
             inboxService.insert(insert);
 

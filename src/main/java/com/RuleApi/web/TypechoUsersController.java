@@ -1922,13 +1922,68 @@ public class TypechoUsersController {
         Integer uid =Integer.parseInt(map.get("uid").toString());
         query.setTouid(uid);
         Integer total = inboxService.total(query);
+        TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
 
         PageList<TypechoInbox> pageList = inboxService.selectPage(query, page, limit);
+        List jsonList = new ArrayList();
+        List<TypechoInbox> list = pageList.getList();
+        for (int i = 0; i < list.size(); i++) {
+            Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
+            TypechoInbox inbox = list.get(i);
+            Integer userid = inbox.getUid();
+            TypechoUsers user = service.selectByKey(userid);
+            //获取用户信息
+            Map userJson = new HashMap();
+            if(user!=null){
+                String name = user.getName();
+                if(user.getScreenName()!=null){
+                    name = user.getScreenName();
+                }
+                userJson.put("name", name);
+                userJson.put("groupKey", user.getGroupKey());
+                userJson.put("avatar", user.getAvatar());
+                userJson.put("customize", user.getCustomize());
+                //判断是否为VIP
+                userJson.put("vip", user.getVip());
+                userJson.put("isvip", 0);
+                Long date = System.currentTimeMillis();
+                String curTime = String.valueOf(date).substring(0, 10);
+                Integer viptime  = user.getVip();
+                if(viptime>Integer.parseInt(curTime)||viptime.equals(1)){
+                    userJson.put("isvip", 1);
+                }
+
+            }else{
+                userJson.put("name", "用户已注销");
+                userJson.put("groupKey", "");
+                userJson.put("avatar", apiconfig.getWebinfoAvatar() + "null");
+            }
+            json.put("userJson",userJson);
+            if(inbox.getType().equals("comment")){
+                TypechoContents contentsInfo = contentsService.selectByKey(inbox.getValue());
+                if(contentsInfo!=null){
+                    json.put("contenTitle",contentsInfo.getTitle());
+                    //加入文章数据
+                    Map contentsJson = new HashMap();
+                    contentsJson.put("cid",contentsInfo.getCid());
+                    contentsJson.put("slug",contentsInfo.getSlug());
+                    contentsJson.put("title",contentsInfo.getTitle());
+                    contentsJson.put("type",contentsInfo.getType());
+                    json.put("contentsInfo",contentsJson);
+                }else{
+                    json.put("contenTitle","文章已删除");
+                }
+            }
+
+
+
+            jsonList.add(json);
+        }
         JSONObject response = new JSONObject();
         response.put("code" , 1);
         response.put("msg"  , "");
-        response.put("data" , null != pageList.getList() ? pageList.getList() : new JSONArray());
-        response.put("count", pageList.getTotalCount());
+        response.put("data" , jsonList);
+        response.put("count", jsonList.size());
         response.put("total", total);
         return response.toString();
     }
@@ -2011,7 +2066,7 @@ public class TypechoUsersController {
                     TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
                     String title = apiconfig.getWebinfoTitle();
                     try {
-                        pushService.sendPushMsg(user.getClientId(),title,text,"payload","system");
+                        pushService.sendPushMsg(user.getClientId(),title+"系统消息",text,"payload","system");
                     }catch (Exception e){
                         System.out.println("通知发送失败："+e);
                     }
@@ -2031,7 +2086,7 @@ public class TypechoUsersController {
 
             JSONObject response = new JSONObject();
             response.put("code" , rows);
-            response.put("msg"  , rows > 0 ? "发送失败" : "发送失败");
+            response.put("msg"  , rows > 0 ? "发送成功" : "发送失败");
             return response.toString();
         }catch (Exception e){
             System.out.println(e);

@@ -390,7 +390,7 @@ public class TypechoShopController {
             insert.setUid(uid);
             insert.setTouid(info.getUid());
             insert.setType("system");
-            insert.setText("你的商品已被删除："+info.getTitle());
+            insert.setText("你的商品【"+info.getTitle()+"】已被删除");
             insert.setCreated(Integer.parseInt(created));
             inboxService.insert(insert);
         }
@@ -438,7 +438,7 @@ public class TypechoShopController {
         insert.setUid(uid);
         insert.setTouid(info.getUid());
         insert.setType("system");
-        insert.setText("你的商品已审核通过："+info.getTitle());
+        insert.setText("你的商品【"+info.getTitle()+"】已审核通过");
         insert.setCreated(Integer.parseInt(created));
         inboxService.insert(insert);
 

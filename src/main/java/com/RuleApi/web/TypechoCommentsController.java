@@ -326,6 +326,10 @@ public class TypechoCommentsController {
                 //根据cid获取文章作者信息
                 String cid = jsonToMap.get("cid").toString();
                 TypechoContents contents = contentsService.selectByKey(cid);
+                if(contents==null){
+                    //文章不存在，代表评论已经失效，直接删除
+                    return Result.getResultJson(0,"文章已被删除！",null);
+                }
                 jsonToMap.put("ownerId", contents.getAuthorId());
                 jsonToMap.put("created",created);
                 jsonToMap.put("type","comment");
@@ -426,7 +430,7 @@ public class TypechoCommentsController {
                             inbox.setUid(logUid);
                             inbox.setTouid(pComments.getAuthorId());
                             inbox.setType("comment");
-                            inbox.setText("你有新的回复："+jsonToMap.get("text").toString());
+                            inbox.setText(jsonToMap.get("text").toString());
                             inbox.setValue(Integer.parseInt(cid));
                             inbox.setCreated(Integer.parseInt(created));
                             inboxService.insert(inbox);
@@ -466,7 +470,7 @@ public class TypechoCommentsController {
                             inbox.setTouid(uid);
                             inbox.setType("comment");
                             inbox.setValue(Integer.parseInt(cid));
-                            inbox.setText("你有新的评论："+jsonToMap.get("text").toString());
+                            inbox.setText(jsonToMap.get("text").toString());
                             inbox.setCreated(Integer.parseInt(created));
                             inboxService.insert(inbox);
                             if(isPush.equals(1)) {
@@ -637,7 +641,7 @@ public class TypechoCommentsController {
                     inbox.setUid(logUid);
                     inbox.setTouid(pComments.getAuthorId());
                     inbox.setType("comment");
-                    inbox.setText("你有新的回复："+text);
+                    inbox.setText(text);
                     inbox.setValue(pComments.getCid());
                     inbox.setCreated(Integer.parseInt(created));
                     inboxService.insert(inbox);
@@ -675,7 +679,7 @@ public class TypechoCommentsController {
                     inbox.setTouid(authorUid);
                     inbox.setType("comment");
                     inbox.setValue(comments.getCid());
-                    inbox.setText("你有新的评论："+text);
+                    inbox.setText(text);
                     inbox.setCreated(Integer.parseInt(created));
                     inboxService.insert(inbox);
                     if(isPush.equals(1)) {
@@ -744,8 +748,8 @@ public class TypechoCommentsController {
                     TypechoInbox insert = new TypechoInbox();
                     insert.setUid(uid);
                     insert.setTouid(aid);
-                    insert.setType("comment");
-                    insert.setText("你的评论已被删除："+comments.getText());
+                    insert.setType("system");
+                    insert.setText("你的评论【"+comments.getText()+"】已被删除");
                     insert.setCreated(Integer.parseInt(created));
                     inboxService.insert(insert);
                 }

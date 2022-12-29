@@ -778,7 +778,7 @@ public class InstallController {
         //查询配置中心表是否存在isPush字段
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'isPush';", Integer.class);
         if (i == 0){
-            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD  ADD `isPush` int(2) DEFAULT '0' COMMENT '是否开启消息通知'");
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `isPush` int(2) DEFAULT '0' COMMENT '是否开启消息通知'");
             text+="配置中心模块，字段isPush添加完成。";
         }else{
             text+="配置中心模块，字段isPush已经存在，无需添加。";

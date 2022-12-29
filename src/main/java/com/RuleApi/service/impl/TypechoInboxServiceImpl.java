@@ -27,11 +27,6 @@ public class TypechoInboxServiceImpl implements TypechoInboxService {
     }
 
     @Override
-    public int batchInsert(List<TypechoInbox> list) {
-    	return dao.batchInsert(list);
-    }
-
-    @Override
     public int update(TypechoInbox typechoInbox) {
     	return dao.update(typechoInbox);
     }
@@ -39,11 +34,6 @@ public class TypechoInboxServiceImpl implements TypechoInboxService {
     @Override
     public int delete(Object key) {
     	return dao.delete(key);
-    }
-
-    @Override
-    public int batchDelete(List<Object> keys) {
-        return dao.batchDelete(keys);
     }
 
 	@Override

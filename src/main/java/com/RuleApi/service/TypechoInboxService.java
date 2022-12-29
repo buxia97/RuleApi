@@ -18,10 +18,6 @@ public interface TypechoInboxService {
      **/
     int insert(TypechoInbox typechoInbox);
 
-    /**
-     * [批量新增]
-     **/
-    int batchInsert(List<TypechoInbox> list);
 
     /**
      * [更新]
@@ -32,11 +28,6 @@ public interface TypechoInboxService {
      * [删除]
      **/
     int delete(Object key);
-
-    /**
-     * [批量删除]
-     **/
-    int batchDelete(List<Object> keys);
 
     /**
      * [主键查询]
