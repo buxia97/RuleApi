@@ -74,6 +74,8 @@
         <result column="disableCode" property="disableCode" />
         <result column="allowDelete" property="allowDelete" />
         <result column="contentAuditlevel" property="contentAuditlevel" />
+        <result column="isPush" property="isPush" />
+
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -148,7 +150,8 @@
         `pushMasterSecret`,
         `disableCode`,
         `allowDelete`,
-        `contentAuditlevel`
+        `contentAuditlevel`,
+        `isPush`
     </sql>
 
     <!-- 插入数据 -->
@@ -355,7 +358,10 @@
                 `allowDelete`,
             </if>
             <if test ='null != contentAuditlevel'>
-                `contentAuditlevel`
+                `contentAuditlevel`,
+            </if>
+            <if test ='null != isPush'>
+                `isPush`
             </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
@@ -559,7 +565,10 @@
                 #{allowDelete},
             </if>
             <if test ='null != contentAuditlevel'>
-                #{contentAuditlevel}
+                #{contentAuditlevel},
+            </if>
+            <if test ='null != isPush'>
+                #{isPush}
             </if>
         </trim>
     </insert>
@@ -637,7 +646,8 @@
             <if test ='null != pushMasterSecret'>`pushMasterSecret` = #{pushMasterSecret},</if>
             <if test ='null != disableCode'>`disableCode` = #{disableCode},</if>
             <if test ='null != allowDelete'>`allowDelete` = #{allowDelete},</if>
-            <if test ='null != contentAuditlevel'>`contentAuditlevel` = #{contentAuditlevel}</if>
+            <if test ='null != contentAuditlevel'>`contentAuditlevel` = #{contentAuditlevel},</if>
+            <if test ='null != isPush'>`isPush` = #{isPush}</if>
         </set>
         WHERE `id` = #{id}
     </update>

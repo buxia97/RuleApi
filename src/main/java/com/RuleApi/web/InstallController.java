@@ -778,7 +778,7 @@ public class InstallController {
         //查询配置中心表是否存在isPush字段
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'isPush';", Integer.class);
         if (i == 0){
-            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD  ADD `isPush` int(2) COMMENT '是否开启消息通知'");
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD  ADD `isPush` int(2) DEFAULT '0' COMMENT '是否开启消息通知'");
             text+="配置中心模块，字段isPush添加完成。";
         }else{
             text+="配置中心模块，字段isPush已经存在，无需添加。";
@@ -851,7 +851,7 @@ public class InstallController {
                     "  `id` int(11) NOT NULL AUTO_INCREMENT," +
                     "  `type` varchar(255) DEFAULT NULL COMMENT '消息类型：system(系统消息)，comment(评论消息)，finance(财务消息)'," +
                     "  `uid` int(11) DEFAULT '0' COMMENT '消息发送人，0是平台'," +
-                    "  `text` varchar(500) DEFAULT '' COMMENT '消息内容（只有简略信息）'," +
+                    "  `text` text COMMENT '消息内容（只有简略信息）'," +
                     "  `touid` int(11) NOT NULL DEFAULT '0' COMMENT '消息接收人uid'," +
                     "  `isread` int(2) DEFAULT '0' COMMENT '是否已读，0已读，1未读'," +
                     "  `value` int(11) DEFAULT '0' COMMENT '消息指向内容的id，根据类型跳转'," +

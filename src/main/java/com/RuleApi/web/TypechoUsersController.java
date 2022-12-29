@@ -11,6 +11,7 @@ import org.apache.poi.hssf.usermodel.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.DigestUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -73,7 +74,12 @@ public class TypechoUsersController {
     @Autowired
     private RedisTemplate redisTemplate;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
+
+    @Value("${mybatis.configuration.variables.prefix}")
+    private String prefix;
 
     @Value("${webinfo.usertime}")
     private Integer usertime;
@@ -935,21 +941,22 @@ public class TypechoUsersController {
     public String SendCode(@RequestParam(value = "params", required = false) String params, HttpServletRequest request) throws MessagingException {
         try{
             Map jsonToMap = null;
-
-            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
-            Integer isEmail = apiconfig.getIsEmail();
-            if(isEmail.equals(0)){
-                return Result.getResultJson(0, "邮箱验证已经关闭", null);
-            }
             String  agent =  request.getHeader("User-Agent");
             String  ip = baseFull.getIpAddr(request);
-
             String iSsendCode = redisHelp.getRedis(this.dataprefix + "_" + "iSsendCode_"+agent+"_"+ip, redisTemplate);
             if(iSsendCode==null){
                 redisHelp.setRedis(this.dataprefix + "_" + "iSsendCode_"+agent+"_"+ip, "data", 30, redisTemplate);
             }else{
                 return Result.getResultJson(0, "你的操作太频繁了", null);
             }
+            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+            Integer isEmail = apiconfig.getIsEmail();
+            if(isEmail.equals(0)){
+                return Result.getResultJson(0, "邮箱验证已经关闭", null);
+            }
+
+
+
             if (StringUtils.isNotBlank(params)) {
                 jsonToMap = JSONObject.parseObject(JSON.parseObject(params).toString());
                 Map keyName = new HashMap<String, String>();
@@ -1902,7 +1909,7 @@ public class TypechoUsersController {
      */
     @RequestMapping(value = "/inbox")
     @ResponseBody
-    public String formPage (@RequestParam(value = "token", required = false) String  token,
+    public String inbox (@RequestParam(value = "token", required = false) String  token,
                             @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
                             @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit) {
         TypechoInbox query = new TypechoInbox();
@@ -1918,20 +1925,68 @@ public class TypechoUsersController {
 
         PageList<TypechoInbox> pageList = inboxService.selectPage(query, page, limit);
         JSONObject response = new JSONObject();
-        response.put("code" , 0);
+        response.put("code" , 1);
         response.put("msg"  , "");
         response.put("data" , null != pageList.getList() ? pageList.getList() : new JSONArray());
         response.put("count", pageList.getTotalCount());
         response.put("total", total);
         return response.toString();
     }
+    /***
+     * 获取用户未读消息数量
+     *
+     */
+    @RequestMapping(value = "/unreadNum")
+    @ResponseBody
+    public String unreadNum (@RequestParam(value = "token", required = false) String  token) {
+        TypechoInbox query = new TypechoInbox();
+        Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
+        if (uStatus == 0) {
+            return Result.getResultJson(0, "用户未登录或Token验证失败", null);
+        }
 
+        Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+        Integer uid =Integer.parseInt(map.get("uid").toString());
+        query.setTouid(uid);
+        query.setIsread(0);
+        Integer total = inboxService.total(query);
+        JSONObject response = new JSONObject();
+        response.put("code" , 1);
+        response.put("msg"  , "");
+        response.put("data" ,total);
+        return response.toString();
+    }
+    /***
+     * 将所有消息已读
+     *
+     */
+    @RequestMapping(value = "/setRead")
+    @ResponseBody
+    public String setRead (@RequestParam(value = "token", required = false) String  token) {
+        TypechoInbox query = new TypechoInbox();
+        try {
+            Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
+            if (uStatus == 0) {
+                return Result.getResultJson(0, "用户未登录或Token验证失败", null);
+            }
+
+            Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+            Integer uid =Integer.parseInt(map.get("uid").toString());
+
+            jdbcTemplate.execute("UPDATE "+this.prefix+"_inbox SET isread = 1 WHERE touid="+uid+";");
+            return Result.getResultJson(1, "操作成功", null);
+        }catch (Exception e){
+            System.out.println(e);
+            return Result.getResultJson(0, "操作失败", null);
+        }
+
+    }
     /***
      * 向指定用户发送消息
      */
     @RequestMapping(value = "/sendUser")
     @ResponseBody
-    public String formInsert(@RequestParam(value = "token", required = false) String  token,
+    public String sendUser(@RequestParam(value = "token", required = false) String  token,
                              @RequestParam(value = "uid", required = false, defaultValue = "1") Integer uid,
                              @RequestParam(value = "text", required = false, defaultValue = "1") String text) {
         try{
@@ -1955,7 +2010,12 @@ public class TypechoUsersController {
                 if(user.getClientId()!=null){
                     TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
                     String title = apiconfig.getWebinfoTitle();
-                    pushService.sendPushMsg(user.getClientId(),title,text,"payload","system");
+                    try {
+                        pushService.sendPushMsg(user.getClientId(),title,text,"payload","system");
+                    }catch (Exception e){
+                        System.out.println("通知发送失败："+e);
+                    }
+
                 }
             }
             Integer muid =Integer.parseInt(map.get("uid").toString());

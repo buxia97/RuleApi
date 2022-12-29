@@ -329,6 +329,10 @@ public class TypechoApiconfig implements Serializable {
      */
     private String pushAppKey;
 
+    /**
+     * isPush
+     */
+    private Integer isPush;
 
     /**
      * pushMasterSecret

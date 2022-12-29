@@ -64,6 +64,12 @@ public class TypechoContentsController {
     @Autowired
     private TypechoApiconfigService apiconfigService;
 
+    @Autowired
+    private PushService pushService;
+
+    @Autowired
+    private TypechoInboxService inboxService;
+
 
     @Autowired
     private RedisTemplate redisTemplate;
@@ -827,23 +833,37 @@ public class TypechoContentsController {
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer uid  = Integer.parseInt(map.get("uid").toString());
             String group = map.get("group").toString();
+            TypechoContents contents = service.selectByKey(key);
             if(!group.equals("administrator")){
                 TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
                 if(apiconfig.getAllowDelete().equals(0)){
                     return Result.getResultJson(0,"系统禁止删除文章",null);
                 }
-                TypechoContents contents = service.selectByKey(key);
+
                 Integer aid = contents.getAuthorId();
                 if(!aid.equals(uid)){
                     return Result.getResultJson(0,"你无权进行此操作",null);
                 }
 //                jsonToMap.put("status","0");
             }
+            //发送消息
+            Long date = System.currentTimeMillis();
+            String created = String.valueOf(date).substring(0,10);
+            TypechoInbox insert = new TypechoInbox();
+            insert.setUid(uid);
+            insert.setTouid(contents.getAuthorId());
+            insert.setType("system");
+            insert.setText("你的文章已被删除："+contents.getTitle());
+            insert.setCreated(Integer.parseInt(created));
+            inboxService.insert(insert);
+
             Integer logUid =Integer.parseInt(map.get("uid").toString());
             int rows = service.delete(key);
             //删除与分类的映射
             int st = relationshipsService.delete(key);
             editFile.setLog("管理员"+logUid+"请求删除文章"+key);
+
+
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );
             response.put("data" , rows);
@@ -898,6 +918,16 @@ public class TypechoContentsController {
 
 
             }
+            //发送消息
+            Long date = System.currentTimeMillis();
+            String created = String.valueOf(date).substring(0,10);
+            TypechoInbox insert = new TypechoInbox();
+            insert.setUid(uid);
+            insert.setTouid(info.getAuthorId());
+            insert.setType("system");
+            insert.setText("你的文章已审核通过："+info.getTitle());
+            insert.setCreated(Integer.parseInt(created));
+            inboxService.insert(insert);
 
 
             editFile.setLog("管理员"+logUid+"请求审核文章"+key);

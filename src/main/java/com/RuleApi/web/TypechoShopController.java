@@ -53,6 +53,9 @@ public class TypechoShopController {
     @Autowired
     private TypechoApiconfigService apiconfigService;
 
+    @Autowired
+    private TypechoInboxService inboxService;
+
     @Value("${web.prefix}")
     private String dataprefix;
 
@@ -371,13 +374,25 @@ public class TypechoShopController {
         Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         Integer uid  = Integer.parseInt(map.get("uid").toString());
         String group = map.get("group").toString();
+        Integer sid = Integer.parseInt(key);
+        TypechoShop info = service.selectByKey(sid);
         if(!group.equals("administrator")){
-            Integer sid = Integer.parseInt(key);
-            TypechoShop info = service.selectByKey(sid);
+
             Integer aid = info.getUid();
             if(!aid.equals(uid)){
                 return Result.getResultJson(0,"你无权进行此操作",null);
             }
+        }else{
+            //发送消息
+            Long date = System.currentTimeMillis();
+            String created = String.valueOf(date).substring(0,10);
+            TypechoInbox insert = new TypechoInbox();
+            insert.setUid(uid);
+            insert.setTouid(info.getUid());
+            insert.setType("system");
+            insert.setText("你的商品已被删除："+info.getTitle());
+            insert.setCreated(Integer.parseInt(created));
+            inboxService.insert(insert);
         }
 
         int rows =  service.delete(key);
@@ -402,9 +417,10 @@ public class TypechoShopController {
         Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         Integer uid  = Integer.parseInt(map.get("uid").toString());
         String group = map.get("group").toString();
+        Integer sid = Integer.parseInt(key);
+        TypechoShop info = service.selectByKey(sid);
         if(!group.equals("administrator")&&!group.equals("editor")){
-            Integer sid = Integer.parseInt(key);
-            TypechoShop info = service.selectByKey(sid);
+
             Integer aid = info.getUid();
             if(!aid.equals(uid)){
                 return Result.getResultJson(0,"你无权进行此操作",null);
@@ -414,6 +430,19 @@ public class TypechoShopController {
         shop.setId(Integer.parseInt(key));
         shop.setStatus(1);
         Integer rows = service.update(shop);
+
+        //发送消息
+        Long date = System.currentTimeMillis();
+        String created = String.valueOf(date).substring(0,10);
+        TypechoInbox insert = new TypechoInbox();
+        insert.setUid(uid);
+        insert.setTouid(info.getUid());
+        insert.setType("system");
+        insert.setText("你的商品已审核通过："+info.getTitle());
+        insert.setCreated(Integer.parseInt(created));
+        inboxService.insert(insert);
+
+
         editFile.setLog("管理员"+uid+"请求审核商品"+key);
         JSONObject response = new JSONObject();
         response.put("code" , rows);
