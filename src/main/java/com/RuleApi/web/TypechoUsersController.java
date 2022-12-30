@@ -1917,67 +1917,88 @@ public class TypechoUsersController {
         if (uStatus == 0) {
             return Result.getResultJson(0, "用户未登录或Token验证失败", null);
         }
-
+        List jsonList = new ArrayList();
         Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
         Integer uid =Integer.parseInt(map.get("uid").toString());
+        List cacheList = redisHelp.getList(this.dataprefix+"_"+"inbox_"+page+"_"+limit+"_"+uid,redisTemplate);
+
         query.setTouid(uid);
         Integer total = inboxService.total(query);
-        TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
-
-        PageList<TypechoInbox> pageList = inboxService.selectPage(query, page, limit);
-        List jsonList = new ArrayList();
-        List<TypechoInbox> list = pageList.getList();
-        for (int i = 0; i < list.size(); i++) {
-            Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
-            TypechoInbox inbox = list.get(i);
-            Integer userid = inbox.getUid();
-            TypechoUsers user = service.selectByKey(userid);
-            //获取用户信息
-            Map userJson = new HashMap();
-            if(user!=null){
-                String name = user.getName();
-                if(user.getScreenName()!=null){
-                    name = user.getScreenName();
-                }
-                userJson.put("name", name);
-                userJson.put("groupKey", user.getGroupKey());
-                userJson.put("avatar", user.getAvatar());
-                userJson.put("customize", user.getCustomize());
-                //判断是否为VIP
-                userJson.put("vip", user.getVip());
-                userJson.put("isvip", 0);
-                Long date = System.currentTimeMillis();
-                String curTime = String.valueOf(date).substring(0, 10);
-                Integer viptime  = user.getVip();
-                if(viptime>Integer.parseInt(curTime)||viptime.equals(1)){
-                    userJson.put("isvip", 1);
-                }
-
+        try{
+            if(cacheList.size()>0){
+                jsonList = cacheList;
             }else{
-                userJson.put("name", "用户已注销");
-                userJson.put("groupKey", "");
-                userJson.put("avatar", apiconfig.getWebinfoAvatar() + "null");
-            }
-            json.put("userJson",userJson);
-            if(inbox.getType().equals("comment")){
-                TypechoContents contentsInfo = contentsService.selectByKey(inbox.getValue());
-                if(contentsInfo!=null){
-                    json.put("contenTitle",contentsInfo.getTitle());
-                    //加入文章数据
-                    Map contentsJson = new HashMap();
-                    contentsJson.put("cid",contentsInfo.getCid());
-                    contentsJson.put("slug",contentsInfo.getSlug());
-                    contentsJson.put("title",contentsInfo.getTitle());
-                    contentsJson.put("type",contentsInfo.getType());
-                    json.put("contentsInfo",contentsJson);
-                }else{
-                    json.put("contenTitle","文章已删除");
+
+
+                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+
+                PageList<TypechoInbox> pageList = inboxService.selectPage(query, page, limit);
+                List<TypechoInbox> list = pageList.getList();
+                for (int i = 0; i < list.size(); i++) {
+                    Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
+                    TypechoInbox inbox = list.get(i);
+                    Integer userid = inbox.getUid();
+                    TypechoUsers user = service.selectByKey(userid);
+                    //获取用户信息
+                    Map userJson = new HashMap();
+                    if(user!=null){
+                        String name = user.getName();
+                        if(user.getScreenName()!=null){
+                            name = user.getScreenName();
+                        }
+                        userJson.put("name", name);
+                        userJson.put("groupKey", user.getGroupKey());
+                        if(user.getMail()!=null){
+                            json.put("avatar",baseFull.getAvatar(apiconfig.getWebinfoAvatar(),user.getMail()));
+                        }else{
+                            json.put("avatar",apiconfig.getWebinfoAvatar()+"null");
+                        }
+                        if(user.getAvatar()!=null){
+                            userJson.put("avatar", user.getAvatar());
+                        }
+                        userJson.put("customize", user.getCustomize());
+                        //判断是否为VIP
+                        userJson.put("vip", user.getVip());
+                        userJson.put("isvip", 0);
+                        Long date = System.currentTimeMillis();
+                        String curTime = String.valueOf(date).substring(0, 10);
+                        Integer viptime  = user.getVip();
+                        if(viptime>Integer.parseInt(curTime)||viptime.equals(1)){
+                            userJson.put("isvip", 1);
+                        }
+
+                    }else{
+                        userJson.put("name", "用户已注销");
+                        userJson.put("groupKey", "");
+                        userJson.put("avatar", apiconfig.getWebinfoAvatar() + "null");
+                    }
+                    json.put("userJson",userJson);
+                    if(inbox.getType().equals("comment")){
+                        TypechoContents contentsInfo = contentsService.selectByKey(inbox.getValue());
+                        if(contentsInfo!=null){
+                            json.put("contenTitle",contentsInfo.getTitle());
+                            //加入文章数据
+                            Map contentsJson = new HashMap();
+                            contentsJson.put("cid",contentsInfo.getCid());
+                            contentsJson.put("slug",contentsInfo.getSlug());
+                            contentsJson.put("title",contentsInfo.getTitle());
+                            contentsJson.put("type",contentsInfo.getType());
+                            json.put("contentsInfo",contentsJson);
+                        }else{
+                            json.put("contenTitle","文章已删除");
+                        }
+                    }
+
+                    jsonList.add(json);
                 }
+                redisHelp.delete(this.dataprefix+"_"+"inbox_"+page+"_"+limit+"_"+uid,redisTemplate);
+                redisHelp.setList(this.dataprefix+"_"+"inbox_"+page+"_"+limit+"_"+uid,jsonList,3,redisTemplate);
             }
-
-
-
-            jsonList.add(json);
+        }catch (Exception e){
+            System.out.println(e);
+            if(cacheList.size()>0){
+                jsonList = cacheList;
+            }
         }
         JSONObject response = new JSONObject();
         response.put("code" , 1);

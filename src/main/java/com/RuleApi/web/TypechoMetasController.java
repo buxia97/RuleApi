@@ -221,17 +221,36 @@ public class TypechoMetasController {
         if(limit>50){
             limit = 50;
         }
+        Integer total = 0;
+        List jsonList = new ArrayList();
+        List cacheList = redisHelp.getList(this.dataprefix+"_"+"metasList_"+page+"_"+limit+"_"+searchParams,redisTemplate);
+
         if (StringUtils.isNotBlank(searchParams)) {
             JSONObject object = JSON.parseObject(searchParams);
             query = object.toJavaObject(TypechoMetas.class);
         }
-
-        PageList<TypechoMetas> pageList = service.selectPage(query, page, limit,searchKey,order);
+        total = service.total(query);
+        try {
+            if (cacheList.size() > 0) {
+                jsonList = cacheList;
+            } else {
+                PageList<TypechoMetas> pageList = service.selectPage(query, page, limit, searchKey, order);
+                jsonList = pageList.getList();
+                redisHelp.delete(this.dataprefix+"_"+"metasList_"+page+"_"+limit+"_"+searchParams,redisTemplate);
+                redisHelp.setList(this.dataprefix+"_"+"metasList_"+page+"_"+limit+"_"+searchParams,jsonList,30,redisTemplate);
+            }
+        }catch (Exception e){
+            System.out.println(e);
+            if(cacheList.size()>0){
+                jsonList = cacheList;
+            }
+        }
         JSONObject response = new JSONObject();
         response.put("code" , 1);
         response.put("msg"  , "");
-        response.put("data" , null != pageList.getList() ? pageList.getList() : new JSONArray());
-        response.put("count", pageList.getTotalCount());
+        response.put("data" , jsonList);
+        response.put("count", jsonList.size());
+        response.put("total", total);
         return response.toString();
     }
     /***
@@ -241,19 +260,29 @@ public class TypechoMetasController {
     @ResponseBody
     public String metaInfo(@RequestParam(value = "key", required = false) String key,@RequestParam(value = "slug", required = false) String slug) {
         try{
-            TypechoMetas metas;
-            //优先处理slug
-            if(slug!=null){
-                metas = service.selectBySlug(slug);
+            Map metaInfoJson = new HashMap<String, String>();
+            Map cacheInfo = redisHelp.getMapValue(this.dataprefix+"_"+"metaInfo_"+key+"_"+slug,redisTemplate);
+
+            if(cacheInfo.size()>0){
+                metaInfoJson = cacheInfo;
             }else{
-                metas = service.selectByKey(key);
+                TypechoMetas metas;
+                //优先处理slug
+                if(slug!=null){
+                    metas = service.selectBySlug(slug);
+                }else{
+                    metas = service.selectByKey(key);
+                }
+                metaInfoJson = JSONObject.parseObject(JSONObject.toJSONString(metas), Map.class);
+                redisHelp.delete(this.dataprefix+"_"+"metaInfo_"+key+"_"+slug,redisTemplate);
+                redisHelp.setKey(this.dataprefix+"_"+"metaInfo_"+key+"_"+slug,metaInfoJson,20,redisTemplate);
             }
-            Map json = JSONObject.parseObject(JSONObject.toJSONString(metas), Map.class);
+
             JSONObject response = new JSONObject();
 
             response.put("code", 1);
             response.put("msg", "");
-            response.put("data", json);
+            response.put("data", metaInfoJson);
 
             return response.toString();
         }catch (Exception e){
