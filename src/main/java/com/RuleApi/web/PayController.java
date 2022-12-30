@@ -213,7 +213,7 @@ public class PayController {
                     users.setAssets(assets);
                     usersService.update(users);
                 }else{
-                    System.out.println("数据库不存在订单");
+                    System.err.println("数据库不存在订单");
                     return "fail";
                 }
             }
@@ -230,7 +230,7 @@ public class PayController {
     public void getQRCode(String codeContent,@RequestParam(value = "token", required = false) String  token, HttpServletResponse response) {
         Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
         if(uStatus==0){
-            System.out.println("用户未的登陆");
+            System.err.println("用户未的登陆");
         }
         System.out.println("codeContent=" + codeContent);
         try {
@@ -455,7 +455,7 @@ public class PayController {
                 users.setAssets(assets);
                 usersService.update(users);
             }else{
-                System.out.println("数据库不存在订单");
+                System.err.println("数据库不存在订单");
                 Map<String, String> returnMap = new HashMap<>();
                 returnMap.put("code", "FALL");
                 returnMap.put("message", "");
@@ -474,7 +474,7 @@ public class PayController {
             return returnXml;
         }
         //支付失败
-        System.out.println("微信支付失败");
+        System.err.println("微信支付失败");
         //创建给微信响应的对象
         Map<String, String> returnMap = new HashMap<>();
         returnMap.put("code", "FALL");
@@ -769,7 +769,7 @@ public class PayController {
                 return Result.getResultJson(0,jsonMap.get("msg").toString(),null);
             }
         }catch (Exception e){
-            System.out.println(e);
+            System.err.println(e);
             return Result.getResultJson(0,"接口异常，请检查配置",null);
         }
 
@@ -832,14 +832,14 @@ public class PayController {
                     usersService.update(users);
                     return "success";
                 }else{
-                    System.out.println("数据库不存在订单");
+                    System.err.println("数据库不存在订单");
                     return "fail";
                 }
             }else{
                 return "fail";
             }
         }catch (Exception e){
-            System.out.println(e);
+            System.err.println(e);
             return "fail";
         }
 

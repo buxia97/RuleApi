@@ -240,7 +240,7 @@ public class TypechoMetasController {
                 redisHelp.setList(this.dataprefix+"_"+"metasList_"+page+"_"+limit+"_"+searchParams,jsonList,30,redisTemplate);
             }
         }catch (Exception e){
-            System.out.println(e);
+            System.err.println(e);
             if(cacheList.size()>0){
                 jsonList = cacheList;
             }

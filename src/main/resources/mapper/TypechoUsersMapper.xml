@@ -178,7 +178,7 @@
             <if test ='null != customize'>`customize` = #{customize},</if>
             <if test ='null != vip'>`vip` = #{vip},</if>
             <if test ='null != avatar'>`avatar` = #{avatar},</if>
-            <if test ='null != experience'>`experience` = #{experience}</if>
+            <if test ='null != experience'>`experience` = #{experience},</if>
             <if test ='null != clientId'>`clientId` = #{clientId}</if>
 
 

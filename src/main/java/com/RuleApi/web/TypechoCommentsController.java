@@ -229,7 +229,7 @@ public class TypechoCommentsController {
                 }
             }
         }catch (Exception e){
-            System.out.println(e);
+            System.err.println(e);
             if(cacheList.size()>0){
                 jsonList = cacheList;
             }
@@ -440,7 +440,7 @@ public class TypechoCommentsController {
                                     try {
                                         pushService.sendPushMsg(user.getClientId(),title,"你有新的回复消息！","payload","comment:"+Integer.parseInt(cid));
                                     }catch (Exception e){
-                                        System.out.println("通知发送失败："+e);
+                                        System.err.println("通知发送失败："+e);
                                     }
 
                                 }
@@ -479,14 +479,14 @@ public class TypechoCommentsController {
                                     try {
                                         pushService.sendPushMsg(user.getClientId(),title,"你的文章有新评论！","payload","comment:"+Integer.parseInt(cid));
                                     }catch (Exception e){
-                                        System.out.println("通知发送失败："+e);
+                                        System.err.println("通知发送失败："+e);
                                     }
 
                                 }
                             }
                         }
                     }catch (Exception e){
-                        System.out.println("邮箱发信配置错误："+e);
+                        System.err.println("邮箱发信配置错误："+e);
                     }
                 }
 
@@ -511,7 +511,7 @@ public class TypechoCommentsController {
             response.put("msg"  , rows > 0 ? "发布成功"+addtext : "发布失败");
             return response.toString();
         }catch (Exception e){
-            System.out.println(e);
+            System.err.println(e);
             return Result.getResultJson(0,"发布失败",null);
         }
 
@@ -574,7 +574,7 @@ public class TypechoCommentsController {
             response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
             return response.toString();
         }catch (Exception e){
-            System.out.println(e);
+            System.err.println(e);
             return Result.getResultJson(0,"操作失败",null);
         }
     }
@@ -651,7 +651,7 @@ public class TypechoCommentsController {
                             try {
                                 pushService.sendPushMsg(user.getClientId(),title,"你有新的评论回复！","payload","comment:"+pComments.getCid());
                             }catch (Exception e){
-                                System.out.println("通知发送失败："+e);
+                                System.err.println("通知发送失败："+e);
                             }
 
                         }
@@ -688,14 +688,14 @@ public class TypechoCommentsController {
                             try {
                                 pushService.sendPushMsg(user.getClientId(),title,"你的文章有新评论！","payload","comment:"+comments.getCid());
                             }catch (Exception e){
-                                System.out.println("通知发送失败："+e);
+                                System.err.println("通知发送失败："+e);
                             }
 
                         }
                     }
                 }
             }catch (Exception e){
-                System.out.println("邮箱发信配置错误："+e);
+                System.err.println("邮箱发信配置错误："+e);
             }
 
 
@@ -707,7 +707,7 @@ public class TypechoCommentsController {
             response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
             return response.toString();
         }catch (Exception e){
-            System.out.println(e);
+            System.err.println(e);
             return Result.getResultJson(0,"操作失败",null);
         }
     }
@@ -773,7 +773,7 @@ public class TypechoCommentsController {
             response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
             return response.toString();
         }catch (Exception e){
-            System.out.println(e);
+            System.err.println(e);
             return Result.getResultJson(0,"操作失败",null);
         }
     }

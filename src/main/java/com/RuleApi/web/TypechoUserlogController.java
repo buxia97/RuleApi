@@ -473,7 +473,7 @@ public class TypechoUserlogController {
             response.put("msg"  , rows > 0 ? "操作成功"+clock : "操作失败");
             return response.toString();
         }catch (Exception e){
-            System.out.println(e);
+            System.err.println(e);
             return Result.getResultJson(0,"操作失败",null);
         }
 

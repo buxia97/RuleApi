@@ -572,7 +572,7 @@ public class TypechoShopController {
                 }
 
             }catch (Exception e){
-                System.out.println("邮箱发信配置错误："+e);
+                System.err.println("邮箱发信配置错误："+e);
             }
 
 

@@ -592,7 +592,7 @@ public class TypechoContentsController {
             response.put("msg"  , rows > 0 ? resText : "发布失败");
             return response.toString();
         }catch (Exception e){
-            System.out.println(e);
+            System.err.println(e);
             return Result.getResultJson(0,"添加失败",null);
         }
     }
@@ -813,7 +813,7 @@ public class TypechoContentsController {
             response.put("msg"  , rows > 0 ? resText : "修改失败");
             return response.toString();
         }catch (Exception e){
-            System.out.println(e);
+            System.err.println(e);
             return Result.getResultJson(0,"修改失败",null);
         }
     }
@@ -912,7 +912,7 @@ public class TypechoContentsController {
                                         "<p>可前往<a href=\""+apiconfig.getWebinfoUrl()+"\">"+newtitle+"</a>查看详情</p></div></div></body></html>",
                                 new String[] {email}, new String[] {});
                     }catch (Exception e){
-                        System.out.println("邮箱发信配置错误："+e);
+                        System.err.println("邮箱发信配置错误："+e);
                     }
                 }
 
@@ -1145,7 +1145,7 @@ public class TypechoContentsController {
             }
 
         }catch (Exception e){
-            System.out.println(e);
+            System.err.println(e);
             return Result.getResultJson(0,"",null);
         }
     }
@@ -1245,7 +1245,7 @@ public class TypechoContentsController {
                 redisHelp.setKey(this.dataprefix+"_contentConfig",contentConfig,5,redisTemplate);
             }
         }catch (Exception e){
-            System.out.println(e);
+            System.err.println(e);
         }
         JSONObject response = new JSONObject();
         response.put("code" , 1);

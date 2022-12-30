@@ -316,7 +316,7 @@ public class TypechoUsersController {
 
             return response.toString();
         } catch (Exception e) {
-            System.out.println(e);
+            System.err.println(e);
             JSONObject response = new JSONObject();
 
             response.put("code", 0);
@@ -659,7 +659,7 @@ public class TypechoUsersController {
 
             }
         } catch (Exception e) {
-            System.out.println(e);
+            System.err.println(e);
             JSONObject response = new JSONObject();
 
             response.put("code", 0);
@@ -786,7 +786,7 @@ public class TypechoUsersController {
             response.put("msg", rows > 0 ? "绑定成功" : "绑定失败");
             return response.toString();
         } catch (Exception e) {
-            System.out.println(e);
+            System.err.println(e);
             JSONObject response = new JSONObject();
 
             response.put("code", 0);
@@ -833,7 +833,7 @@ public class TypechoUsersController {
             response.put("msg", "");
             return response.toString();
         } catch (Exception e) {
-            System.out.println(e);
+            System.err.println(e);
             response.put("code", 0);
             response.put("data", "");
             response.put("msg", "数据异常");
@@ -1113,7 +1113,7 @@ public class TypechoUsersController {
             response.put("msg", rows > 0 ? "操作成功" : "操作失败");
             return response.toString();
         } catch (Exception e) {
-            System.out.println(e);
+            System.err.println(e);
             return Result.getResultJson(0, "操作失败", null);
         }
 
@@ -1141,7 +1141,7 @@ public class TypechoUsersController {
             response.put("msg", rows > 0 ? "操作成功" : "操作失败");
             return response.toString();
         } catch (Exception e) {
-            System.out.println(e);
+            System.err.println(e);
             return Result.getResultJson(0, "操作失败", null);
         }
     }
@@ -1259,7 +1259,7 @@ public class TypechoUsersController {
             response.put("msg", rows > 0 ? responseText : "操作失败");
             return response.toString();
         } catch (Exception e) {
-            System.out.println(e);
+            System.err.println(e);
             return Result.getResultJson(0, "操作失败", null);
         }
 
@@ -1341,7 +1341,7 @@ public class TypechoUsersController {
             response.put("msg", rows > 0 ? "操作成功" : "操作失败");
             return response.toString();
         } catch (Exception e) {
-            System.out.println(e);
+            System.err.println(e);
             return Result.getResultJson(0, "操作失败", null);
         }
 
@@ -1412,7 +1412,7 @@ public class TypechoUsersController {
             response.put("msg", rows > 0 ? "操作成功" : "操作失败");
             return response.toString();
         } catch (Exception e) {
-            System.out.println(e);
+            System.err.println(e);
             return Result.getResultJson(0, "操作失败", null);
         }
 
@@ -1457,7 +1457,7 @@ public class TypechoUsersController {
             response.put("msg", rows > 0 ? "操作成功" : "操作失败");
             return response.toString();
         } catch (Exception e) {
-            System.out.println(e);
+            System.err.println(e);
             return Result.getResultJson(0, "操作失败", null);
         }
 
@@ -1579,7 +1579,7 @@ public class TypechoUsersController {
             response.put("msg", rows > 0 ? "操作成功" : "操作失败");
             return response.toString();
         } catch (Exception e) {
-            System.out.println(e);
+            System.err.println(e);
             return Result.getResultJson(0, "操作失败", null);
         }
 
@@ -1627,8 +1627,10 @@ public class TypechoUsersController {
             paylog.setSubject("系统扣款");
         }
         paylogService.insert(paylog);
-        user.setAssets(assets);
-        Integer rows = service.update(user);
+        TypechoUsers update = new TypechoUsers();
+        update.setUid(user.getUid());
+        update.setAssets(assets);
+        Integer rows = service.update(update);
         JSONObject response = new JSONObject();
         response.put("code", rows > 0 ? 1 : 0);
         response.put("data", rows);
@@ -1652,7 +1654,7 @@ public class TypechoUsersController {
             redisHelp.delete(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
             return Result.getResultJson(1, "退出成功", null);
         }catch (Exception e){
-            System.out.println(e);
+            System.err.println(e);
             return Result.getResultJson(0, "退出失败", null);
         }
 
@@ -1674,7 +1676,7 @@ public class TypechoUsersController {
             QRCodeUtil.createCodeToOutputStream(res.toString(), response.getOutputStream());
             System.out.println("成功生成二维码!");
         } catch (IOException e) {
-            System.out.println(e);
+            System.err.println(e);
         }
     }
 
@@ -1995,7 +1997,7 @@ public class TypechoUsersController {
                 redisHelp.setList(this.dataprefix+"_"+"inbox_"+page+"_"+limit+"_"+uid,jsonList,3,redisTemplate);
             }
         }catch (Exception e){
-            System.out.println(e);
+            System.err.println(e);
             if(cacheList.size()>0){
                 jsonList = cacheList;
             }
@@ -2052,7 +2054,7 @@ public class TypechoUsersController {
             jdbcTemplate.execute("UPDATE "+this.prefix+"_inbox SET isread = 1 WHERE touid="+uid+";");
             return Result.getResultJson(1, "操作成功", null);
         }catch (Exception e){
-            System.out.println(e);
+            System.err.println(e);
             return Result.getResultJson(0, "操作失败", null);
         }
 
@@ -2089,7 +2091,7 @@ public class TypechoUsersController {
                     try {
                         pushService.sendPushMsg(user.getClientId(),title+"系统消息",text,"payload","system");
                     }catch (Exception e){
-                        System.out.println("通知发送失败："+e);
+                        System.err.println("通知发送失败："+e);
                     }
 
                 }
@@ -2110,7 +2112,7 @@ public class TypechoUsersController {
             response.put("msg"  , rows > 0 ? "发送成功" : "发送失败");
             return response.toString();
         }catch (Exception e){
-            System.out.println(e);
+            System.err.println(e);
             return Result.getResultJson(0, "发送失败", null);
         }
 

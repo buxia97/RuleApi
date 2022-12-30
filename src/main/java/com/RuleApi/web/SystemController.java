@@ -704,7 +704,7 @@ public class SystemController {
             }
             return Result.getResultJson(1, "执行成功", null);
         }catch (Exception e){
-            System.out.println(e);
+            System.err.println(e);
             return Result.getResultJson(1, "执行失败", null);
         }
 

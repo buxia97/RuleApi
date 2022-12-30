@@ -215,7 +215,7 @@ public class InstallController {
                     ") ENGINE=MyISAM DEFAULT CHARSET=utf8;");
             text+="数据关联表创建完成。";
         }catch (Exception e){
-            System.out.println(e);
+            System.err.println(e);
             return Result.getResultJson(0,"数据库语句执行失败，请检查数据库版本及服务器性能后重试。",null);
         }
         JSONObject response = new JSONObject();
