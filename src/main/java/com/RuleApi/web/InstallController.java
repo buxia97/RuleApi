@@ -867,4 +867,32 @@ public class InstallController {
         redisHelp.setRedis(this.dataprefix+"_"+"isInstall","1",600,redisTemplate);
         return text;
     }
+    /***
+     * 让内容字段变为utf8mb4，以支持emoji标签
+     */
+    @RequestMapping(value = "/toUtf8mb4")
+    @ResponseBody
+    public String toUtf8mb4(@RequestParam(value = "webkey", required = false,defaultValue = "") String  webkey) {
+        if(!webkey.equals(this.key)){
+            return Result.getResultJson(0,"请输入正确的访问KEY。如果忘记，可在服务器/opt/application.properties中查看",null);
+        }
+        try{
+            String isRepeated = redisHelp.getRedis("isTypechoInstall",redisTemplate);
+            if(isRepeated==null){
+                redisHelp.setRedis("isTypechoInstall","1",15,redisTemplate);
+            }else{
+                return Result.getResultJson(0,"你的操作太频繁了",null);
+            }
+            jdbcTemplate.execute("alter table `"+prefix+"_contents`  MODIFY COLUMN `text` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;");
+            jdbcTemplate.execute("alter table `"+prefix+"_shop`  MODIFY COLUMN `text` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;");
+            jdbcTemplate.execute("alter table `"+prefix+"_shop`  MODIFY COLUMN `value` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;");
+            jdbcTemplate.execute("alter table `"+prefix+"_inbox`  MODIFY COLUMN `text` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;");
+            jdbcTemplate.execute("alter table `"+prefix+"_comments`  MODIFY COLUMN `text` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;");
+            return Result.getResultJson(1,"操作成功",null);
+        }catch (Exception e){
+            System.err.println(e);
+            return Result.getResultJson(1,"操作失败",null);
+        }
+
+    }
 }
