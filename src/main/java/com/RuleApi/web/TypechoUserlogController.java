@@ -62,6 +62,12 @@ public class TypechoUserlogController {
     private TypechoApiconfigService apiconfigService;
 
     @Autowired
+    private TypechoInboxService inboxService;
+
+    @Autowired
+    private PushService pushService;
+
+    @Autowired
     private JdbcTemplate jdbcTemplate;
 
     @Value("${web.prefix}")
@@ -460,6 +466,16 @@ public class TypechoUserlogController {
                         paylogB.setPaytype("reward");
                         paylogB.setSubject("来自用户ID" + uid + "打赏");
                         paylogService.insert(paylogB);
+                        //发送消息通知
+                        String created = String.valueOf(date).substring(0,10);
+                        TypechoInbox inbox = new TypechoInbox();
+                        inbox.setUid(uid);
+                        inbox.setTouid(authorid);
+                        inbox.setType("finance");
+                        inbox.setText("打赏了你的文章【"+curContents.getTitle()+"】");
+                        inbox.setValue(curContents.getCid());
+                        inbox.setCreated(Integer.parseInt(created));
+                        inboxService.insert(inbox);
                     }
 
                 }
