@@ -494,6 +494,9 @@ public class TypechoShopController {
             if(num<1){
                 return Result.getResultJson(0,"该商品已售完",null);
             }
+            if(price<0){
+                return Result.getResultJson(0,"该商品价格参数异常，无法交易",null);
+            }
             Integer Assets = oldAssets - price;
             usersinfo.setAssets(Assets);
             //生成用户日志，这里的cid用于商品id
@@ -601,6 +604,9 @@ public class TypechoShopController {
             if(uStatus==0){
                 return Result.getResultJson(0,"用户未登录或Token验证失败",null);
             }
+            if(day < 1){
+                return Result.getResultJson(0,"参数错误！",null);
+            }
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer uid  = Integer.parseInt(map.get("uid").toString());
             TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
@@ -631,6 +637,9 @@ public class TypechoShopController {
             if(day >= apiconfig.getVipDay()){
                 //如果时间戳为1就是永久会员
                 vipTime = 1;
+            }
+            if(AllPrice < 0 ){
+                return Result.getResultJson(0,"参数错误！",null);
             }
             Integer newassets = assets - AllPrice;
             //更新用户资产与登录状态
