@@ -97,7 +97,7 @@
     <!-- 删除 -->
     <delete id="delete">
         DELETE FROM typecho_userapi
-        WHERE `id` = #{key}
+        WHERE `uid` = #{key}
     </delete>
 
     <!-- 批量删除 -->

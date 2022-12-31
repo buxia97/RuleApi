@@ -151,7 +151,14 @@ public class TypechoCommentsController {
                     }
 
                     if(json.get("mail")!=null){
-                        json.put("avatar",baseFull.getAvatar(apiconfig.getWebinfoAvatar(),json.get("mail").toString()));
+                        String mail = json.get("mail").toString();
+
+                        if(mail.indexOf("@qq.com") != -1){
+                            String qq = mail.replace("@qq.com","");
+                            json.put("avatar", "https://q1.qlogo.cn/g?b=qq&nk="+qq+"&s=640");
+                        }else{
+                            json.put("avatar", baseFull.getAvatar(apiconfig.getWebinfoAvatar(), mail));
+                        }
                     }else{
                         json.put("avatar",apiconfig.getWebinfoAvatar()+"null");
                     }

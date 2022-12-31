@@ -151,7 +151,15 @@ public class TypechoUsersController {
                     json.remove("assets");
                     if(json.get("avatar")==null){
                         if (json.get("mail") != null) {
-                            json.put("avatar", baseFull.getAvatar(apiconfig.getWebinfoAvatar(), json.get("mail").toString()));
+
+                            String mail = json.get("mail").toString();
+
+                            if(mail.indexOf("@qq.com") != -1){
+                                String qq = mail.replace("@qq.com","");
+                                json.put("avatar", "https://q1.qlogo.cn/g?b=qq&nk="+qq+"&s=640");
+                            }else{
+                                json.put("avatar", baseFull.getAvatar(apiconfig.getWebinfoAvatar(), mail));
+                            }
                         } else {
                             json.put("avatar", apiconfig.getWebinfoAvatar() + "null");
                         }
@@ -301,7 +309,15 @@ public class TypechoUsersController {
             TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
             if(json.get("avatar")==null){
                 if (json.get("mail") != null) {
-                    json.put("avatar", baseFull.getAvatar(apiconfig.getWebinfoAvatar(), json.get("mail").toString()));
+                    String mail = json.get("mail").toString();
+
+                    if(mail.indexOf("@qq.com") != -1){
+                        String qq = mail.replace("@qq.com","");
+                        json.put("avatar", "https://q1.qlogo.cn/g?b=qq&nk="+qq+"&s=640");
+                    }else{
+                        json.put("avatar", baseFull.getAvatar(apiconfig.getWebinfoAvatar(), mail));
+                    }
+                    //json.put("avatar", baseFull.getAvatar(apiconfig.getWebinfoAvatar(), json.get("mail").toString()));
 
                 } else {
                     json.put("avatar", apiconfig.getWebinfoAvatar() + "null");
@@ -391,7 +407,12 @@ public class TypechoUsersController {
                     jsonToMap.put("avatar",rows.get(0).getAvatar());
                 }else{
                     if (rows.get(0).getMail() != null) {
-                        jsonToMap.put("avatar", baseFull.getAvatar(apiconfig.getWebinfoAvatar(), rows.get(0).getMail()));
+                        if(rows.get(0).getMail().indexOf("@qq.com") != -1){
+                            String qq = rows.get(0).getMail().replace("@qq.com","");
+                            jsonToMap.put("avatar", "https://q1.qlogo.cn/g?b=qq&nk="+qq+"&s=640");
+                        }else{
+                            jsonToMap.put("avatar", baseFull.getAvatar(apiconfig.getWebinfoAvatar(), rows.get(0).getMail()));
+                        }
                     } else {
                         jsonToMap.put("avatar", apiconfig.getWebinfoAvatar() + "null");
                     }
@@ -564,7 +585,12 @@ public class TypechoUsersController {
                     jsonToMap.put("avatar", user.getAvatar());
                 }else{
                     if (user.getMail() != null) {
-                        jsonToMap.put("avatar", baseFull.getAvatar(apiconfig.getWebinfoAvatar(), user.getMail()));
+                        if(user.getMail().indexOf("@qq.com") != -1){
+                            String qq = user.getMail().replace("@qq.com","");
+                            jsonToMap.put("avatar", "https://q1.qlogo.cn/g?b=qq&nk="+qq+"&s=640");
+                        }else{
+                            jsonToMap.put("avatar", baseFull.getAvatar(apiconfig.getWebinfoAvatar(), user.getMail()));
+                        }
                     } else {
                         jsonToMap.put("avatar", apiconfig.getWebinfoAvatar() + "null");
                     }
@@ -1405,6 +1431,22 @@ public class TypechoUsersController {
             if (!group.equals("administrator")) {
                 return Result.getResultJson(0, "你没有操作权限", null);
             }
+            TypechoUsers users = service.selectByKey(key);
+            if(users==null){
+                return Result.getResultJson(0, "该用户不存在", null);
+            }
+            //删除关联的信息
+            TypechoUserapi userapi = new TypechoUserapi();
+            userapi.setUid(Integer.parseInt(key));
+            Integer isApi = userapiService.total(userapi);
+            if(isApi > 0){
+                userapiService.delete(key);
+            }
+            //删除用户登录状态
+            String oldToken = redisHelp.getRedis(this.dataprefix + "_" + "userkey" + users.getName(), redisTemplate);
+            if (oldToken != null) {
+                redisHelp.delete(this.dataprefix + "_" + "userInfo" + oldToken, redisTemplate);
+            }
             int rows = service.delete(key);
             JSONObject response = new JSONObject();
             response.put("code", rows > 0 ? 1 : 0);
@@ -1706,7 +1748,15 @@ public class TypechoUsersController {
         json.put("token", token);
         TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
         if (json.get("mail") != null) {
-            json.put("avatar", baseFull.getAvatar(apiconfig.getWebinfoAvatar(), json.get("mail").toString()));
+            String mail = json.get("mail").toString();
+
+            if(mail.indexOf("@qq.com") != -1){
+                String qq = mail.replace("@qq.com","");
+                json.put("avatar", "https://q1.qlogo.cn/g?b=qq&nk="+qq+"&s=640");
+            }else{
+                json.put("avatar", baseFull.getAvatar(apiconfig.getWebinfoAvatar(), mail));
+            }
+            //json.put("avatar", baseFull.getAvatar(apiconfig.getWebinfoAvatar(), json.get("mail").toString()));
 
         } else {
             json.put("avatar", apiconfig.getWebinfoAvatar() + "null");
@@ -1951,7 +2001,15 @@ public class TypechoUsersController {
                         userJson.put("name", name);
                         userJson.put("groupKey", user.getGroupKey());
                         if(user.getMail()!=null){
-                            json.put("avatar",baseFull.getAvatar(apiconfig.getWebinfoAvatar(),user.getMail()));
+                            String mail = user.getMail();
+
+                            if(mail.indexOf("@qq.com") != -1){
+                                String qq = mail.replace("@qq.com","");
+                                json.put("avatar", "https://q1.qlogo.cn/g?b=qq&nk="+qq+"&s=640");
+                            }else{
+                                json.put("avatar", baseFull.getAvatar(apiconfig.getWebinfoAvatar(), mail));
+                            }
+                            //json.put("avatar",baseFull.getAvatar(apiconfig.getWebinfoAvatar(),user.getMail()));
                         }else{
                             json.put("avatar",apiconfig.getWebinfoAvatar()+"null");
                         }

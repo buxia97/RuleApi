@@ -312,7 +312,15 @@ public class TypechoContentsController {
                             avatar = author.getAvatar();
                         }else{
                             if(author.getMail()!=""&&author.getMail()!=null){
-                                avatar = baseFull.getAvatar(apiconfig.getWebinfoAvatar(), author.getMail());
+                                String mail = author.getMail();
+
+                                if(mail.indexOf("@qq.com") != -1){
+                                    String qq = mail.replace("@qq.com","");
+                                    avatar = "https://q1.qlogo.cn/g?b=qq&nk="+qq+"&s=640";
+                                }else{
+                                    avatar = baseFull.getAvatar(apiconfig.getWebinfoAvatar(), author.getMail());
+                                }
+                                //avatar = baseFull.getAvatar(apiconfig.getWebinfoAvatar(), author.getMail());
                             }
                         }
 
