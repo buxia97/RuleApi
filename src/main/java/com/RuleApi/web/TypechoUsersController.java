@@ -631,9 +631,9 @@ public class TypechoUsersController {
                     return Result.getResultJson(0, "当前注册需要邀请码，请采用普通方式注册！", null);
                 }
 
-                if (jsonToMap.get("headImgUrl") != null) {
-
-                }
+//                if (jsonToMap.get("headImgUrl") != null) {
+//
+//                }
                 TypechoUsers regUser = new TypechoUsers();
                 String name = baseFull.createRandomStr(5) + baseFull.createRandomStr(4);
                 String p = baseFull.createRandomStr(9);
@@ -646,7 +646,13 @@ public class TypechoUsersController {
                 regUser.setScreenName(userapi.getNickName());
                 regUser.setPassword(passwd.replaceAll("(\\\r\\\n|\\\r|\\\n|\\\n\\\r)", ""));
                 if (jsonToMap.get("headImgUrl") != null) {
-                    regUser.setAvatar(jsonToMap.get("headImgUrl").toString());
+                    String headImgUrl = jsonToMap.get("headImgUrl").toString();
+                    //QQ的接口头像要处理
+                    if(jsonToMap.get("appLoginType").toString().equals("qq")){
+                        headImgUrl.replace("http://","https://");
+                        headImgUrl.replace("&amp;","&");
+                    }
+                    regUser.setAvatar(headImgUrl);
                 }
                 Integer to = service.insert(regUser);
                 //注册完成后，增加绑定
