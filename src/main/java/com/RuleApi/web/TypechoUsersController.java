@@ -2008,21 +2008,23 @@ public class TypechoUsersController {
                         }
                         userJson.put("name", name);
                         userJson.put("groupKey", user.getGroupKey());
-                        if(user.getMail()!=null){
-                            String mail = user.getMail();
 
-                            if(mail.indexOf("@qq.com") != -1){
-                                String qq = mail.replace("@qq.com","");
-                                json.put("avatar", "https://q1.qlogo.cn/g?b=qq&nk="+qq+"&s=640");
+                        if(user.getAvatar()==null){
+                            if(user.getMail()!=null){
+                                String mail = user.getMail();
+
+                                if(mail.indexOf("@qq.com") != -1){
+                                    String qq = mail.replace("@qq.com","");
+                                    json.put("avatar", "https://q1.qlogo.cn/g?b=qq&nk="+qq+"&s=640");
+                                }else{
+                                    json.put("avatar", baseFull.getAvatar(apiconfig.getWebinfoAvatar(), mail));
+                                }
+                                //json.put("avatar",baseFull.getAvatar(apiconfig.getWebinfoAvatar(),user.getMail()));
                             }else{
-                                json.put("avatar", baseFull.getAvatar(apiconfig.getWebinfoAvatar(), mail));
+                                json.put("avatar",apiconfig.getWebinfoAvatar()+"null");
                             }
-                            //json.put("avatar",baseFull.getAvatar(apiconfig.getWebinfoAvatar(),user.getMail()));
                         }else{
-                            json.put("avatar",apiconfig.getWebinfoAvatar()+"null");
-                        }
-                        if(user.getAvatar()!=null){
-                            userJson.put("avatar", user.getAvatar());
+                            json.put("avatar", user.getAvatar());
                         }
                         userJson.put("customize", user.getCustomize());
                         //判断是否为VIP
