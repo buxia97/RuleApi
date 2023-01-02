@@ -655,7 +655,7 @@ public class TypechoCommentsController {
                 Long date = System.currentTimeMillis();
                 String created = String.valueOf(date).substring(0,10);
                 TypechoInbox inbox = new TypechoInbox();
-                inbox.setUid(logUid);
+                inbox.setUid(comments.getAuthorId());
                 inbox.setTouid(pComments.getAuthorId());
                 inbox.setType("comment");
                 inbox.setText(text);
@@ -696,7 +696,7 @@ public class TypechoCommentsController {
                 Long date = System.currentTimeMillis();
                 String created = String.valueOf(date).substring(0,10);
                 TypechoInbox inbox = new TypechoInbox();
-                inbox.setUid(logUid);
+                inbox.setUid(comments.getAuthorId());
                 inbox.setTouid(authorUid);
                 inbox.setType("comment");
                 inbox.setValue(comments.getCid());

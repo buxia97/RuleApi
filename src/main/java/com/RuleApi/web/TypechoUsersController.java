@@ -163,6 +163,8 @@ public class TypechoUsersController {
                         } else {
                             json.put("avatar", apiconfig.getWebinfoAvatar() + "null");
                         }
+                    }else{
+
                     }
                     json.put("isvip", 0);
                     Long date = System.currentTimeMillis();
@@ -647,10 +649,10 @@ public class TypechoUsersController {
                 regUser.setPassword(passwd.replaceAll("(\\\r\\\n|\\\r|\\\n|\\\n\\\r)", ""));
                 if (jsonToMap.get("headImgUrl") != null) {
                     String headImgUrl = jsonToMap.get("headImgUrl").toString();
-                    //QQ的接口头像要处理
+                    //QQ的接口头像要处理(垃圾腾讯突然修改了返回格式)
                     if(jsonToMap.get("appLoginType").toString().equals("qq")){
-                        headImgUrl.replace("http://","https://");
-                        headImgUrl.replace("&amp;","&");
+                        headImgUrl = headImgUrl.replace("http://","https://");
+                        headImgUrl = headImgUrl.replace("&amp;","&");
                     }
                     regUser.setAvatar(headImgUrl);
                 }
