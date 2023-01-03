@@ -862,6 +862,36 @@ public class InstallController {
         }else{
             text+="消息通知模块已经存在，无需添加。";
         }
+        //关注模块
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_fan';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("CREATE TABLE `"+prefix+"_fan` (" +
+                    "  `id` int(11) NOT NULL AUTO_INCREMENT," +
+                    "  `created` int(10) unsigned DEFAULT '0' COMMENT '关注时间'," +
+                    "  `uid` int(11) unsigned NOT NULL DEFAULT '0' COMMENT '关注人'," +
+                    "  `touid` int(11) unsigned NOT NULL DEFAULT '0' COMMENT '被关注人'," +
+                    "  PRIMARY KEY (`id`)" +
+                    ") ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='关注表（全局内容）';");
+            text+="关注模块创建完成。";
+        }else{
+            text+="关注模块已经存在，无需添加。";
+        }
+        //违规记录模块
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_violation';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("CREATE TABLE `"+prefix+"_violation` (" +
+                    "  `id` int(11) NOT NULL AUTO_INCREMENT," +
+                    "  `uid` int(11) NOT NULL DEFAULT '0' COMMENT '违规者uid'," +
+                    "  `type` varchar(255) DEFAULT NULL COMMENT '违规类型（finance财务，content内容，comment评论，attack攻击）'," +
+                    "  `text` text COMMENT '具体原因'," +
+                    "  `created` int(10) unsigned DEFAULT '0' COMMENT '违规时间'," +
+                    "  `handler` int(11) unsigned DEFAULT '0' COMMENT '处理人，0为系统自动，其它为真实用户'," +
+                    "  PRIMARY KEY (`id`)" +
+                    ") ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='违规记录表';");
+            text+="违规记录模块模块创建完成。";
+        }else{
+            text+="违规记录模块模块已经存在，无需添加。";
+        }
         text+=" ------ 执行结束，安装执行完成";
 
         redisHelp.setRedis(this.dataprefix+"_"+"isInstall","1",600,redisTemplate);
