@@ -366,7 +366,15 @@ public class TypechoUsersController {
                 return Result.getResultJson(0, "请输入正确的参数", null);
             }
             jsonToMap.remove("password");
-            TypechoUsers Users = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoUsers.class);
+            String name = jsonToMap.get("name").toString();
+
+            TypechoUsers Users = new TypechoUsers();
+            //支持邮箱登录
+            if (!baseFull.isEmail(name)) {
+                Users.setName(name);
+            }else{
+                Users.setMail(name);
+            }
             List<TypechoUsers> rows = service.selectList(Users);
             if (rows.size() > 0) {
                 //查询出用户信息后，通过接口验证用户密码

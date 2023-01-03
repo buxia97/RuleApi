@@ -8,7 +8,7 @@ RuleApi，基于typecho正式版数据库，使用JAVA语言Springboot框架，�
 
 ## 安装教程
 
-https://www.ruletree.club/archives/2661/
+[RuleProject全项目安装教程](https://www.yuque.com/buxia97/ruleproject)
 
 ## 更新教程
 
