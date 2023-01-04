@@ -218,6 +218,7 @@ public class InstallController {
             System.err.println(e);
             return Result.getResultJson(0,"数据库语句执行失败，请检查数据库版本及服务器性能后重试。",null);
         }
+        text+=" ------ 执行结束，独立安装数据表导入完成，请继续安装RuleApi扩展数据表";
         JSONObject response = new JSONObject();
         response.put("code" , 1);
         response.put("msg"  ,text);
@@ -815,6 +816,14 @@ public class InstallController {
             text+="配置中心模块，字段contentAuditlevel添加完成。";
         }else{
             text+="配置中心模块，字段contentAuditlevel已经存在，无需添加。";
+        }
+        //查询配置中心表是否存在uploadLevel字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'uploadLevel';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `uploadLevel` int(2) DEFAULT '0' COMMENT '上传限制等级（0只允许图片，2只允许图片视频，3允许所有类型文件）'");
+            text+="配置中心模块，字段uploadLevel添加完成。";
+        }else{
+            text+="配置中心模块，字段uploadLevel已经存在，无需添加。";
         }
         try {
             Thread.sleep(500);

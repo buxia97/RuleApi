@@ -1,9 +1,6 @@
 package com.RuleApi.web;
 
-import com.RuleApi.common.EditFile;
-import com.RuleApi.common.RedisHelp;
-import com.RuleApi.common.ResultAll;
-import com.RuleApi.common.UserStatus;
+import com.RuleApi.common.*;
 import com.RuleApi.entity.TypechoApiconfig;
 import com.RuleApi.service.TypechoApiconfigService;
 import com.aliyun.oss.OSS;
@@ -63,6 +60,7 @@ public class UploadController {
     EditFile editFile = new EditFile();
     RedisHelp redisHelp =new RedisHelp();
     ResultAll Result = new ResultAll();
+    baseFull baseFull = new baseFull();
     UserStatus UStatus = new UserStatus();
 
     /**
@@ -91,10 +89,23 @@ public class UploadController {
             oldFileName = oldFileName +".png";
             eName = oldFileName.substring(oldFileName.lastIndexOf("."));
         }
-        //检查是否是图片
-        BufferedImage bi = ImageIO.read(file.getInputStream());
-        if(bi == null){
-            return Result.getResultJson(0,"请上传图片文件",null);
+
+        //根据权限等级检查是否为图片
+        Integer uploadLevel = apiconfig.getUploadLevel();
+        if(uploadLevel.equals(0)){
+            //检查是否是图片
+            BufferedImage bi = ImageIO.read(file.getInputStream());
+            if(bi == null&&!eName.equals(".WEBP")&&!eName.equals(".webp")){
+                return Result.getResultJson(0,"请上传图片文件",null);
+            }
+        }
+        if(uploadLevel.equals(1)){
+            //检查是否是图片或视频
+            BufferedImage bi = ImageIO.read(file.getInputStream());
+            Integer isVideo = baseFull.isVideo(eName);
+            if(bi == null&&!eName.equals(".WEBP")&&!eName.equals(".webp")&&!isVideo.equals(1)){
+                return Result.getResultJson(0,"请上传图片或者视频文件",null);
+            }
         }
 
         String newFileName = UUID.randomUUID()+eName;
@@ -176,10 +187,22 @@ public class UploadController {
             filetype = filename.substring(filename.lastIndexOf("."));
         }
         String newfile = UUID.randomUUID()+filetype;
-        //检查是否是图片
-        BufferedImage bi = ImageIO.read(file.getInputStream());
-        if(bi == null){
-            return Result.getResultJson(0,"请上传图片文件",null);
+        //根据权限等级检查是否为图片
+        Integer uploadLevel = apiconfig.getUploadLevel();
+        if(uploadLevel.equals(0)){
+            //检查是否是图片
+            BufferedImage bi = ImageIO.read(file.getInputStream());
+            if(bi == null&&!filetype.equals(".WEBP")&&!filetype.equals(".webp")){
+                return Result.getResultJson(0,"请上传图片文件",null);
+            }
+        }
+        if(uploadLevel.equals(1)){
+            //检查是否是图片或视频
+            BufferedImage bi = ImageIO.read(file.getInputStream());
+            Integer isVideo = baseFull.isVideo(filetype);
+            if(bi == null&&!filetype.equals(".WEBP")&&!filetype.equals(".webp")&&!isVideo.equals(1)){
+                return Result.getResultJson(0,"请上传图片或者视频文件",null);
+            }
         }
 
         /*解决文件路径中的空格问题*/
@@ -232,11 +255,9 @@ public class UploadController {
         //返回上传到oss的路径
         OSS ossClient = new OSSClientBuilder().build(apiconfig.getAliyunEndpoint(), apiconfig.getAliyunAccessKeyId(),apiconfig.getAliyunAccessKeySecret());
         InputStream inputStream = null;
-        //检查是否是图片
-        BufferedImage bi = ImageIO.read(file.getInputStream());
-        if(bi == null){
-            return Result.getResultJson(0,"请上传图片文件",null);
-        }
+
+
+
         try {
             //获取文件流
             inputStream = file.getInputStream();
@@ -258,6 +279,23 @@ public class UploadController {
         }catch (Exception e){
             filename = filename +".png";
             eName = filename.substring(filename.lastIndexOf("."));
+        }
+        //根据权限等级检查是否为图片
+        Integer uploadLevel = apiconfig.getUploadLevel();
+        if(uploadLevel.equals(0)){
+            //检查是否是图片或视频
+            BufferedImage bi = ImageIO.read(file.getInputStream());
+            if(bi == null&&!eName.equals(".WEBP")&&!eName.equals(".webp")){
+                return Result.getResultJson(0,"请上传图片文件",null);
+            }
+        }
+        if(uploadLevel.equals(1)){
+            //检查是否是图片
+            BufferedImage bi = ImageIO.read(file.getInputStream());
+            Integer isVideo = baseFull.isVideo(eName);
+            if(bi == null&&!eName.equals(".WEBP")&&!eName.equals(".webp")&&!isVideo.equals(1)){
+                return Result.getResultJson(0,"请上传图片或者视频文件",null);
+            }
         }
         //1.在文件名称中添加随机唯一的值
         String newFileName = UUID.randomUUID()+eName;
@@ -288,19 +326,8 @@ public class UploadController {
         Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         Integer uid =Integer.parseInt(map.get("uid").toString());
         String oldFileName = file.getOriginalFilename();
-        //检查是否是图片
-        BufferedImage bi = null;
-        try {
-            bi = ImageIO.read(file.getInputStream());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        if(bi == null){
-            return Result.getResultJson(0,"请上传图片文件",null);
-        }
-
+        TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
         FTPClient ftpClient = new FTPClient();
-        //检查是否是图片
         try {
 
             //指定存放上传文件的目录
@@ -330,12 +357,27 @@ public class UploadController {
                 originalFileName = originalFileName +".png";
                 suffix = originalFileName.substring(originalFileName.lastIndexOf("."));
             }
+            //根据权限等级检查是否为图片
+            Integer uploadLevel = apiconfig.getUploadLevel();
+            if(uploadLevel.equals(0)){
+                //检查是否是图片
+                BufferedImage bi = ImageIO.read(file.getInputStream());
+                if(bi == null&&!suffix.equals(".WEBP")&&!suffix.equals(".webp")){
+                    return Result.getResultJson(0,"请上传图片文件",null);
+                }
+            }
+            if(uploadLevel.equals(1)){
+                //检查是否是图片或视频
+                BufferedImage bi = ImageIO.read(file.getInputStream());
+                Integer isVideo = baseFull.isVideo(suffix);
+                if(bi == null&&!suffix.equals(".WEBP")&&!suffix.equals(".webp")&&!isVideo.equals(1)){
+                    return Result.getResultJson(0,"请上传图片或者视频文件",null);
+                }
+            }
             //2、使用UUID生成新文件名
             String newFileName = UUID.randomUUID() + suffix;
-
             //生成文件
             File file1 = new File(dir, newFileName);
-
             //传输内容
             try {
                 file.transferTo(file1);
@@ -344,7 +386,7 @@ public class UploadController {
                 System.out.println("上传文件失败！");
                 e.printStackTrace();
             }
-            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+
             //在服务器上生成新的目录
             String key = apiconfig.getFtpBasePath()+"/"+file1.getName();
 
@@ -355,9 +397,6 @@ public class UploadController {
 
             //进行登录 参数分别为账号 密码
             ftpClient.login(apiconfig.getFtpUsername(),apiconfig.getFtpPassword());
-
-
-
             //开启被动模式（按自己如何配置的ftp服务器来决定是否开启）
             ftpClient.enterLocalPassiveMode();
             //只能选择local_root下已存在的目录

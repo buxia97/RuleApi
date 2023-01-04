@@ -355,6 +355,13 @@ public class TypechoApiconfig implements Serializable {
      */
     private Integer contentAuditlevel;
 
+    /**
+     * uploadLevel
+     */
+    private Integer uploadLevel;
+
+
+
 
 
 

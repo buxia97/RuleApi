@@ -72,6 +72,9 @@ public class TypechoUsersController {
     private TypechoFanService fanService;
 
     @Autowired
+    private TypechoViolationService violationService;
+
+    @Autowired
     private PushService pushService;
 
 
@@ -2546,9 +2549,18 @@ public class TypechoUsersController {
     @RequestMapping(value = "/banUser")
     @ResponseBody
     public String sendUser(@RequestParam(value = "token", required = false) String  token,
-                           @RequestParam(value = "uid", required = false, defaultValue = "1") Integer uid,
-                           @RequestParam(value = "time", required = false, defaultValue = "1") Integer time) {
+                           @RequestParam(value = "uid", required = false) Integer uid,
+                           @RequestParam(value = "time", required = false) Integer time,
+                           @RequestParam(value = "type", required = false) String type,
+                           @RequestParam(value = "text", required = false) String text){
         try {
+            //防止重复提交
+            String isRepeated = redisHelp.getRedis(token+"_isRepeated",redisTemplate);
+            if(isRepeated==null){
+                redisHelp.setRedis(token+"_isRepeated","1",5,redisTemplate);
+            }else{
+                return Result.getResultJson(0,"你的操作太频繁了",null);
+            }
             Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
             if(uStatus==0){
                 return Result.getResultJson(0,"用户未登录或Token验证失败",null);
@@ -2557,7 +2569,13 @@ public class TypechoUsersController {
             if(time<0||time==null){
                 return Result.getResultJson(0, "参数错误", null);
             }
+
+            //违规类型（finance财务，content内容，comment评论，attack攻击）
+            if(!type.equals("finance")&&!type.equals("content")&&!type.equals("comment")&&!type.equals("attack")){
+                return Result.getResultJson(0, "参数错误", null);
+            }
             Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+            Integer userid =Integer.parseInt(map.get("uid").toString());
             String group = map.get("group").toString();
             if (!group.equals("administrator")) {
                 return Result.getResultJson(0, "你没有操作权限", null);
@@ -2590,6 +2608,14 @@ public class TypechoUsersController {
                 users.setBantime(updatetime);
             }
             int rows = service.update(users);
+            //添加违规记录
+            TypechoViolation violation = new TypechoViolation();
+            violation.setUid(uid);
+            violation.setType(type);
+            violation.setText(text);
+            violation.setHandler(userid);
+            violation.setCreated(curtime);
+            violationService.insert(violation);
             JSONObject response = new JSONObject();
             response.put("code" , rows);
             response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
@@ -2598,6 +2624,47 @@ public class TypechoUsersController {
             System.err.println(e);
             return Result.getResultJson(0, "接口异常，请联系管理员", null);
         }
+    }
+    /***
+     * 封禁记录
+     */
+    @RequestMapping(value = "/violationList")
+    @ResponseBody
+    public String violationList (@RequestParam(value = "searchParams", required = false) String  searchParams,
+                            @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
+                            @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit) {
+        TypechoViolation query = new TypechoViolation();
+        Integer total = 0;
+        List jsonList = new ArrayList();
+        List cacheList = redisHelp.getList(this.dataprefix+"_"+"violationList_"+page+"_"+limit+"_"+searchParams,redisTemplate);
+        if (StringUtils.isNotBlank(searchParams)) {
+            JSONObject object = JSON.parseObject(searchParams);
+            query = object.toJavaObject(TypechoViolation.class);
+        }
+        total = violationService.total(query);
+        try {
+            if (cacheList.size() > 0) {
+                jsonList = cacheList;
+            } else {
+                PageList<TypechoViolation> pageList = violationService.selectPage(query, page, limit);
+                jsonList = pageList.getList();
+                redisHelp.delete(this.dataprefix+"_"+"violationList_"+page+"_"+limit+"_"+searchParams,redisTemplate);
+                redisHelp.setList(this.dataprefix+"_"+"violationList_"+page+"_"+limit+"_"+searchParams,jsonList,2,redisTemplate);
+            }
+        }catch (Exception e){
+            System.err.println(e);
+            if(cacheList.size()>0){
+                jsonList = cacheList;
+            }
+        }
+
+        JSONObject response = new JSONObject();
+        response.put("code" , 0);
+        response.put("msg"  , "");
+        response.put("data" , jsonList);
+        response.put("count", jsonList.size());
+        response.put("total", total);
+        return response.toString();
     }
 
 }

@@ -237,7 +237,7 @@ public class TypechoMetasController {
                 PageList<TypechoMetas> pageList = service.selectPage(query, page, limit, searchKey, order);
                 jsonList = pageList.getList();
                 redisHelp.delete(this.dataprefix+"_"+"metasList_"+page+"_"+limit+"_"+searchParams,redisTemplate);
-                redisHelp.setList(this.dataprefix+"_"+"metasList_"+page+"_"+limit+"_"+searchParams,jsonList,30,redisTemplate);
+                redisHelp.setList(this.dataprefix+"_"+"metasList_"+page+"_"+limit+"_"+searchParams,jsonList,10,redisTemplate);
             }
         }catch (Exception e){
             System.err.println(e);

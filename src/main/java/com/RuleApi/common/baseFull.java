@@ -250,5 +250,12 @@ public class baseFull {
             return 0;
         }
     }
+    public static Integer isVideo(String type){
+        if(!type.equals(".mp4")&&!type.equals(".MP4")&&!type.equals(".AVI")&&!type.equals(".avi")&&!type.equals(".MKV")&&!type.equals(".mkv")){
+            return 0;
+        }else{
+            return 1;
+        }
+    }
 
 }

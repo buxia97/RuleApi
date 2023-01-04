@@ -76,6 +76,9 @@
         <result column="contentAuditlevel" property="contentAuditlevel" />
         <result column="isPush" property="isPush" />
 
+        <result column="uploadLevel" property="uploadLevel" />
+
+
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -151,7 +154,8 @@
         `disableCode`,
         `allowDelete`,
         `contentAuditlevel`,
-        `isPush`
+        `isPush`,
+        `uploadLevel`
     </sql>
 
     <!-- 插入数据 -->
@@ -361,7 +365,10 @@
                 `contentAuditlevel`,
             </if>
             <if test ='null != isPush'>
-                `isPush`
+                `isPush`,
+            </if>
+            <if test ='null != uploadLevel'>
+                `uploadLevel`
             </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
@@ -568,7 +575,10 @@
                 #{contentAuditlevel},
             </if>
             <if test ='null != isPush'>
-                #{isPush}
+                #{isPush},
+            </if>
+            <if test ='null != uploadLevel'>
+                #{uploadLevel}
             </if>
         </trim>
     </insert>
@@ -647,7 +657,8 @@
             <if test ='null != disableCode'>`disableCode` = #{disableCode},</if>
             <if test ='null != allowDelete'>`allowDelete` = #{allowDelete},</if>
             <if test ='null != contentAuditlevel'>`contentAuditlevel` = #{contentAuditlevel},</if>
-            <if test ='null != isPush'>`isPush` = #{isPush}</if>
+            <if test ='null != isPush'>`isPush` = #{isPush},</if>
+            <if test ='null != uploadLevel'>`uploadLevel` = #{uploadLevel}</if>
         </set>
         WHERE `id` = #{id}
     </update>
