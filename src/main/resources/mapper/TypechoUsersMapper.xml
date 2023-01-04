@@ -23,6 +23,7 @@
         <result column="avatar" property="avatar" />
         <result column="experience" property="experience" />
         <result column="clientId" property="clientId" />
+        <result column="clientId" property="bantime" />
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -45,7 +46,8 @@
         `vip`,
         `avatar`,
         `experience`,
-        `clientId`
+        `clientId`,
+        `bantime`,
     </sql>
 
     <!-- 插入数据 -->
@@ -89,7 +91,10 @@
                 `avatar`,
             </if>
             <if test ='null != clientId'>
-                `clientId`
+                `clientId`,
+            </if>
+            <if test ='null != bantime'>
+                `bantime`
             </if>
 
         </trim>
@@ -131,7 +136,10 @@
                 #{avatar},
             </if>
             <if test ='null != clientId'>
-                #{clientId}
+                #{clientId},
+            </if>
+            <if test ='null != bantime'>
+                #{bantime}
             </if>
 
         </trim>
@@ -152,7 +160,8 @@
                 #{curr.activated},
                 #{curr.logged},
                 #{curr.groupKey},
-                #{curr.authCode}
+                #{curr.authCode},
+                #{curr.bantime}
             )
         </foreach>
     </insert>
@@ -179,8 +188,8 @@
             <if test ='null != vip'>`vip` = #{vip},</if>
             <if test ='null != avatar'>`avatar` = #{avatar},</if>
             <if test ='null != experience'>`experience` = #{experience},</if>
-            <if test ='null != clientId'>`clientId` = #{clientId}</if>
-
+            <if test ='null != clientId'>`clientId` = #{clientId},</if>
+            <if test ='null != bantime'>`bantime` = #{bantime}</if>
 
         </set>
         WHERE `uid` = #{uid}
@@ -291,10 +300,13 @@
                 and `experience` = #{typechoUsers.experience}
             </if>
             <if test ='null != typechoUsers.vip'>
-                and `vip` > 0
+                and `vip` > CAST(FLOOR(UNIX_TIMESTAMP() / 1000) AS INTEGER)
+            </if>
+            <if test ='null != typechoUsers.bantime'>
+                and `bantime` > CAST(FLOOR(UNIX_TIMESTAMP() / 1000) AS INTEGER)
             </if>
             <if test ='"" != searchKey'>
-                and CONCAT(IFNULL(`name`,''),IFNULL(`screenName`,'')) LIKE '%${searchKey}%'
+                and CONCAT(IFNULL(`name`,''),IFNULL(`screenName`,''),IFNULL(`mail`,'')) LIKE '%${searchKey}%'
             </if>
 
         </where>

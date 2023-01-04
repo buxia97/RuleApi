@@ -88,27 +88,33 @@ public class TypechoUsers implements Serializable {
     private String pay;
 
     /**
-     * customize
+     * customize（自定义头衔）
      */
     private String customize;
 
     /**
-     * vip
+     * vip（到期时间）
      */
     private Integer vip;
 
     /**
-     * experience
+     * experience（经验值）
      */
     private Integer experience;
 
     /**
-     * avatar
+     * avatar（头像）
      */
     private String avatar;
 
     /**
-     * clientId
+     * 客户端id（用于发送状态栏消息）
      */
     private String clientId;
+
+    /**
+     * 封禁时间
+     */
+    private Integer bantime;
+
 }

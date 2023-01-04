@@ -369,6 +369,14 @@ public class InstallController {
         }else{
             text+="用户模块，字段clientId已经存在，无需添加。";
         }
+        //查询用户表是否存在bantime字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_users' and column_name = 'bantime';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_users ADD bantime integer(10) DEFAULT 0;");
+            text+="用户模块，字段bantime添加完成。";
+        }else{
+            text+="用户模块，字段bantime已经存在，无需添加。";
+        }
 
         //查询分类标签表是否存在imgurl字段
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_metas' and column_name = 'imgurl';", Integer.class);
@@ -500,11 +508,7 @@ public class InstallController {
         }else{
             text+="资产日志模块已经存在，无需添加。";
         }
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException ie) {
-            Thread.currentThread().interrupt();
-        }
+
         //添加卡密充值模块
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_paykey';", Integer.class);
         if (i == 0){
@@ -522,7 +526,7 @@ public class InstallController {
             text+="卡密充值模块已经存在，无需添加。";
         }
         try {
-            Thread.sleep(1000);
+            Thread.sleep(500);
         } catch (InterruptedException ie) {
             Thread.currentThread().interrupt();
         }
@@ -579,7 +583,7 @@ public class InstallController {
             text+="API配置中心模块已经存在，无需添加。";
         }
         try {
-            Thread.sleep(1000);
+            Thread.sleep(500);
         } catch (InterruptedException ie) {
             Thread.currentThread().interrupt();
         }
@@ -646,6 +650,11 @@ public class InstallController {
             text+="配置中心模块，字段pushAdsPrice添加完成。";
         }else{
             text+="配置中心模块，字段pushAdsPrice已经存在，无需添加。";
+        }
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
         }
         //查询配置中心表是否存在pushAdsNum字段
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'pushAdsNum';", Integer.class);
@@ -806,6 +815,11 @@ public class InstallController {
             text+="配置中心模块，字段contentAuditlevel添加完成。";
         }else{
             text+="配置中心模块，字段contentAuditlevel已经存在，无需添加。";
+        }
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
         }
         //添加邀请码模块
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_invitation';", Integer.class);

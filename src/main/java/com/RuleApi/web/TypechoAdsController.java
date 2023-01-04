@@ -272,7 +272,7 @@ public class TypechoAdsController {
     }
 
     /***
-     * 表单修改
+     * 修改广告
      * @param params Bean对象JSON字符串
      */
     @RequestMapping(value = "/editAds")
