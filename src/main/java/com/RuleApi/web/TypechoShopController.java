@@ -391,7 +391,7 @@ public class TypechoShopController {
         String group = map.get("group").toString();
         Integer sid = Integer.parseInt(key);
         TypechoShop info = service.selectByKey(sid);
-        if(!group.equals("administrator")){
+        if(!group.equals("administrator")&&!group.equals("editor")){
 
             Integer aid = info.getUid();
             if(!aid.equals(uid)){
@@ -422,47 +422,79 @@ public class TypechoShopController {
      */
     @RequestMapping(value = "/auditShop")
     @ResponseBody
-    public String auditShop(@RequestParam(value = "key", required = false) String  key,@RequestParam(value = "token", required = false) String  token) {
-
-        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-        if(uStatus==0){
-            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+    public String auditShop(@RequestParam(value = "key", required = false) String  key,
+                            @RequestParam(value = "token", required = false) String  token,
+                            @RequestParam(value = "type", required = false) Integer  type,
+                            @RequestParam(value = "reason", required = false) String  reason) {
+        if(type==null){
+            type = 0;
         }
-        // 查询发布者是不是自己，如果是管理员则跳过
-        Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
-        Integer uid  = Integer.parseInt(map.get("uid").toString());
-        String group = map.get("group").toString();
-        Integer sid = Integer.parseInt(key);
-        TypechoShop info = service.selectByKey(sid);
-        if(!group.equals("administrator")&&!group.equals("editor")){
-
-            Integer aid = info.getUid();
-            if(!aid.equals(uid)){
-                return Result.getResultJson(0,"你无权进行此操作",null);
+        try{
+            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+            if(uStatus==0){
+                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
             }
+            // 查询发布者是不是自己，如果是管理员则跳过
+            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            Integer uid  = Integer.parseInt(map.get("uid").toString());
+            String group = map.get("group").toString();
+            Integer sid = Integer.parseInt(key);
+            TypechoShop info = service.selectByKey(sid);
+            if(!group.equals("administrator")&&!group.equals("editor")){
+
+                Integer aid = info.getUid();
+                if(!aid.equals(uid)){
+                    return Result.getResultJson(0,"你无权进行此操作",null);
+                }
+            }
+            TypechoShop shop = new TypechoShop();
+            shop.setId(Integer.parseInt(key));
+            if(type.equals(0)){
+                shop.setStatus(1);
+            }else{
+                if(reason==""||reason==null){
+                    return Result.getResultJson(0,"请输入拒绝理由",null);
+                }
+                shop.setStatus(2);
+            }
+            Integer rows = service.update(shop);
+            //根据过审状态发送不同的内容
+            if(type.equals(0)) {
+                //发送消息
+                Long date = System.currentTimeMillis();
+                String created = String.valueOf(date).substring(0,10);
+                TypechoInbox insert = new TypechoInbox();
+                insert.setUid(uid);
+                insert.setTouid(info.getUid());
+                insert.setType("system");
+                insert.setText("你的商品【"+info.getTitle()+"】已审核通过");
+                insert.setCreated(Integer.parseInt(created));
+                inboxService.insert(insert);
+            }else{
+                //发送消息
+                Long date = System.currentTimeMillis();
+                String created = String.valueOf(date).substring(0,10);
+                TypechoInbox insert = new TypechoInbox();
+                insert.setUid(uid);
+                insert.setTouid(info.getUid());
+                insert.setType("system");
+                insert.setText("你的商品【"+info.getTitle()+"】未审核通过。理由如下："+reason);
+                insert.setCreated(Integer.parseInt(created));
+                inboxService.insert(insert);
+            }
+
+
+
+            editFile.setLog("管理员"+uid+"请求审核商品"+key);
+            JSONObject response = new JSONObject();
+            response.put("code" , rows);
+            response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
+            return response.toString();
+        }catch (Exception e){
+            System.err.println(e);
+            return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
         }
-        TypechoShop shop = new TypechoShop();
-        shop.setId(Integer.parseInt(key));
-        shop.setStatus(1);
-        Integer rows = service.update(shop);
 
-        //发送消息
-        Long date = System.currentTimeMillis();
-        String created = String.valueOf(date).substring(0,10);
-        TypechoInbox insert = new TypechoInbox();
-        insert.setUid(uid);
-        insert.setTouid(info.getUid());
-        insert.setType("system");
-        insert.setText("你的商品【"+info.getTitle()+"】已审核通过");
-        insert.setCreated(Integer.parseInt(created));
-        inboxService.insert(insert);
-
-
-        editFile.setLog("管理员"+uid+"请求审核商品"+key);
-        JSONObject response = new JSONObject();
-        response.put("code" , rows);
-        response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
-        return response.toString();
     }
     /***
      * 购买商品

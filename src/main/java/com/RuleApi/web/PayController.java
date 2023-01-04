@@ -770,7 +770,7 @@ public class PayController {
             }
         }catch (Exception e){
             System.err.println(e);
-            return Result.getResultJson(0,"接口异常，请检查配置",null);
+            return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
         }
 
 

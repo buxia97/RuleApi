@@ -614,7 +614,7 @@ public class TypechoContentsController {
             return response.toString();
         }catch (Exception e){
             System.err.println(e);
-            return Result.getResultJson(0,"添加失败",null);
+            return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
         }
     }
 
@@ -835,7 +835,7 @@ public class TypechoContentsController {
             return response.toString();
         }catch (Exception e){
             System.err.println(e);
-            return Result.getResultJson(0,"修改失败",null);
+            return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
         }
     }
 
@@ -855,7 +855,7 @@ public class TypechoContentsController {
             Integer uid  = Integer.parseInt(map.get("uid").toString());
             String group = map.get("group").toString();
             TypechoContents contents = service.selectByKey(key);
-            if(!group.equals("administrator")){
+            if(!group.equals("administrator")&&!group.equals("editor")){
                 TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
                 if(apiconfig.getAllowDelete().equals(0)){
                     return Result.getResultJson(0,"系统禁止删除文章",null);
@@ -899,8 +899,14 @@ public class TypechoContentsController {
      */
     @RequestMapping(value = "/contentsAudit")
     @ResponseBody
-    public String contentsAudit(@RequestParam(value = "key", required = false) String  key, @RequestParam(value = "token", required = false) String  token) {
+    public String contentsAudit(@RequestParam(value = "key", required = false) String  key,
+                                @RequestParam(value = "token", required = false) String  token,
+                                @RequestParam(value = "type", required = false) Integer  type,
+                                @RequestParam(value = "reason", required = false) String  reason) {
         try {
+            if(type==null){
+                type = 0;
+            }
             Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
             if(uStatus==0){
                 return Result.getResultJson(0,"用户未登录或Token验证失败",null);
@@ -916,40 +922,77 @@ public class TypechoContentsController {
             Integer logUid =Integer.parseInt(map.get("uid").toString());
             TypechoContents info = service.selectByKey(key);
             info.setCid(Integer.parseInt(key));
-            info.setStatus("publish");
+            //0为审核通过，1为不通过，并发送消息
+            if(type.equals(0)){
+                info.setStatus("publish");
+            }else{
+                if(reason==""||reason==null){
+                    return Result.getResultJson(0,"请输入拒绝理由",null);
+                }
+                info.setStatus("reject");
+            }
             Integer rows = service.update(info);
             //给作者发送邮件
-
             TypechoUsers ainfo = usersService.selectByKey(info.getAuthorId());
-            String title =info.getTitle();
+            String title = info.getTitle();
             Integer uid = ainfo.getUid();
-            if(ainfo.getMail()!=null){
-                Integer isEmail = apiconfig.getIsEmail();
-                if(isEmail.equals(1)){
-                    String email = ainfo.getMail();
-                    try{
-                        MailService.send("用户："+uid+",您的文章已审核通过", "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><title></title><meta charset=\"utf-8\" /><style>*{padding:0px;margin:0px;box-sizing:border-box;}html{box-sizing:border-box;}body{font-size:15px;background:#fff}.main{margin:20px auto;max-width:500px;border:solid 1px #2299dd;overflow:hidden;}.main h1{display:block;width:100%;background:#2299dd;font-size:18px;color:#fff;text-align:center;padding:15px;}.text{padding:30px;}.text p{margin:10px 0px;line-height:25px;}.text p span{color:#2299dd;font-weight:bold;font-size:22px;margin-left:5px;}</style></head>" +
-                                        "<body><div class=\"main\"><h1>文章审核</h1><div class=\"text\"><p>用户 "+uid+"，你的文章<"+title+">已经审核通过！</p>" +
-                                        "<p>可前往<a href=\""+apiconfig.getWebinfoUrl()+"\">"+newtitle+"</a>查看详情</p></div></div></body></html>",
-                                new String[] {email}, new String[] {});
-                    }catch (Exception e){
-                        System.err.println("邮箱发信配置错误："+e);
+            //根据过审状态发送不同的内容
+            if(type.equals(0)) {
+
+                if (ainfo.getMail() != null) {
+                    Integer isEmail = apiconfig.getIsEmail();
+                    if (isEmail.equals(1)) {
+                        String email = ainfo.getMail();
+                        try {
+                            MailService.send("用户：" + uid + ",您的文章已审核通过", "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><title></title><meta charset=\"utf-8\" /><style>*{padding:0px;margin:0px;box-sizing:border-box;}html{box-sizing:border-box;}body{font-size:15px;background:#fff}.main{margin:20px auto;max-width:500px;border:solid 1px #2299dd;overflow:hidden;}.main h1{display:block;width:100%;background:#2299dd;font-size:18px;color:#fff;text-align:center;padding:15px;}.text{padding:30px;}.text p{margin:10px 0px;line-height:25px;}.text p span{color:#2299dd;font-weight:bold;font-size:22px;margin-left:5px;}</style></head>" +
+                                            "<body><div class=\"main\"><h1>文章审核</h1><div class=\"text\"><p>用户 " + uid + "，你的文章<" + title + ">已经审核通过！</p>" +
+                                            "<p>可前往<a href=\"" + apiconfig.getWebinfoUrl() + "\">" + newtitle + "</a>查看详情</p></div></div></body></html>",
+                                    new String[]{email}, new String[]{});
+                        } catch (Exception e) {
+                            System.err.println("邮箱发信配置错误：" + e);
+                        }
                     }
+
+
                 }
+                //发送消息
+                Long date = System.currentTimeMillis();
+                String created = String.valueOf(date).substring(0, 10);
+                TypechoInbox insert = new TypechoInbox();
+                insert.setUid(uid);
+                insert.setTouid(info.getAuthorId());
+                insert.setType("system");
+                insert.setText("你的文章【" + info.getTitle() + "】已审核通过");
+                insert.setCreated(Integer.parseInt(created));
+                inboxService.insert(insert);
+            }else{
+                if (ainfo.getMail() != null) {
+                    Integer isEmail = apiconfig.getIsEmail();
+                    if (isEmail.equals(1)) {
+                        String email = ainfo.getMail();
+                        try {
+                            MailService.send("用户：" + uid + ",您的文章未审核通过", "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><title></title><meta charset=\"utf-8\" /><style>*{padding:0px;margin:0px;box-sizing:border-box;}html{box-sizing:border-box;}body{font-size:15px;background:#fff}.main{margin:20px auto;max-width:500px;border:solid 1px #2299dd;overflow:hidden;}.main h1{display:block;width:100%;background:#2299dd;font-size:18px;color:#fff;text-align:center;padding:15px;}.text{padding:30px;}.text p{margin:10px 0px;line-height:25px;}.text p span{color:#2299dd;font-weight:bold;font-size:22px;margin-left:5px;}</style></head>" +
+                                            "<body><div class=\"main\"><h1>文章审核</h1><div class=\"text\"><p>用户 " + uid + "，你的文章<" + title + ">未审核通过！理由如下："+reason+"</p>" +
+                                            "<p>可前往<a href=\"" + apiconfig.getWebinfoUrl() + "\">" + newtitle + "</a>查看详情</p></div></div></body></html>",
+                                    new String[]{email}, new String[]{});
+                        } catch (Exception e) {
+                            System.err.println("邮箱发信配置错误：" + e);
+                        }
+                    }
 
 
+                }
+                //发送消息
+                Long date = System.currentTimeMillis();
+                String created = String.valueOf(date).substring(0, 10);
+                TypechoInbox insert = new TypechoInbox();
+                insert.setUid(uid);
+                insert.setTouid(info.getAuthorId());
+                insert.setType("system");
+                insert.setText("你的文章【" + info.getTitle() + "】未审核通过。理由如下："+reason);
+                insert.setCreated(Integer.parseInt(created));
+                inboxService.insert(insert);
             }
-            //发送消息
-            Long date = System.currentTimeMillis();
-            String created = String.valueOf(date).substring(0,10);
-            TypechoInbox insert = new TypechoInbox();
-            insert.setUid(uid);
-            insert.setTouid(info.getAuthorId());
-            insert.setType("system");
-            insert.setText("你的文章【"+info.getTitle()+"】已审核通过");
-            insert.setCreated(Integer.parseInt(created));
-            inboxService.insert(insert);
-
 
             editFile.setLog("管理员"+logUid+"请求审核文章"+key);
             JSONObject response = new JSONObject();
@@ -958,7 +1001,8 @@ public class TypechoContentsController {
             response.put("msg"  , rows > 0 ? "操作成功，缓存缘故，数据可能存在延迟" : "操作失败");
             return response.toString();
         }catch (Exception e){
-            return Result.getResultJson(0,"操作失败",null);
+            System.err.println(e);
+            return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
         }
     }
     /***
@@ -1037,7 +1081,7 @@ public class TypechoContentsController {
 
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             String group = map.get("group").toString();
-            if(!group.equals("administrator")){
+            if(!group.equals("administrator")&&!group.equals("editor")){
                 return Result.getResultJson(0,"你没有操作权限",null);
             };
             Integer logUid =Integer.parseInt(map.get("uid").toString());
@@ -1074,7 +1118,7 @@ public class TypechoContentsController {
 
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             String group = map.get("group").toString();
-            if(!group.equals("administrator")){
+            if(!group.equals("administrator")&&!group.equals("editor")){
                 return Result.getResultJson(0,"你没有操作权限",null);
             }
             Integer logUid =Integer.parseInt(map.get("uid").toString());
@@ -1111,7 +1155,7 @@ public class TypechoContentsController {
 
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             String group = map.get("group").toString();
-            if(!group.equals("administrator")){
+            if(!group.equals("administrator")&&!group.equals("editor")){
                 return Result.getResultJson(0,"你没有操作权限",null);
             }
             Integer logUid =Integer.parseInt(map.get("uid").toString());

@@ -1028,6 +1028,7 @@ public class TypechoUsersController {
             response.put("msg", rows > 0 ? "注册成功" : "注册失败");
             return response.toString();
         }catch (Exception e){
+            System.err.println(e);
             return Result.getResultJson(0, "参数错误", null);
         }
 
