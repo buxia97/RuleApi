@@ -467,9 +467,8 @@ public class TypechoCommentsController {
 
                     }else{
                         TypechoUsers author = usersService.selectByKey(contents.getAuthorId());
-
                         Integer uid = author.getUid();
-                        if(!uid.equals(cuid)){
+                        if(!cuid.equals(contents.getAuthorId())){
                             if(author.getMail()!=null){
                                 if(isEmail.equals(1)) {
                                     String email = author.getMail();
@@ -486,27 +485,28 @@ public class TypechoCommentsController {
                                     }
                                 }
                             }
-                        }
-                        //发送消息通知
-                        TypechoInbox inbox = new TypechoInbox();
-                        inbox.setUid(logUid);
-                        inbox.setTouid(uid);
-                        inbox.setType("comment");
-                        inbox.setValue(Integer.parseInt(cid));
-                        inbox.setText(jsonToMap.get("text").toString());
-                        inbox.setCreated(Integer.parseInt(created));
-                        inboxService.insert(inbox);
-                        if(isPush.equals(1)) {
-                            TypechoUsers user = usersService.selectByKey(uid);
-                            if(user.getClientId()!=null){
-                                try {
-                                    pushService.sendPushMsg(user.getClientId(),title,"你的文章有新评论！","payload","comment:"+Integer.parseInt(cid));
-                                }catch (Exception e){
-                                    System.err.println("通知发送失败："+e);
-                                }
+                            //发送消息通知
+                            TypechoInbox inbox = new TypechoInbox();
+                            inbox.setUid(logUid);
+                            inbox.setTouid(uid);
+                            inbox.setType("comment");
+                            inbox.setValue(Integer.parseInt(cid));
+                            inbox.setText(jsonToMap.get("text").toString());
+                            inbox.setCreated(Integer.parseInt(created));
+                            inboxService.insert(inbox);
+                            if(isPush.equals(1)) {
+                                TypechoUsers user = usersService.selectByKey(uid);
+                                if(user.getClientId()!=null){
+                                    try {
+                                        pushService.sendPushMsg(user.getClientId(),title,"你的文章有新评论！","payload","comment:"+Integer.parseInt(cid));
+                                    }catch (Exception e){
+                                        System.err.println("通知发送失败："+e);
+                                    }
 
+                                }
                             }
                         }
+
                     }
 
                 }
@@ -688,44 +688,48 @@ public class TypechoCommentsController {
 
 
             }else{
-                if(author.getMail()!=null){
-                    if(isEmail.equals(1)) {
-                        String aemail = author.getMail();
-                        try{
-                            MailService.send("用户：" + authorUid + ",您的文章有新的评论", "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><title></title>" +
-                                        "<meta charset=\"utf-8\" /><style>*{padding:0px;margin:0px;box-sizing:border-box;}html{box-sizing:border-box;}body{font-size:15px;background:#fff}.main{margin:20px auto;max-width:500px;border:solid 1px #2299dd;overflow:hidden;}.main h1{display:block;width:100%;background:#2299dd;font-size:18px;color:#fff;text-align:center;padding:15px;}.text{padding:30px;}.text p{margin:10px 0px;line-height:25px;}.text p span{color:#2299dd;font-weight:bold;font-size:22px;margin-left:5px;}</style></head>" +
-                                        "<body><div class=\"main\"><h1>文章评论</h1>" +
-                                        "<div class=\"text\"><p>用户 " + authorUid + "，你的文章有新的评论：</p><p>”" + postName + "：" + text + "“</p>" +
-                                        "<p>可前往<a href=\"" + apiconfig.getWebinfoUrl() + "\">" + title + "</a>查看详情</p>" +
-                                        "</div></div></body></html>",
-                                new String[]{aemail}, new String[]{});
-                        }catch (Exception e){
-                            System.err.println("邮箱发信配置错误："+e);
+                //不是作者本人才通知
+                if(!comments.getAuthorId().equals(author.getUid())){
+                    if(author.getMail()!=null){
+                        if(isEmail.equals(1)) {
+                            String aemail = author.getMail();
+                            try{
+                                MailService.send("您的文章有新的评论", "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><title></title>" +
+                                                "<meta charset=\"utf-8\" /><style>*{padding:0px;margin:0px;box-sizing:border-box;}html{box-sizing:border-box;}body{font-size:15px;background:#fff}.main{margin:20px auto;max-width:500px;border:solid 1px #2299dd;overflow:hidden;}.main h1{display:block;width:100%;background:#2299dd;font-size:18px;color:#fff;text-align:center;padding:15px;}.text{padding:30px;}.text p{margin:10px 0px;line-height:25px;}.text p span{color:#2299dd;font-weight:bold;font-size:22px;margin-left:5px;}</style></head>" +
+                                                "<body><div class=\"main\"><h1>文章评论</h1>" +
+                                                "<div class=\"text\"><p>用户 " + authorUid + "，你的文章有新的评论：</p><p>”" + postName + "：" + text + "“</p>" +
+                                                "<p>可前往<a href=\"" + apiconfig.getWebinfoUrl() + "\">" + title + "</a>查看详情</p>" +
+                                                "</div></div></body></html>",
+                                        new String[]{aemail}, new String[]{});
+                            }catch (Exception e){
+                                System.err.println("邮箱发信配置错误："+e);
+                            }
                         }
                     }
-                }
-                //发送消息通知
-                Long date = System.currentTimeMillis();
-                String created = String.valueOf(date).substring(0,10);
-                TypechoInbox inbox = new TypechoInbox();
-                inbox.setUid(comments.getAuthorId());
-                inbox.setTouid(authorUid);
-                inbox.setType("comment");
-                inbox.setValue(comments.getCid());
-                inbox.setText(text);
-                inbox.setCreated(Integer.parseInt(created));
-                inboxService.insert(inbox);
-                if(isPush.equals(1)) {
-                    TypechoUsers user = usersService.selectByKey(uid);
-                    if(user.getClientId()!=null){
-                        try {
-                            pushService.sendPushMsg(user.getClientId(),title,"你的文章有新评论！","payload","comment:"+comments.getCid());
-                        }catch (Exception e){
-                            System.err.println("通知发送失败："+e);
-                        }
+                    //发送消息通知
+                    Long date = System.currentTimeMillis();
+                    String created = String.valueOf(date).substring(0,10);
+                    TypechoInbox inbox = new TypechoInbox();
+                    inbox.setUid(comments.getAuthorId());
+                    inbox.setTouid(authorUid);
+                    inbox.setType("comment");
+                    inbox.setValue(comments.getCid());
+                    inbox.setText(text);
+                    inbox.setCreated(Integer.parseInt(created));
+                    inboxService.insert(inbox);
+                    if(isPush.equals(1)) {
+                        TypechoUsers user = usersService.selectByKey(uid);
+                        if(user.getClientId()!=null){
+                            try {
+                                pushService.sendPushMsg(user.getClientId(),title,"你的文章有新评论！","payload","comment:"+comments.getCid());
+                            }catch (Exception e){
+                                System.err.println("通知发送失败："+e);
+                            }
 
+                        }
                     }
                 }
+
             }
             editFile.setLog("管理员"+logUid+"审核了评论"+key);
             JSONObject response = new JSONObject();
