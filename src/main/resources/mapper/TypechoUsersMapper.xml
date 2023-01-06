@@ -23,7 +23,7 @@
         <result column="avatar" property="avatar" />
         <result column="experience" property="experience" />
         <result column="clientId" property="clientId" />
-        <result column="clientId" property="bantime" />
+        <result column="bantime" property="bantime" />
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -47,7 +47,7 @@
         `avatar`,
         `experience`,
         `clientId`,
-        `bantime`,
+        `bantime`
     </sql>
 
     <!-- 插入数据 -->

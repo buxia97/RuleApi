@@ -364,7 +364,7 @@ public class TypechoContentsController {
                 redisHelp.setList(this.dataprefix+"_"+"contentsList_"+page+"_"+limit+"_"+searchParams+"_"+order+"_"+searchKey+"_"+random+"_"+aid,jsonList,this.contentCache,redisTemplate);
             }
         }catch (Exception e){
-
+            System.err.println(e);
             if(cacheList.size()>0){
                 jsonList = cacheList;
             }
@@ -470,37 +470,39 @@ public class TypechoContentsController {
                     }
                 }
 
-
                 //写入创建时间和作者
                 jsonToMap.put("created",userTime);
                 jsonToMap.put("authorId",uid);
 
-
-
-
                 //根据后台的开关判断
+                Map userMap =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+                String group = userMap.get("group").toString();
                 Integer contentAuditlevel = apiconfig.getContentAuditlevel();
                 if(contentAuditlevel.equals(0)){
                     jsonToMap.put("status","publish");
                 }
                 if(contentAuditlevel.equals(1)){
-                    String forbidden = apiconfig.getForbidden();
-                    String text = jsonToMap.get("text").toString();
-                    if(forbidden!=null){
-                        if(forbidden.indexOf(",") != -1){
-                            String[] strarray=forbidden.split(",");
-                            for (int i = 0; i < strarray.length; i++){
-                                String str = strarray[i];
-                                if(text.indexOf(str) != -1){
+                    if(!group.equals("administrator")&&!group.equals("editor")){
+                        String forbidden = apiconfig.getForbidden();
+                        String text = jsonToMap.get("text").toString();
+                        if(forbidden!=null){
+                            if(forbidden.indexOf(",") != -1){
+                                String[] strarray=forbidden.split(",");
+                                for (int i = 0; i < strarray.length; i++){
+                                    String str = strarray[i];
+                                    if(text.indexOf(str) != -1){
+                                        jsonToMap.put("status","waiting");
+                                        isWaiting = 1;
+                                    }
+                                }
+                            }else{
+                                if(text.indexOf(forbidden) != -1){
                                     jsonToMap.put("status","waiting");
                                     isWaiting = 1;
                                 }
                             }
                         }else{
-                            if(text.indexOf(forbidden) != -1){
-                                jsonToMap.put("status","waiting");
-                                isWaiting = 1;
-                            }
+                            jsonToMap.put("status","publish");
                         }
                     }else{
                         jsonToMap.put("status","publish");
@@ -508,9 +510,6 @@ public class TypechoContentsController {
 
                 }
                 if(contentAuditlevel.equals(2)){
-                    //除管理员外，文章默认待审核
-                    Map userMap =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
-                    String group = userMap.get("group").toString();
                     if(!group.equals("administrator")&&!group.equals("editor")){
                         jsonToMap.put("status","waiting");
                     }else{

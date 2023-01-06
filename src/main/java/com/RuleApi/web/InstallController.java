@@ -441,7 +441,7 @@ public class InstallController {
             text+="社会化登录模块已经存在，无需添加。";
         }
         try {
-            Thread.sleep(1000);
+            Thread.sleep(500);
         } catch (InterruptedException ie) {
             Thread.currentThread().interrupt();
         }

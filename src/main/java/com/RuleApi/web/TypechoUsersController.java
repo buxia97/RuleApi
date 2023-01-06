@@ -488,6 +488,7 @@ public class TypechoUsersController {
             }
             return Result.getResultJson(rows.size() > 0 ? 1 : 0, rows.size() > 0 ? "登录成功" : "用户名或密码错误", jsonToMap);
         } catch (Exception e) {
+            System.err.println(e);
             JSONObject response = new JSONObject();
 
             response.put("code", 0);
@@ -661,14 +662,12 @@ public class TypechoUsersController {
                 jsonToMap.put("lv", baseFull.getLv(lv));
                 //更新用户登录时间和第一次登陆时间（满足typecho要求）
                 String userTime = String.valueOf(date).substring(0, 10);
-                Map updateLogin = new HashMap<String, String>();
-                updateLogin.put("uid", user.getUid());
-                updateLogin.put("logged", userTime);
+                TypechoUsers updateuser = new TypechoUsers();
+                updateuser.setUid(user.getUid());
+                updateuser.setLogged(Integer.parseInt(userTime));
                 if (user.getLogged() == 0) {
-                    updateLogin.put("activated", userTime);
+                    updateuser.setActivated(Integer.parseInt(userTime));
                 }
-
-                TypechoUsers updateuser = JSON.parseObject(JSON.toJSONString(updateLogin), TypechoUsers.class);
 
                 Integer rows = service.update(updateuser);
 
@@ -1546,6 +1545,9 @@ public class TypechoUsersController {
     @ResponseBody
     public String userWithdraw(@RequestParam(value = "num", required = false) Integer num, @RequestParam(value = "token", required = false) String token) {
         try {
+            if(num==null){
+                return Result.getResultJson(0, "参数错误", null);
+            }
             Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
             if (uStatus == 0) {
                 return Result.getResultJson(0, "用户未登录或Token验证失败", null);
@@ -1556,6 +1558,10 @@ public class TypechoUsersController {
             TypechoUsers user = service.selectByKey(uid);
             if (user.getPay() == null) {
                 return Result.getResultJson(0, "请先设置收款信息", null);
+            }
+            Integer Assets = user.getAssets();
+            if(num > Assets){
+                return Result.getResultJson(0, "你的余额不足", null);
             }
             Long date = System.currentTimeMillis();
             String userTime = String.valueOf(date).substring(0, 10);
