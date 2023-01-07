@@ -552,7 +552,7 @@ public class TypechoCommentsController {
             //只有管理员允许修改
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             String group = map.get("group").toString();
-            if(!group.equals("administrator")){
+            if(!group.equals("administrator")&&!group.equals("editor")){
                 return Result.getResultJson(0,"你没有操作权限",null);
             }
             Integer logUid =Integer.parseInt(map.get("uid").toString());
@@ -758,7 +758,7 @@ public class TypechoCommentsController {
             Integer uid  = Integer.parseInt(map.get("uid").toString());
             // 查询发布者是不是自己，如果是管理员则跳过
             String group = map.get("group").toString();
-            if(!group.equals("administrator")){
+            if(!group.equals("administrator")&&!group.equals("editor")){
                 TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
                 if(apiconfig.getAllowDelete().equals(0)){
                     return Result.getResultJson(0,"系统禁止删除评论",null);

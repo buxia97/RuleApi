@@ -905,7 +905,7 @@ public class InstallController {
             jdbcTemplate.execute("CREATE TABLE `"+prefix+"_violation` (" +
                     "  `id` int(11) NOT NULL AUTO_INCREMENT," +
                     "  `uid` int(11) NOT NULL DEFAULT '0' COMMENT '违规者uid'," +
-                    "  `type` varchar(255) DEFAULT NULL COMMENT '违规类型（finance财务，content内容，comment评论，attack攻击）'," +
+                    "  `type` varchar(255) DEFAULT NULL COMMENT '处理类型（manager管理员操作，system系统自动）'," +
                     "  `text` text COMMENT '具体原因'," +
                     "  `created` int(10) unsigned DEFAULT '0' COMMENT '违规时间'," +
                     "  `handler` int(11) unsigned DEFAULT '0' COMMENT '处理人，0为系统自动，其它为真实用户'," +
