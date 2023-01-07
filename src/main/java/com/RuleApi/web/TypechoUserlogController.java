@@ -93,6 +93,9 @@ public class TypechoUserlogController {
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
         }
+        if(cid==""||cid==null){
+            return Result.getResultJson(0,"参数不正确",null);
+        }
         Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         Integer uid =Integer.parseInt(map.get("uid").toString());
         TypechoUserlog userlog = new TypechoUserlog();

@@ -300,10 +300,10 @@
                 and `experience` = #{typechoUsers.experience}
             </if>
             <if test ='null != typechoUsers.vip'>
-                and `vip` > CAST(FLOOR(UNIX_TIMESTAMP() / 1000) AS INTEGER)
+                and `vip` > UNIX_TIMESTAMP() or `vip` = 1
             </if>
             <if test ='null != typechoUsers.bantime'>
-                and `bantime` > CAST(FLOOR(UNIX_TIMESTAMP() / 1000) AS INTEGER)
+                and `bantime` > UNIX_TIMESTAMP() or `bantime` = 1
             </if>
             <if test ='"" != searchKey'>
                 and CONCAT(IFNULL(`name`,''),IFNULL(`screenName`,''),IFNULL(`mail`,'')) LIKE '%${searchKey}%'

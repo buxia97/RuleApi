@@ -122,7 +122,8 @@ public class TypechoUsersController {
                            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
                            @RequestParam(value = "searchKey", required = false, defaultValue = "") String searchKey,
                            @RequestParam(value = "order", required = false, defaultValue = "") String order,
-                           @RequestParam(value = "limit", required = false, defaultValue = "15") Integer limit) {
+                           @RequestParam(value = "limit", required = false, defaultValue = "15") Integer limit,
+                           @RequestParam(value = "token", required = false, defaultValue = "") String token) {
         TypechoUsers query = new TypechoUsers();
 
         if(limit>50){
@@ -136,8 +137,21 @@ public class TypechoUsersController {
             total = service.total(query);
         }
         List jsonList = new ArrayList();
+        List cacheList = new ArrayList();
+        //如果是管理员，则不缓存且显示用户资产
+        Integer isAdmin = 0;
+        String group = "";
+        Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+        if(map.size()>0){
+            group = map.get("group").toString();
+            if (group.equals("administrator")) {
+                isAdmin = 1;
+            }
+        }
+        if(isAdmin.equals(0)){
+            cacheList = redisHelp.getList(this.dataprefix + "_" + "userList_" + page + "_" + limit + "_" + searchParams + "_" + order + "_" + searchKey, redisTemplate);
+        }
 
-        List cacheList = redisHelp.getList(this.dataprefix + "_" + "userList_" + page + "_" + limit + "_" + searchParams + "_" + order + "_" + searchKey, redisTemplate);
         try {
             if (cacheList.size() > 0) {
                 jsonList = cacheList;
@@ -158,7 +172,9 @@ public class TypechoUsersController {
                     json.remove("password");
                     json.remove("address");
                     json.remove("pay");
-                    json.remove("assets");
+                    if (!group.equals("administrator")) {
+                        json.remove("assets");
+                    }
                     if(json.get("avatar")==null){
                         if (json.get("mail") != null) {
 
@@ -219,57 +235,80 @@ public class TypechoUsersController {
     @RequestMapping(value = "/userData")
     @ResponseBody
     public String userData(@RequestParam(value = "token", required = false) String token) {
-        Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
-        if (uStatus == 0) {
-            return Result.getResultJson(0, "用户未登录或Token验证失败", null);
-        }
-        Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
-        Integer uid = Integer.parseInt(map.get("uid").toString());
-        //用户文章数量
-        TypechoContents contents = new TypechoContents();
-        contents.setType("post");
-        contents.setStatus("publish");
-        contents.setAuthorId(uid);
-        Integer contentsNum = contentsService.total(contents);
-        //用户评论数量
-        TypechoComments comments = new TypechoComments();
-        comments.setAuthorId(uid);
-        Integer commentsNum = commentsService.total(comments);
-        //用户资产和创建时间
-        TypechoUsers user = service.selectByKey(uid);
-        Integer assets = user.getAssets();
-        Integer created = user.getCreated();
-        //是否签到
-        TypechoUserlog log = new TypechoUserlog();
-        log.setType("clock");
-        log.setUid(uid);
-        List<TypechoUserlog> info = userlogService.selectList(log);
-        Integer isClock = 0;
-        //获取上次时间
-        if (info.size() > 0) {
-            Integer time = info.get(0).getCreated();
-            String oldStamp = time + "000";
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
-            String oldtime = sdf.format(new Date(Long.parseLong(oldStamp)));
-            Integer old = Integer.parseInt(oldtime);
-            //获取本次时间
-            Long curStamp = System.currentTimeMillis();  //获取当前时间戳
-            String curtime = sdf.format(new Date(Long.parseLong(String.valueOf(curStamp))));
-            Integer cur = Integer.parseInt(curtime);
-            if (old >= cur) {
-                isClock = 1;
-            }
-        }
-
         Map json = new HashMap();
-        json.put("contentsNum", contentsNum);
-        json.put("commentsNum", commentsNum);
-        json.put("assets", assets);
-        json.put("created", created);
-        json.put("isClock", isClock);
+        try {
 
+            Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
+            if (uStatus == 0) {
+                return Result.getResultJson(0, "用户未登录或Token验证失败", null);
+            }
+            Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+            Integer uid = Integer.parseInt(map.get("uid").toString());
+            Map cacheInfo = redisHelp.getMapValue(this.dataprefix+"_"+"userData_"+uid,redisTemplate);
+            if(cacheInfo.size()>0){
+                json = cacheInfo;
+            }else{
+                //用户文章数量
+                TypechoContents contents = new TypechoContents();
+                contents.setType("post");
+                contents.setStatus("publish");
+                contents.setAuthorId(uid);
+                Integer contentsNum = contentsService.total(contents);
+                //用户评论数量
+                TypechoComments comments = new TypechoComments();
+                comments.setAuthorId(uid);
+                Integer commentsNum = commentsService.total(comments);
+                //用户资产和创建时间
+                TypechoUsers user = service.selectByKey(uid);
+                Integer assets = user.getAssets();
+                Integer created = user.getCreated();
+                Integer experience = user.getExperience();
+                //是否签到
+                TypechoUserlog log = new TypechoUserlog();
+                log.setType("clock");
+                log.setUid(uid);
+                List<TypechoUserlog> info = userlogService.selectList(log);
+                Integer isClock = 0;
+                //获取上次时间
+                if (info.size() > 0) {
+                    Integer time = info.get(0).getCreated();
+                    String oldStamp = time + "000";
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+                    String oldtime = sdf.format(new Date(Long.parseLong(oldStamp)));
+                    Integer old = Integer.parseInt(oldtime);
+                    //获取本次时间
+                    Long curStamp = System.currentTimeMillis();  //获取当前时间戳
+                    String curtime = sdf.format(new Date(Long.parseLong(String.valueOf(curStamp))));
+                    Integer cur = Integer.parseInt(curtime);
+                    if (old >= cur) {
+                        isClock = 1;
+                    }
+                }
+                //用户粉丝数量
+                TypechoFan fan = new TypechoFan();
+                fan.setTouid(uid);
+                Integer fanNum = fanService.total(fan);
+                //用户关注数量
+                TypechoFan follow = new TypechoFan();
+                fan.setUid(uid);
+                Integer followNum = fanService.total(follow);
+
+                json.put("contentsNum", contentsNum);
+                json.put("commentsNum", commentsNum);
+                json.put("assets", assets);
+                json.put("created", created);
+                json.put("experience", experience);
+                json.put("isClock", isClock);
+                json.put("fanNum", fanNum);
+                json.put("followNum", followNum);
+                redisHelp.delete(this.dataprefix+"_"+"userData_"+uid,redisTemplate);
+                redisHelp.setKey(this.dataprefix+"_"+"userData_"+uid,json,this.userCache,redisTemplate);
+            }
+
+        }catch (Exception e){
+            System.err.println(e);
+        }
         JSONObject response = new JSONObject();
-
         response.put("code", 1);
         response.put("msg", "");
         response.put("data", json);
@@ -284,64 +323,70 @@ public class TypechoUsersController {
     @ResponseBody
     public String userInfo(@RequestParam(value = "key", required = false) String key,@RequestParam(value = "token", required = false, defaultValue = "") String token) {
         try {
-            TypechoUsers info = service.selectByKey(key);
-            Map json = JSONObject.parseObject(JSONObject.toJSONString(info), Map.class);
-            //获取用户等级
-            Integer uid = Integer.parseInt(key);
-            if (uid < 1) {
-                return Result.getResultJson(0, "请传入正确的参数", null);
-            }
-            TypechoComments comments = new TypechoComments();
-            comments.setAuthorId(uid);
-            Integer lv = commentsService.total(comments);
-            json.put("lv", baseFull.getLv(lv));
-            //判断是否为VIP
-            json.put("isvip", 0);
-            Long date = System.currentTimeMillis();
-            String curTime = String.valueOf(date).substring(0, 10);
-            Integer viptime  = info.getVip();
-            if(viptime>Integer.parseInt(curTime)||viptime.equals(1)){
-                json.put("isvip", 1);
-            }
-            json.remove("password");
-            json.remove("address");
-            json.remove("clientId");
-            json.remove("pay");
-            Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
-            if(map.size()>0){
-                String group = map.get("group").toString();
-                if (!group.equals("administrator")) {
+            Map json = new HashMap();
+            Map cacheInfo = redisHelp.getMapValue(this.dataprefix+"_"+"userInfo_"+key,redisTemplate);
+            if(cacheInfo.size()>0){
+                json = cacheInfo;
+            }else{
+                TypechoUsers info = service.selectByKey(key);
+                json = JSONObject.parseObject(JSONObject.toJSONString(info), Map.class);
+                //获取用户等级
+                Integer uid = Integer.parseInt(key);
+                if (uid < 1) {
+                    return Result.getResultJson(0, "请传入正确的参数", null);
+                }
+                TypechoComments comments = new TypechoComments();
+                comments.setAuthorId(uid);
+                Integer lv = commentsService.total(comments);
+                json.put("lv", baseFull.getLv(lv));
+                //判断是否为VIP
+                json.put("isvip", 0);
+                Long date = System.currentTimeMillis();
+                String curTime = String.valueOf(date).substring(0, 10);
+                Integer viptime  = info.getVip();
+                if(viptime>Integer.parseInt(curTime)||viptime.equals(1)){
+                    json.put("isvip", 1);
+                }
+                json.remove("password");
+                json.remove("address");
+                json.remove("clientId");
+                json.remove("pay");
+                Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+                if(map.size()>0){
+                    String group = map.get("group").toString();
+                    if (!group.equals("administrator")) {
+                        json.remove("assets");
+                    }
+                }else{
                     json.remove("assets");
                 }
-            }else{
-                json.remove("assets");
-            }
 
 
-            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
-            if(json.get("avatar")==null){
-                if (json.get("mail") != null) {
-                    String mail = json.get("mail").toString();
+                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+                if(json.get("avatar")==null){
+                    if (json.get("mail") != null) {
+                        String mail = json.get("mail").toString();
 
-                    if(mail.indexOf("@qq.com") != -1){
-                        String qq = mail.replace("@qq.com","");
-                        json.put("avatar", "https://q1.qlogo.cn/g?b=qq&nk="+qq+"&s=640");
-                    }else{
-                        json.put("avatar", baseFull.getAvatar(apiconfig.getWebinfoAvatar(), mail));
+                        if(mail.indexOf("@qq.com") != -1){
+                            String qq = mail.replace("@qq.com","");
+                            json.put("avatar", "https://q1.qlogo.cn/g?b=qq&nk="+qq+"&s=640");
+                        }else{
+                            json.put("avatar", baseFull.getAvatar(apiconfig.getWebinfoAvatar(), mail));
+                        }
+                        //json.put("avatar", baseFull.getAvatar(apiconfig.getWebinfoAvatar(), json.get("mail").toString()));
+
+                    } else {
+                        json.put("avatar", apiconfig.getWebinfoAvatar() + "null");
                     }
-                    //json.put("avatar", baseFull.getAvatar(apiconfig.getWebinfoAvatar(), json.get("mail").toString()));
-
-                } else {
-                    json.put("avatar", apiconfig.getWebinfoAvatar() + "null");
                 }
+                redisHelp.delete(this.dataprefix+"_"+"userInfo_"+key,redisTemplate);
+                redisHelp.setKey(this.dataprefix+"_"+"userInfo_"+key,json,this.userCache,redisTemplate);
+
             }
-
             JSONObject response = new JSONObject();
-
             response.put("code", 1);
             response.put("msg", "");
             response.put("data", json);
-
             return response.toString();
         } catch (Exception e) {
             System.err.println(e);
@@ -1555,6 +1600,9 @@ public class TypechoUsersController {
             Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
             Integer uid = Integer.parseInt(map.get("uid").toString());
             //查询用户是否设置pay
+            if(num < 1){
+                return Result.getResultJson(0, "参数错误", null);
+            }
             TypechoUsers user = service.selectByKey(uid);
             if (user.getPay() == null) {
                 return Result.getResultJson(0, "请先设置收款信息", null);
