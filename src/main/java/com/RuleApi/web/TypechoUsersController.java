@@ -160,6 +160,15 @@ public class TypechoUsersController {
                 TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
                 PageList<TypechoUsers> pageList = service.selectPage(query, page, limit, searchKey, order);
                 List<TypechoUsers> list = pageList.getList();
+                if(list.size() < 1){
+                    JSONObject noData = new JSONObject();
+                    noData.put("code" , 0);
+                    noData.put("msg"  , "");
+                    noData.put("data" , new ArrayList());
+                    noData.put("count", 0);
+                    noData.put("total", total);
+                    return noData.toString();
+                }
                 for (int i = 0; i < list.size(); i++) {
                     Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
                     TypechoUsers userInfo = list.get(i);
@@ -1690,6 +1699,15 @@ public class TypechoUsersController {
         PageList<TypechoUserlog> pageList = userlogService.selectPage(query, page, limit);
         List jsonList = new ArrayList();
         List<TypechoUserlog> list = pageList.getList();
+        if(list.size() < 1){
+            JSONObject noData = new JSONObject();
+            noData.put("code" , 0);
+            noData.put("msg"  , "");
+            noData.put("data" , new ArrayList());
+            noData.put("count", 0);
+            noData.put("total", total);
+            return noData.toString();
+        }
         for (int i = 0; i < list.size(); i++) {
             Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
             Integer uuid = list.get(i).getUid();
@@ -2129,6 +2147,15 @@ public class TypechoUsersController {
 
                 PageList<TypechoInbox> pageList = inboxService.selectPage(query, page, limit);
                 List<TypechoInbox> list = pageList.getList();
+                if(list.size() < 1){
+                    JSONObject noData = new JSONObject();
+                    noData.put("code" , 0);
+                    noData.put("msg"  , "");
+                    noData.put("data" , new ArrayList());
+                    noData.put("count", 0);
+                    noData.put("total", total);
+                    return noData.toString();
+                }
                 for (int i = 0; i < list.size(); i++) {
                     Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
                     TypechoInbox inbox = list.get(i);
@@ -2336,6 +2363,7 @@ public class TypechoUsersController {
             if (uStatus == 0) {
                 return Result.getResultJson(0, "用户未登录或Token验证失败", null);
             }
+
             //所有操作均为isRepeated字段，用户不可能5秒内同时进行多种操作，所以拦截
             String isRepeated = redisHelp.getRedis(token+"_isRepeated",redisTemplate);
             if(isRepeated==null){
@@ -2345,11 +2373,15 @@ public class TypechoUsersController {
             }
             Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
             Integer uid =Integer.parseInt(map.get("uid").toString());
+            if(uid.equals(touid)){
+                return Result.getResultJson(0, "你不可以关注自己", null);
+            }
             TypechoFan fan = new TypechoFan();
             fan.setTouid(touid);
             fan.setUid(uid);
             Integer isFan = fanService.total(fan);
-            if(type.equals(0)){
+            //1是请求关注，0是取消关注
+            if(type.equals(1)){
                 if(isFan > 0){
                     return Result.getResultJson(0, "你已经关注过了", null);
                 }
@@ -2365,8 +2397,14 @@ public class TypechoUsersController {
                 if(isFan < 1){
                     return Result.getResultJson(0, "你还未关注Ta", null);
                 }
-                List fanlist = fanService.selectList(fan);
-                int rows = fanService.batchDelete(fanlist);
+                int rows = 0;
+                List<TypechoFan> fanlist = fanService.selectList(fan);
+                if(fanlist.size()>0){
+                    TypechoFan oldFan = fanlist.get(0);
+                    Integer id = oldFan.getId();
+                    rows = fanService.delete(id);
+                }
+
                 JSONObject response = new JSONObject();
                 response.put("code" , rows);
                 response.put("msg"  , rows > 0 ? "取消关注成功" : "取消关注失败");
@@ -2401,28 +2439,22 @@ public class TypechoUsersController {
         if(isFan > 0){
             return Result.getResultJson(1, "已关注", null);
         }else{
-            return Result.getResultJson(1, "未关注", null);
+            return Result.getResultJson(0, "未关注", null);
         }
     }
     /***
-     * 我关注的人
+     * Ta关注的人
      */
     @RequestMapping(value = "/followList")
     @ResponseBody
-    public String followList(@RequestParam(value = "token", required = false) String  token,
+    public String followList(@RequestParam(value = "uid", required = false) Integer  uid,
                            @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
                            @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit) {
         if(limit>50){
             limit = 50;
         }
         TypechoFan query = new TypechoFan();
-        Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
-        if (uStatus == 0) {
-            return Result.getResultJson(0, "用户未登录或Token验证失败", null);
-        }
         List jsonList = new ArrayList();
-        Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
-        Integer uid =Integer.parseInt(map.get("uid").toString());
         List cacheList = redisHelp.getList(this.dataprefix+"_"+"followList_"+page+"_"+limit+"_"+uid,redisTemplate);
         query.setUid(uid);
         Integer total = fanService.total(query);
@@ -2435,6 +2467,15 @@ public class TypechoUsersController {
 
                 PageList<TypechoFan> pageList = fanService.selectPage(query, page, limit);
                 List<TypechoFan> list = pageList.getList();
+                if(list.size() < 1){
+                    JSONObject noData = new JSONObject();
+                    noData.put("code" , 0);
+                    noData.put("msg"  , "");
+                    noData.put("data" , new ArrayList());
+                    noData.put("count", 0);
+                    noData.put("total", total);
+                    return noData.toString();
+                }
                 for (int i = 0; i < list.size(); i++) {
                     Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
                     TypechoFan fan = list.get(i);
@@ -2468,6 +2509,7 @@ public class TypechoUsersController {
                             userJson.put("avatar", user.getAvatar());
                         }
                         userJson.put("customize", user.getCustomize());
+                        userJson.put("introduce", user.getIntroduce());
                         //判断是否为VIP
                         userJson.put("vip", user.getVip());
                         userJson.put("isvip", 0);
@@ -2505,26 +2547,20 @@ public class TypechoUsersController {
 
     }
     /***
-     * 关注我的人
+     * 关注Ta的人
      */
     @RequestMapping(value = "/fanList")
     @ResponseBody
-    public String fanList(@RequestParam(value = "token", required = false) String  token,
+    public String fanList(@RequestParam(value = "touid", required = false) Integer  touid,
                              @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
                              @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit) {
         if(limit>50){
             limit = 50;
         }
         TypechoFan query = new TypechoFan();
-        Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
-        if (uStatus == 0) {
-            return Result.getResultJson(0, "用户未登录或Token验证失败", null);
-        }
         List jsonList = new ArrayList();
-        Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
-        Integer uid =Integer.parseInt(map.get("uid").toString());
-        List cacheList = redisHelp.getList(this.dataprefix+"_"+"fanList_"+page+"_"+limit+"_"+uid,redisTemplate);
-        query.setTouid(uid);
+        List cacheList = redisHelp.getList(this.dataprefix+"_"+"fanList_"+page+"_"+limit+"_"+touid,redisTemplate);
+        query.setTouid(touid);
         Integer total = fanService.total(query);
         try{
             if(cacheList.size()>0){
@@ -2535,6 +2571,15 @@ public class TypechoUsersController {
 
                 PageList<TypechoFan> pageList = fanService.selectPage(query, page, limit);
                 List<TypechoFan> list = pageList.getList();
+                if(list.size() < 1){
+                    JSONObject noData = new JSONObject();
+                    noData.put("code" , 0);
+                    noData.put("msg"  , "");
+                    noData.put("data" , new ArrayList());
+                    noData.put("count", 0);
+                    noData.put("total", total);
+                    return noData.toString();
+                }
                 for (int i = 0; i < list.size(); i++) {
                     Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
                     TypechoFan fan = list.get(i);
@@ -2568,6 +2613,7 @@ public class TypechoUsersController {
                             userJson.put("avatar", user.getAvatar());
                         }
                         userJson.put("customize", user.getCustomize());
+                        userJson.put("introduce", user.getIntroduce());
 
                         //判断是否为VIP
                         userJson.put("vip", user.getVip());
@@ -2587,8 +2633,8 @@ public class TypechoUsersController {
                     json.put("userJson",userJson);
                     jsonList.add(json);
                 }
-                redisHelp.delete(this.dataprefix+"_"+"fanList_"+page+"_"+limit+"_"+uid,redisTemplate);
-                redisHelp.setList(this.dataprefix+"_"+"fanList_"+page+"_"+limit+"_"+uid,jsonList,3,redisTemplate);
+                redisHelp.delete(this.dataprefix+"_"+"fanList_"+page+"_"+limit+"_"+touid,redisTemplate);
+                redisHelp.setList(this.dataprefix+"_"+"fanList_"+page+"_"+limit+"_"+touid,jsonList,3,redisTemplate);
             }
         }catch (Exception e){
             System.err.println(e);

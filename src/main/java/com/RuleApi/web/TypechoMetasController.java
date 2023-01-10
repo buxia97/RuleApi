@@ -101,7 +101,14 @@ public class TypechoMetasController {
                 //首先查询typechoRelationships获取映射关系
                 PageList<TypechoRelationships> pageList = relationshipsService.selectPage(query, page, limit);
                 List<TypechoRelationships> list = pageList.getList();
-
+                if(list.size() < 1){
+                    JSONObject noData = new JSONObject();
+                    noData.put("code" , 0);
+                    noData.put("msg"  , "");
+                    noData.put("data" , new ArrayList());
+                    noData.put("count", 0);
+                    return noData.toString();
+                }
                 for (int i = 0; i < list.size(); i++) {
                     Integer cid = list.get(i).getCid();
                     TypechoContents typechoContents = list.get(i).getContents();
@@ -120,7 +127,15 @@ public class TypechoMetasController {
                             avatar = author.getAvatar();
                         }else{
                             if(author.getMail()!=""&&author.getMail()!=null){
-                                avatar = baseFull.getAvatar(apiconfig.getWebinfoAvatar(), author.getMail());
+                                String mail = author.getMail();
+
+                                if(mail.indexOf("@qq.com") != -1){
+                                    String qq = mail.replace("@qq.com","");
+                                    avatar = "https://q1.qlogo.cn/g?b=qq&nk="+qq+"&s=640";
+                                }else{
+                                    avatar = baseFull.getAvatar(apiconfig.getWebinfoAvatar(), author.getMail());
+                                }
+                                //avatar = baseFull.getAvatar(apiconfig.getWebinfoAvatar(), author.getMail());
                             }
                         }
                         authorInfo.put("name",name);

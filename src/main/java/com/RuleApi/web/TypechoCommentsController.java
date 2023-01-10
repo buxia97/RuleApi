@@ -131,6 +131,14 @@ public class TypechoCommentsController {
                 TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
                 PageList<TypechoComments> pageList = service.selectPage(query, page, limit,searchKey,order);
                 List list = pageList.getList();
+                if(list.size() < 1){
+                    JSONObject noData = new JSONObject();
+                    noData.put("code" , 0);
+                    noData.put("msg"  , "");
+                    noData.put("data" , new ArrayList());
+                    noData.put("count", 0);
+                    return noData.toString();
+                }
                 for (int i = 0; i < list.size(); i++) {
                     Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
                     String cid = json.get("cid").toString();

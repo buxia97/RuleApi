@@ -33,9 +33,4 @@ public class TypechoFan implements Serializable {
      * touid  被关注人
      */
     private Integer touid;
-
-    /**
-     * type  帖子类型
-     */
-    private String type;
 }

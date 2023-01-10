@@ -8,15 +8,13 @@
         <result column="created" property="created" />
         <result column="uid" property="uid" />
         <result column="touid" property="touid" />
-        <result column="type" property="type" />
     </resultMap>
 
     <sql id="Base_Column_List">
         `id`,
         `created`,
         `uid`,
-        `touid`,
-        `type`
+        `touid`
     </sql>
 
     <!-- 插入数据 -->
@@ -33,10 +31,7 @@
                 `uid`,
             </if>
             <if test ='null != touid'>
-                `touid`,
-            </if>
-            <if test ='null != type'>
-                `type`
+                `touid`
             </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
@@ -50,10 +45,7 @@
                 #{uid},
             </if>
             <if test ='null != touid'>
-                #{touid},
-            </if>
-            <if test ='null != type'>
-                #{type}
+                #{touid}
             </if>
         </trim>
     </insert>
@@ -66,8 +58,7 @@
                 #{curr.id},
                 #{curr.created},
                 #{curr.uid},
-                #{curr.touid},
-                #{curr.type}
+                #{curr.touid}
             )
         </foreach>
     </insert>
@@ -78,8 +69,7 @@
         <set>
             <if test ='null != created'>`created` = #{created},</if>
             <if test ='null != uid'>`uid` = #{uid},</if>
-            <if test ='null != touid'>`touid` = #{touid},</if>
-            <if test ='null != type'>`type` = #{type}</if>
+            <if test ='null != touid'>`touid` = #{touid}</if>
         </set>
         WHERE `id` = #{id}
     </update>
@@ -122,9 +112,6 @@
             <if test ='null != touid'>
                 and `touid` = #{touid}
             </if>
-            <if test ='null != type'>
-                and `type` = #{type}
-            </if>
         </where>
     </select>
 
@@ -145,9 +132,6 @@
             <if test ='null != typechoFan.touid'>
                 and `touid` = #{typechoFan.touid}
             </if>
-            <if test ='null != typechoFan.type'>
-                and `type` = #{typechoFan.type}
-            </if>
         </where>
         limit #{page,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
     </select>
@@ -167,9 +151,6 @@
             </if>
             <if test ='null != touid'>
                 and `touid` = #{touid}
-            </if>
-            <if test ='null != type'>
-                and `type` = #{type}
             </if>
         </where>
     </select>

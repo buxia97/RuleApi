@@ -153,6 +153,15 @@ public class TypechoUserlogController {
             }else {
                 PageList<TypechoUserlog> pageList = service.selectPage(query, page, limit);
                 List<TypechoUserlog> list = pageList.getList();
+                if(list.size() < 1){
+                    JSONObject noData = new JSONObject();
+                    noData.put("code" , 0);
+                    noData.put("msg"  , "");
+                    noData.put("data" , new ArrayList());
+                    noData.put("count", 0);
+                    noData.put("total", total);
+                    return noData.toString();
+                }
                 for (int i = 0; i < list.size(); i++) {
                     Integer cid = list.get(i).getCid();
 
@@ -562,6 +571,15 @@ public class TypechoUserlogController {
             }else {
                 PageList<TypechoUserlog> pageList = service.selectPage(query, Integer.parseInt(page), Integer.parseInt(limit));
                 List<TypechoUserlog> list = pageList.getList();
+                if(list.size() < 1){
+                    JSONObject noData = new JSONObject();
+                    noData.put("code" , 0);
+                    noData.put("msg"  , "");
+                    noData.put("data" , new ArrayList());
+                    noData.put("count", 0);
+                    noData.put("total", total);
+                    return noData.toString();
+                }
                 for (int i = 0; i < list.size(); i++) {
                     Integer cid = list.get(i).getCid();
                     //这里cid是商品id
@@ -632,6 +650,15 @@ public class TypechoUserlogController {
             }else {
                 PageList<TypechoUserlog> pageList = service.selectPage(query, page, limit);
                 List<TypechoUserlog> list = pageList.getList();
+                if(list.size() < 1){
+                    JSONObject noData = new JSONObject();
+                    noData.put("code" , 0);
+                    noData.put("msg"  , "");
+                    noData.put("data" , new ArrayList());
+                    noData.put("count", 0);
+                    noData.put("total", total);
+                    return noData.toString();
+                }
                 for (int i = 0; i < list.size(); i++) {
                     Integer cid = list.get(i).getCid();
                     Integer touid = list.get(i).getUid();

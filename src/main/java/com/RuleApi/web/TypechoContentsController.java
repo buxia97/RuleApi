@@ -273,6 +273,15 @@ public class TypechoContentsController {
                 TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
                 PageList<TypechoContents> pageList = service.selectPage(query, page, limit, searchKey,order,random);
                 List list = pageList.getList();
+                if(list.size() < 1){
+                    JSONObject noData = new JSONObject();
+                    noData.put("code" , 0);
+                    noData.put("msg"  , "");
+                    noData.put("data" , new ArrayList());
+                    noData.put("count", 0);
+                    noData.put("total", total);
+                    return noData.toString();
+                }
                 for (int i = 0; i < list.size(); i++) {
                     Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
                     //加入自定义字段信息，这里取消注释即可开启，但是数据库查询会消耗性能
