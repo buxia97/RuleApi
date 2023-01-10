@@ -2363,16 +2363,23 @@ public class TypechoUsersController {
             if (uStatus == 0) {
                 return Result.getResultJson(0, "用户未登录或Token验证失败", null);
             }
-
-            //所有操作均为isRepeated字段，用户不可能5秒内同时进行多种操作，所以拦截
+            Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+            Integer uid =Integer.parseInt(map.get("uid").toString());
+            //登录情况下，刷数据攻击拦截
             String isRepeated = redisHelp.getRedis(token+"_isRepeated",redisTemplate);
             if(isRepeated==null){
                 redisHelp.setRedis(token+"_isRepeated","1",5,redisTemplate);
             }else{
+                Integer frequency = Integer.parseInt(isRepeated) + 1;
+                if(frequency==3){
+                    securityService.safetyMessage("用户ID："+uid+"，在评论接口疑似存在攻击行为，请及时确认处理。","system");
+                    redisHelp.setRedis(token+"_isRepeated",frequency.toString(),600,redisTemplate);
+                    return Result.getResultJson(0,"你的请求存在恶意行为，10分钟内禁止操作！",null);
+                }
                 return Result.getResultJson(0,"你的操作太频繁了",null);
             }
-            Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
-            Integer uid =Integer.parseInt(map.get("uid").toString());
+            //攻击拦截结束
+
             if(uid.equals(touid)){
                 return Result.getResultJson(0, "你不可以关注自己", null);
             }
