@@ -183,24 +183,27 @@ public class TypechoCommentsController {
                         comments.setAuthorId(userid);
                         Integer lv = service.total(comments);
                         TypechoUsers userinfo = usersService.selectByKey(userid);
-                        json.put("lv",baseFull.getLv(lv));
-                        json.put("customize",userinfo.getCustomize());
-                        //判断是否为VIP
-                        json.put("isvip", 0);
-                        json.put("vip", userinfo.getVip());
-                        if(userinfo.getAvatar()!=null){
-                            json.put("avatar",userinfo.getAvatar());
+                        if(userinfo!=null){
+                            json.put("lv",baseFull.getLv(lv));
+                            json.put("customize",userinfo.getCustomize());
+                            //判断是否为VIP
+                            json.put("isvip", 0);
+                            json.put("vip", userinfo.getVip());
+                            if(userinfo.getAvatar()!=null){
+                                json.put("avatar",userinfo.getAvatar());
+                            }
+                            Long date = System.currentTimeMillis();
+                            String curTime = String.valueOf(date).substring(0, 10);
+                            Integer viptime  = userinfo.getVip();
+                            if(viptime>Integer.parseInt(curTime)){
+                                json.put("isvip", 1);
+                            }
+                            if(viptime.equals(1)){
+                                //永久VIP
+                                json.put("isvip", 2);
+                            }
                         }
-                        Long date = System.currentTimeMillis();
-                        String curTime = String.valueOf(date).substring(0, 10);
-                        Integer viptime  = userinfo.getVip();
-                        if(viptime>Integer.parseInt(curTime)){
-                            json.put("isvip", 1);
-                        }
-                        if(viptime.equals(1)){
-                            //永久VIP
-                            json.put("isvip", 2);
-                        }
+
                     }
 
 

@@ -582,11 +582,15 @@ public class TypechoUserlogController {
                 }
                 for (int i = 0; i < list.size(); i++) {
                     Integer cid = list.get(i).getCid();
+                    Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
                     //这里cid是商品id
                     TypechoShop shop = shopService.selectByKey(cid);
-                    Map shopInfo = JSONObject.parseObject(JSONObject.toJSONString(shop), Map.class);
-                    Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
-                    json.put("shopInfo",shopInfo);
+                    if(shop!=null){
+                        Map shopInfo = JSONObject.parseObject(JSONObject.toJSONString(shop), Map.class);
+                        json.put("shopInfo",shopInfo);
+                    }
+
+
                     //获取商家邮箱
                     Integer merid = shop.getUid();
                     TypechoUsers merchant = usersService.selectByKey(merid);
@@ -662,11 +666,15 @@ public class TypechoUserlogController {
                 for (int i = 0; i < list.size(); i++) {
                     Integer cid = list.get(i).getCid();
                     Integer touid = list.get(i).getUid();
+                    Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
                     //这里cid是商品id
                     TypechoShop shop = shopService.selectByKey(cid);
-                    Map shopInfo = JSONObject.parseObject(JSONObject.toJSONString(shop), Map.class);
-                    Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
-                    json.put("shopInfo",shopInfo);
+                    if(shop!=null){
+                        Map shopInfo = JSONObject.parseObject(JSONObject.toJSONString(shop), Map.class);
+
+                        json.put("shopInfo",shopInfo);
+                    }
+
                     //获取用户地址
 
                     TypechoUsers user = usersService.selectByKey(touid);

@@ -293,65 +293,75 @@ public class TypechoContentsController {
 
                     List metas = new ArrayList();
                     List tags = new ArrayList();
-                    for (int j = 0; j < relationships.size(); j++) {
-                        Map info = JSONObject.parseObject(JSONObject.toJSONString(relationships.get(j)), Map.class);
-                        if(info!=null){
-                            String mid = info.get("mid").toString();
+                    if(relationships.size()>0){
+                        for (int j = 0; j < relationships.size(); j++) {
+                            Map info = JSONObject.parseObject(JSONObject.toJSONString(relationships.get(j)), Map.class);
+                            if(info!=null){
+                                String mid = info.get("mid").toString();
 
-                            TypechoMetas metasList  = metasService.selectByKey(mid);
-                            Map metasInfo = JSONObject.parseObject(JSONObject.toJSONString(metasList), Map.class);
-                            String type = metasInfo.get("type").toString();
-                            if(type.equals("category")){
-                                metas.add(metasInfo);
+                                TypechoMetas metasList  = metasService.selectByKey(mid);
+                                Map metasInfo = JSONObject.parseObject(JSONObject.toJSONString(metasList), Map.class);
+                                String type = metasInfo.get("type").toString();
+                                if(type.equals("category")){
+                                    metas.add(metasInfo);
+                                }
+                                if(type.equals("tag")){
+                                    tags.add(metasInfo);
+                                }
                             }
-                            if(type.equals("tag")){
-                                tags.add(metasInfo);
-                            }
+
                         }
-
                     }
+
                     //写入作者详细信息
                     Integer uid = Integer.parseInt(json.get("authorId").toString());
                     if(uid>0){
                         TypechoUsers author = usersService.selectByKey(uid);
                         Map authorInfo = new HashMap();
-                        String name = author.getName();
-                        if(author.getScreenName()!=""){
-                            name = author.getScreenName();
-                        }
-                        String avatar = apiconfig.getWebinfoAvatar() + "null";
-                        if(author.getAvatar()!=""&&author.getAvatar()!=null){
-                            avatar = author.getAvatar();
-                        }else{
-                            if(author.getMail()!=""&&author.getMail()!=null){
-                                String mail = author.getMail();
-
-                                if(mail.indexOf("@qq.com") != -1){
-                                    String qq = mail.replace("@qq.com","");
-                                    avatar = "https://q1.qlogo.cn/g?b=qq&nk="+qq+"&s=640";
-                                }else{
-                                    avatar = baseFull.getAvatar(apiconfig.getWebinfoAvatar(), author.getMail());
-                                }
-                                //avatar = baseFull.getAvatar(apiconfig.getWebinfoAvatar(), author.getMail());
+                        if(author!=null){
+                            String name = author.getName();
+                            if(author.getScreenName()!=null&&author.getScreenName()!=""){
+                                name = author.getScreenName();
                             }
+                            String avatar = apiconfig.getWebinfoAvatar() + "null";
+                            if(author.getAvatar()!=null&&author.getAvatar()!=""){
+                                avatar = author.getAvatar();
+                            }else{
+                                if(author.getMail()!=null&&author.getMail()!=""){
+                                    String mail = author.getMail();
+
+                                    if(mail.indexOf("@qq.com") != -1){
+                                        String qq = mail.replace("@qq.com","");
+                                        avatar = "https://q1.qlogo.cn/g?b=qq&nk="+qq+"&s=640";
+                                    }else{
+                                        avatar = baseFull.getAvatar(apiconfig.getWebinfoAvatar(), author.getMail());
+                                    }
+                                    //avatar = baseFull.getAvatar(apiconfig.getWebinfoAvatar(), author.getMail());
+                                }
+                            }
+
+                            authorInfo.put("name",name);
+                            authorInfo.put("avatar",avatar);
+                            authorInfo.put("customize",author.getCustomize());
+                            //判断是否为VIP
+                            authorInfo.put("isvip", 0);
+                            Long date = System.currentTimeMillis();
+                            String curTime = String.valueOf(date).substring(0, 10);
+                            Integer viptime  = author.getVip();
+
+                            if(viptime>Integer.parseInt(curTime)||viptime.equals(1)){
+                                authorInfo.put("isvip", 1);
+                            }
+                            if(viptime.equals(1)){
+                                //永久VIP
+                                authorInfo.put("isvip", 2);
+                            }
+                        }else{
+                            authorInfo.put("name","用户已注销");
+                            authorInfo.put("avatar",apiconfig.getWebinfoAvatar() + "null");
                         }
 
-                        authorInfo.put("name",name);
-                        authorInfo.put("avatar",avatar);
-                        authorInfo.put("customize",author.getCustomize());
-                        //判断是否为VIP
-                        authorInfo.put("isvip", 0);
-                        Long date = System.currentTimeMillis();
-                        String curTime = String.valueOf(date).substring(0, 10);
-                        Integer viptime  = author.getVip();
 
-                        if(viptime>Integer.parseInt(curTime)||viptime.equals(1)){
-                            authorInfo.put("isvip", 1);
-                        }
-                        if(viptime.equals(1)){
-                            //永久VIP
-                            authorInfo.put("isvip", 2);
-                        }
                         json.put("authorInfo",authorInfo);
                     }
 

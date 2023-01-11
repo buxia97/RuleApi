@@ -236,7 +236,7 @@ public class InstallController {
         try {
             String isInstall = redisHelp.getRedis(this.dataprefix+"_"+"isInstall",redisTemplate);
             if(isInstall!=null){
-                return "虽然重复执行也没关系，但是还是尽量不要频繁点哦，十分钟后再来操作吧！";
+                return "虽然重复执行也没关系，但是还是尽量不要频繁点哦，1分钟后再来操作吧！";
             }
         }catch (Exception e){
             return "Redis连接失败或未安装";
@@ -956,7 +956,7 @@ public class InstallController {
         }
         text+=" ------ 执行结束，安装执行完成";
 
-        redisHelp.setRedis(this.dataprefix+"_"+"isInstall","1",600,redisTemplate);
+        redisHelp.setRedis(this.dataprefix+"_"+"isInstall","1",60,redisTemplate);
         return text;
     }
     /***

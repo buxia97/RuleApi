@@ -118,41 +118,46 @@ public class TypechoMetasController {
                     if(uid>0){
                         TypechoUsers author = usersService.selectByKey(uid);
                         Map authorInfo = new HashMap();
-                        String name = author.getName();
-                        if(author.getScreenName()!=""){
-                            name = author.getScreenName();
-                        }
-                        String avatar = apiconfig.getWebinfoAvatar() + "null";
-                        if(author.getAvatar()!=""&&author.getAvatar()!=null){
-                            avatar = author.getAvatar();
-                        }else{
-                            if(author.getMail()!=""&&author.getMail()!=null){
-                                String mail = author.getMail();
-
-                                if(mail.indexOf("@qq.com") != -1){
-                                    String qq = mail.replace("@qq.com","");
-                                    avatar = "https://q1.qlogo.cn/g?b=qq&nk="+qq+"&s=640";
-                                }else{
-                                    avatar = baseFull.getAvatar(apiconfig.getWebinfoAvatar(), author.getMail());
-                                }
-                                //avatar = baseFull.getAvatar(apiconfig.getWebinfoAvatar(), author.getMail());
+                        if(author!=null){
+                            String name = author.getName();
+                            if(author.getScreenName()!=""&&author.getScreenName()!=null){
+                                name = author.getScreenName();
                             }
-                        }
-                        authorInfo.put("name",name);
-                        authorInfo.put("avatar",avatar);
-                        authorInfo.put("customize",author.getCustomize());
-                        //判断是否为VIP
-                        authorInfo.put("isvip", 0);
-                        Long date = System.currentTimeMillis();
-                        String curTime = String.valueOf(date).substring(0, 10);
-                        Integer viptime  = author.getVip();
+                            String avatar = apiconfig.getWebinfoAvatar() + "null";
+                            if(author.getAvatar()!=""&&author.getAvatar()!=null){
+                                avatar = author.getAvatar();
+                            }else{
+                                if(author.getMail()!=""&&author.getMail()!=null){
+                                    String mail = author.getMail();
 
-                        if(viptime>Integer.parseInt(curTime)||viptime.equals(1)){
-                            authorInfo.put("isvip", 1);
-                        }
-                        if(viptime.equals(1)){
-                            //永久VIP
-                            authorInfo.put("isvip", 2);
+                                    if(mail.indexOf("@qq.com") != -1){
+                                        String qq = mail.replace("@qq.com","");
+                                        avatar = "https://q1.qlogo.cn/g?b=qq&nk="+qq+"&s=640";
+                                    }else{
+                                        avatar = baseFull.getAvatar(apiconfig.getWebinfoAvatar(), author.getMail());
+                                    }
+                                    //avatar = baseFull.getAvatar(apiconfig.getWebinfoAvatar(), author.getMail());
+                                }
+                            }
+                            authorInfo.put("name",name);
+                            authorInfo.put("avatar",avatar);
+                            authorInfo.put("customize",author.getCustomize());
+                            //判断是否为VIP
+                            authorInfo.put("isvip", 0);
+                            Long date = System.currentTimeMillis();
+                            String curTime = String.valueOf(date).substring(0, 10);
+                            Integer viptime  = author.getVip();
+
+                            if(viptime>Integer.parseInt(curTime)||viptime.equals(1)){
+                                authorInfo.put("isvip", 1);
+                            }
+                            if(viptime.equals(1)){
+                                //永久VIP
+                                authorInfo.put("isvip", 2);
+                            }
+                        }else{
+                            authorInfo.put("name","用户已注销");
+                            authorInfo.put("avatar",apiconfig.getWebinfoAvatar() + "null");
                         }
                         contentsInfo.put("authorInfo",authorInfo);
                     }
