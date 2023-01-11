@@ -25,7 +25,7 @@
 
     <!-- 插入数据 -->
     <insert id="insert" parameterType="com.RuleApi.entity.TypechoChatMsg">
-        INSERT INTO typecho_chat_msg
+        INSERT INTO ${prefix}_chat_msg
         <trim prefix="(" suffix=")" suffixOverrides=",">
             <if test ='null != id'>
                 `id`,
@@ -76,7 +76,7 @@
 
     <!-- 批量插入数据 -->
     <insert id="batchInsert" parameterType="java.util.List">
-        INSERT INTO typecho_chat_msg ( <include refid="Base_Column_List" /> ) VALUES
+        INSERT INTO ${prefix}_chat_msg ( <include refid="Base_Column_List" /> ) VALUES
         <foreach collection="list" item="curr" index="index" separator=",">
             (
                 #{curr.id},
@@ -92,7 +92,7 @@
 
     <!-- 更新 -->
     <update id="update" parameterType="com.RuleApi.entity.TypechoChatMsg">
-        UPDATE typecho_chat_msg
+        UPDATE ${prefix}_chat_msg
         <set>
             <if test ='null != uid'>`uid` = #{uid},</if>
             <if test ='null != cid'>`cid` = #{cid},</if>
@@ -106,13 +106,13 @@
 
     <!-- 删除 -->
     <delete id="delete">
-        DELETE FROM typecho_chat_msg
+        DELETE FROM ${prefix}_chat_msg
         WHERE `id` = #{key}
     </delete>
 
     <!-- 批量删除 -->
     <delete id="batchDelete" parameterType = "java.util.List">
-        DELETE FROM typecho_chat_msg WHERE id IN
+        DELETE FROM ${prefix}_chat_msg WHERE id IN
         <foreach collection="list"  item="item" open="(" separator="," close=")"  >
             #{item}
         </foreach>
@@ -121,14 +121,14 @@
     <!-- 主键查询 -->
     <select id="selectByKey" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List" />
-        FROM typecho_chat_msg
+        FROM ${prefix}_chat_msg
         WHERE `id` = #{key}
     </select>
 
     <!-- 条件查询 -->
     <select id="selectList" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List" />
-        FROM typecho_chat_msg
+        FROM ${prefix}_chat_msg
         <where>
             <if test ='null != id'>
                 and `id` = #{id}
@@ -157,7 +157,7 @@
     <!-- 分页条件查询 -->
     <select id="selectPage" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List" />
-        FROM typecho_chat_msg
+        FROM ${prefix}_chat_msg
         <where>
             <if test ='null != typechoChatMsg.id'>
                 and `id` = #{typechoChatMsg.id}
@@ -186,7 +186,7 @@
 
     <!-- 总量查询 -->
     <select id="total" resultType="java.lang.Integer">
-        SELECT count(*) FROM typecho_chat_msg
+        SELECT count(*) FROM ${prefix}_chat_msg
         <where>
             <if test ='null != id'>
                 and `id` = #{id}

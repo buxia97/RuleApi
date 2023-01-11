@@ -885,6 +885,11 @@ public class InstallController {
         }else{
             text+="消息通知模块已经存在，无需添加。";
         }
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+        }
         //关注模块
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_fan';", Integer.class);
         if (i == 0){
@@ -911,9 +916,43 @@ public class InstallController {
                     "  `handler` int(11) unsigned DEFAULT '0' COMMENT '处理人，0为系统自动，其它为真实用户'," +
                     "  PRIMARY KEY (`id`)" +
                     ") ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='违规记录表';");
-            text+="违规记录模块模块创建完成。";
+            text+="违规记录模块创建完成。";
         }else{
-            text+="违规记录模块模块已经存在，无需添加。";
+            text+="违规记录模块已经存在，无需添加。";
+        }
+        //聊天室模块
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_chat';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("CREATE TABLE `"+prefix+"_chat` (" +
+                    "  `id` int(11) NOT NULL AUTO_INCREMENT," +
+                    "  `chatid` varchar(255) DEFAULT NULL COMMENT '聊天室id（加密值）'," +
+                    "  `uid` int(11) DEFAULT '0' COMMENT '创建者'," +
+                    "  `toid` int(11) DEFAULT '0' COMMENT '也是创建者（和上一个字段共同判断私聊）'," +
+                    "  `created` int(10) unsigned DEFAULT '0' COMMENT '创建时间'," +
+                    "  `lastTime` int(10) unsigned DEFAULT '0' COMMENT '最后聊天时间'," +
+                    "  `type` int(2) unsigned DEFAULT '0' COMMENT '0是私聊，1是群聊'," +
+                    "  PRIMARY KEY (`id`)" +
+                    ") ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='聊天室表';");
+            text+="聊天室模块创建完成。";
+        }else{
+            text+="聊天室模块已经存在，无需添加。";
+        }
+        //聊天记录模块
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_chat_msg';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("CREATE TABLE `"+prefix+"_chat_msg` (" +
+                    "  `id` int(11) NOT NULL AUTO_INCREMENT," +
+                    "  `uid` int(11) DEFAULT '0' COMMENT '发送人'," +
+                    "  `cid` int(11) DEFAULT '0' COMMENT '聊天室'," +
+                    "  `text` text CHARACTER SET utf8mb4 COMMENT '消息内容'," +
+                    "  `created` int(10) unsigned DEFAULT '0' COMMENT '发送时间'," +
+                    "  `type` int(2) unsigned DEFAULT '0' COMMENT '0文字消息，1图片消息，3视频消息，4系统提示'," +
+                    "  `url` varchar(400) DEFAULT NULL COMMENT '为链接时的url'," +
+                    "  PRIMARY KEY (`id`)" +
+                    ") ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='聊天消息';");
+            text+="聊天记录模块创建完成。";
+        }else{
+            text+="聊天记录模块已经存在，无需添加。";
         }
         text+=" ------ 执行结束，安装执行完成";
 
