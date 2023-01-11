@@ -427,7 +427,12 @@ public class TypechoUsersController {
         String oldpw = null;
         try {
             //未登录情况下，撞库类攻击拦截
+
             String  ip = baseFull.getIpAddr(request);
+            String isSilence = redisHelp.getRedis(ip+"_silence",redisTemplate);
+            if(isSilence!=null){
+                return Result.getResultJson(0,"你已被禁止请求，请耐心等待",null);
+            }
             String isRepeated = redisHelp.getRedis(ip+"_isOperation",redisTemplate);
             if(isRepeated==null){
                 redisHelp.setRedis(ip+"_isOperation","1",3,redisTemplate);
@@ -435,9 +440,10 @@ public class TypechoUsersController {
                 Integer frequency = Integer.parseInt(isRepeated) + 1;
                 if(frequency==3){
                     securityService.safetyMessage("IP："+ip+"，在登录接口疑似存在攻击行为，请及时确认处理。","system");
-                    redisHelp.setRedis(ip+"_isOperation",frequency.toString(),600,redisTemplate);
+                    redisHelp.setRedis(ip+"_silence","1",600,redisTemplate);
                     return Result.getResultJson(0,"你的请求存在恶意行为，10分钟内禁止操作！",null);
                 }
+                redisHelp.setRedis(ip+"_isOperation",frequency.toString(),3,redisTemplate);
                 return Result.getResultJson(0,"你的操作太频繁了",null);
             }
             //攻击拦截结束
@@ -2366,15 +2372,21 @@ public class TypechoUsersController {
             Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
             Integer uid =Integer.parseInt(map.get("uid").toString());
             //登录情况下，刷数据攻击拦截
-            String isRepeated = redisHelp.getRedis(token+"_isRepeated",redisTemplate);
+            String isSilence = redisHelp.getRedis(this.dataprefix+"_"+uid+"_silence",redisTemplate);
+            if(isSilence!=null){
+                return Result.getResultJson(0,"你已被进展请求，请耐心等待",null);
+            }
+            String isRepeated = redisHelp.getRedis(this.dataprefix+"_"+uid+"_isRepeated",redisTemplate);
             if(isRepeated==null){
-                redisHelp.setRedis(token+"_isRepeated","1",5,redisTemplate);
+                redisHelp.setRedis(this.dataprefix+"_"+uid+"_isRepeated","1",1,redisTemplate);
             }else{
                 Integer frequency = Integer.parseInt(isRepeated) + 1;
-                if(frequency==3){
-                    securityService.safetyMessage("用户ID："+uid+"，在评论接口疑似存在攻击行为，请及时确认处理。","system");
-                    redisHelp.setRedis(token+"_isRepeated",frequency.toString(),600,redisTemplate);
+                if(frequency==1){
+                    securityService.safetyMessage("用户ID："+uid+"，在关注接口疑似存在攻击行为，请及时确认处理。","system");
+                    redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",600,redisTemplate);
                     return Result.getResultJson(0,"你的请求存在恶意行为，10分钟内禁止操作！",null);
+                }else{
+                    redisHelp.setRedis(this.dataprefix+"_"+uid+"_isRepeated",frequency.toString(),3,redisTemplate);
                 }
                 return Result.getResultJson(0,"你的操作太频繁了",null);
             }

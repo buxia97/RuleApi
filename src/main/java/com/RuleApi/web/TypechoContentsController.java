@@ -411,15 +411,21 @@ public class TypechoContentsController {
             Integer logUid =Integer.parseInt(map.get("uid").toString());
 
             //登录情况下，刷数据攻击拦截
-            String isRepeated = redisHelp.getRedis(token+"_isRepeated",redisTemplate);
+            String isSilence = redisHelp.getRedis(this.dataprefix+"_"+logUid+"_silence",redisTemplate);
+            if(isSilence!=null){
+                return Result.getResultJson(0,"你已被禁言，请耐心等待",null);
+            }
+            String isRepeated = redisHelp.getRedis(this.dataprefix+"_"+logUid+"_isRepeated",redisTemplate);
             if(isRepeated==null){
-                redisHelp.setRedis(token+"_isRepeated","1",5,redisTemplate);
+                redisHelp.setRedis(this.dataprefix+"_"+logUid+"_isRepeated","1",3,redisTemplate);
             }else{
                 Integer frequency = Integer.parseInt(isRepeated) + 1;
                 if(frequency==3){
                     securityService.safetyMessage("用户ID："+logUid+"，在文章发布接口疑似存在攻击行为，请及时确认处理。","system");
-                    redisHelp.setRedis(token+"_isRepeated",frequency.toString(),600,redisTemplate);
+                    redisHelp.setRedis(this.dataprefix+"_"+logUid+"_silence","1",600,redisTemplate);
                     return Result.getResultJson(0,"你的请求存在恶意行为，10分钟内禁止操作！",null);
+                }else{
+                    redisHelp.setRedis(this.dataprefix+"_"+logUid+"_isRepeated",frequency.toString(),3,redisTemplate);
                 }
                 return Result.getResultJson(0,"你的操作太频繁了",null);
             }

@@ -1,15 +1,15 @@
 package com.RuleApi.web;
 
+import com.RuleApi.common.*;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.RuleApi.entity.*;
-import com.RuleApi.common.ApiResult;
-import com.RuleApi.common.PageList;
-import com.RuleApi.common.ResultCode;
 import com.RuleApi.service.*;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * 控制层
@@ -32,58 +34,201 @@ public class TypechoChatController {
     @Autowired
     TypechoChatService service;
 
-    /**
-     * 具体字段请根据实际情况处理
-     * 参数请求报文:
-     *
-     * {
-     *   "paramOne": 1,
-     *   "paramTwo": "xxx"
-     * }
-     */
-    @RequestMapping(value = "/insert")
-    @ResponseBody
-    public ApiResult insert (@RequestBody TypechoChat typechoChat, HttpServletRequest request) {
-        int affectRows = service.insert(typechoChat);
-        return new ApiResult<>(ResultCode.success.getCode(), affectRows, ResultCode.success.getDescr(), request.getRequestURI());
-    }
+    @Autowired
+    TypechoChatMsgService chatMsgService;
 
-    /**
-     * 参数请求报文:
-     *
-     * [
-     *     {
-     *       "paramOne": 1,
-     *       "paramTwo": "xxx"
-     *     },
-     *     {
-     *       "paramOne": 1,
-     *       "paramTwo": "xxx"
-     *     }
-     * ]
-     */
-    @RequestMapping(value = "/batchInsert")
-    @ResponseBody
-    public ApiResult batchInsert (@RequestBody List<TypechoChat> list, HttpServletRequest request) {
-        int affectRows = service.batchInsert(list);
-        return new ApiResult<>(ResultCode.success.getCode(), affectRows, ResultCode.success.getDescr(), request.getRequestURI());
-    }
+    @Autowired
+    private SecurityService securityService;
 
-    /**
-     * 参数请求报文:
-     *
-     * {
-     *   "paramOne": 1,
-     *   "paramTwo": "xxx"
-     * }
-     */
-    @RequestMapping(value = "/update")
-    @ResponseBody
-    public ApiResult update (@RequestBody TypechoChat typechoChat, HttpServletRequest request) {
-        int affectRows = service.update(typechoChat);
-        return new ApiResult<>(ResultCode.success.getCode(), affectRows, ResultCode.success.getDescr(), request.getRequestURI());
-    }
+    @Autowired
+    private TypechoApiconfigService apiconfigService;
 
+    @Value("${web.prefix}")
+    private String dataprefix;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
+
+    @Autowired
+    private PushService pushService;
+
+    RedisHelp redisHelp =new RedisHelp();
+    ResultAll Result = new ResultAll();
+    UserStatus UStatus = new UserStatus();
+    baseFull baseFull = new baseFull();
+    EditFile editFile = new EditFile();
+
+    /***
+     * 获取私聊聊天室（没有则自动新增）
+     */
+    @RequestMapping(value = "/getPrivateChat")
+    @ResponseBody
+    public String getPrivateChat(@RequestParam(value = "token", required = false) String  token,
+                            @RequestParam(value = "touid", required = false) Integer  touid) {
+        try{
+            if(touid==null||touid<1){
+                return Result.getResultJson(0,"参数不正确",null);
+            }
+            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+
+            if(uStatus==0){
+                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+            }
+            Integer chatid = null;
+            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            Integer uid =Integer.parseInt(map.get("uid").toString());
+            //判断是否有聊天室存在(自己发起的聊天)
+            TypechoChat chat = new TypechoChat();
+            chat.setUid(uid);
+            chat.setToid(touid);
+            List<TypechoChat> list = service.selectList(chat);
+            if(list.size()>0){
+                chatid = list.get(0).getId();
+            }else{
+                //判断对方发起的聊天
+                chat.setUid(touid);
+                chat.setToid(uid);
+                list = service.selectList(chat);
+                if(list.size()>0){
+                    chatid = list.get(0).getId();
+                }
+            }
+            //如果未聊天过，则创建聊天室
+            if(chatid==null){
+                TypechoChat insert = new TypechoChat();
+                insert.setUid(uid);
+                insert.setToid(touid);
+                Long date = System.currentTimeMillis();
+                String created = String.valueOf(date).substring(0,10);
+                insert.setCreated(Integer.parseInt(created));
+                insert.setType(0);
+                chatid = service.insert(insert);
+            }
+            JSONObject response = new JSONObject();
+            response.put("code" , 1);
+            response.put("data" , chatid);
+            response.put("msg"  , "");
+            return response.toString();
+        }catch (Exception e){
+            System.err.println(e);
+            return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
+        }
+
+    }
+    /***
+     * 发送消息
+     */
+    @RequestMapping(value = "/sendMsg")
+    @ResponseBody
+    public String sendMsg(@RequestParam(value = "token", required = false) String  token,
+                                 @RequestParam(value = "chatid", required = false) Integer  chatid,
+                                 @RequestParam(value = "msg", required = false) String  msg,
+                                @RequestParam(value = "type", required = false) Integer  type,
+                                @RequestParam(value = "url", required = false) String  url) {
+        try{
+            if(chatid==null||msg==null||type==null){
+                return Result.getResultJson(0,"参数不正确",null);
+            }
+            if(type<0){
+                return Result.getResultJson(0,"参数不正确",null);
+            }
+            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+            if(uStatus==0){
+                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+            }
+            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            Integer uid =Integer.parseInt(map.get("uid").toString());
+            //禁言判断
+
+            String isSilence = redisHelp.getRedis(this.dataprefix+"_"+uid+"_silence",redisTemplate);
+            if(isSilence!=null){
+                return Result.getResultJson(0,"你已被禁言，请耐心等待",null);
+            }
+
+            //登录情况下，刷数据攻击拦截
+            String isRepeated = redisHelp.getRedis(this.dataprefix+"_"+uid+"_isSendMsg",redisTemplate);
+            if(isRepeated==null){
+                redisHelp.setRedis(this.dataprefix+"_"+uid+"_isSendMsg","1",1,redisTemplate);
+            }else{
+                Integer frequency = Integer.parseInt(isRepeated) + 1;
+                if(frequency==4){
+                    securityService.safetyMessage("用户ID："+uid+"，在聊天发送消息接口疑似存在攻击行为，请及时确认处理。","system");
+                    redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",600,redisTemplate);
+                    return Result.getResultJson(0,"你的发言过于频繁，已被禁言十分钟！",null);
+                }else{
+                    redisHelp.setRedis(this.dataprefix+"_"+uid+"_isSendMsg",frequency.toString(),5,redisTemplate);
+                }
+                return Result.getResultJson(0,"你的操作太频繁了",null);
+            }
+            //攻击拦截结束
+
+            TypechoChat chat = service.selectByKey(chatid);
+            if(chat==null){
+                return Result.getResultJson(0,"聊天室不存在",null);
+            }
+            if(msg.length()>1500){
+                return Result.getResultJson(0,"最大发言字数不超过1500",null);
+            }
+            //违禁词拦截
+            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+            String forbidden = apiconfig.getForbidden();
+            Integer intercept = 0;
+            if(forbidden!=null){
+                if(forbidden.indexOf(",") != -1){
+                    String[] strarray=forbidden.split(",");
+                    for (int i = 0; i < strarray.length; i++){
+                        String str = strarray[i];
+                        if(msg.indexOf(str) != -1){
+                            intercept = 1;
+                        }
+                    }
+                }else{
+                    if(msg.indexOf(forbidden) != -1){
+                        intercept = 1;
+                    }
+                }
+            }
+            if(intercept.equals(1)){
+                //以十分钟为检测周期，违禁一次刷新一次，等于4次则禁言
+                String isIntercept = redisHelp.getRedis(this.dataprefix+"_"+uid+"_isIntercept",redisTemplate);
+                if(isIntercept==null){
+                    redisHelp.setRedis(this.dataprefix+"_"+uid+"_isIntercept","1",600,redisTemplate);
+                }else{
+                    Integer frequency = Integer.parseInt(isIntercept) + 1;
+                    if(frequency==4){
+                        securityService.safetyMessage("用户ID："+uid+"，在聊天发送消息接口多次触发违禁，请及时确认处理。","system");
+                        redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",3600,redisTemplate);
+                        return Result.getResultJson(0,"你已多次发送违禁词，被禁言一小时！",null);
+                    }else{
+                        redisHelp.setRedis(this.dataprefix+"_"+uid+"_isIntercept",frequency.toString(),600,redisTemplate);
+                    }
+
+                }
+                return Result.getResultJson(0,"消息存在违禁词",null);
+            }
+            //违禁词拦截结束
+
+
+            Long date = System.currentTimeMillis();
+            String created = String.valueOf(date).substring(0,10);
+            TypechoChatMsg msgbox = new TypechoChatMsg();
+            msgbox.setCid(chatid);
+            msgbox.setUid(uid);
+            msgbox.setText(msg);
+            msgbox.setCreated(Integer.parseInt(created));
+            msgbox.setUrl(url);
+            int rows = chatMsgService.insert(msgbox);
+            JSONObject response = new JSONObject();
+            response.put("code" , rows);
+            response.put("msg"  , rows > 0 ? "发送成功" : "发送失败");
+            return response.toString();
+        }catch (Exception e){
+            System.err.println(e);
+            return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
+        }
+
+
+    }
     /**
      * 参数请求报文:
      *
@@ -95,21 +240,6 @@ public class TypechoChatController {
     @ResponseBody
     public ApiResult delete (@RequestBody Object key, HttpServletRequest request) {
         int affectRows = service.delete(key);
-        return new ApiResult<>(ResultCode.success.getCode(), affectRows, ResultCode.success.getDescr(), request.getRequestURI());
-    }
-
-    /**
-     * 参数请求报文:
-     *
-     * [
-     *     9,
-     *     11
-     * ]
-     */
-    @RequestMapping(value = "/batchDelete")
-    @ResponseBody
-    public ApiResult batchDelete (@RequestBody List<Object> keys, HttpServletRequest request) {
-        int affectRows = service.batchDelete(keys);
         return new ApiResult<>(ResultCode.success.getCode(), affectRows, ResultCode.success.getDescr(), request.getRequestURI());
     }
 
@@ -200,26 +330,7 @@ public class TypechoChatController {
         return service.selectByKey(key);
     }
 
-    /***
-     * 表单插入
-     * @param params Bean对象JSON字符串
-     */
-    @RequestMapping(value = "/formInsert")
-    @ResponseBody
-    public String formInsert(@RequestParam(value = "params", required = false) String  params) {
-        TypechoChat insert = null;
-        if (StringUtils.isNotBlank(params)) {
-            JSONObject object = JSON.parseObject(params);
-            insert = object.toJavaObject(TypechoChat.class);
-        }
 
-        int rows = service.insert(insert);
-
-        JSONObject response = new JSONObject();
-        response.put("code" , rows);
-        response.put("msg"  , rows > 0 ? "添加成功" : "添加失败");
-        return response.toString();
-    }
 
     /***
      * 表单修改

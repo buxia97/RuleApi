@@ -20,11 +20,6 @@ public class TypechoChat implements Serializable {
     private Integer id;
 
     /**
-     * chatid  聊天室id（加密值）
-     */
-    private String chatid;
-
-    /**
      * uid  创建者
      */
     private Integer uid;
