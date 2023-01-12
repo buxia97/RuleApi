@@ -17,9 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * 控制层
@@ -42,6 +40,9 @@ public class TypechoChatController {
 
     @Autowired
     private TypechoApiconfigService apiconfigService;
+
+    @Autowired
+    private TypechoUsersService usersService;
 
     @Value("${web.prefix}")
     private String dataprefix;
@@ -229,6 +230,231 @@ public class TypechoChatController {
 
 
     }
+    /***
+     * 我参与的私聊
+     */
+    @RequestMapping(value = "/myChat")
+    @ResponseBody
+    public String myCaht (@RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
+                            @RequestParam(value = "token", required = false) String  token,
+                            @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit) {
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+        if(uStatus==0){
+            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+        }
+        Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+        Integer uid =Integer.parseInt(map.get("uid").toString());
+        //查询uid时，同时查询toid
+        TypechoChat query = new TypechoChat();
+        query.setUid(uid);
+        List jsonList = new ArrayList();
+        List cacheList = redisHelp.getList(this.dataprefix+"_"+"myChat"+uid+"_"+page+"_"+limit,redisTemplate);
+        Integer total = service.total(query);
+        try{
+            if(cacheList.size()>0){
+                jsonList = cacheList;
+            }else{
+                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+
+                PageList<TypechoChat> pageList = service.selectPage(query, page, limit);
+                List<TypechoChat> list = pageList.getList();
+                if(list.size() < 1){
+                    JSONObject noData = new JSONObject();
+                    noData.put("code" , 0);
+                    noData.put("msg"  , "");
+                    noData.put("data" , new ArrayList());
+                    noData.put("count", 0);
+                    noData.put("total", total);
+                    return noData.toString();
+                }
+                for (int i = 0; i < list.size(); i++) {
+                    Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
+                    TypechoChat chat = list.get(i);
+                    Integer userid = chat.getUid();
+                    if(userid.equals(uid)){
+                        userid = chat.getToid();
+                    }
+                    TypechoUsers user = usersService.selectByKey(userid);
+                    //获取用户信息
+                    Map userJson = new HashMap();
+                    if(user!=null){
+                        String name = user.getName();
+                        if(user.getScreenName()!=null){
+                            name = user.getScreenName();
+                        }
+                        userJson.put("name", name);
+                        userJson.put("groupKey", user.getGroupKey());
+
+                        if(user.getAvatar()==null){
+                            if(user.getMail()!=null){
+                                String mail = user.getMail();
+
+                                if(mail.indexOf("@qq.com") != -1){
+                                    String qq = mail.replace("@qq.com","");
+                                    userJson.put("avatar", "https://q1.qlogo.cn/g?b=qq&nk="+qq+"&s=640");
+                                }else{
+                                    userJson.put("avatar", baseFull.getAvatar(apiconfig.getWebinfoAvatar(), mail));
+                                }
+                                //json.put("avatar",baseFull.getAvatar(apiconfig.getWebinfoAvatar(),user.getMail()));
+                            }else{
+                                userJson.put("avatar",apiconfig.getWebinfoAvatar()+"null");
+                            }
+                        }else{
+                            userJson.put("avatar", user.getAvatar());
+                        }
+                        userJson.put("customize", user.getCustomize());
+                        userJson.put("introduce", user.getIntroduce());
+                        //判断是否为VIP
+                        userJson.put("vip", user.getVip());
+                        userJson.put("isvip", 0);
+                        Long date = System.currentTimeMillis();
+                        String curTime = String.valueOf(date).substring(0, 10);
+                        Integer viptime  = user.getVip();
+                        if(viptime>Integer.parseInt(curTime)||viptime.equals(1)){
+                            userJson.put("isvip", 1);
+                        }
+
+                    }else{
+                        userJson.put("name", "用户已注销");
+                        userJson.put("groupKey", "");
+                        userJson.put("avatar", apiconfig.getWebinfoAvatar() + "null");
+                    }
+                    json.put("userJson",userJson);
+                    jsonList.add(json);
+                }
+                redisHelp.delete(this.dataprefix+"_"+"myChat"+uid+"_"+page+"_"+limit,redisTemplate);
+                redisHelp.setList(this.dataprefix+"_"+"myChat"+uid+"_"+page+"_"+limit,jsonList,3,redisTemplate);
+            }
+        }catch (Exception e){
+            System.err.println(e);
+            if(cacheList.size()>0){
+                jsonList = cacheList;
+            }
+        }
+        JSONObject response = new JSONObject();
+        response.put("code" , 1);
+        response.put("msg"  , "");
+        response.put("data" , jsonList);
+        response.put("count", jsonList.size());
+        response.put("total", total);
+        return response.toString();
+
+    }
+
+    /***
+     * 聊天消息
+     */
+    @RequestMapping(value = "/msgList")
+    @ResponseBody
+    public String msgList ( @RequestParam(value = "chatid", required = false) Integer  chatid,
+                            @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
+                            @RequestParam(value = "token", required = false) String  token,
+                            @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit) {
+        if(chatid==null){
+            return Result.getResultJson(0,"参数不正确",null);
+        }
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+        if(uStatus==0){
+            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+        }
+        TypechoChat chat = service.selectByKey(chatid);
+        if(chat==null){
+            return Result.getResultJson(0,"聊天室不存在",null);
+        }
+
+
+        TypechoChatMsg query = new TypechoChatMsg();
+        query.setCid(chatid);
+        List jsonList = new ArrayList();
+        List cacheList = redisHelp.getList(this.dataprefix+"_"+"msgList_"+chatid+"_"+page+"_"+limit,redisTemplate);
+        Integer total = chatMsgService.total(query);
+        try{
+            if(cacheList.size()>0){
+                jsonList = cacheList;
+            }else{
+                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+
+                PageList<TypechoChatMsg> pageList = chatMsgService.selectPage(query, page, limit);
+                List<TypechoChatMsg> list = pageList.getList();
+                if(list.size() < 1){
+                    JSONObject noData = new JSONObject();
+                    noData.put("code" , 0);
+                    noData.put("msg"  , "");
+                    noData.put("data" , new ArrayList());
+                    noData.put("count", 0);
+                    noData.put("total", total);
+                    return noData.toString();
+                }
+                for (int i = 0; i < list.size(); i++) {
+                    Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
+                    TypechoChatMsg msg = list.get(i);
+                    Integer userid = msg.getUid();
+                    TypechoUsers user = usersService.selectByKey(userid);
+                    //获取用户信息
+                    Map userJson = new HashMap();
+                    if(user!=null){
+                        String name = user.getName();
+                        if(user.getScreenName()!=null){
+                            name = user.getScreenName();
+                        }
+                        userJson.put("name", name);
+                        userJson.put("groupKey", user.getGroupKey());
+
+                        if(user.getAvatar()==null){
+                            if(user.getMail()!=null){
+                                String mail = user.getMail();
+
+                                if(mail.indexOf("@qq.com") != -1){
+                                    String qq = mail.replace("@qq.com","");
+                                    userJson.put("avatar", "https://q1.qlogo.cn/g?b=qq&nk="+qq+"&s=640");
+                                }else{
+                                    userJson.put("avatar", baseFull.getAvatar(apiconfig.getWebinfoAvatar(), mail));
+                                }
+                                //json.put("avatar",baseFull.getAvatar(apiconfig.getWebinfoAvatar(),user.getMail()));
+                            }else{
+                                userJson.put("avatar",apiconfig.getWebinfoAvatar()+"null");
+                            }
+                        }else{
+                            userJson.put("avatar", user.getAvatar());
+                        }
+                        userJson.put("customize", user.getCustomize());
+                        userJson.put("introduce", user.getIntroduce());
+                        //判断是否为VIP
+                        userJson.put("vip", user.getVip());
+                        userJson.put("isvip", 0);
+                        Long date = System.currentTimeMillis();
+                        String curTime = String.valueOf(date).substring(0, 10);
+                        Integer viptime  = user.getVip();
+                        if(viptime>Integer.parseInt(curTime)||viptime.equals(1)){
+                            userJson.put("isvip", 1);
+                        }
+
+                    }else{
+                        userJson.put("name", "用户已注销");
+                        userJson.put("groupKey", "");
+                        userJson.put("avatar", apiconfig.getWebinfoAvatar() + "null");
+                    }
+                    json.put("userJson",userJson);
+                    jsonList.add(json);
+                }
+                redisHelp.delete(this.dataprefix+"_"+"msgList_"+chatid+"_"+page+"_"+limit,redisTemplate);
+                redisHelp.setList(this.dataprefix+"_"+"msgList_"+chatid+"_"+page+"_"+limit,jsonList,3,redisTemplate);
+            }
+        }catch (Exception e){
+            System.err.println(e);
+            if(cacheList.size()>0){
+                jsonList = cacheList;
+            }
+        }
+        JSONObject response = new JSONObject();
+        response.put("code" , 1);
+        response.put("msg"  , "");
+        response.put("data" , jsonList);
+        response.put("count", jsonList.size());
+        response.put("total", total);
+        return response.toString();
+    }
+
     /**
      * 参数请求报文:
      *
@@ -236,11 +462,43 @@ public class TypechoChatController {
      *   "key":1
      * }
      */
-    @RequestMapping(value = "/delete")
+    @RequestMapping(value = "/deleteChat")
     @ResponseBody
-    public ApiResult delete (@RequestBody Object key, HttpServletRequest request) {
-        int affectRows = service.delete(key);
-        return new ApiResult<>(ResultCode.success.getCode(), affectRows, ResultCode.success.getDescr(), request.getRequestURI());
+    public String deleteChat (@RequestParam(value = "chatid", required = false) Integer  chatid,
+                             @RequestParam(value = "token", required = false) String  token) {
+        if(chatid==null){
+            return Result.getResultJson(0,"参数不正确",null);
+        }
+        try {
+            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+            if(uStatus==0){
+                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+            }
+            Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+            String group = map.get("group").toString();
+            if(!group.equals("administrator")&&!group.equals("editor")){
+                return Result.getResultJson(0,"你没有操作权限",null);
+            }
+            Integer logUid =Integer.parseInt(map.get("uid").toString());
+            TypechoChat chat = service.selectByKey(chatid);
+            if(chat==null){
+                return Result.getResultJson(0,"聊天室不存在",null);
+            }
+            //删除聊天室全部消息
+            chatMsgService.delete(chatid);
+            //删除聊天室
+            int rows = service.delete(chatid);
+            JSONObject response = new JSONObject();
+            response.put("code", rows > 0 ? 1 : 0);
+            response.put("data", rows);
+            response.put("msg", rows > 0 ? "操作成功" : "操作失败");
+            return response.toString();
+
+        } catch (Exception e) {
+            System.err.println(e);
+            return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
+        }
+
     }
 
     /**

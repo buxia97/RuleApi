@@ -150,10 +150,10 @@
                 and `id` = #{typechoChat.id}
             </if>
             <if test ='null != typechoChat.uid'>
-                and `uid` = #{typechoChat.uid}
+                and `uid` = #{typechoChat.uid} or `toid` = #{typechoChat.uid}
             </if>
             <if test ='null != typechoChat.toid'>
-                and `toid` = #{typechoChat.toid}
+                and `toid` = #{typechoChat.toid} or `uid` = #{typechoChat.toid}
             </if>
             <if test ='null != typechoChat.created'>
                 and `created` = #{typechoChat.created}

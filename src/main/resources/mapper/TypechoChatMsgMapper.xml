@@ -107,7 +107,7 @@
     <!-- 删除 -->
     <delete id="delete">
         DELETE FROM ${prefix}_chat_msg
-        WHERE `id` = #{key}
+        WHERE `cid` = #{key}
     </delete>
 
     <!-- 批量删除 -->

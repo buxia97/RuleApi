@@ -1006,21 +1006,27 @@ public class TypechoUsersController {
         TypechoUsers insert = null;
         Map jsonToMap = null;
         try{
-            //未登录情况下，注册机类攻击拦截
+            //未登录情况下，撞库类攻击拦截
+
             String  ip = baseFull.getIpAddr(request);
+            String isSilence = redisHelp.getRedis(ip+"_silence",redisTemplate);
+            if(isSilence!=null){
+                return Result.getResultJson(0,"你已被禁止请求，请耐心等待",null);
+            }
             String isRepeated = redisHelp.getRedis(ip+"_isOperation",redisTemplate);
             if(isRepeated==null){
                 redisHelp.setRedis(ip+"_isOperation","1",3,redisTemplate);
             }else{
                 Integer frequency = Integer.parseInt(isRepeated) + 1;
                 if(frequency==3){
-                    securityService.safetyMessage("IP："+ip+"，在登录接口疑似存在攻击行为，请及时确认处理。","system");
-                    redisHelp.setRedis(ip+"_isOperation",frequency.toString(),600,redisTemplate);
+                    securityService.safetyMessage("IP："+ip+"，在注册接口疑似存在攻击行为，请及时确认处理。","system");
+                    redisHelp.setRedis(ip+"_silence","1",600,redisTemplate);
                     return Result.getResultJson(0,"你的请求存在恶意行为，10分钟内禁止操作！",null);
                 }
+                redisHelp.setRedis(ip+"_isOperation",frequency.toString(),3,redisTemplate);
                 return Result.getResultJson(0,"你的操作太频繁了",null);
             }
-            //注册拦截结束
+            //攻击拦截结束
             if (StringUtils.isNotBlank(params)) {
                 jsonToMap = JSONObject.parseObject(JSON.parseObject(params).toString());
                 //在之前需要做判断，验证用户名或者邮箱在数据库中是否存在
@@ -1575,9 +1581,13 @@ public class TypechoUsersController {
             if (!group.equals("administrator")) {
                 return Result.getResultJson(0, "你没有操作权限", null);
             }
+            Integer logUid =Integer.parseInt(map.get("uid").toString());
             TypechoUsers users = service.selectByKey(key);
             if(users==null){
                 return Result.getResultJson(0, "该用户不存在", null);
+            }
+            if(users.getUid().equals(logUid)){
+                return Result.getResultJson(0, "你不可以删除你自己", null);
             }
             //删除关联的信息
             TypechoUserapi userapi = new TypechoUserapi();
@@ -1593,6 +1603,7 @@ public class TypechoUsersController {
                 redisHelp.delete(this.dataprefix + "_" + "userkey" + users.getName(), redisTemplate);
             }
             int rows = service.delete(key);
+            editFile.setLog("管理员"+logUid+"删除了用户"+key);
             JSONObject response = new JSONObject();
             response.put("code", rows > 0 ? 1 : 0);
             response.put("data", rows);
@@ -2374,7 +2385,7 @@ public class TypechoUsersController {
             //登录情况下，刷数据攻击拦截
             String isSilence = redisHelp.getRedis(this.dataprefix+"_"+uid+"_silence",redisTemplate);
             if(isSilence!=null){
-                return Result.getResultJson(0,"你已被进展请求，请耐心等待",null);
+                return Result.getResultJson(0,"你已被禁止请求，请耐心等待",null);
             }
             String isRepeated = redisHelp.getRedis(this.dataprefix+"_"+uid+"_isRepeated",redisTemplate);
             if(isRepeated==null){
