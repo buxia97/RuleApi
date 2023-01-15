@@ -32,6 +32,7 @@ public interface TypechoChatMsgService {
      * [删除]
      **/
     int delete(Object key);
+    int deleteMsg(Object key);
 
     /**
      * [批量删除]

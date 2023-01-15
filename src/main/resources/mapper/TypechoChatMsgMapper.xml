@@ -110,6 +110,11 @@
         WHERE `cid` = #{key}
     </delete>
 
+    <delete id="deleteMsg">
+        DELETE FROM ${prefix}_chat_msg
+        WHERE `id` = #{key}
+    </delete>
+
     <!-- 批量删除 -->
     <delete id="batchDelete" parameterType = "java.util.List">
         DELETE FROM ${prefix}_chat_msg WHERE id IN

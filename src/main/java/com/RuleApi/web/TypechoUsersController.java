@@ -1518,7 +1518,7 @@ public class TypechoUsersController {
             return response.toString();
         } catch (Exception e) {
             System.err.println(e);
-            return Result.getResultJson(0, "操作失败", null);
+            return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
         }
 
     }

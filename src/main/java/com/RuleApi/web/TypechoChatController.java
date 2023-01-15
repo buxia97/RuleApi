@@ -78,6 +78,22 @@ public class TypechoChatController {
             Integer chatid = null;
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer uid =Integer.parseInt(map.get("uid").toString());
+            //登录情况下，刷聊天数据
+            String isRepeated = redisHelp.getRedis(this.dataprefix+"_"+uid+"_getChat",redisTemplate);
+            if(isRepeated==null){
+                redisHelp.setRedis(this.dataprefix+"_"+uid+"_getChat","2",1,redisTemplate);
+            }else{
+                Integer frequency = Integer.parseInt(isRepeated) + 1;
+                if(frequency==4){
+                    securityService.safetyMessage("用户ID："+uid+"，在聊天发起接口疑似存在攻击行为，请及时确认处理。","system");
+                    redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",900,redisTemplate);
+                    return Result.getResultJson(0,"你的操作过于频繁，已被禁用15分钟聊天室！",null);
+                }else{
+                    redisHelp.setRedis(this.dataprefix+"_"+uid+"_isSendMsg",frequency.toString(),5,redisTemplate);
+                }
+            }
+            //攻击拦截结束
+
             //判断是否有聊天室存在(自己发起的聊天)
             TypechoChat chat = new TypechoChat();
             chat.setUid(uid);
@@ -102,6 +118,7 @@ public class TypechoChatController {
                 Long date = System.currentTimeMillis();
                 String created = String.valueOf(date).substring(0,10);
                 insert.setCreated(Integer.parseInt(created));
+                insert.setLastTime(Integer.parseInt(created));
                 insert.setType(0);
                 chatid = service.insert(insert);
             }
@@ -208,8 +225,6 @@ public class TypechoChatController {
                 return Result.getResultJson(0,"消息存在违禁词",null);
             }
             //违禁词拦截结束
-
-
             Long date = System.currentTimeMillis();
             String created = String.valueOf(date).substring(0,10);
             TypechoChatMsg msgbox = new TypechoChatMsg();
@@ -219,6 +234,11 @@ public class TypechoChatController {
             msgbox.setCreated(Integer.parseInt(created));
             msgbox.setUrl(url);
             int rows = chatMsgService.insert(msgbox);
+            //更新聊天室最后消息时间
+            TypechoChat newChat = new TypechoChat();
+            newChat.setId(chatid);
+            newChat.setLastTime(Integer.parseInt(created));
+            service.update(chat);
             JSONObject response = new JSONObject();
             response.put("code" , rows);
             response.put("msg"  , rows > 0 ? "发送成功" : "发送失败");
@@ -238,6 +258,9 @@ public class TypechoChatController {
     public String myCaht (@RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
                             @RequestParam(value = "token", required = false) String  token,
                             @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit) {
+        if(limit>30){
+            limit = 30;
+        }
         Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
@@ -361,7 +384,9 @@ public class TypechoChatController {
         if(chat==null){
             return Result.getResultJson(0,"聊天室不存在",null);
         }
-
+        if(limit>30){
+            limit = 30;
+        }
 
         TypechoChatMsg query = new TypechoChatMsg();
         query.setCid(chatid);
@@ -456,11 +481,7 @@ public class TypechoChatController {
     }
 
     /**
-     * 参数请求报文:
-     *
-     * {
-     *   "key":1
-     * }
+     * 删除聊天室
      */
     @RequestMapping(value = "/deleteChat")
     @ResponseBody
@@ -488,6 +509,47 @@ public class TypechoChatController {
             chatMsgService.delete(chatid);
             //删除聊天室
             int rows = service.delete(chatid);
+            editFile.setLog("管理员"+logUid+"请求删除（清空聊天室）："+chatid);
+            JSONObject response = new JSONObject();
+            response.put("code", rows > 0 ? 1 : 0);
+            response.put("data", rows);
+            response.put("msg", rows > 0 ? "操作成功" : "操作失败");
+            return response.toString();
+
+        } catch (Exception e) {
+            System.err.println(e);
+            return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
+        }
+
+    }
+    /**
+     * 删除聊天消息
+     */
+    @RequestMapping(value = "/deleteMsg")
+    @ResponseBody
+    public String deleteMsg (@RequestParam(value = "msgid", required = false) Integer  msgid,
+                              @RequestParam(value = "token", required = false) String  token) {
+        if(msgid==null){
+            return Result.getResultJson(0,"参数不正确",null);
+        }
+        try {
+            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+            if(uStatus==0){
+                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+            }
+            Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+            String group = map.get("group").toString();
+            if(!group.equals("administrator")&&!group.equals("editor")){
+                return Result.getResultJson(0,"你没有操作权限",null);
+            }
+            Integer logUid =Integer.parseInt(map.get("uid").toString());
+            TypechoChatMsg msg = chatMsgService.selectByKey(msgid);
+            if(msg==null){
+                return Result.getResultJson(0,"聊天消息不存在",null);
+            }
+            //删除消息
+            int rows = chatMsgService.deleteMsg(msgid);
+            editFile.setLog("管理员"+logUid+"请求删除聊天消息："+msgid);
             JSONObject response = new JSONObject();
             response.put("code", rows > 0 ? 1 : 0);
             response.put("data", rows);
@@ -501,122 +563,101 @@ public class TypechoChatController {
 
     }
 
-    /**
-     * 参数请求报文:
-     *
-     * {
-     *   "key":1
-     * }
+    /***
+     * 管理员创建群聊
      */
-    @RequestMapping(value = "/selectByKey")
+    @RequestMapping(value = "/createGroup")
     @ResponseBody
-    public ApiResult selectByKey (@RequestBody Object key, HttpServletRequest request) {
-        TypechoChat typechoChat = service.selectByKey(key);
-        return new ApiResult<>(ResultCode.success.getCode(), typechoChat, ResultCode.success.getDescr(), request.getRequestURI());
+    public String createChat(@RequestParam(value = "name", required = false) String  name,
+                             @RequestParam(value = "pic", required = false) String  pic,
+                             @RequestParam(value = "token", required = false) String  token) {
+        if(name.length()<1||pic.length()<1){
+            return Result.getResultJson(0,"必须设置聊天室图片和名称",null);
+        }
+        try{
+            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+            if(uStatus==0){
+                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+            }
+            Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+            String group = map.get("group").toString();
+            if(!group.equals("administrator")&&!group.equals("editor")){
+                return Result.getResultJson(0,"你没有操作权限",null);
+            }
+            Long date = System.currentTimeMillis();
+            String created = String.valueOf(date).substring(0,10);
+            Integer uid =Integer.parseInt(map.get("uid").toString());
+            TypechoChat chat = new TypechoChat();
+            chat.setName(name);
+            chat.setPic(pic);
+            chat.setUid(uid);
+            chat.setType(1);
+            chat.setCreated(Integer.parseInt(created));
+            chat.setLastTime(Integer.parseInt(created));
+            int rows = service.insert(chat);
+            editFile.setLog("管理员"+uid+"请求创建聊天室");
+            JSONObject response = new JSONObject();
+            response.put("code", rows > 0 ? 1 : 0);
+            response.put("data", rows);
+            response.put("msg", rows > 0 ? "创建成功" : "创建失败");
+            return response.toString();
+        }catch (Exception e){
+            System.err.println(e);
+            return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
+        }
     }
 
     /***
-    * 参数请求报文:
-    *
-    * {
-    *   "paramOne": 1,
-    *   "paramTwo": "xxx"
-    * }
-    */
-    @RequestMapping(value = "/selectList")
-    @ResponseBody
-    public ApiResult selectList (@RequestBody TypechoChat typechoChat, HttpServletRequest request) {
-        List<TypechoChat> result = service.selectList(typechoChat);
-        return new ApiResult<>(ResultCode.success.getCode(), result, ResultCode.success.getDescr(), request.getRequestURI());
-    }
-
-    /***
-     * 参数请求报文:
-     *
-     * {
-     *   "paramOne": 1,
-     *   "paramTwo": "xxx"
-     * }
+     * 全部群聊
      */
-    @RequestMapping(value = "/selectPage")
+    @RequestMapping(value = "/allGroup")
     @ResponseBody
-    public ApiResult selectPage (@RequestBody JSONObject object, HttpServletRequest request) {
-        Integer page     = (Integer) object.getOrDefault("page"    , 1);
-        Integer pageSize = (Integer) object.getOrDefault("pageSize", 15);
-
-        // 剔除page, pageSize参数
-        object.remove("page");
-        object.remove("pageSize");
-
-        TypechoChat typechoChat = object.toJavaObject(TypechoChat.class);
-        PageList<TypechoChat> pageList = service.selectPage(typechoChat, page, pageSize);
-        return new ApiResult<>(ResultCode.success.getCode(), pageList, ResultCode.success.getDescr(), request.getRequestURI());
-    }
-
-    /***
-     * 表单查询请求
-     * @param searchParams Bean对象JSON字符串
-     * @param page         页码
-     * @param limit        每页显示数量
-     */
-    @RequestMapping(value = "/formPage")
-    @ResponseBody
-    public String formPage (@RequestParam(value = "searchParams", required = false) String  searchParams,
-                            @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
-                            @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit) {
+    public String allGroup (@RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
+                          @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit) {
+        if(limit>30){
+            limit = 30;
+        }
         TypechoChat query = new TypechoChat();
-        if (StringUtils.isNotBlank(searchParams)) {
-            JSONObject object = JSON.parseObject(searchParams);
-            query = object.toJavaObject(TypechoChat.class);
-        }
+        query.setType(1);
+        List jsonList = new ArrayList();
+        List cacheList = redisHelp.getList(this.dataprefix+"_"+"allGroup_"+page+"_"+limit,redisTemplate);
+        Integer total = service.total(query);
+        try{
+            if(cacheList.size()>0){
+                jsonList = cacheList;
+            }else{
+                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
 
-        PageList<TypechoChat> pageList = service.selectPage(query, page, limit);
+                PageList<TypechoChat> pageList = service.selectPage(query, page, limit);
+                List<TypechoChat> list = pageList.getList();
+                if(list.size() < 1){
+                    JSONObject noData = new JSONObject();
+                    noData.put("code" , 0);
+                    noData.put("msg"  , "");
+                    noData.put("data" , new ArrayList());
+                    noData.put("count", 0);
+                    noData.put("total", total);
+                    return noData.toString();
+                }
+                redisHelp.delete(this.dataprefix+"_"+"allGroup_"+page+"_"+limit,redisTemplate);
+                redisHelp.setList(this.dataprefix+"_"+"allGroup_"+page+"_"+limit,list,3,redisTemplate);
+            }
+        }catch (Exception e){
+            System.err.println(e);
+            if(cacheList.size()>0){
+                jsonList = cacheList;
+            }
+        }
         JSONObject response = new JSONObject();
-        response.put("code" , 0);
+        response.put("code" , 1);
         response.put("msg"  , "");
-        response.put("data" , null != pageList.getList() ? pageList.getList() : new JSONArray());
-        response.put("count", pageList.getTotalCount());
+        response.put("data" , jsonList);
+        response.put("count", jsonList.size());
+        response.put("total", total);
         return response.toString();
-    }
 
-    /***
-     * 表单查询
-     */
-    @RequestMapping(value = "/formSelectByKey")
-    @ResponseBody
-    public TypechoChat formSelectByKey(@RequestParam(value = "key", required = false) String  key) {
-        return service.selectByKey(key);
     }
 
 
 
-    /***
-     * 表单修改
-     * @param params Bean对象JSON字符串
-     */
-    @RequestMapping(value = "/formUpdate")
-    @ResponseBody
-    public String formUpdate(@RequestParam(value = "params", required = false) String  params) {
-        TypechoChat update = null;
-        if (StringUtils.isNotBlank(params)) {
-            JSONObject object = JSON.parseObject(params);
-            update = object.toJavaObject(TypechoChat.class);
-        }
-
-        int rows = service.update(update);
-
-        JSONObject response = new JSONObject();
-        response.put("code" , rows);
-        response.put("msg"  , rows > 0 ? "修改成功" : "修改失败");
-        return response.toString();
-    }
-
-    /***
-     * 表单删除
-     */
-    @RequestMapping(value = "/formDelete")
-    @ResponseBody
-    public int formDelete(@RequestParam(value = "key", required = false) String  key) {
-        return service.delete(key);
-    }
 }

@@ -10,6 +10,8 @@
         <result column="created" property="created" />
         <result column="lastTime" property="lastTime" />
         <result column="type" property="type" />
+        <result column="name" property="name" />
+        <result column="pic" property="pic" />
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -18,7 +20,9 @@
         `toid`,
         `created`,
         `lastTime`,
-        `type`
+        `type`,
+        `name`,
+        `pic`
     </sql>
 
     <!-- 插入数据 -->
@@ -41,7 +45,13 @@
                 `lastTime`,
             </if>
             <if test ='null != type'>
-                `type`
+                `type`,
+            </if>
+            <if test ='null != name'>
+                `name`,
+            </if>
+            <if test ='null != pic'>
+                `pic`
             </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
@@ -61,7 +71,13 @@
                 #{lastTime},
             </if>
             <if test ='null != type'>
-                #{type}
+                #{type},
+            </if>
+            <if test ='null != name'>
+                #{name},
+            </if>
+            <if test ='null != pic'>
+                #{pic}
             </if>
         </trim>
     </insert>
@@ -76,7 +92,9 @@
                 #{curr.toid},
                 #{curr.created},
                 #{curr.lastTime},
-                #{curr.type}
+                #{curr.type},
+                #{curr.name},
+                #{curr.pic}
             )
         </foreach>
     </insert>
@@ -89,7 +107,9 @@
             <if test ='null != toid'>`toid` = #{toid},</if>
             <if test ='null != created'>`created` = #{created},</if>
             <if test ='null != lastTime'>`lastTime` = #{lastTime},</if>
-            <if test ='null != type'>`type` = #{type}</if>
+            <if test ='null != type'>`type` = #{type},</if>
+            <if test ='null != name'>`name` = #{name},</if>
+            <if test ='null != pic'>`pic` = #{pic}</if>
         </set>
         WHERE `id` = #{id}
     </update>

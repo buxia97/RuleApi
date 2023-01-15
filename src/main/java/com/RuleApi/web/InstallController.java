@@ -937,6 +937,22 @@ public class InstallController {
         }else{
             text+="聊天室模块已经存在，无需添加。";
         }
+        //查询聊天室模块是否存在name字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_chat' and column_name = 'name';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_chat ADD `name` varchar(400) DEFAULT NULL COMMENT '聊天室名称（群聊）'");
+            text+="聊天室模块，字段name添加完成。";
+        }else{
+            text+="聊天室模块，字段name已经存在，无需添加。";
+        }
+        //查询聊天室模块是否存在pic字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_chat' and column_name = 'pic';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_chat ADD `pic` varchar(400) DEFAULT NULL COMMENT '图片地址（群聊）'");
+            text+="聊天室模块，字段pic添加完成。";
+        }else{
+            text+="聊天室模块，字段pic已经存在，无需添加。";
+        }
         //聊天记录模块
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_chat_msg';", Integer.class);
         if (i == 0){

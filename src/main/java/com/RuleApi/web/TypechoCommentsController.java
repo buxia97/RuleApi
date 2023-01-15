@@ -290,13 +290,13 @@ public class TypechoCommentsController {
             }
             String isRepeated = redisHelp.getRedis(this.dataprefix+"_"+logUid+"_isRepeated",redisTemplate);
             if(isRepeated==null){
-                redisHelp.setRedis(this.dataprefix+"_"+logUid+"_isRepeated","1",3,redisTemplate);
+                redisHelp.setRedis(this.dataprefix+"_"+logUid+"_isRepeated","1",2,redisTemplate);
             }else{
                 Integer frequency = Integer.parseInt(isRepeated) + 1;
                 if(frequency==3){
                     securityService.safetyMessage("用户ID："+logUid+"，在评论发布接口疑似存在攻击行为，请及时确认处理。","system");
-                    redisHelp.setRedis(this.dataprefix+"_"+logUid+"_silence","1",600,redisTemplate);
-                    return Result.getResultJson(0,"你的请求存在恶意行为，10分钟内禁止操作！",null);
+                    redisHelp.setRedis(this.dataprefix+"_"+logUid+"_silence","1",900,redisTemplate);
+                    return Result.getResultJson(0,"你的请求存在恶意行为，15分钟内禁止操作！",null);
                 }else{
                     redisHelp.setRedis(this.dataprefix+"_"+logUid+"_isRepeated",frequency.toString(),3,redisTemplate);
                 }
@@ -335,8 +335,8 @@ public class TypechoCommentsController {
                     jsonToMap.put("author",map.get("screenName").toString());
                     postName = map.get("screenName").toString();
                 }
-                if(jsonToMap.get("text")==null){
-                    return Result.getResultJson(0,"评论不能为空",null);
+                if(jsonToMap.get("text")==null||jsonToMap.get("text").toString().length()>4){
+                    return Result.getResultJson(0,"评论长度过短",null);
                 }else{
                     if(jsonToMap.get("text").toString().length()>1500){
                         return Result.getResultJson(0,"超出最大评论长度",null);

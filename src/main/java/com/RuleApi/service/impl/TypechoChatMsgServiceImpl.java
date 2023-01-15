@@ -41,6 +41,11 @@ public class TypechoChatMsgServiceImpl implements TypechoChatMsgService {
     	return dao.delete(key);
     }
 
+	@Override
+	public int deleteMsg(Object key) {
+		return dao.deleteMsg(key);
+	}
+
     @Override
     public int batchDelete(List<Object> keys) {
         return dao.batchDelete(keys);

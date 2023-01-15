@@ -43,4 +43,14 @@ public class TypechoChat implements Serializable {
      * type  0是私聊，1是群聊
      */
     private Integer type;
+
+    /**
+     * 聊天室名称（群聊）
+     */
+    private String name;
+
+    /**
+     * 图片地址（群聊）
+     */
+    private String pic;
 }
