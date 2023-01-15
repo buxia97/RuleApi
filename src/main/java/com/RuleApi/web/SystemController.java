@@ -117,6 +117,9 @@ public class SystemController {
     @RequestMapping(value = "/getConfig")
     @ResponseBody
     public String getConfig(@RequestParam(value = "webkey", required = false) String  webkey) {
+        if(webkey.length()<1){
+            return Result.getResultJson(0,"请输入正确的访问key",null);
+        }
         if(!webkey.equals(this.key)){
             return Result.getResultJson(0,"请输入正确的访问key",null);
         }
@@ -149,6 +152,9 @@ public class SystemController {
     @RequestMapping(value = "/setupWebKey")
     @ResponseBody
     public String setupWebKey(@RequestParam(value = "webkey", required = false) String  webkey,@RequestParam(value = "params", required = false) String  params) {
+        if(webkey.length()<1){
+            return Result.getResultJson(0,"请输入正确的访问key",null);
+        }
         if(!webkey.equals(this.key)){
             return Result.getResultJson(0,"请输入正确的访问key",null);
         }
@@ -185,6 +191,9 @@ public class SystemController {
     @RequestMapping(value = "/setupCache")
     @ResponseBody
     public String setupCache(@RequestParam(value = "webkey", required = false) String  webkey,@RequestParam(value = "params", required = false) String  params) {
+        if(webkey.length()<1){
+            return Result.getResultJson(0,"请输入正确的访问key",null);
+        }
         if(!webkey.equals(this.key)){
             return Result.getResultJson(0,"请输入正确的访问key",null);
         }
@@ -258,6 +267,9 @@ public class SystemController {
     @RequestMapping(value = "/setupMysql")
     @ResponseBody
     public String setupMysql(@RequestParam(value = "webkey", required = false) String  webkey,@RequestParam(value = "params", required = false) String  params) {
+        if(webkey.length()<1){
+            return Result.getResultJson(0,"请输入正确的访问key",null);
+        }
         if(!webkey.equals(this.key)){
             return Result.getResultJson(0,"请输入正确的访问key",null);
         }
@@ -321,6 +333,9 @@ public class SystemController {
     @RequestMapping(value = "/setupRedis")
     @ResponseBody
     public String setupRedis(@RequestParam(value = "webkey", required = false) String  webkey,@RequestParam(value = "params", required = false) String  params) {
+        if(webkey.length()<1){
+            return Result.getResultJson(0,"请输入正确的访问key",null);
+        }
         if(!webkey.equals(this.key)){
             return Result.getResultJson(0,"请输入正确的访问key",null);
         }
@@ -390,6 +405,9 @@ public class SystemController {
     @RequestMapping(value = "/setupEmail")
     @ResponseBody
     public String setupEmail(@RequestParam(value = "webkey", required = false) String  webkey,@RequestParam(value = "params", required = false) String  params) {
+        if(webkey.length()<1){
+            return Result.getResultJson(0,"请输入正确的访问key",null);
+        }
         if(!webkey.equals(this.key)){
             return Result.getResultJson(0,"请输入正确的访问key",null);
         }
@@ -467,6 +485,9 @@ public class SystemController {
     @RequestMapping(value = "/allConfig")
     @ResponseBody
     public String allConfig(@RequestParam(value = "webkey", required = false) String  webkey) {
+        if(webkey.length()<1){
+            return Result.getResultJson(0,"请输入正确的访问key",null);
+        }
         if(!webkey.equals(this.key)){
             return Result.getResultJson(0,"请输入正确的访问key",null);
         }
@@ -617,6 +638,9 @@ public class SystemController {
     @RequestMapping(value = "/getApiConfig")
     @ResponseBody
     public String getApiConfig(@RequestParam(value = "webkey", required = false) String  webkey) {
+        if(webkey.length()<1){
+            return Result.getResultJson(0,"请输入正确的访问key",null);
+        }
         if(!webkey.equals(this.key)){
             return Result.getResultJson(0,"请输入正确的访问key",null);
         }
@@ -635,6 +659,9 @@ public class SystemController {
     @ResponseBody
     public String apiConfigUpdate(@RequestParam(value = "params", required = false) String  params,@RequestParam(value = "webkey", required = false) String  webkey) {
         TypechoApiconfig update = null;
+        if(webkey.length()<1){
+            return Result.getResultJson(0,"请输入正确的访问key",null);
+        }
         if(!webkey.equals(this.key)){
             return Result.getResultJson(0,"请输入正确的访问key",null);
         }
@@ -682,6 +709,9 @@ public class SystemController {
     @RequestMapping(value = "/taskAds")
     @ResponseBody
     public String taskAds(@RequestParam(value = "webkey", required = false) String  webkey) {
+        if(webkey.length()<1){
+            return Result.getResultJson(0,"请输入正确的访问key",null);
+        }
         if(!webkey.equals(this.key)){
             return Result.getResultJson(0,"请输入正确的访问key",null);
         }
@@ -734,6 +764,9 @@ public class SystemController {
                               @RequestParam(value = "cid", required = false) String  cid,
                               @RequestParam(value = "title", required = false) String  title,
                               @RequestParam(value = "content", required = false) String  content) {
+        if(webkey.length()<1){
+            return Result.getResultJson(0,"请输入正确的访问key",null);
+        }
         if(!webkey.equals(this.key)){
             return Result.getResultJson(0,"请输入正确的访问key",null);
         }

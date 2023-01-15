@@ -159,6 +159,7 @@
                 and `type` = #{type}
             </if>
         </where>
+        order by created desc
     </select>
 
     <!-- 分页条件查询 -->
@@ -185,6 +186,9 @@
                 and `type` = #{typechoChat.type}
             </if>
         </where>
+        <if test ='"" != order'>
+            order by ${order} desc
+        </if>
         limit #{page,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
     </select>
 

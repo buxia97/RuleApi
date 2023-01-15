@@ -53,7 +53,7 @@ public interface TypechoChatDao {
     /**
      * [分页条件查询]
      **/
-    List<TypechoChat> selectPage (@Param("typechoChat") TypechoChat typechoChat, @Param("page") Integer page, @Param("pageSize") Integer pageSize);
+    List<TypechoChat> selectPage (@Param("typechoChat") TypechoChat typechoChat, @Param("page") Integer page, @Param("pageSize") Integer pageSize,@Param("order") String order);
 
     /**
      * [总量查询]

@@ -51,7 +51,7 @@ public interface TypechoChatService {
     /**
      * [分页条件查询]
      **/
-    PageList<TypechoChat> selectPage (TypechoChat typechoChat, Integer page, Integer pageSize);
+    PageList<TypechoChat> selectPage (TypechoChat typechoChat, Integer page, Integer pageSize,String order);
 
     /**
      * [总量查询]

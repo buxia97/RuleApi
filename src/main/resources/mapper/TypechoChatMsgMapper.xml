@@ -157,6 +157,7 @@
                 and `url` = #{url}
             </if>
         </where>
+        order by created desc
     </select>
 
     <!-- 分页条件查询 -->
@@ -186,6 +187,7 @@
                 and `url` = #{typechoChatMsg.url}
             </if>
         </where>
+        order by created desc
         limit #{page,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
     </select>
 

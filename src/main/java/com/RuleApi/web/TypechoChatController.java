@@ -257,9 +257,13 @@ public class TypechoChatController {
     @ResponseBody
     public String myCaht (@RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
                             @RequestParam(value = "token", required = false) String  token,
+                            @RequestParam(value = "order", required = false) String  order,
                             @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit) {
         if(limit>30){
             limit = 30;
+        }
+        if(order.length()<1){
+            order = "created";
         }
         Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
         if(uStatus==0){
@@ -279,7 +283,7 @@ public class TypechoChatController {
             }else{
                 TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
 
-                PageList<TypechoChat> pageList = service.selectPage(query, page, limit);
+                PageList<TypechoChat> pageList = service.selectPage(query, page, limit,order);
                 List<TypechoChat> list = pageList.getList();
                 if(list.size() < 1){
                     JSONObject noData = new JSONObject();
@@ -424,7 +428,7 @@ public class TypechoChatController {
                         }
                         userJson.put("name", name);
                         userJson.put("groupKey", user.getGroupKey());
-
+                        userJson.put("uid", user.getUid());
                         if(user.getAvatar()==null){
                             if(user.getMail()!=null){
                                 String mail = user.getMail();
@@ -460,6 +464,9 @@ public class TypechoChatController {
                         userJson.put("avatar", apiconfig.getWebinfoAvatar() + "null");
                     }
                     json.put("userJson",userJson);
+                    //获取最新消息
+
+
                     jsonList.add(json);
                 }
                 redisHelp.delete(this.dataprefix+"_"+"msgList_"+chatid+"_"+page+"_"+limit,redisTemplate);
@@ -571,6 +578,7 @@ public class TypechoChatController {
     public String createChat(@RequestParam(value = "name", required = false) String  name,
                              @RequestParam(value = "pic", required = false) String  pic,
                              @RequestParam(value = "token", required = false) String  token) {
+
         if(name.length()<1||pic.length()<1){
             return Result.getResultJson(0,"必须设置聊天室图片和名称",null);
         }
@@ -613,9 +621,13 @@ public class TypechoChatController {
     @RequestMapping(value = "/allGroup")
     @ResponseBody
     public String allGroup (@RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
+                            @RequestParam(value = "order", required = false) String  order,
                           @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit) {
         if(limit>30){
             limit = 30;
+        }
+        if(order.length()<1){
+            order = "created";
         }
         TypechoChat query = new TypechoChat();
         query.setType(1);
@@ -628,7 +640,7 @@ public class TypechoChatController {
             }else{
                 TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
 
-                PageList<TypechoChat> pageList = service.selectPage(query, page, limit);
+                PageList<TypechoChat> pageList = service.selectPage(query, page, limit,order);
                 List<TypechoChat> list = pageList.getList();
                 if(list.size() < 1){
                     JSONObject noData = new JSONObject();

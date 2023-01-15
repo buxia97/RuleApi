@@ -57,7 +57,7 @@ public class TypechoChatServiceImpl implements TypechoChatService {
 	}
 
 	@Override
-	public PageList<TypechoChat> selectPage(TypechoChat typechoChat, Integer offset, Integer pageSize) {
+	public PageList<TypechoChat> selectPage(TypechoChat typechoChat, Integer offset, Integer pageSize,String order) {
 		PageList<TypechoChat> pageList = new PageList<>();
 
 		int total = this.total(typechoChat);
@@ -71,7 +71,7 @@ public class TypechoChatServiceImpl implements TypechoChatService {
 
 		int page = (offset - 1) * pageSize;
 
-		List<TypechoChat> list = dao.selectPage(typechoChat, page, pageSize);
+		List<TypechoChat> list = dao.selectPage(typechoChat, page, pageSize,order);
 
 		pageList.setList(list);
 		pageList.setStartPageNo(offset);
