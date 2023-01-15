@@ -120,7 +120,8 @@ public class TypechoChatController {
                 insert.setCreated(Integer.parseInt(created));
                 insert.setLastTime(Integer.parseInt(created));
                 insert.setType(0);
-                chatid = service.insert(insert);
+                service.insert(insert);
+                chatid = insert.getId();
             }
             JSONObject response = new JSONObject();
             response.put("code" , 1);
