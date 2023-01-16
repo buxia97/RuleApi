@@ -264,7 +264,7 @@ public class TypechoChatController {
             limit = 30;
         }
         if(order.length()<1){
-            order = "created";
+            order = "lastTime";
         }
         Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
         if(uStatus==0){
@@ -298,6 +298,16 @@ public class TypechoChatController {
                 for (int i = 0; i < list.size(); i++) {
                     Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
                     TypechoChat chat = list.get(i);
+
+                    //获取最新聊天消息
+                    Integer chatid = chat.getId();
+                    TypechoChatMsg msg = new TypechoChatMsg();
+                    msg.setCid(chatid);
+                    List<TypechoChatMsg> msgList = chatMsgService.selectList(msg);
+                    if(msgList.size()>0) {
+                        Map lastMsg = JSONObject.parseObject(JSONObject.toJSONString(msgList.get(0)), Map.class);
+                        json.put("lastMsg",lastMsg);
+                    }
                     Integer userid = chat.getUid();
                     if(userid.equals(uid)){
                         userid = chat.getToid();
@@ -331,6 +341,7 @@ public class TypechoChatController {
                             userJson.put("avatar", user.getAvatar());
                         }
                         userJson.put("customize", user.getCustomize());
+                        userJson.put("experience",user.getExperience());
                         userJson.put("introduce", user.getIntroduce());
                         //判断是否为VIP
                         userJson.put("vip", user.getVip());

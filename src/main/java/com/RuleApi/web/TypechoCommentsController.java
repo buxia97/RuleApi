@@ -192,6 +192,7 @@ public class TypechoCommentsController {
                             json.put("mail",userinfo.getMail());
                             json.put("lv",baseFull.getLv(lv));
                             json.put("customize",userinfo.getCustomize());
+                            json.put("experience",userinfo.getExperience());
                             //判断是否为VIP
                             json.put("isvip", 0);
                             json.put("vip", userinfo.getVip());
