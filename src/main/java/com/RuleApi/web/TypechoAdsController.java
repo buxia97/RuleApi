@@ -90,7 +90,7 @@ public class TypechoAdsController {
             }
 
         }catch (Exception e){
-            System.err.println(e);
+            e.printStackTrace();
         }
         JSONObject adsInfo = JSON.parseObject(JSON.toJSONString(adsInfoJson),JSONObject.class);
         return adsInfo.toJSONString();
@@ -151,7 +151,7 @@ public class TypechoAdsController {
                 redisHelp.setList(this.dataprefix + "_" + "adsList_" + page + "_" + limit + "_" + searchParams+"_"+searchKey,jsonList,600,redisTemplate);
             }
         }catch (Exception e){
-            System.err.println(e);
+            e.printStackTrace();
         }
         JSONObject response = new JSONObject();
         response.put("code" , 1);
@@ -263,7 +263,7 @@ public class TypechoAdsController {
             response.put("msg"  , rows > 0 ? "添加成功，等待管理员审核" : "添加失败");
             return response.toString();
         }catch (Exception e){
-            System.err.println(e);
+            e.printStackTrace();
             return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
         }
 
@@ -486,7 +486,7 @@ public class TypechoAdsController {
             }
 
         }catch (Exception e){
-            System.err.println(e);
+            e.printStackTrace();
         }
         JSONObject response = new JSONObject();
         response.put("code" ,1 );

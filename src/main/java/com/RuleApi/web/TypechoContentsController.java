@@ -383,7 +383,7 @@ public class TypechoContentsController {
                 redisHelp.setList(this.dataprefix+"_"+"contentsList_"+page+"_"+limit+"_"+searchParams+"_"+order+"_"+searchKey+"_"+random+"_"+aid,jsonList,this.contentCache,redisTemplate);
             }
         }catch (Exception e){
-            System.err.println(e);
+            e.printStackTrace();
             if(cacheList.size()>0){
                 jsonList = cacheList;
             }
@@ -637,7 +637,7 @@ public class TypechoContentsController {
             response.put("msg"  , rows > 0 ? resText : "发布失败");
             return response.toString();
         }catch (Exception e){
-            System.err.println(e);
+            e.printStackTrace();
             return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
         }
     }
@@ -858,7 +858,7 @@ public class TypechoContentsController {
             response.put("msg"  , rows > 0 ? resText : "修改失败");
             return response.toString();
         }catch (Exception e){
-            System.err.println(e);
+            e.printStackTrace();
             return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
         }
     }
@@ -1025,7 +1025,7 @@ public class TypechoContentsController {
             response.put("msg"  , rows > 0 ? "操作成功，缓存缘故，数据可能存在延迟" : "操作失败");
             return response.toString();
         }catch (Exception e){
-            System.err.println(e);
+            e.printStackTrace();
             return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
         }
     }
@@ -1234,7 +1234,7 @@ public class TypechoContentsController {
             }
 
         }catch (Exception e){
-            System.err.println(e);
+            e.printStackTrace();
             return Result.getResultJson(0,"",null);
         }
     }
@@ -1334,7 +1334,7 @@ public class TypechoContentsController {
                 redisHelp.setKey(this.dataprefix+"_contentConfig",contentConfig,5,redisTemplate);
             }
         }catch (Exception e){
-            System.err.println(e);
+            e.printStackTrace();
         }
         JSONObject response = new JSONObject();
         response.put("code" , 1);

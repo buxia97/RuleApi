@@ -215,7 +215,7 @@ public class InstallController {
                     ") ENGINE=MyISAM DEFAULT CHARSET=utf8;");
             text+="数据关联表创建完成。";
         }catch (Exception e){
-            System.err.println(e);
+            e.printStackTrace();
             return Result.getResultJson(0,"数据库语句执行失败，请检查数据库版本及服务器性能后重试。",null);
         }
         text+=" ------ 执行结束，独立安装数据表导入完成，请继续安装RuleApi扩展数据表";
@@ -998,7 +998,7 @@ public class InstallController {
             jdbcTemplate.execute("alter table `"+prefix+"_comments`  MODIFY COLUMN `text` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;");
             return Result.getResultJson(1,"操作成功",null);
         }catch (Exception e){
-            System.err.println(e);
+            e.printStackTrace();
             return Result.getResultJson(1,"操作失败",null);
         }
 

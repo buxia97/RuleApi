@@ -769,7 +769,7 @@ public class PayController {
                 return Result.getResultJson(0,jsonMap.get("msg").toString(),null);
             }
         }catch (Exception e){
-            System.err.println(e);
+            e.printStackTrace();
             return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
         }
 
@@ -839,7 +839,7 @@ public class PayController {
                 return "fail";
             }
         }catch (Exception e){
-            System.err.println(e);
+            e.printStackTrace();
             return "fail";
         }
 

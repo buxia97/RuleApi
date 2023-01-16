@@ -734,7 +734,7 @@ public class SystemController {
             }
             return Result.getResultJson(1, "执行成功", null);
         }catch (Exception e){
-            System.err.println(e);
+            e.printStackTrace();
             return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
         }
 

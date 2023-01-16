@@ -321,7 +321,7 @@ public class TypechoUsersController {
             }
 
         }catch (Exception e){
-            System.err.println(e);
+            e.printStackTrace();
         }
         JSONObject response = new JSONObject();
         response.put("code", 1);
@@ -404,7 +404,7 @@ public class TypechoUsersController {
             response.put("data", json);
             return response.toString();
         } catch (Exception e) {
-            System.err.println(e);
+            e.printStackTrace();
             JSONObject response = new JSONObject();
 
             response.put("code", 0);
@@ -554,7 +554,7 @@ public class TypechoUsersController {
             }
             return Result.getResultJson(rows.size() > 0 ? 1 : 0, rows.size() > 0 ? "登录成功" : "用户名或密码错误", jsonToMap);
         } catch (Exception e) {
-            System.err.println(e);
+            e.printStackTrace();
             JSONObject response = new JSONObject();
 
             response.put("code", 0);
@@ -813,7 +813,7 @@ public class TypechoUsersController {
 
             }
         } catch (Exception e) {
-            System.err.println(e);
+            e.printStackTrace();
             JSONObject response = new JSONObject();
 
             response.put("code", 0);
@@ -940,7 +940,7 @@ public class TypechoUsersController {
             response.put("msg", rows > 0 ? "绑定成功" : "绑定失败");
             return response.toString();
         } catch (Exception e) {
-            System.err.println(e);
+            e.printStackTrace();
             JSONObject response = new JSONObject();
 
             response.put("code", 0);
@@ -987,7 +987,7 @@ public class TypechoUsersController {
             response.put("msg", "");
             return response.toString();
         } catch (Exception e) {
-            System.err.println(e);
+            e.printStackTrace();
             response.put("code", 0);
             response.put("data", "");
             response.put("msg", "数据异常");
@@ -1102,7 +1102,7 @@ public class TypechoUsersController {
             response.put("msg", rows > 0 ? "注册成功" : "注册失败");
             return response.toString();
         }catch (Exception e){
-            System.err.println(e);
+            e.printStackTrace();
             return Result.getResultJson(0, "参数错误", null);
         }
 
@@ -1289,7 +1289,7 @@ public class TypechoUsersController {
             response.put("msg", rows > 0 ? "操作成功" : "操作失败");
             return response.toString();
         } catch (Exception e) {
-            System.err.println(e);
+            e.printStackTrace();
             return Result.getResultJson(0, "操作失败", null);
         }
 
@@ -1317,7 +1317,7 @@ public class TypechoUsersController {
             response.put("msg", rows > 0 ? "操作成功" : "操作失败");
             return response.toString();
         } catch (Exception e) {
-            System.err.println(e);
+            e.printStackTrace();
             return Result.getResultJson(0, "操作失败", null);
         }
     }
@@ -1435,7 +1435,7 @@ public class TypechoUsersController {
             response.put("msg", rows > 0 ? responseText : "操作失败");
             return response.toString();
         } catch (Exception e) {
-            System.err.println(e);
+            e.printStackTrace();
             return Result.getResultJson(0, "操作失败", null);
         }
 
@@ -1517,7 +1517,7 @@ public class TypechoUsersController {
             response.put("msg", rows > 0 ? "操作成功" : "操作失败");
             return response.toString();
         } catch (Exception e) {
-            System.err.println(e);
+            e.printStackTrace();
             return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
         }
 
@@ -1610,7 +1610,7 @@ public class TypechoUsersController {
             response.put("msg", rows > 0 ? "操作成功" : "操作失败");
             return response.toString();
         } catch (Exception e) {
-            System.err.println(e);
+            e.printStackTrace();
             return Result.getResultJson(0, "操作失败", null);
         }
 
@@ -1665,7 +1665,7 @@ public class TypechoUsersController {
             response.put("msg", rows > 0 ? "操作成功" : "操作失败");
             return response.toString();
         } catch (Exception e) {
-            System.err.println(e);
+            e.printStackTrace();
             return Result.getResultJson(0, "操作失败", null);
         }
 
@@ -1796,7 +1796,7 @@ public class TypechoUsersController {
             response.put("msg", rows > 0 ? "操作成功" : "操作失败");
             return response.toString();
         } catch (Exception e) {
-            System.err.println(e);
+            e.printStackTrace();
             return Result.getResultJson(0, "操作失败", null);
         }
 
@@ -1871,7 +1871,7 @@ public class TypechoUsersController {
             redisHelp.delete(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
             return Result.getResultJson(1, "退出成功", null);
         }catch (Exception e){
-            System.err.println(e);
+            e.printStackTrace();
             return Result.getResultJson(0, "退出失败", null);
         }
 
@@ -1893,7 +1893,7 @@ public class TypechoUsersController {
             QRCodeUtil.createCodeToOutputStream(res.toString(), response.getOutputStream());
             System.out.println("成功生成二维码!");
         } catch (IOException e) {
-            System.err.println(e);
+            e.printStackTrace();
         }
     }
 
@@ -2244,7 +2244,7 @@ public class TypechoUsersController {
                 redisHelp.setList(this.dataprefix+"_"+"inbox_"+page+"_"+limit+"_"+uid,jsonList,3,redisTemplate);
             }
         }catch (Exception e){
-            System.err.println(e);
+            e.printStackTrace();
             if(cacheList.size()>0){
                 jsonList = cacheList;
             }
@@ -2301,7 +2301,7 @@ public class TypechoUsersController {
             jdbcTemplate.execute("UPDATE "+this.prefix+"_inbox SET isread = 1 WHERE touid="+uid+";");
             return Result.getResultJson(1, "操作成功", null);
         }catch (Exception e){
-            System.err.println(e);
+            e.printStackTrace();
             return Result.getResultJson(0, "操作失败", null);
         }
 
@@ -2359,7 +2359,7 @@ public class TypechoUsersController {
             response.put("msg"  , rows > 0 ? "发送成功" : "发送失败");
             return response.toString();
         }catch (Exception e){
-            System.err.println(e);
+            e.printStackTrace();
             return Result.getResultJson(0, "发送失败", null);
         }
 
@@ -2442,7 +2442,7 @@ public class TypechoUsersController {
             }
 
         }catch (Exception e){
-            System.err.println(e);
+            e.printStackTrace();
             return Result.getResultJson(0, "接口异常，请联系管理员", null);
         }
     }
@@ -2562,7 +2562,7 @@ public class TypechoUsersController {
                 redisHelp.setList(this.dataprefix+"_"+"followList_"+page+"_"+limit+"_"+uid,jsonList,3,redisTemplate);
             }
         }catch (Exception e){
-            System.err.println(e);
+            e.printStackTrace();
             if(cacheList.size()>0){
                 jsonList = cacheList;
             }
@@ -2667,7 +2667,7 @@ public class TypechoUsersController {
                 redisHelp.setList(this.dataprefix+"_"+"fanList_"+page+"_"+limit+"_"+touid,jsonList,3,redisTemplate);
             }
         }catch (Exception e){
-            System.err.println(e);
+            e.printStackTrace();
             if(cacheList.size()>0){
                 jsonList = cacheList;
             }
@@ -2766,7 +2766,7 @@ public class TypechoUsersController {
             response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
             return response.toString();
         }catch (Exception e){
-            System.err.println(e);
+            e.printStackTrace();
             return Result.getResultJson(0, "接口异常，请联系管理员", null);
         }
     }
@@ -2812,7 +2812,7 @@ public class TypechoUsersController {
             return response.toString();
 
         }catch (Exception e){
-            System.err.println(e);
+            e.printStackTrace();
             return Result.getResultJson(0, "接口异常，请联系管理员", null);
         }
 
@@ -2901,7 +2901,7 @@ public class TypechoUsersController {
                 redisHelp.setList(this.dataprefix+"_"+"violationList_"+page+"_"+limit+"_"+searchParams,jsonList,30,redisTemplate);
             }
         }catch (Exception e){
-            System.err.println(e);
+            e.printStackTrace();
             if(cacheList.size()>0){
                 jsonList = cacheList;
             }

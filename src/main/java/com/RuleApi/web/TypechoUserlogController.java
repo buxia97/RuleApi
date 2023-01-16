@@ -501,7 +501,7 @@ public class TypechoUserlogController {
             response.put("msg"  , rows > 0 ? "操作成功"+clock : "操作失败");
             return response.toString();
         }catch (Exception e){
-            System.err.println(e);
+            e.printStackTrace();
             return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
         }
 

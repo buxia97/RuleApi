@@ -129,7 +129,7 @@ public class TypechoChatController {
             response.put("msg"  , "");
             return response.toString();
         }catch (Exception e){
-            System.err.println(e);
+            e.printStackTrace();
             return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
         }
 
@@ -245,7 +245,7 @@ public class TypechoChatController {
             response.put("msg"  , rows > 0 ? "发送成功" : "发送失败");
             return response.toString();
         }catch (Exception e){
-            System.err.println(e);
+            e.printStackTrace();
             return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
         }
 
@@ -354,7 +354,7 @@ public class TypechoChatController {
                 redisHelp.setList(this.dataprefix+"_"+"myChat"+uid+"_"+page+"_"+limit,jsonList,3,redisTemplate);
             }
         }catch (Exception e){
-            System.err.println(e);
+            e.printStackTrace();
             if(cacheList.size()>0){
                 jsonList = cacheList;
             }
@@ -474,7 +474,7 @@ public class TypechoChatController {
                 redisHelp.setList(this.dataprefix+"_"+"msgList_"+chatid+"_"+page+"_"+limit,jsonList,3,redisTemplate);
             }
         }catch (Exception e){
-            System.err.println(e);
+            e.printStackTrace();
             if(cacheList.size()>0){
                 jsonList = cacheList;
             }
@@ -525,7 +525,7 @@ public class TypechoChatController {
             return response.toString();
 
         } catch (Exception e) {
-            System.err.println(e);
+            e.printStackTrace();
             return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
         }
 
@@ -565,7 +565,7 @@ public class TypechoChatController {
             return response.toString();
 
         } catch (Exception e) {
-            System.err.println(e);
+            e.printStackTrace();
             return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
         }
 
@@ -611,7 +611,7 @@ public class TypechoChatController {
             response.put("msg", rows > 0 ? "创建成功" : "创建失败");
             return response.toString();
         }catch (Exception e){
-            System.err.println(e);
+            e.printStackTrace();
             return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
         }
     }
@@ -656,7 +656,7 @@ public class TypechoChatController {
                 redisHelp.setList(this.dataprefix+"_"+"allGroup_"+page+"_"+limit,list,3,redisTemplate);
             }
         }catch (Exception e){
-            System.err.println(e);
+            e.printStackTrace();
             if(cacheList.size()>0){
                 jsonList = cacheList;
             }
