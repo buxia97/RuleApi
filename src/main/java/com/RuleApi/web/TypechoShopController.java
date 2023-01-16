@@ -156,7 +156,9 @@ public class TypechoShopController {
     @XssCleanIgnore
     @RequestMapping(value = "/addShop")
     @ResponseBody
-    public String addShop(@RequestParam(value = "params", required = false) String  params,@RequestParam(value = "token", required = false) String  token) {
+    public String addShop(@RequestParam(value = "params", required = false) String  params,
+                          @RequestParam(value = "token", required = false) String  token,
+                          @RequestParam(value = "text", required = false) String  text) {
         Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
@@ -189,6 +191,10 @@ public class TypechoShopController {
         if (StringUtils.isNotBlank(params)) {
             TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
             jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
+            //支持两种模式提交商品内容
+            if(text.length()<1){
+                text = jsonToMap.get("text").toString();
+            }
             Integer price = 0;
             if(jsonToMap.get("price")!=null){
                 price = Integer.parseInt(jsonToMap.get("price").toString());
@@ -201,21 +207,20 @@ public class TypechoShopController {
             Long date = System.currentTimeMillis();
             String userTime = String.valueOf(date).substring(0,10);
 
-            if(jsonToMap.get("text")==null){
+            if(text.length()<1){
                 return Result.getResultJson(0,"内容不能为空",null);
             }else{
-                if(jsonToMap.get("text").toString().length()>10000){
+                if(text.length()>10000){
                     return Result.getResultJson(0,"超出最大内容长度",null);
                 }
             }
             //是否开启代码拦截
             if(apiconfig.getDisableCode().equals(1)){
-                String text = jsonToMap.get("text").toString();
                 if(baseFull.haveCode(text).equals(1)){
                     return Result.getResultJson(0,"你的内容包含敏感代码，请修改后重试！",null);
                 }
             }
-
+            jsonToMap.put("text",text);
             jsonToMap.put("created",userTime);
 
             //如果用户不设置VIP折扣，则调用系统设置
@@ -224,10 +229,7 @@ public class TypechoShopController {
             if(jsonToMap.get("vipDiscount")==null){
                 jsonToMap.put("vipDiscount",vipDiscount);
             }
-            insert = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoShop.class);
 
-
-//
 //            if(group.equals("administrator")||group.equals("editor")){
 //                jsonToMap.put("status","1");
 //            }
@@ -238,7 +240,6 @@ public class TypechoShopController {
             }
             if(contentAuditlevel.equals(1)){
                 String forbidden = apiconfig.getForbidden();
-                String text = jsonToMap.get("text").toString();
                 if(forbidden!=null){
                     if(forbidden.indexOf(",") != -1){
                         String[] strarray=forbidden.split(",");
@@ -278,6 +279,7 @@ public class TypechoShopController {
                     return Result.getResultJson(0, "发布商品前，请先绑定邮箱", null);
                 }
             }
+            insert = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoShop.class);
 
             insert.setUid(uid);
         }
@@ -296,7 +298,9 @@ public class TypechoShopController {
     @XssCleanIgnore
     @RequestMapping(value = "/editShop")
     @ResponseBody
-    public String editShop(@RequestParam(value = "params", required = false) String  params,@RequestParam(value = "token", required = false) String  token) {
+    public String editShop(@RequestParam(value = "params", required = false) String  params,
+                           @RequestParam(value = "token", required = false) String  token,
+                           @RequestParam(value = "text", required = false) String  text) {
         Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
@@ -308,6 +312,10 @@ public class TypechoShopController {
         if (StringUtils.isNotBlank(params)) {
             TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
             jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
+            //支持两种模式提交评论内容
+            if(text.length()<1){
+                text = jsonToMap.get("text").toString();
+            }
             Integer price = 0;
             if(jsonToMap.get("price")!=null){
                 price = Integer.parseInt(jsonToMap.get("price").toString());
@@ -315,6 +323,7 @@ public class TypechoShopController {
                     return Result.getResultJson(0,"请输入正确的参数",null);
                 }
             }
+
             // 查询发布者是不是自己，如果是管理员则跳过
             String group = map.get("group").toString();
             if(!group.equals("administrator")&&!group.equals("editor")){
@@ -326,6 +335,13 @@ public class TypechoShopController {
                 }
 //                jsonToMap.put("status","0");
             }
+            if(text.length()<1){
+                return Result.getResultJson(0,"内容不能为空",null);
+            }else{
+                if(text.length()>10000){
+                    return Result.getResultJson(0,"超出最大内容长度",null);
+                }
+            }
             //根据后台的开关判断
             Integer contentAuditlevel = apiconfig.getContentAuditlevel();
             if(contentAuditlevel.equals(0)){
@@ -333,7 +349,6 @@ public class TypechoShopController {
             }
             if(contentAuditlevel.equals(1)){
                 String forbidden = apiconfig.getForbidden();
-                String text = jsonToMap.get("text").toString();
                 if(forbidden!=null){
                     if(forbidden.indexOf(",") != -1){
                         String[] strarray=forbidden.split(",");
@@ -362,21 +377,13 @@ public class TypechoShopController {
                     jsonToMap.put("status","1");
                 }
             }
-            if(jsonToMap.get("text")==null){
-                return Result.getResultJson(0,"内容不能为空",null);
-            }else{
-                if(jsonToMap.get("text").toString().length()>10000){
-                    return Result.getResultJson(0,"超出最大内容长度",null);
-                }
-            }
             //是否开启代码拦截
             if(apiconfig.getDisableCode().equals(1)){
-                String text = jsonToMap.get("text").toString();
                 if(baseFull.haveCode(text).equals(1)){
                     return Result.getResultJson(0,"你的内容包含敏感代码，请修改后重试！",null);
                 }
             }
-
+            jsonToMap.put("text",text);
             jsonToMap.remove("created");
             update = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoShop.class);
         }

@@ -825,6 +825,46 @@ public class InstallController {
         }else{
             text+="配置中心模块，字段uploadLevel已经存在，无需添加。";
         }
+        //查询配置中心表是否存在clockExp字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'clockExp';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `clockExp` int(11) DEFAULT '5' COMMENT '签到经验'");
+            text+="配置中心模块，字段clockExp添加完成。";
+        }else{
+            text+="配置中心模块，字段clockExp已经存在，无需添加。";
+        }
+        //查询配置中心表是否存在reviewExp字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'reviewExp';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `reviewExp` int(11) DEFAULT '1' COMMENT '评论经验'");
+            text+="配置中心模块，字段reviewExp添加完成。";
+        }else{
+            text+="配置中心模块，字段reviewExp已经存在，无需添加。";
+        }
+        //查询配置中心表是否存在postExp字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'postExp';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `postExp` int(11) DEFAULT '10' COMMENT '发布内容经验（文章，动态，帖子）'");
+            text+="配置中心模块，字段postExp添加完成。";
+        }else{
+            text+="配置中心模块，字段postExp已经存在，无需添加。";
+        }
+        //查询配置中心表是否存在violationExp字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'violationExp';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `violationExp` int(11) DEFAULT '50' COMMENT '违规扣除经验'");
+            text+="配置中心模块，字段violationExp添加完成。";
+        }else{
+            text+="配置中心模块，字段violationExp已经存在，无需添加。";
+        }
+        //查询配置中心表是否存在deleteExp字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'deleteExp';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `deleteExp` int(11) DEFAULT '20' COMMENT '删除扣除经验（文章，评论，动态，帖子）'");
+            text+="配置中心模块，字段deleteExp添加完成。";
+        }else{
+            text+="配置中心模块，字段deleteExp已经存在，无需添加。";
+        }
         try {
             Thread.sleep(500);
         } catch (InterruptedException ie) {

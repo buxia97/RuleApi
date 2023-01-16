@@ -291,7 +291,8 @@ public class TypechoUserlogController {
             Random r = new Random();
 
             String clock = "";
-
+            String type = "";
+            JSONObject clockData = new JSONObject();
             if (StringUtils.isNotBlank(params)) {
 
 
@@ -301,7 +302,7 @@ public class TypechoUserlogController {
                 Long date = System.currentTimeMillis();
                 String userTime = String.valueOf(date).substring(0,10);
                 jsonToMap.put("created",userTime);
-                String type = jsonToMap.get("type").toString();
+                type = jsonToMap.get("type").toString();
                 //只有喜欢操作不需要登陆拦截
                 if(!type.equals("likes")){
                     Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
@@ -353,6 +354,7 @@ public class TypechoUserlogController {
                         return Result.getResultJson(0,"签到功能已关闭",null);
                     }
                     int award = r.nextInt(clockMax) + 1;
+                    int addExp = apiconfig.getClockExp();
                     TypechoUserlog log = new TypechoUserlog();
                     log.setType("clock");
                     log.setUid(uid);
@@ -378,15 +380,19 @@ public class TypechoUserlogController {
 
                     TypechoUsers user = usersService.selectByKey(uid);
                     Integer account = user.getAssets();
+                    Integer oldExperience = user.getExperience();
                     Integer Assets = account + award;
-
+                    Integer newExperience = oldExperience + addExp;
                     TypechoUsers newUser = new TypechoUsers();
                     newUser.setUid(uid);
                     newUser.setAssets(Assets);
-
+                    newUser.setExperience(newExperience);
                     usersService.update(newUser);
                     jsonToMap.put("num",award);
-                    clock = "，获得"+award+"积分奖励！";
+                    //clock = "，获得"+award+"积分奖励！";
+                    clockData.put("award" , award);
+                    clockData.put("addExp" , addExp);
+
 
                     //生成签到收益日志
                     TypechoPaylog paylog = new TypechoPaylog();
@@ -498,6 +504,10 @@ public class TypechoUserlogController {
 
             JSONObject response = new JSONObject();
             response.put("code" , rows);
+            if(type.equals("clock")){
+                response.put("clockData" , clockData);
+
+            }
             response.put("msg"  , rows > 0 ? "操作成功"+clock : "操作失败");
             return response.toString();
         }catch (Exception e){

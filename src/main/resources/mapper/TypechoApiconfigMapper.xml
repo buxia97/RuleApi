@@ -77,6 +77,11 @@
         <result column="isPush" property="isPush" />
 
         <result column="uploadLevel" property="uploadLevel" />
+        <result column="clockExp" property="clockExp" />
+        <result column="reviewExp" property="reviewExp" />
+        <result column="postExp" property="postExp" />
+        <result column="violationExp" property="violationExp" />
+        <result column="deleteExp" property="deleteExp" />
 
 
     </resultMap>
@@ -155,7 +160,12 @@
         `allowDelete`,
         `contentAuditlevel`,
         `isPush`,
-        `uploadLevel`
+        `uploadLevel`,
+        `clockExp`,
+        `reviewExp`,
+        `postExp`,
+        `violationExp`,
+        `deleteExp`
     </sql>
 
     <!-- 插入数据 -->
@@ -368,7 +378,22 @@
                 `isPush`,
             </if>
             <if test ='null != uploadLevel'>
-                `uploadLevel`
+                `uploadLevel`,
+            </if>
+            <if test ='null != clockExp'>
+                `clockExp`,
+            </if>
+            <if test ='null != reviewExp'>
+                `reviewExp`,
+            </if>
+            <if test ='null != postExp'>
+                `postExp`,
+            </if>
+            <if test ='null != violationExp'>
+                `violationExp`,
+            </if>
+            <if test ='null != deleteExp'>
+                `deleteExp`
             </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
@@ -578,7 +603,22 @@
                 #{isPush},
             </if>
             <if test ='null != uploadLevel'>
-                #{uploadLevel}
+                #{uploadLevel},
+            </if>
+            <if test ='null != clockExp'>
+                #{clockExp},
+            </if>
+            <if test ='null != reviewExp'>
+                #{reviewExp},
+            </if>
+            <if test ='null != postExp'>
+                #{postExp},
+            </if>
+            <if test ='null != violationExp'>
+                #{violationExp},
+            </if>
+            <if test ='null != deleteExp'>
+                #{deleteExp}
             </if>
         </trim>
     </insert>
@@ -658,7 +698,13 @@
             <if test ='null != allowDelete'>`allowDelete` = #{allowDelete},</if>
             <if test ='null != contentAuditlevel'>`contentAuditlevel` = #{contentAuditlevel},</if>
             <if test ='null != isPush'>`isPush` = #{isPush},</if>
-            <if test ='null != uploadLevel'>`uploadLevel` = #{uploadLevel}</if>
+            <if test ='null != uploadLevel'>`uploadLevel` = #{uploadLevel},</if>
+
+            <if test ='null != clockExp'>`clockExp` = #{clockExp},</if>
+            <if test ='null != reviewExp'>`reviewExp` = #{reviewExp},</if>
+            <if test ='null != postExp'>`postExp` = #{postExp},</if>
+            <if test ='null != violationExp'>`violationExp` = #{violationExp},</if>
+            <if test ='null != deleteExp'>`deleteExp` = #{deleteExp}</if>
         </set>
         WHERE `id` = #{id}
     </update>

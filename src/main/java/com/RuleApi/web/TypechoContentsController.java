@@ -406,7 +406,9 @@ public class TypechoContentsController {
     @XssCleanIgnore
     @RequestMapping(value = "/contentsAdd")
     @ResponseBody
-    public String contentsAdd(@RequestParam(value = "params", required = false) String  params, @RequestParam(value = "token", required = false) String  token) {
+    public String contentsAdd(@RequestParam(value = "params", required = false) String  params,
+                              @RequestParam(value = "token", required = false) String  token,
+                              @RequestParam(value = "text", required = false) String  text) {
         try {
             TypechoContents insert = null;
             Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
@@ -441,14 +443,19 @@ public class TypechoContentsController {
             }
             //攻击拦截结束
 
-
+            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
             Integer isWaiting = 0;
             if (StringUtils.isNotBlank(params)) {
                 jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
+
+                //支持两种模式提交文章内容
+                if(text.length()<1){
+                    text = jsonToMap.get("text").toString();
+                }
                 //获取发布者信息
                 String uid = map.get("uid").toString();
                 //判断是否开启邮箱验证
-                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+
                 Integer isEmail = apiconfig.getIsEmail();
                 if(isEmail.equals(1)) {
                     //判断用户是否绑定了邮箱
@@ -474,24 +481,23 @@ public class TypechoContentsController {
                 if(jsonToMap.get("tag")!=null){
                     tag = jsonToMap.get("tag").toString();
                 }
-                if(jsonToMap.get("text")==null){
-                    jsonToMap.put("text","暂无内容");
+                if(text.length()<1){
+                    return Result.getResultJson(0,"文章内容不能为空",null);
                 }else{
-                    if(jsonToMap.get("text").toString().length()>60000){
+                    if(text.length()>60000){
                         return Result.getResultJson(0,"超出最大文章内容长度",null);
                     }
-                    //满足typecho的要求，加入markdown申明
-                    String text = jsonToMap.get("text").toString();
+
                     //是否开启代码拦截
                     if(apiconfig.getDisableCode().equals(1)){
                         if(baseFull.haveCode(text).equals(1)){
                             return Result.getResultJson(0,"你的内容包含敏感代码，请修改后重试！",null);
                         }
                     }
+                    //满足typecho的要求，加入markdown申明
                     boolean status = text.contains("<!--markdown-->");
                     if(!status){
                         text = "<!--markdown-->"+text;
-                        jsonToMap.put("text",text);
                     }
                 }
 
@@ -509,7 +515,6 @@ public class TypechoContentsController {
                 if(contentAuditlevel.equals(1)){
                     if(!group.equals("administrator")&&!group.equals("editor")){
                         String forbidden = apiconfig.getForbidden();
-                        String text = jsonToMap.get("text").toString();
                         if(forbidden!=null){
                             if(forbidden.indexOf(",") != -1){
                                 String[] strarray=forbidden.split(",");
@@ -541,7 +546,7 @@ public class TypechoContentsController {
                         jsonToMap.put("status","publish");
                     }
                 }
-
+                jsonToMap.put("text",text);
                 //部分字段不允许定义
                 jsonToMap.put("type","post");
                 jsonToMap.put("commentsNum",0);
@@ -628,6 +633,15 @@ public class TypechoContentsController {
             String resText = "发布成功";
             if(isWaiting>0){
                 resText = "文章将在审核后发布！";
+                //如果无需审核，则立即增加经验
+                Integer postExp = apiconfig.getPostExp();
+                TypechoUsers oldUser = usersService.selectByKey(logUid);
+                Integer experience = oldUser.getExperience();
+                experience = experience + postExp;
+                TypechoUsers updateUser = new TypechoUsers();
+                updateUser.setUid(logUid);
+                updateUser.setExperience(experience);
+                usersService.update(updateUser);
             }
 
             editFile.setLog("用户"+logUid+"请求发布了新文章");
@@ -649,7 +663,9 @@ public class TypechoContentsController {
     @XssCleanIgnore
     @RequestMapping(value = "/contentsUpdate")
     @ResponseBody
-    public String contentsUpdate(@RequestParam(value = "params", required = false) String  params, @RequestParam(value = "token", required = false) String  token) {
+    public String contentsUpdate(@RequestParam(value = "params", required = false) String  params,
+                                 @RequestParam(value = "token", required = false) String  token,
+                                 @RequestParam(value = "text", required = false) String  text) {
 
         try {
             TypechoContents update = null;
@@ -667,6 +683,13 @@ public class TypechoContentsController {
             if (StringUtils.isNotBlank(params)) {
                 TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
                 jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
+                //支持两种模式提交评论内容
+                if(text.length()<1){
+                    text = jsonToMap.get("text").toString();
+                }
+                if(text.length()<1){
+                    return Result.getResultJson(0,"文章内容不能为空",null);
+                }
                 //生成typecho数据库格式的修改时间戳
                 Long date = System.currentTimeMillis();
                 String userTime = String.valueOf(date).substring(0,10);
@@ -701,7 +724,6 @@ public class TypechoContentsController {
                     jsonToMap.put("text","暂无内容");
                 }else{
                     //满足typecho的要求，加入markdown申明
-                    String text = jsonToMap.get("text").toString();
                     //是否开启代码拦截
                     if(apiconfig.getDisableCode().equals(1)){
                         if(baseFull.haveCode(text).equals(1)){
@@ -711,11 +733,11 @@ public class TypechoContentsController {
                     boolean status = text.contains("<!--markdown-->");
                     if(!status){
                         text = "<!--markdown-->"+text;
-                        jsonToMap.put("text",text);
+
                     }
                 }
 
-
+                jsonToMap.put("text",text);
                 //部分字段不允许定义
                 jsonToMap.remove("authorId");
                 jsonToMap.remove("commentsNum");
@@ -745,7 +767,6 @@ public class TypechoContentsController {
                 }
                 if(contentAuditlevel.equals(1)){
                     String forbidden = apiconfig.getForbidden();
-                    String text = jsonToMap.get("text").toString();
                     if(forbidden!=null){
                         if(forbidden.indexOf(",") != -1){
                             String[] strarray=forbidden.split(",");
@@ -879,8 +900,9 @@ public class TypechoContentsController {
             Integer uid  = Integer.parseInt(map.get("uid").toString());
             String group = map.get("group").toString();
             TypechoContents contents = service.selectByKey(key);
+            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
             if(!group.equals("administrator")&&!group.equals("editor")){
-                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+
                 if(apiconfig.getAllowDelete().equals(0)){
                     return Result.getResultJson(0,"系统禁止删除文章",null);
                 }
@@ -906,6 +928,16 @@ public class TypechoContentsController {
             int rows = service.delete(key);
             //删除与分类的映射
             int st = relationshipsService.delete(key);
+
+            //更新用户经验
+            Integer deleteExp = apiconfig.getDeleteExp();
+            TypechoUsers oldUser = usersService.selectByKey(contents.getAuthorId());
+            Integer experience = oldUser.getExperience();
+            experience = experience - deleteExp;
+            TypechoUsers updateUser = new TypechoUsers();
+            updateUser.setUid(contents.getAuthorId());
+            updateUser.setExperience(experience);
+            usersService.update(updateUser);
             editFile.setLog("管理员"+logUid+"请求删除文章"+key);
 
 
@@ -1017,6 +1049,15 @@ public class TypechoContentsController {
                 insert.setCreated(Integer.parseInt(created));
                 inboxService.insert(insert);
             }
+            //审核后增加经验
+            Integer postExp = apiconfig.getPostExp();
+            TypechoUsers oldUser = usersService.selectByKey(info.getAuthorId());
+            Integer experience = oldUser.getExperience();
+            experience = experience + postExp;
+            TypechoUsers updateUser = new TypechoUsers();
+            updateUser.setUid(info.getAuthorId());
+            updateUser.setExperience(experience);
+            usersService.update(updateUser);
 
             editFile.setLog("管理员"+logUid+"请求审核文章"+key);
             JSONObject response = new JSONObject();

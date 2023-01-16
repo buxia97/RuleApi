@@ -130,7 +130,7 @@ public class TypechoCommentsController {
             }else{
                 TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
                 PageList<TypechoComments> pageList = service.selectPage(query, page, limit,searchKey,order);
-                List list = pageList.getList();
+                List<TypechoComments> list = pageList.getList();
                 if(list.size() < 1){
                     JSONObject noData = new JSONObject();
                     noData.put("code" , 0);
@@ -141,9 +141,9 @@ public class TypechoCommentsController {
                 }
                 for (int i = 0; i < list.size(); i++) {
                     Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
-                    String cid = json.get("cid").toString();
 
-
+                    TypechoComments comments = list.get(i);
+                    Integer cid = comments.getCid();
 
 
                     //如果存在上级评论
@@ -174,16 +174,22 @@ public class TypechoCommentsController {
                         json.put("avatar",apiconfig.getWebinfoAvatar()+"null");
                     }
                     //获取用户等级和自定义头衔
-                    Integer userid = Integer.parseInt(json.get("authorId").toString());
+                    Integer userid = comments.getAuthorId();
                     if(userid<1){
                         json.put("lv",0);
                         json.put("customize","");
                     }else{
-                        TypechoComments comments = new TypechoComments();
-                        comments.setAuthorId(userid);
-                        Integer lv = service.total(comments);
+                        TypechoComments usercomments = new TypechoComments();
+                        usercomments.setAuthorId(userid);
+                        Integer lv = service.total(usercomments);
                         TypechoUsers userinfo = usersService.selectByKey(userid);
                         if(userinfo!=null){
+                            String name = userinfo.getName();
+                            if(userinfo.getScreenName().length()>0){
+                                name = userinfo.getScreenName();
+                            }
+                            json.put("author",name);
+                            json.put("mail",userinfo.getMail());
                             json.put("lv",baseFull.getLv(lv));
                             json.put("customize",userinfo.getCustomize());
                             //判断是否为VIP
@@ -273,7 +279,10 @@ public class TypechoCommentsController {
      */
     @RequestMapping(value = "/commentsAdd")
     @ResponseBody
-    public String commentsAdd(@RequestParam(value = "params", required = false) String  params, @RequestParam(value = "token", required = false) String  token,HttpServletRequest request) {
+    public String commentsAdd(@RequestParam(value = "params", required = false) String  params,
+                              @RequestParam(value = "token", required = false) String  token,
+                              @RequestParam(value = "text", required = false) String  text,
+                              HttpServletRequest request) {
         try {
             Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
             Map jsonToMap =null;
@@ -326,24 +335,31 @@ public class TypechoCommentsController {
                 Long date = System.currentTimeMillis();
                 String created = String.valueOf(date).substring(0,10);
                 //获取评论发布者信息和填写其它不可定义的值
-                jsonToMap.put("authorId",map.get("uid").toString());
-                String postName = "";
-                if(map.get("screenName")==null){
-                    jsonToMap.put("author",map.get("name").toString());
-                    postName = map.get("name").toString();
-                }else{
-                    jsonToMap.put("author",map.get("screenName").toString());
-                    postName = map.get("screenName").toString();
+
+                //支持两种模式提交评论内容
+                if(text.length()<1){
+                    text = jsonToMap.get("text").toString();
                 }
-                if(jsonToMap.get("text")==null||jsonToMap.get("text").toString().length()>4){
+                jsonToMap.put("authorId",map.get("uid").toString());
+
+                TypechoUsers user = usersService.selectByKey(map.get("uid").toString());
+                String postName = "";
+                if(user.getScreenName().length()<1){
+                    jsonToMap.put("author",user.getName());
+                    postName = user.getName();
+                }else{
+                    jsonToMap.put("author",user.getScreenName());
+                    postName = user.getScreenName();
+                }
+                if(text.length()>4){
                     return Result.getResultJson(0,"评论长度过短",null);
                 }else{
-                    if(jsonToMap.get("text").toString().length()>1500){
+                    if(text.length()>1500){
                         return Result.getResultJson(0,"超出最大评论长度",null);
                     }
                 }
                 if(map.get("url")!=null){
-                    jsonToMap.put("url",map.get("url").toString());
+                    jsonToMap.put("url",user.getUrl());
                 }
                 if(isEmail.equals(1)){
                     if(map.get("mail")!=null){
@@ -354,7 +370,7 @@ public class TypechoCommentsController {
                 }
                 //是否开启代码拦截
                 if(apiconfig.getDisableCode().equals(1)){
-                    String text = jsonToMap.get("text").toString();
+
                     if(baseFull.haveCode(text).equals(1)){
                         return Result.getResultJson(0,"你的内容包含敏感代码，请修改后重试！",null);
                     }
@@ -366,6 +382,7 @@ public class TypechoCommentsController {
                     //文章不存在，代表评论已经失效，直接删除
                     return Result.getResultJson(0,"文章已被删除！",null);
                 }
+                jsonToMap.put("text",text);
                 jsonToMap.put("ownerId", contents.getAuthorId());
                 jsonToMap.put("created",created);
                 jsonToMap.put("type","comment");
@@ -391,7 +408,6 @@ public class TypechoCommentsController {
                 } else if(auditlevel.equals(2)){
                     //为2违禁词匹配审核
                     String forbidden = apiconfig.getForbidden();
-                    String text = jsonToMap.get("text").toString();
                     if(forbidden!=null){
                         if(forbidden.indexOf(",") != -1){
                             String[] strarray=forbidden.split(",");
@@ -414,7 +430,6 @@ public class TypechoCommentsController {
                 } else if(auditlevel.equals(3)){
                     //为2违禁词匹配拦截
                     String forbidden = apiconfig.getForbidden();
-                    String text = jsonToMap.get("text").toString();
                     if(forbidden!=null){
                         if(forbidden.indexOf(",") != -1){
                             String[] strarray=forbidden.split(",");
@@ -457,7 +472,8 @@ public class TypechoCommentsController {
                                                     "</div></div></body></html>",
                                             new String[]{pemail}, new String[]{});
                                 }catch (Exception e){
-                                    System.err.println("邮箱发信配置错误："+e);
+                                    System.err.println("邮箱发信配置错误");
+                                    e.printStackTrace();
                                 }
                             }
                         }
@@ -471,12 +487,13 @@ public class TypechoCommentsController {
                         inbox.setCreated(Integer.parseInt(created));
                         inboxService.insert(inbox);
                         if(isPush.equals(1)) {
-                            TypechoUsers user = usersService.selectByKey(pComments.getAuthorId());
-                            if(user.getClientId()!=null){
+                            TypechoUsers parentUser = usersService.selectByKey(pComments.getAuthorId());
+                            if(parentUser.getClientId()!=null){
                                 try {
-                                    pushService.sendPushMsg(user.getClientId(),title,"你有新的回复消息！","payload","comment:"+Integer.parseInt(cid));
+                                    pushService.sendPushMsg(parentUser.getClientId(),title,"你有新的回复消息！","payload","comment:"+Integer.parseInt(cid));
                                 }catch (Exception e){
-                                    System.err.println("通知发送失败："+e);
+                                    System.err.println("通知发送失败");
+                                    e.printStackTrace();
                                 }
 
                             }
@@ -498,7 +515,8 @@ public class TypechoCommentsController {
                                                     "</div></div></body></html>",
                                             new String[]{email}, new String[]{});
                                     }catch (Exception e){
-                                        System.err.println("邮箱发信配置错误："+e);
+                                        System.err.println("邮箱发信配置错误");
+                                        e.printStackTrace();
                                     }
                                 }
                             }
@@ -508,16 +526,16 @@ public class TypechoCommentsController {
                             inbox.setTouid(uid);
                             inbox.setType("comment");
                             inbox.setValue(Integer.parseInt(cid));
-                            inbox.setText(jsonToMap.get("text").toString());
+                            inbox.setText(text);
                             inbox.setCreated(Integer.parseInt(created));
                             inboxService.insert(inbox);
                             if(isPush.equals(1)) {
-                                TypechoUsers user = usersService.selectByKey(uid);
-                                if(user.getClientId()!=null){
+                                if(author.getClientId()!=null){
                                     try {
-                                        pushService.sendPushMsg(user.getClientId(),title,"你的文章有新评论！","payload","comment:"+Integer.parseInt(cid));
+                                        pushService.sendPushMsg(author.getClientId(),title,"你的文章有新评论！","payload","comment:"+Integer.parseInt(cid));
                                     }catch (Exception e){
-                                        System.err.println("通知发送失败："+e);
+                                        System.err.println("通知发送失败");
+                                        e.printStackTrace();
                                     }
 
                                 }
@@ -541,6 +559,17 @@ public class TypechoCommentsController {
             String addtext ="";
             if(cstatus.equals("waiting")){
                 addtext = "，将在审核通过后显示！";
+            }else{
+                //如果无需审核，则立即增加经验
+                Integer reviewExp = apiconfig.getReviewExp();
+                TypechoUsers oldUser = usersService.selectByKey(logUid);
+                Integer experience = oldUser.getExperience();
+                experience = experience + reviewExp;
+                TypechoUsers updateUser = new TypechoUsers();
+                updateUser.setUid(logUid);
+                updateUser.setExperience(experience);
+                usersService.update(updateUser);
+
             }
             editFile.setLog("用户"+logUid+"提交发布评论，IP："+ip);
             JSONObject response = new JSONObject();
@@ -559,7 +588,9 @@ public class TypechoCommentsController {
      */
     @RequestMapping(value = "/commentsEdit")
     @ResponseBody
-    public String commentsEdit(@RequestParam(value = "params", required = false) String  params, @RequestParam(value = "token", required = false) String  token) {
+    public String commentsEdit(@RequestParam(value = "params", required = false) String  params,
+                               @RequestParam(value = "token", required = false) String  token,
+                               @RequestParam(value = "text", required = false) String  text) {
         try {
             Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
             if(uStatus==0){
@@ -581,20 +612,24 @@ public class TypechoCommentsController {
                 if(jsonToMap.get("coid")==null){
                     return Result.getResultJson(0,"请传入评论id",null);
                 }
-                if(jsonToMap.get("text")==null){
+                //支持两种模式提交评论内容
+                if(text.length()<1){
+                    text = jsonToMap.get("text").toString();
+                }
+                if(text.length()<1){
                     return Result.getResultJson(0,"评论不能为空",null);
                 }else{
-                    if(jsonToMap.get("text").toString().length()>1500){
+                    if(text.length()>1500){
                         return Result.getResultJson(0,"超出最大评论长度",null);
                     }
                 }
                 //是否开启代码拦截
                 if(apiconfig.getDisableCode().equals(1)){
-                    String text = jsonToMap.get("text").toString();
                     if(baseFull.haveCode(text).equals(1)){
                         return Result.getResultJson(0,"你的内容包含敏感代码，请修改后重试！",null);
                     }
                 }
+                jsonToMap.put("text",text);
                 jsonToMap.remove("parent");
                 jsonToMap.remove("ownerId");
                 jsonToMap.remove("created");
@@ -676,7 +711,8 @@ public class TypechoCommentsController {
                                         "</div></div></body></html>",
                                 new String[]{pemail}, new String[]{});
                         }catch (Exception e){
-                            System.err.println("邮箱发信配置错误："+e);
+                            System.err.println("邮箱发信配置错误");
+                            e.printStackTrace();
                         }
                     }
                 }
@@ -697,7 +733,8 @@ public class TypechoCommentsController {
                         try {
                             pushService.sendPushMsg(user.getClientId(),title,"你有新的评论回复！","payload","comment:"+pComments.getCid());
                         }catch (Exception e){
-                            System.err.println("通知发送失败："+e);
+                            System.err.println("通知发送失败");
+                            e.printStackTrace();
                         }
 
                     }
@@ -719,7 +756,8 @@ public class TypechoCommentsController {
                                                 "</div></div></body></html>",
                                         new String[]{aemail}, new String[]{});
                             }catch (Exception e){
-                                System.err.println("邮箱发信配置错误："+e);
+                                System.err.println("邮箱发信配置错误");
+                                e.printStackTrace();
                             }
                         }
                     }
@@ -740,7 +778,8 @@ public class TypechoCommentsController {
                             try {
                                 pushService.sendPushMsg(user.getClientId(),title,"你的文章有新评论！","payload","comment:"+comments.getCid());
                             }catch (Exception e){
-                                System.err.println("通知发送失败："+e);
+                                System.err.println("通知发送失败");
+                                e.printStackTrace();
                             }
 
                         }
@@ -748,6 +787,16 @@ public class TypechoCommentsController {
                 }
 
             }
+            //审核后增加经验
+            Integer reviewExp = apiconfig.getReviewExp();
+            TypechoUsers oldUser = usersService.selectByKey(comments.getAuthorId());
+            Integer experience = oldUser.getExperience();
+            experience = experience + reviewExp;
+            TypechoUsers updateUser = new TypechoUsers();
+            updateUser.setUid(comments.getAuthorId());
+            updateUser.setExperience(experience);
+            usersService.update(updateUser);
+
             editFile.setLog("管理员"+logUid+"审核了评论"+key);
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );
@@ -770,24 +819,24 @@ public class TypechoCommentsController {
             if(uStatus==0){
                 return Result.getResultJson(0,"用户未登录或Token验证失败",null);
             }
+
             //String group = (String) redisHelp.getValue("userInfo"+token,"group",redisTemplate);
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer uid  = Integer.parseInt(map.get("uid").toString());
             // 查询发布者是不是自己，如果是管理员则跳过
+            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+            TypechoComments comments = service.selectByKey(key);
             String group = map.get("group").toString();
             if(!group.equals("administrator")&&!group.equals("editor")){
-                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
                 if(apiconfig.getAllowDelete().equals(0)){
                     return Result.getResultJson(0,"系统禁止删除评论",null);
                 }
-                TypechoComments comments = service.selectByKey(key);
                 Integer aid = comments.getAuthorId();
                 if(!aid.equals(uid)){
                     return Result.getResultJson(0,"你无权进行此操作",null);
                 }
 //                jsonToMap.put("status","0");
             }else{
-                TypechoComments comments = service.selectByKey(key);
                 Integer aid = comments.getAuthorId();
                 //如果管理员不是评论发布者，则发送消息给用户（但不推送通知）
                 if(!aid.equals(uid)){
@@ -803,7 +852,7 @@ public class TypechoCommentsController {
                 }
             }
             //更新文章评论数量
-            TypechoComments comments = service.selectByKey(key);
+
             Integer cid = comments.getCid();
             TypechoContents contents = new TypechoContents();
             TypechoComments sum = new TypechoComments();
@@ -813,6 +862,16 @@ public class TypechoCommentsController {
             contents.setCommentsNum(total);
             contentsService.update(contents);
             //删除
+            //更新用户经验
+            Integer deleteExp = apiconfig.getDeleteExp();
+            TypechoUsers oldUser = usersService.selectByKey(comments.getAuthorId());
+            Integer experience = oldUser.getExperience();
+            experience = experience - deleteExp;
+            TypechoUsers updateUser = new TypechoUsers();
+            updateUser.setUid(comments.getAuthorId());
+            updateUser.setExperience(experience);
+            usersService.update(updateUser);
+
             int rows = service.delete(key);
             editFile.setLog("用户"+uid+"删除了评论"+key);
             JSONObject response = new JSONObject();

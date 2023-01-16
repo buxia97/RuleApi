@@ -360,6 +360,30 @@ public class TypechoApiconfig implements Serializable {
      */
     private Integer uploadLevel;
 
+    /**
+     * clockExp
+     */
+    private Integer clockExp;
+
+    /**
+     * reviewExp
+     */
+    private Integer reviewExp;
+
+    /**
+     * poshExp
+     */
+    private Integer postExp;
+
+    /**
+     * violationExp
+     */
+    private Integer violationExp;
+
+    /**
+     * deleteExp
+     */
+    private Integer deleteExp;
 
 
 
