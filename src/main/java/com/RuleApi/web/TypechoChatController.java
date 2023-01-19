@@ -270,7 +270,8 @@ public class TypechoChatController {
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
         }
-        Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+        Map map = redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+
         Integer uid =Integer.parseInt(map.get("uid").toString());
         //查询uid时，同时查询toid
         TypechoChat query = new TypechoChat();
@@ -326,7 +327,6 @@ public class TypechoChatController {
                         if(user.getAvatar()==null){
                             if(user.getMail()!=null){
                                 String mail = user.getMail();
-
                                 if(mail.indexOf("@qq.com") != -1){
                                     String qq = mail.replace("@qq.com","");
                                     userJson.put("avatar", "https://q1.qlogo.cn/g?b=qq&nk="+qq+"&s=640");

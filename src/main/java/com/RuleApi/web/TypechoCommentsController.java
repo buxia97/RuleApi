@@ -183,7 +183,7 @@ public class TypechoCommentsController {
                         usercomments.setAuthorId(userid);
                         Integer lv = service.total(usercomments);
                         TypechoUsers userinfo = usersService.selectByKey(userid);
-                        if(userinfo!=null){
+                        if(userinfo==null){
                             String name = userinfo.getName();
                             if(userinfo.getScreenName().length()>0){
                                 name = userinfo.getScreenName();
@@ -210,10 +210,7 @@ public class TypechoCommentsController {
                                 json.put("isvip", 2);
                             }
                         }
-
                     }
-
-
                     json.put("parentComments",parentComments);
 
                     TypechoContents contentsInfo = contentsService.selectByKey(cid);
