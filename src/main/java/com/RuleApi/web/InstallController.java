@@ -836,7 +836,7 @@ public class InstallController {
         //查询配置中心表是否存在reviewExp字段
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'reviewExp';", Integer.class);
         if (i == 0){
-            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `reviewExp` int(11) DEFAULT '1' COMMENT '评论经验'");
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `reviewExp` int(11) DEFAULT '1' COMMENT '每日前三次评论经验'");
             text+="配置中心模块，字段reviewExp添加完成。";
         }else{
             text+="配置中心模块，字段reviewExp已经存在，无需添加。";
@@ -844,7 +844,7 @@ public class InstallController {
         //查询配置中心表是否存在postExp字段
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'postExp';", Integer.class);
         if (i == 0){
-            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `postExp` int(11) DEFAULT '10' COMMENT '发布内容经验（文章，动态，帖子）'");
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `postExp` int(11) DEFAULT '10' COMMENT '每日前三次发布内容经验（文章，动态，帖子）'");
             text+="配置中心模块，字段postExp添加完成。";
         }else{
             text+="配置中心模块，字段postExp已经存在，无需添加。";

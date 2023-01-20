@@ -23,6 +23,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 import org.commonmark.node.*;
@@ -48,6 +49,9 @@ public class TypechoContentsController {
 
     @Autowired
     private TypechoRelationshipsService relationshipsService;
+
+    @Autowired
+    private TypechoUserlogService userlogService;
 
     @Autowired
     private TypechoMetasService metasService;
@@ -634,15 +638,37 @@ public class TypechoContentsController {
             String resText = "发布成功";
             if(isWaiting>0){
                 resText = "文章将在审核后发布！";
+
+            }else{
                 //如果无需审核，则立即增加经验
                 Integer postExp = apiconfig.getPostExp();
-                TypechoUsers oldUser = usersService.selectByKey(logUid);
-                Integer experience = oldUser.getExperience();
-                experience = experience + postExp;
-                TypechoUsers updateUser = new TypechoUsers();
-                updateUser.setUid(logUid);
-                updateUser.setExperience(experience);
-                usersService.update(updateUser);
+
+                //生成操作记录
+                Long date = System.currentTimeMillis();
+                String created = String.valueOf(date).substring(0,10);
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+                String curtime = sdf.format(new Date(date));
+
+                TypechoUserlog userlog = new TypechoUserlog();
+                userlog.setUid(logUid);
+                //cid用于存放真实时间
+                userlog.setCid(Integer.parseInt(curtime));
+                userlog.setType("postExp");
+                Integer size = userlogService.total(userlog);
+                //只有前三次发布文章获得经验
+                if(size < 3){
+                    userlog.setNum(postExp);
+                    userlog.setCreated(Integer.parseInt(created));
+                    userlogService.insert(userlog);
+                    //修改用户资产
+                    TypechoUsers oldUser = usersService.selectByKey(logUid);
+                    Integer experience = oldUser.getExperience();
+                    experience = experience + postExp;
+                    TypechoUsers updateUser = new TypechoUsers();
+                    updateUser.setUid(logUid);
+                    updateUser.setExperience(experience);
+                    usersService.update(updateUser);
+                }
             }
 
             editFile.setLog("用户"+logUid+"请求发布了新文章");
@@ -1050,15 +1076,44 @@ public class TypechoContentsController {
                 insert.setCreated(Integer.parseInt(created));
                 inboxService.insert(insert);
             }
-            //审核后增加经验
-            Integer postExp = apiconfig.getPostExp();
-            TypechoUsers oldUser = usersService.selectByKey(info.getAuthorId());
-            Integer experience = oldUser.getExperience();
-            experience = experience + postExp;
-            TypechoUsers updateUser = new TypechoUsers();
-            updateUser.setUid(info.getAuthorId());
-            updateUser.setExperience(experience);
-            usersService.update(updateUser);
+            try{
+                if(type.equals(0)) {
+                    //审核后增加经验
+                    Integer postExp = apiconfig.getPostExp();
+
+                    //生成操作记录
+                    Long date = System.currentTimeMillis();
+                    String created = String.valueOf(date).substring(0,10);
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+                    String curtime = sdf.format(new Date(date));
+
+                    TypechoUserlog userlog = new TypechoUserlog();
+                    userlog.setUid(logUid);
+                    //cid用于存放真实时间
+                    userlog.setCid(Integer.parseInt(curtime));
+                    userlog.setType("postExp");
+                    Integer size = userlogService.total(userlog);
+                    //只有前三次发布文章获得经验
+                    if(size < 3){
+                        userlog.setNum(postExp);
+                        userlog.setCreated(Integer.parseInt(created));
+                        userlogService.insert(userlog);
+                        //修改用户资产
+                        TypechoUsers oldUser = usersService.selectByKey(logUid);
+                        Integer experience = oldUser.getExperience();
+                        experience = experience + postExp;
+                        TypechoUsers updateUser = new TypechoUsers();
+                        updateUser.setUid(logUid);
+                        updateUser.setExperience(experience);
+                        usersService.update(updateUser);
+                    }
+                }
+
+            }catch (Exception e){
+                System.out.println("经验增加出错！");
+                e.printStackTrace();
+            }
+
 
             editFile.setLog("管理员"+logUid+"请求审核文章"+key);
             JSONObject response = new JSONObject();
