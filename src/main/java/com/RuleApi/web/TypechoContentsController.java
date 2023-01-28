@@ -1306,6 +1306,9 @@ public class TypechoContentsController {
     @ResponseBody
     public String isCommnet(@RequestParam(value = "key", required = false) String  key, @RequestParam(value = "token", required = false) String  token) {
         try {
+            if(key.length()<1){
+                return Result.getResultJson(0,"参数错误",null);
+            }
             Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
             if(uStatus==0){
                 return Result.getResultJson(0,"用户未登录或Token验证失败",null);

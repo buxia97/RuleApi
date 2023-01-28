@@ -145,11 +145,16 @@ public class TypechoChatController {
                                 @RequestParam(value = "type", required = false) Integer  type,
                                 @RequestParam(value = "url", required = false) String  url) {
         try{
-            if(chatid==null||msg==null||type==null){
+            if(chatid==null||type==null){
                 return Result.getResultJson(0,"参数不正确",null);
             }
             if(type<0){
                 return Result.getResultJson(0,"参数不正确",null);
+            }
+            if(type.equals(0)){
+                if(msg.length()<1){
+                    return Result.getResultJson(0,"消息内容不能为空",null);
+                }
             }
             Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
             if(uStatus==0){
@@ -180,7 +185,9 @@ public class TypechoChatController {
                 return Result.getResultJson(0,"你的操作太频繁了",null);
             }
             //攻击拦截结束
-
+            if(baseFull.haveCode(msg).equals(1)){
+                return Result.getResultJson(0,"消息内容存在敏感代码",null);
+            }
             TypechoChat chat = service.selectByKey(chatid);
             if(chat==null){
                 return Result.getResultJson(0,"聊天室不存在",null);
@@ -662,6 +669,21 @@ public class TypechoChatController {
                     noData.put("count", 0);
                     noData.put("total", total);
                     return noData.toString();
+                }
+                for (int i = 0; i < list.size(); i++) {
+                    Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
+                    TypechoChat chat = list.get(i);
+
+                    //获取最新聊天消息
+                    Integer chatid = chat.getId();
+                    TypechoChatMsg msg = new TypechoChatMsg();
+                    msg.setCid(chatid);
+                    List<TypechoChatMsg> msgList = chatMsgService.selectList(msg);
+                    if(msgList.size()>0) {
+                        Map lastMsg = JSONObject.parseObject(JSONObject.toJSONString(msgList.get(0)), Map.class);
+                        json.put("lastMsg",lastMsg);
+                    }
+                    jsonList.add(json);
                 }
                 redisHelp.delete(this.dataprefix+"_"+"allGroup_"+page+"_"+limit,redisTemplate);
                 redisHelp.setList(this.dataprefix+"_"+"allGroup_"+page+"_"+limit,list,3,redisTemplate);
