@@ -255,7 +255,7 @@ public class InstallController {
             return "Mysql数据库连接失败或未安装";
         }
         //修改请求头
-        jdbcTemplate.execute("ALTER TABLE "+prefix+"_comments MODIFY agent varchar(500);");
+        jdbcTemplate.execute("ALTER TABLE "+prefix+"_comments MODIFY agent varchar(520);");
         //查询文章表是否存在views字段
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_contents' and column_name = 'views';", Integer.class);
         if (i == 0){

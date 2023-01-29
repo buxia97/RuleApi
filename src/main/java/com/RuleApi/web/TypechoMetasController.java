@@ -103,7 +103,7 @@ public class TypechoMetasController {
                 List<TypechoRelationships> list = pageList.getList();
                 if(list.size() < 1){
                     JSONObject noData = new JSONObject();
-                    noData.put("code" , 0);
+                    noData.put("code" , 1);
                     noData.put("msg"  , "");
                     noData.put("data" , new ArrayList());
                     noData.put("count", 0);

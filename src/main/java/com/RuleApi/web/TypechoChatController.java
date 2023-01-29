@@ -270,7 +270,7 @@ public class TypechoChatController {
         if(limit>30){
             limit = 30;
         }
-        if(order.length()<1){
+        if(order==null){
             order = "lastTime";
         }
         Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
@@ -296,7 +296,7 @@ public class TypechoChatController {
                 List<TypechoChat> list = pageList.getList();
                 if(list.size() < 1){
                     JSONObject noData = new JSONObject();
-                    noData.put("code" , 0);
+                    noData.put("code" , 1);
                     noData.put("msg"  , "");
                     noData.put("data" , new ArrayList());
                     noData.put("count", 0);
@@ -347,6 +347,7 @@ public class TypechoChatController {
                         }else{
                             userJson.put("avatar", user.getAvatar());
                         }
+                        userJson.put("uid", user.getUid());
                         userJson.put("customize", user.getCustomize());
                         userJson.put("experience",user.getExperience());
                         userJson.put("introduce", user.getIntroduce());
@@ -426,7 +427,7 @@ public class TypechoChatController {
                 List<TypechoChatMsg> list = pageList.getList();
                 if(list.size() < 1){
                     JSONObject noData = new JSONObject();
-                    noData.put("code" , 0);
+                    noData.put("code" , 1);
                     noData.put("msg"  , "");
                     noData.put("data" , new ArrayList());
                     noData.put("count", 0);
@@ -635,21 +636,33 @@ public class TypechoChatController {
     }
 
     /***
-     * 全部群聊
+     * 全部聊天
      */
-    @RequestMapping(value = "/allGroup")
+    @RequestMapping(value = "/allChat")
     @ResponseBody
     public String allGroup (@RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
-                            @RequestParam(value = "order", required = false) String  order,
-                          @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit) {
+                            @RequestParam(value = "order", required = false, defaultValue = "created") String  order,
+                            @RequestParam(value = "type", required = false, defaultValue = "1") Integer  type,
+                          @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
+                            @RequestParam(value = "token", required = false) String  token) {
         if(limit>30){
             limit = 30;
         }
-        if(order.length()<1){
-            order = "created";
-        }
         TypechoChat query = new TypechoChat();
         query.setType(1);
+        //管理员可以查看所有聊天，普通用户只能查看群聊
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+        if(uStatus==0){
+            query.setType(1);
+        }else{
+            Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+            String group = map.get("group").toString();
+            if(group.equals("administrator")||group.equals("editor")){
+                query.setType(type);
+            }
+
+        }
+
         List jsonList = new ArrayList();
         List cacheList = redisHelp.getList(this.dataprefix+"_"+"allGroup_"+page+"_"+limit,redisTemplate);
         Integer total = service.total(query);
@@ -663,7 +676,7 @@ public class TypechoChatController {
                 List<TypechoChat> list = pageList.getList();
                 if(list.size() < 1){
                     JSONObject noData = new JSONObject();
-                    noData.put("code" , 0);
+                    noData.put("code" , 1);
                     noData.put("msg"  , "");
                     noData.put("data" , new ArrayList());
                     noData.put("count", 0);
@@ -683,10 +696,70 @@ public class TypechoChatController {
                         Map lastMsg = JSONObject.parseObject(JSONObject.toJSONString(msgList.get(0)), Map.class);
                         json.put("lastMsg",lastMsg);
                     }
+                    if(type.equals(0)){
+                        //获取聊天发起人信息
+                        Integer userid = chat.getUid();
+                        Integer toUserid = chat.getToid();
+                        TypechoUsers user = usersService.selectByKey(userid);
+                        TypechoUsers toUser = usersService.selectByKey(toUserid);
+                        //获取用户信息
+                        Map userJson = new HashMap();
+                        if(user!=null){
+                            String name = user.getName();
+                            if(user.getScreenName()!=null){
+                                name = user.getScreenName();
+                            }
+                            String toName = toUser.getName();
+                            if(toUser.getScreenName()!=null){
+                                toName = toUser.getScreenName();
+                            }
+                            userJson.put("name", name);
+                            userJson.put("toName", toName);
+                            userJson.put("groupKey", user.getGroupKey());
+
+                            if(user.getAvatar()==null){
+                                if(user.getMail()!=null){
+                                    String mail = user.getMail();
+                                    if(mail.indexOf("@qq.com") != -1){
+                                        String qq = mail.replace("@qq.com","");
+                                        userJson.put("avatar", "https://q1.qlogo.cn/g?b=qq&nk="+qq+"&s=640");
+                                    }else{
+                                        userJson.put("avatar", baseFull.getAvatar(apiconfig.getWebinfoAvatar(), mail));
+                                    }
+                                    //json.put("avatar",baseFull.getAvatar(apiconfig.getWebinfoAvatar(),user.getMail()));
+                                }else{
+                                    userJson.put("avatar",apiconfig.getWebinfoAvatar()+"null");
+                                }
+                            }else{
+                                userJson.put("avatar", user.getAvatar());
+                            }
+                            userJson.put("uid", user.getUid());
+                            userJson.put("touid", toUser.getUid());
+                            userJson.put("customize", user.getCustomize());
+                            userJson.put("experience",user.getExperience());
+                            userJson.put("introduce", user.getIntroduce());
+                            //判断是否为VIP
+                            userJson.put("vip", user.getVip());
+                            userJson.put("isvip", 0);
+                            Long date = System.currentTimeMillis();
+                            String curTime = String.valueOf(date).substring(0, 10);
+                            Integer viptime  = user.getVip();
+                            if(viptime>Integer.parseInt(curTime)||viptime.equals(1)){
+                                userJson.put("isvip", 1);
+                            }
+
+                        }else{
+                            userJson.put("name", "用户已注销");
+                            userJson.put("groupKey", "");
+                            userJson.put("avatar", apiconfig.getWebinfoAvatar() + "null");
+                        }
+                        json.put("userJson",userJson);
+                    }
+
                     jsonList.add(json);
                 }
                 redisHelp.delete(this.dataprefix+"_"+"allGroup_"+page+"_"+limit,redisTemplate);
-                redisHelp.setList(this.dataprefix+"_"+"allGroup_"+page+"_"+limit,list,3,redisTemplate);
+                redisHelp.setList(this.dataprefix+"_"+"allGroup_"+page+"_"+limit,list,5,redisTemplate);
             }
         }catch (Exception e){
             e.printStackTrace();
