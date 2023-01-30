@@ -695,6 +695,9 @@ public class TypechoCommentsController {
                 return Result.getResultJson(0,"你没有操作权限",null);
             }
             TypechoComments comments = service.selectByKey(key);
+            if(comments.getStatus().equals("approved")){
+                return Result.getResultJson(0,"该评论已被通过",null);
+            }
             Integer rows = 0;
             if(type.equals(0)){
 

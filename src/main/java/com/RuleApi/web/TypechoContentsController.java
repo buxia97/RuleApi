@@ -1004,6 +1004,9 @@ public class TypechoContentsController {
             }
             Integer logUid =Integer.parseInt(map.get("uid").toString());
             TypechoContents info = service.selectByKey(key);
+            if(info.getStatus().equals("publish")){
+                return Result.getResultJson(0,"该文章已审核通过",null);
+            }
             info.setCid(Integer.parseInt(key));
             //0为审核通过，1为不通过，并发送消息
             if(type.equals(0)){

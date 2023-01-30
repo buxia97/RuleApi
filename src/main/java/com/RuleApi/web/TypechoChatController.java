@@ -142,7 +142,7 @@ public class TypechoChatController {
     public String sendMsg(@RequestParam(value = "token", required = false) String  token,
                                  @RequestParam(value = "chatid", required = false) Integer  chatid,
                                  @RequestParam(value = "msg", required = false) String  msg,
-                                @RequestParam(value = "type", required = false) Integer  type,
+                                @RequestParam(value = "type", required = false, defaultValue = "0") Integer  type,
                                 @RequestParam(value = "url", required = false) String  url) {
         try{
             if(chatid==null||type==null){
@@ -166,7 +166,7 @@ public class TypechoChatController {
 
             String isSilence = redisHelp.getRedis(this.dataprefix+"_"+uid+"_silence",redisTemplate);
             if(isSilence!=null){
-                return Result.getResultJson(0,"你已被禁言，请耐心等待",null);
+                return Result.getResultJson(0,"你已被暂时禁言，请耐心等待",null);
             }
 
             //登录情况下，刷数据攻击拦截
@@ -192,47 +192,51 @@ public class TypechoChatController {
             if(chat==null){
                 return Result.getResultJson(0,"聊天室不存在",null);
             }
-            if(msg.length()>1500){
-                return Result.getResultJson(0,"最大发言字数不超过1500",null);
-            }
-            //违禁词拦截
-            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
-            String forbidden = apiconfig.getForbidden();
-            Integer intercept = 0;
-            if(forbidden!=null){
-                if(forbidden.indexOf(",") != -1){
-                    String[] strarray=forbidden.split(",");
-                    for (int i = 0; i < strarray.length; i++){
-                        String str = strarray[i];
-                        if(msg.indexOf(str) != -1){
+            if(type.equals(0)){
+                if(msg.length()>1500){
+                    return Result.getResultJson(0,"最大发言字数不超过1500",null);
+                }
+                //违禁词拦截
+                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+                String forbidden = apiconfig.getForbidden();
+                Integer intercept = 0;
+                if(forbidden!=null){
+                    if(forbidden.indexOf(",") != -1){
+                        String[] strarray=forbidden.split(",");
+                        for (int i = 0; i < strarray.length; i++){
+                            String str = strarray[i];
+                            if(msg.indexOf(str) != -1){
+                                intercept = 1;
+                            }
+                        }
+                    }else{
+                        if(msg.indexOf(forbidden) != -1){
                             intercept = 1;
                         }
                     }
-                }else{
-                    if(msg.indexOf(forbidden) != -1){
-                        intercept = 1;
-                    }
                 }
-            }
-            if(intercept.equals(1)){
-                //以十分钟为检测周期，违禁一次刷新一次，等于4次则禁言
-                String isIntercept = redisHelp.getRedis(this.dataprefix+"_"+uid+"_isIntercept",redisTemplate);
-                if(isIntercept==null){
-                    redisHelp.setRedis(this.dataprefix+"_"+uid+"_isIntercept","1",600,redisTemplate);
-                }else{
-                    Integer frequency = Integer.parseInt(isIntercept) + 1;
-                    if(frequency==4){
-                        securityService.safetyMessage("用户ID："+uid+"，在聊天发送消息接口多次触发违禁，请及时确认处理。","system");
-                        redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",3600,redisTemplate);
-                        return Result.getResultJson(0,"你已多次发送违禁词，被禁言一小时！",null);
+                if(intercept.equals(1)){
+                    //以十分钟为检测周期，违禁一次刷新一次，等于4次则禁言
+                    String isIntercept = redisHelp.getRedis(this.dataprefix+"_"+uid+"_isIntercept",redisTemplate);
+                    if(isIntercept==null){
+                        redisHelp.setRedis(this.dataprefix+"_"+uid+"_isIntercept","1",600,redisTemplate);
                     }else{
-                        redisHelp.setRedis(this.dataprefix+"_"+uid+"_isIntercept",frequency.toString(),600,redisTemplate);
-                    }
+                        Integer frequency = Integer.parseInt(isIntercept) + 1;
+                        if(frequency==4){
+                            securityService.safetyMessage("用户ID："+uid+"，在聊天发送消息接口多次触发违禁，请及时确认处理。","system");
+                            redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",3600,redisTemplate);
+                            return Result.getResultJson(0,"你已多次发送违禁词，被禁言一小时！",null);
+                        }else{
+                            redisHelp.setRedis(this.dataprefix+"_"+uid+"_isIntercept",frequency.toString(),600,redisTemplate);
+                        }
 
+                    }
+                    return Result.getResultJson(0,"消息存在违禁词",null);
                 }
-                return Result.getResultJson(0,"消息存在违禁词",null);
+                //违禁词拦截结束
             }
-            //违禁词拦截结束
+
+
             Long date = System.currentTimeMillis();
             String created = String.valueOf(date).substring(0,10);
             TypechoChatMsg msgbox = new TypechoChatMsg();
@@ -241,6 +245,7 @@ public class TypechoChatController {
             msgbox.setText(msg);
             msgbox.setCreated(Integer.parseInt(created));
             msgbox.setUrl(url);
+            msgbox.setType(type);
             int rows = chatMsgService.insert(msgbox);
             //更新聊天室最后消息时间
             TypechoChat newChat = new TypechoChat();
@@ -600,7 +605,7 @@ public class TypechoChatController {
                              @RequestParam(value = "token", required = false) String  token) {
 
         if(name.length()<1||pic.length()<1){
-            return Result.getResultJson(0,"必须设置聊天室图片和名称",null);
+            return Result.getResultJson(0,"必须设置群聊图片和名称",null);
         }
         try{
             Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
@@ -632,6 +637,136 @@ public class TypechoChatController {
         }catch (Exception e){
             e.printStackTrace();
             return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
+        }
+    }
+    /***
+     * 管理员编辑群聊
+     */
+    @RequestMapping(value = "/editGroup")
+    @ResponseBody
+    public String editGroup(@RequestParam(value = "name", required = false) String  name,
+                             @RequestParam(value = "id", required = false) Integer  id,
+                             @RequestParam(value = "pic", required = false) String  pic,
+                             @RequestParam(value = "token", required = false) String  token) {
+
+        if(name.length()<1||pic.length()<1){
+            return Result.getResultJson(0,"必须设置群聊图片和名称",null);
+        }
+        try{
+            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+            if(uStatus==0){
+                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+            }
+            Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+            String group = map.get("group").toString();
+            if(!group.equals("administrator")&&!group.equals("editor")){
+                return Result.getResultJson(0,"你没有操作权限",null);
+            }
+            TypechoChat oldChat = service.selectByKey(id);
+            if(oldChat == null){
+                return Result.getResultJson(0,"群聊不存在",null);
+            }
+            Integer uid =Integer.parseInt(map.get("uid").toString());
+            TypechoChat chat = new TypechoChat();
+            chat.setId(id);
+            chat.setName(name);
+            chat.setPic(pic);
+
+            int rows = service.update(chat);
+            editFile.setLog("管理员"+uid+"请求修改聊天室");
+            JSONObject response = new JSONObject();
+            response.put("code", rows > 0 ? 1 : 0);
+            response.put("data", rows);
+            response.put("msg", rows > 0 ? "修改成功" : "修改失败");
+            return response.toString();
+        }catch (Exception e){
+            e.printStackTrace();
+            return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
+        }
+    }
+    /***
+     * 群聊信息
+     */
+    @RequestMapping(value = "/groupInfo")
+    @ResponseBody
+    public String groupInfo(@RequestParam(value = "id", required = false) Integer  id) {
+
+        try{
+            Map groupInfoJson = new HashMap<String, String>();
+            Map cacheInfo = redisHelp.getMapValue(this.dataprefix+"_"+"groupInfoJson_"+id,redisTemplate);
+
+            if(cacheInfo.size()>0){
+                groupInfoJson = cacheInfo;
+            }else{
+                TypechoChat chat;
+                chat = service.selectByKey(id);
+                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+                //获取创建人信息
+                Integer userid = chat.getUid();
+                TypechoUsers user = usersService.selectByKey(userid);
+                Map userJson = new HashMap();
+                if(user!=null){
+                    String name = user.getName();
+                    if(user.getScreenName()!=null){
+                        name = user.getScreenName();
+                    }
+                    userJson.put("name", name);
+                    userJson.put("groupKey", user.getGroupKey());
+                    userJson.put("uid", user.getUid());
+                    if(user.getAvatar()==null){
+                        if(user.getMail()!=null){
+                            String mail = user.getMail();
+
+                            if(mail.indexOf("@qq.com") != -1){
+                                String qq = mail.replace("@qq.com","");
+                                userJson.put("avatar", "https://q1.qlogo.cn/g?b=qq&nk="+qq+"&s=640");
+                            }else{
+                                userJson.put("avatar", baseFull.getAvatar(apiconfig.getWebinfoAvatar(), mail));
+                            }
+                            //json.put("avatar",baseFull.getAvatar(apiconfig.getWebinfoAvatar(),user.getMail()));
+                        }else{
+                            userJson.put("avatar",apiconfig.getWebinfoAvatar()+"null");
+                        }
+                    }else{
+                        userJson.put("avatar", user.getAvatar());
+                    }
+                    userJson.put("customize", user.getCustomize());
+                    userJson.put("introduce", user.getIntroduce());
+                    //判断是否为VIP
+                    userJson.put("vip", user.getVip());
+                    userJson.put("isvip", 0);
+                    Long date = System.currentTimeMillis();
+                    String curTime = String.valueOf(date).substring(0, 10);
+                    Integer viptime  = user.getVip();
+                    if(viptime>Integer.parseInt(curTime)||viptime.equals(1)){
+                        userJson.put("isvip", 1);
+                    }
+
+                }else{
+                    userJson.put("name", "用户已注销");
+                    userJson.put("groupKey", "");
+                    userJson.put("avatar", apiconfig.getWebinfoAvatar() + "null");
+                }
+                groupInfoJson.put("userJson",userJson);
+                groupInfoJson = JSONObject.parseObject(JSONObject.toJSONString(chat), Map.class);
+                redisHelp.delete(this.dataprefix+"_"+"groupInfoJson_"+id,redisTemplate);
+                redisHelp.setKey(this.dataprefix+"_"+"groupInfoJson_"+id,groupInfoJson,10,redisTemplate);
+            }
+
+            JSONObject response = new JSONObject();
+
+            response.put("code", 1);
+            response.put("msg", "");
+            response.put("data", groupInfoJson);
+
+            return response.toString();
+        }catch (Exception e){
+            JSONObject response = new JSONObject();
+            response.put("code", 1);
+            response.put("msg", "");
+            response.put("data", null);
+
+            return response.toString();
         }
     }
 

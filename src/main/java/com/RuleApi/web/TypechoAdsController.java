@@ -366,6 +366,9 @@ public class TypechoAdsController {
         }
         String uid = map.get("uid").toString();
         TypechoAds ads = service.selectByKey(id);
+        if(ads.getStatus().equals(1)){
+            return Result.getResultJson(0, "该广告已审核通过", null);
+        }
         ads.setStatus(1);
         Integer rows = service.update(ads);
         editFile.setLog("管理员"+uid+"请求审核广告"+id);
