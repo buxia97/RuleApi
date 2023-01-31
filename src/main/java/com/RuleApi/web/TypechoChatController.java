@@ -921,6 +921,7 @@ public class TypechoChatController {
                         Map lastMsg = JSONObject.parseObject(JSONObject.toJSONString(msgList.get(0)), Map.class);
                         json.put("lastMsg",lastMsg);
                     }
+
                     if(type.equals(0)){
                         //获取聊天发起人信息
                         Integer userid = chat.getUid();
@@ -984,7 +985,7 @@ public class TypechoChatController {
                     jsonList.add(json);
                 }
                 redisHelp.delete(this.dataprefix+"_"+"allGroup_"+page+"_"+limit,redisTemplate);
-                redisHelp.setList(this.dataprefix+"_"+"allGroup_"+page+"_"+limit,list,5,redisTemplate);
+                redisHelp.setList(this.dataprefix+"_"+"allGroup_"+page+"_"+limit,jsonList,5,redisTemplate);
             }
         }catch (Exception e){
             e.printStackTrace();
