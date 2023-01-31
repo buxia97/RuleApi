@@ -162,6 +162,7 @@ public class TypechoChatController {
             }
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer uid =Integer.parseInt(map.get("uid").toString());
+            String group = map.get("group").toString();
             //禁言判断
 
             String isSilence = redisHelp.getRedis(this.dataprefix+"_"+uid+"_silence",redisTemplate);
@@ -184,6 +185,7 @@ public class TypechoChatController {
                 }
                 return Result.getResultJson(0,"你的操作太频繁了",null);
             }
+
             //攻击拦截结束
             if(baseFull.haveCode(msg).equals(1)){
                 return Result.getResultJson(0,"消息内容存在敏感代码",null);
@@ -191,6 +193,17 @@ public class TypechoChatController {
             TypechoChat chat = service.selectByKey(chatid);
             if(chat==null){
                 return Result.getResultJson(0,"聊天室不存在",null);
+            }
+            if(!chat.getBan().equals(0)){
+
+                if(group.equals("administrator")&&group.equals("editor")){
+                    if(chat.getType().equals(0)){
+                        return Result.getResultJson(0,"该聊天室已开启屏蔽机制",null);
+                    }else{
+                        return Result.getResultJson(0,"管理员已开启禁言",null);
+                    }
+                }
+
             }
             if(type.equals(0)){
                 if(msg.length()>1500){
@@ -685,6 +698,83 @@ public class TypechoChatController {
         }
     }
     /***
+     * 屏蔽和全群禁言
+     */
+    @RequestMapping(value = "/banChat")
+    @ResponseBody
+    public String banChat(@RequestParam(value = "id", required = false) Integer  id,
+                            @RequestParam(value = "token", required = false) String  token,
+                          @RequestParam(value = "type", required = false, defaultValue = "1") Integer  type) {
+        try {
+            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+            if(uStatus==0){
+                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+            }
+
+            Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+            String group = map.get("group").toString();
+            Integer uid =Integer.parseInt(map.get("uid").toString());
+            TypechoChat oldChat = service.selectByKey(id);
+            if(oldChat == null){
+                return Result.getResultJson(0,"聊天室不存在",null);
+            }
+            if(oldChat.getType().equals(1)){
+                if(!group.equals("administrator")&&!group.equals("editor")){
+                    return Result.getResultJson(0,"你没有操作权限",null);
+                }
+//                if(!oldChat.getBan().equals(0)){
+//                    return Result.getResultJson(0,"该群聊已被全体禁言",null);
+//                }
+            }else{
+                if(oldChat.getUid().equals(uid)&&oldChat.getToid().equals(uid)){
+                    return Result.getResultJson(0,"你没有操作权限",null);
+                }
+                if(!oldChat.getBan().equals(0)){
+                    if(!oldChat.getBan().equals(uid)){
+                        return Result.getResultJson(0,"你没有操作权限",null);
+                    }
+
+                }
+
+            }
+            TypechoChat chat = new TypechoChat();
+            chat.setId(id);
+            if(type.equals(1)){
+                chat.setBan(uid);
+            }else{
+                chat.setBan(0);
+            }
+
+            int rows = service.update(chat);
+            //发送系统消息
+            Long date = System.currentTimeMillis();
+            String created = String.valueOf(date).substring(0,10);
+            TypechoChatMsg msgbox = new TypechoChatMsg();
+            msgbox.setCid(id);
+            msgbox.setUid(uid);
+            if(type.equals(1)) {
+                msgbox.setText("ban");
+            }else{
+                msgbox.setText("noban");
+            }
+            msgbox.setCreated(Integer.parseInt(created));
+            msgbox.setType(4);
+            chatMsgService.insert(msgbox);
+            editFile.setLog("用户"+uid+"请求屏蔽or禁言聊天室");
+            JSONObject response = new JSONObject();
+            response.put("code", rows > 0 ? 1 : 0);
+            response.put("data", rows);
+            response.put("msg", rows > 0 ? "操作成功" : "操作失败");
+            return response.toString();
+        }catch (Exception e){
+            e.printStackTrace();
+            return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
+        }
+
+
+
+    }
+    /***
      * 群聊信息
      */
     @RequestMapping(value = "/groupInfo")
@@ -750,7 +840,7 @@ public class TypechoChatController {
                 groupInfoJson.put("userJson",userJson);
                 groupInfoJson = JSONObject.parseObject(JSONObject.toJSONString(chat), Map.class);
                 redisHelp.delete(this.dataprefix+"_"+"groupInfoJson_"+id,redisTemplate);
-                redisHelp.setKey(this.dataprefix+"_"+"groupInfoJson_"+id,groupInfoJson,10,redisTemplate);
+                redisHelp.setKey(this.dataprefix+"_"+"groupInfoJson_"+id,groupInfoJson,5,redisTemplate);
             }
 
             JSONObject response = new JSONObject();

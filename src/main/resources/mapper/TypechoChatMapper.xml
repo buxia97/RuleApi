@@ -12,6 +12,7 @@
         <result column="type" property="type" />
         <result column="name" property="name" />
         <result column="pic" property="pic" />
+        <result column="ban" property="ban" />
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -22,7 +23,8 @@
         `lastTime`,
         `type`,
         `name`,
-        `pic`
+        `pic`,
+        `ban`
     </sql>
 
     <!-- 插入数据 -->
@@ -51,7 +53,10 @@
                 `name`,
             </if>
             <if test ='null != pic'>
-                `pic`
+                `pic`,
+            </if>
+            <if test ='null != ban'>
+                `ban`
             </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
@@ -77,7 +82,10 @@
                 #{name},
             </if>
             <if test ='null != pic'>
-                #{pic}
+                #{pic},
+            </if>
+            <if test ='null != ban'>
+                #{ban}
             </if>
         </trim>
     </insert>
@@ -94,7 +102,8 @@
                 #{curr.lastTime},
                 #{curr.type},
                 #{curr.name},
-                #{curr.pic}
+                #{curr.pic},
+                #{curr.ban}
             )
         </foreach>
     </insert>
@@ -109,7 +118,8 @@
             <if test ='null != lastTime'>`lastTime` = #{lastTime},</if>
             <if test ='null != type'>`type` = #{type},</if>
             <if test ='null != name'>`name` = #{name},</if>
-            <if test ='null != pic'>`pic` = #{pic}</if>
+            <if test ='null != pic'>`pic` = #{pic},</if>
+            <if test ='null != ban'>`ban` = #{ban}</if>
         </set>
         WHERE `id` = #{id}
     </update>

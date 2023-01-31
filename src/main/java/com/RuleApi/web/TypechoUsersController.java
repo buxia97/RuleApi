@@ -275,6 +275,9 @@ public class TypechoUsersController {
                 Integer commentsNum = commentsService.total(comments);
                 //用户资产和创建时间
                 TypechoUsers user = service.selectByKey(uid);
+                if(user==null){
+                    return Result.getResultJson(0,"用户不存在",null);
+                }
                 Integer assets = user.getAssets();
                 Integer created = user.getCreated();
                 Integer experience = user.getExperience();
@@ -308,6 +311,12 @@ public class TypechoUsersController {
                 fan.setUid(uid);
                 Integer followNum = fanService.total(follow);
 
+                String isSilence = redisHelp.getRedis(this.dataprefix+"_"+uid+"_silence",redisTemplate);
+                if(isSilence!=null){
+                    json.put("systemBan", 1);
+                }else{
+                    json.put("systemBan", 0);
+                }
                 json.put("contentsNum", contentsNum);
                 json.put("commentsNum", commentsNum);
                 json.put("assets", assets);
@@ -317,7 +326,7 @@ public class TypechoUsersController {
                 json.put("fanNum", fanNum);
                 json.put("followNum", followNum);
                 redisHelp.delete(this.dataprefix+"_"+"userData_"+uid,redisTemplate);
-                redisHelp.setKey(this.dataprefix+"_"+"userData_"+uid,json,this.userCache,redisTemplate);
+                redisHelp.setKey(this.dataprefix+"_"+"userData_"+uid,json,5,redisTemplate);
             }
 
         }catch (Exception e){

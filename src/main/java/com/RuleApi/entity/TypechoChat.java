@@ -53,4 +53,9 @@ public class TypechoChat implements Serializable {
      * 图片地址（群聊）
      */
     private String pic;
+
+    /**
+     * 屏蔽和全体禁言，存操作人id
+     */
+    private Integer ban;
 }
