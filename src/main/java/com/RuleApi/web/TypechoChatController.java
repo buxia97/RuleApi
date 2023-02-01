@@ -285,8 +285,8 @@ public class TypechoChatController {
                             @RequestParam(value = "token", required = false) String  token,
                             @RequestParam(value = "order", required = false) String  order,
                             @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit) {
-        if(limit>30){
-            limit = 30;
+        if(limit>50){
+            limit = 50;
         }
         if(order==null){
             order = "lastTime";
@@ -301,6 +301,7 @@ public class TypechoChatController {
         //查询uid时，同时查询toid
         TypechoChat query = new TypechoChat();
         query.setUid(uid);
+        query.setType(0);
         List jsonList = new ArrayList();
         List cacheList = redisHelp.getList(this.dataprefix+"_"+"myChat"+uid+"_"+page+"_"+limit,redisTemplate);
         Integer total = service.total(query);
@@ -426,8 +427,8 @@ public class TypechoChatController {
         if(chat==null){
             return Result.getResultJson(0,"聊天室不存在",null);
         }
-        if(limit>30){
-            limit = 30;
+        if(limit>100){
+            limit = 100;
         }
 
         TypechoChatMsg query = new TypechoChatMsg();
@@ -662,9 +663,6 @@ public class TypechoChatController {
                              @RequestParam(value = "pic", required = false) String  pic,
                              @RequestParam(value = "token", required = false) String  token) {
 
-        if(name.length()<1||pic.length()<1){
-            return Result.getResultJson(0,"必须设置群聊图片和名称",null);
-        }
         try{
             Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
             if(uStatus==0){
@@ -870,8 +868,8 @@ public class TypechoChatController {
                             @RequestParam(value = "type", required = false, defaultValue = "1") Integer  type,
                           @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
                             @RequestParam(value = "token", required = false) String  token) {
-        if(limit>30){
-            limit = 30;
+        if(limit>50){
+            limit = 50;
         }
         TypechoChat query = new TypechoChat();
         query.setType(1);
