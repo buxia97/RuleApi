@@ -264,7 +264,7 @@ public class TypechoChatController {
             TypechoChat newChat = new TypechoChat();
             newChat.setId(chatid);
             newChat.setLastTime(Integer.parseInt(created));
-            service.update(chat);
+            service.update(newChat);
             JSONObject response = new JSONObject();
             response.put("code" , rows);
             response.put("msg"  , rows > 0 ? "发送成功" : "发送失败");
@@ -338,6 +338,8 @@ public class TypechoChatController {
                     Integer userid = chat.getUid();
                     if(userid.equals(uid)){
                         userid = chat.getToid();
+                    }else{
+                        userid = chat.getUid();
                     }
                     TypechoUsers user = usersService.selectByKey(userid);
                     //获取用户信息
@@ -427,8 +429,8 @@ public class TypechoChatController {
         if(chat==null){
             return Result.getResultJson(0,"聊天室不存在",null);
         }
-        if(limit>100){
-            limit = 100;
+        if(limit>300){
+            limit = 300;
         }
 
         TypechoChatMsg query = new TypechoChatMsg();
