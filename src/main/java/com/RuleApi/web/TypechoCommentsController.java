@@ -162,33 +162,49 @@ public class TypechoCommentsController {
                         }
                     }
 
-                    if(json.get("mail")!=null){
+
+                    //获取用户等级和自定义头衔
+                    Integer userid = comments.getAuthorId();
+                    String avatar = apiconfig.getWebinfoAvatar() + "null";
+                    if(userid<1){
                         String mail = json.get("mail").toString();
 
                         if(mail.indexOf("@qq.com") != -1){
                             String qq = mail.replace("@qq.com","");
-                            json.put("avatar", "https://q1.qlogo.cn/g?b=qq&nk="+qq+"&s=640");
+                            avatar = "https://q1.qlogo.cn/g?b=qq&nk="+qq+"&s=640";
                         }else{
-                            json.put("avatar", baseFull.getAvatar(apiconfig.getWebinfoAvatar(), mail));
+                            avatar = baseFull.getAvatar(apiconfig.getWebinfoAvatar(), mail);
                         }
-                    }else{
-                        json.put("avatar",apiconfig.getWebinfoAvatar()+"null");
-                    }
-                    //获取用户等级和自定义头衔
-                    Integer userid = comments.getAuthorId();
-                    if(userid<1){
                         json.put("lv",0);
                         json.put("customize","");
+                        json.put("avatar",avatar);
                     }else{
                         TypechoComments usercomments = new TypechoComments();
                         usercomments.setAuthorId(userid);
                         Integer lv = service.total(usercomments);
                         TypechoUsers userinfo = usersService.selectByKey(userid);
-                        if(userinfo==null){
+                        if(userinfo!=null){
                             String name = userinfo.getName();
-                            if(userinfo.getScreenName().length()>0){
+                            if(userinfo.getScreenName()!=null&&userinfo.getScreenName()!=""){
                                 name = userinfo.getScreenName();
                             }
+
+                            if(userinfo.getAvatar()!=null&&userinfo.getAvatar()!=""){
+                                avatar = userinfo.getAvatar();
+                            }else{
+                                if(userinfo.getMail()!=null&&userinfo.getMail()!=""){
+                                    String mail = userinfo.getMail();
+
+                                    if(mail.indexOf("@qq.com") != -1){
+                                        String qq = mail.replace("@qq.com","");
+                                        avatar = "https://q1.qlogo.cn/g?b=qq&nk="+qq+"&s=640";
+                                    }else{
+                                        avatar = baseFull.getAvatar(apiconfig.getWebinfoAvatar(), userinfo.getMail());
+                                    }
+                                    //avatar = baseFull.getAvatar(apiconfig.getWebinfoAvatar(), author.getMail());
+                                }
+                            }
+                            json.put("avatar",avatar);
                             json.put("author",name);
                             json.put("mail",userinfo.getMail());
                             json.put("lv",baseFull.getLv(lv));
@@ -197,9 +213,7 @@ public class TypechoCommentsController {
                             //判断是否为VIP
                             json.put("isvip", 0);
                             json.put("vip", userinfo.getVip());
-                            if(userinfo.getAvatar()!=null){
-                                json.put("avatar",userinfo.getAvatar());
-                            }
+
                             Long date = System.currentTimeMillis();
                             String curTime = String.valueOf(date).substring(0, 10);
                             Integer viptime  = userinfo.getVip();
@@ -244,14 +258,15 @@ public class TypechoCommentsController {
 
 
                     jsonList.add(json);
-                    if(uStatus!=0){
-                        redisHelp.delete(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchKey+"_"+searchParams+"_"+uid+"_"+order,redisTemplate);
-                        redisHelp.setList(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchKey+"_"+searchParams+"_"+uid+"_"+order,jsonList,this.CommentCache,redisTemplate);
-                    }else{
-                        redisHelp.delete(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchKey+"_"+searchParams+"_"+order,redisTemplate);
-                        redisHelp.setList(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchKey+"_"+searchParams+"_"+order,jsonList,this.CommentCache,redisTemplate);
-                    }
 
+
+                }
+                if(uStatus!=0){
+                    redisHelp.delete(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchKey+"_"+searchParams+"_"+uid+"_"+order,redisTemplate);
+                    redisHelp.setList(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchKey+"_"+searchParams+"_"+uid+"_"+order,jsonList,this.CommentCache,redisTemplate);
+                }else{
+                    redisHelp.delete(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchKey+"_"+searchParams+"_"+order,redisTemplate);
+                    redisHelp.setList(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchKey+"_"+searchParams+"_"+order,jsonList,this.CommentCache,redisTemplate);
                 }
             }
         }catch (Exception e){
@@ -336,7 +351,7 @@ public class TypechoCommentsController {
                 //获取评论发布者信息和填写其它不可定义的值
 
                 //支持两种模式提交评论内容
-                if(text.length()<1){
+                if(text==null){
                     text = jsonToMap.get("text").toString();
                 }
                 jsonToMap.put("authorId",map.get("uid").toString());
@@ -631,7 +646,7 @@ public class TypechoCommentsController {
                     return Result.getResultJson(0,"请传入评论id",null);
                 }
                 //支持两种模式提交评论内容
-                if(text.length()<1){
+                if(text==null){
                     text = jsonToMap.get("text").toString();
                 }
                 if(text.length()<1){

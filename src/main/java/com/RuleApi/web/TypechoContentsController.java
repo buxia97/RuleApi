@@ -469,7 +469,7 @@ public class TypechoContentsController {
                 jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
 
                 //支持两种模式提交文章内容
-                if(text.length()<1){
+                if(text==null){
                     text = jsonToMap.get("text").toString();
                 }
                 //获取发布者信息
@@ -730,7 +730,7 @@ public class TypechoContentsController {
                 TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
                 jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
                 //支持两种模式提交评论内容
-                if(text.length()<1){
+                if(text==null){
                     text = jsonToMap.get("text").toString();
                 }
                 if(text.length()<1){

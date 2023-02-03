@@ -192,7 +192,7 @@ public class TypechoShopController {
             TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
             jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
             //支持两种模式提交商品内容
-            if(text.length()<1){
+            if(text==null){
                 text = jsonToMap.get("text").toString();
             }
             Integer price = 0;
@@ -313,7 +313,7 @@ public class TypechoShopController {
             TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
             jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
             //支持两种模式提交评论内容
-            if(text.length()<1){
+            if(text==null){
                 text = jsonToMap.get("text").toString();
             }
             Integer price = 0;
