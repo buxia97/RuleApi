@@ -131,6 +131,7 @@ public class TypechoContentsController {
                     return Result.getResultJson(0,"该文章不存在",null);
                 }
                 String text = typechoContents.getText();
+                String oldText = typechoContents.getText();
                 //要做处理将typecho的图片插入格式变成markdown
                 List imgList = baseFull.getImageSrc(text);
                 List codeList = baseFull.getImageCode(text);
@@ -185,6 +186,12 @@ public class TypechoContentsController {
                 contensjson.put("category",metas);
                 contensjson.put("tag",tags);
                 contensjson.put("text",text);
+                boolean status = oldText.contains("<!--markdown-->");
+                if(status){
+                    contensjson.put("markdown",1);
+                }else{
+                    contensjson.put("markdown",0);
+                }
 
                 //文章阅读量增加
                 String  agent =  request.getHeader("User-Agent");
@@ -371,6 +378,12 @@ public class TypechoContentsController {
                     }
 
                     String text = json.get("text").toString();
+                    boolean status = text.contains("<!--markdown-->");
+                    if(status){
+                        json.put("markdown",1);
+                    }else{
+                        json.put("markdown",0);
+                    }
                     List imgList = baseFull.getImageSrc(text);
 
                     text = baseFull.toStrByChinese(text);
@@ -379,6 +392,7 @@ public class TypechoContentsController {
                     json.put("text",text.length()>400 ? text.substring(0,400) : text);
                     json.put("category",metas);
                     json.put("tag",tags);
+
                     json.remove("password");
 
                     jsonList.add(json);
@@ -413,7 +427,8 @@ public class TypechoContentsController {
     @ResponseBody
     public String contentsAdd(@RequestParam(value = "params", required = false) String  params,
                               @RequestParam(value = "token", required = false) String  token,
-                              @RequestParam(value = "text", required = false) String  text) {
+                              @RequestParam(value = "text", required = false) String  text,
+                              @RequestParam(value = "isMd", required = false, defaultValue = "1") Integer  isMd) {
         try {
             TypechoContents insert = null;
             Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
@@ -500,10 +515,13 @@ public class TypechoContentsController {
                         }
                     }
                     //满足typecho的要求，加入markdown申明
-                    boolean status = text.contains("<!--markdown-->");
-                    if(!status){
-                        text = "<!--markdown-->"+text;
+                    if(isMd.equals(1)){
+                        boolean status = text.contains("<!--markdown-->");
+                        if(!status){
+                            text = "<!--markdown-->"+text;
+                        }
                     }
+
                 }
 
                 //写入创建时间和作者
@@ -692,7 +710,8 @@ public class TypechoContentsController {
     @ResponseBody
     public String contentsUpdate(@RequestParam(value = "params", required = false) String  params,
                                  @RequestParam(value = "token", required = false) String  token,
-                                 @RequestParam(value = "text", required = false) String  text) {
+                                 @RequestParam(value = "text", required = false) String  text,
+                                 @RequestParam(value = "isMd", required = false, defaultValue = "1") Integer  isMd) {
 
         try {
             TypechoContents update = null;
@@ -757,11 +776,14 @@ public class TypechoContentsController {
                             return Result.getResultJson(0,"你的内容包含敏感代码，请修改后重试！",null);
                         }
                     }
-                    boolean status = text.contains("<!--markdown-->");
-                    if(!status){
-                        text = "<!--markdown-->"+text;
+                    if(isMd.equals(1)){
+                        boolean status = text.contains("<!--markdown-->");
+                        if(!status){
+                            text = "<!--markdown-->"+text;
 
+                        }
                     }
+
                 }
 
                 jsonToMap.put("text",text);

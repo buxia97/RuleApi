@@ -165,9 +165,16 @@ public class TypechoMetasController {
                     //处理文章内容为简介
 
                     String text = contentsInfo.get("text").toString();
+                    boolean status = text.contains("<!--markdown-->");
+                    if(status){
+                        contentsInfo.put("markdown",1);
+                    }else{
+                        contentsInfo.put("markdown",0);
+                    }
                     List imgList = baseFull.getImageSrc(text);
                     text = baseFull.toStrByChinese(text);
                     contentsInfo.put("text",text.length()>400 ? text.substring(0,400) : text);
+
                     contentsInfo.put("images",imgList);
                     //加入自定义字段，分类和标签
                     //加入自定义字段信息，这里取消注释即可开启，但是数据库查询会消耗性能
