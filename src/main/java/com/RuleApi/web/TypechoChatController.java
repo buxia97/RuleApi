@@ -324,6 +324,8 @@ public class TypechoChatController {
                 }
                 for (int i = 0; i < list.size(); i++) {
                     Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
+
+
                     TypechoChat chat = list.get(i);
 
                     //获取最新聊天消息
@@ -335,6 +337,9 @@ public class TypechoChatController {
                         Map lastMsg = JSONObject.parseObject(JSONObject.toJSONString(msgList.get(0)), Map.class);
                         json.put("lastMsg",lastMsg);
                     }
+                    Integer msgNum = chatMsgService.total(msg);
+                    json.put("msgNum",msgNum);
+
                     Integer userid = chat.getUid();
                     if(userid.equals(uid)){
                         userid = chat.getToid();
@@ -921,6 +926,8 @@ public class TypechoChatController {
                         Map lastMsg = JSONObject.parseObject(JSONObject.toJSONString(msgList.get(0)), Map.class);
                         json.put("lastMsg",lastMsg);
                     }
+                    Integer msgNum = chatMsgService.total(msg);
+                    json.put("msgNum",msgNum);
 
                     if(type.equals(0)){
                         //获取聊天发起人信息
