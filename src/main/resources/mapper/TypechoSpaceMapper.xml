@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.RuleApi.dao.TypechoSpaceDao">
+
+    <resultMap id="BaseResultMap" type="com.RuleApi.entity.TypechoSpace" >
+        <result column="id" property="id" />
+        <result column="uid" property="uid" />
+        <result column="created" property="created" />
+        <result column="modified" property="modified" />
+        <result column="text" property="text" />
+        <result column="pic" property="pic" />
+        <result column="type" property="type" />
+        <result column="likes" property="likes" />
+        <result column="toid" property="toid" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        `id`,
+        `uid`,
+        `created`,
+        `modified`,
+        `text`,
+        `pic`,
+        `type`,
+        `likes`,
+        `toid`
+    </sql>
+
+    <!-- 插入数据 -->
+    <insert id="insert" parameterType="com.RuleApi.entity.TypechoSpace">
+        INSERT INTO typecho_space
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test ='null != id'>
+                `id`,
+            </if>
+            <if test ='null != uid'>
+                `uid`,
+            </if>
+            <if test ='null != created'>
+                `created`,
+            </if>
+            <if test ='null != modified'>
+                `modified`,
+            </if>
+            <if test ='null != text'>
+                `text`,
+            </if>
+            <if test ='null != pic'>
+                `pic`,
+            </if>
+            <if test ='null != type'>
+                `type`,
+            </if>
+            <if test ='null != likes'>
+                `likes`,
+            </if>
+            <if test ='null != toid'>
+                `toid`
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test ='null != id'>
+                #{id},
+            </if>
+            <if test ='null != uid'>
+                #{uid},
+            </if>
+            <if test ='null != created'>
+                #{created},
+            </if>
+            <if test ='null != modified'>
+                #{modified},
+            </if>
+            <if test ='null != text'>
+                #{text},
+            </if>
+            <if test ='null != pic'>
+                #{pic},
+            </if>
+            <if test ='null != type'>
+                #{type},
+            </if>
+            <if test ='null != likes'>
+                #{likes},
+            </if>
+            <if test ='null != toid'>
+                #{toid}
+            </if>
+        </trim>
+    </insert>
+
+    <!-- 批量插入数据 -->
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO typecho_space ( <include refid="Base_Column_List" /> ) VALUES
+        <foreach collection="list" item="curr" index="index" separator=",">
+            (
+                #{curr.id},
+                #{curr.uid},
+                #{curr.created},
+                #{curr.modified},
+                #{curr.text},
+                #{curr.pic},
+                #{curr.type},
+                #{curr.likes},
+                #{curr.toid}
+            )
+        </foreach>
+    </insert>
+
+    <!-- 更新 -->
+    <update id="update" parameterType="com.RuleApi.entity.TypechoSpace">
+        UPDATE typecho_space
+        <set>
+            <if test ='null != uid'>`uid` = #{uid},</if>
+            <if test ='null != created'>`created` = #{created},</if>
+            <if test ='null != modified'>`modified` = #{modified},</if>
+            <if test ='null != text'>`text` = #{text},</if>
+            <if test ='null != pic'>`pic` = #{pic},</if>
+            <if test ='null != type'>`type` = #{type},</if>
+            <if test ='null != likes'>`likes` = #{likes},</if>
+            <if test ='null != toid'>`toid` = #{toid}</if>
+        </set>
+        WHERE `id` = #{id}
+    </update>
+
+    <!-- 删除 -->
+    <delete id="delete">
+        DELETE FROM typecho_space
+        WHERE `id` = #{key}
+    </delete>
+
+    <!-- 批量删除 -->
+    <delete id="batchDelete" parameterType = "java.util.List">
+        DELETE FROM typecho_space WHERE id IN
+        <foreach collection="list"  item="item" open="(" separator="," close=")"  >
+            #{item}
+        </foreach>
+    </delete>
+
+    <!-- 主键查询 -->
+    <select id="selectByKey" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM typecho_space
+        WHERE `id` = #{key}
+    </select>
+
+    <!-- 条件查询 -->
+    <select id="selectList" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM typecho_space
+        <where>
+            <if test ='null != id'>
+                and `id` = #{id}
+            </if>
+            <if test ='null != uid'>
+                and `uid` = #{uid}
+            </if>
+            <if test ='null != created'>
+                and `created` = #{created}
+            </if>
+            <if test ='null != modified'>
+                and `modified` = #{modified}
+            </if>
+            <if test ='null != text'>
+                and `text` = #{text}
+            </if>
+            <if test ='null != pic'>
+                and `pic` = #{pic}
+            </if>
+            <if test ='null != type'>
+                and `type` = #{type}
+            </if>
+            <if test ='null != likes'>
+                and `likes` = #{likes}
+            </if>
+            <if test ='null != toid'>
+                and `toid` = #{toid}
+            </if>
+        </where>
+    </select>
+
+    <!-- 分页条件查询 -->
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM typecho_space
+        <where>
+            <if test ='null != typechoSpace.id'>
+                and `id` = #{typechoSpace.id}
+            </if>
+            <if test ='null != typechoSpace.uid'>
+                and `uid` = #{typechoSpace.uid}
+            </if>
+            <if test ='null != typechoSpace.created'>
+                and `created` = #{typechoSpace.created}
+            </if>
+            <if test ='null != typechoSpace.modified'>
+                and `modified` = #{typechoSpace.modified}
+            </if>
+            <if test ='null != typechoSpace.text'>
+                and `text` = #{typechoSpace.text}
+            </if>
+            <if test ='null != typechoSpace.pic'>
+                and `pic` = #{typechoSpace.pic}
+            </if>
+            <if test ='null != typechoSpace.type'>
+                and `type` = #{typechoSpace.type}
+            </if>
+            <if test ='null != typechoSpace.likes'>
+                and `likes` = #{typechoSpace.likes}
+            </if>
+            <if test ='null != typechoSpace.toid'>
+                and `toid` = #{typechoSpace.toid}
+            </if>
+        </where>
+        limit #{page,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
+    </select>
+
+    <!-- 总量查询 -->
+    <select id="total" resultType="java.lang.Integer">
+        SELECT count(*) FROM typecho_space
+        <where>
+            <if test ='null != id'>
+                and `id` = #{id}
+            </if>
+            <if test ='null != uid'>
+                and `uid` = #{uid}
+            </if>
+            <if test ='null != created'>
+                and `created` = #{created}
+            </if>
+            <if test ='null != modified'>
+                and `modified` = #{modified}
+            </if>
+            <if test ='null != text'>
+                and `text` = #{text}
+            </if>
+            <if test ='null != pic'>
+                and `pic` = #{pic}
+            </if>
+            <if test ='null != type'>
+                and `type` = #{type}
+            </if>
+            <if test ='null != likes'>
+                and `likes` = #{likes}
+            </if>
+            <if test ='null != toid'>
+                and `toid` = #{toid}
+            </if>
+        </where>
+    </select>
+</mapper>

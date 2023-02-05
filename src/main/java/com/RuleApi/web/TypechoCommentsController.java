@@ -309,7 +309,7 @@ public class TypechoCommentsController {
             //登录情况下，刷数据攻击拦截
             String isSilence = redisHelp.getRedis(this.dataprefix+"_"+logUid+"_silence",redisTemplate);
             if(isSilence!=null){
-                return Result.getResultJson(0,"你已被禁言，请耐心等待",null);
+                return Result.getResultJson(0,"你的操作太频繁了，请稍后再试",null);
             }
             String isRepeated = redisHelp.getRedis(this.dataprefix+"_"+logUid+"_isRepeated",redisTemplate);
             if(isRepeated==null){
