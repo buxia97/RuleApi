@@ -1102,6 +1102,7 @@ public class TypechoUsersController {
                 jsonToMap.remove("assets");
                 jsonToMap.remove("customize");
                 jsonToMap.remove("vip");
+                jsonToMap.remove("posttime");
             }
             insert = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoUsers.class);
             int rows = service.insert(insert);

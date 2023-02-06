@@ -56,6 +56,11 @@ public interface TypechoFanDao {
     List<TypechoFan> selectPage (@Param("typechoFan") TypechoFan typechoFan, @Param("page") Integer page, @Param("pageSize") Integer pageSize);
 
     /**
+     * [分页条件查询]
+     **/
+    List<TypechoFan> selectUserPage (@Param("typechoFan") TypechoFan typechoFan, @Param("page") Integer page, @Param("pageSize") Integer pageSize);
+
+    /**
      * [总量查询]
      **/
     int total(TypechoFan typechoFan);

@@ -117,4 +117,10 @@ public class TypechoUsers implements Serializable {
      */
     private Integer bantime;
 
+    /**
+     * 最新发布时间
+     */
+    private Integer posttime;
+
+
 }

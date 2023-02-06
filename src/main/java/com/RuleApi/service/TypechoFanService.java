@@ -54,6 +54,11 @@ public interface TypechoFanService {
     PageList<TypechoFan> selectPage (TypechoFan typechoFan, Integer page, Integer pageSize);
 
     /**
+     * [分页条件查询]
+     **/
+    PageList<TypechoFan> selectUserPage (TypechoFan typechoFan, Integer page, Integer pageSize);
+
+    /**
      * [总量查询]
      **/
     int total(TypechoFan typechoFan);

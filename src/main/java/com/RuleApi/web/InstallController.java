@@ -378,6 +378,14 @@ public class InstallController {
         }else{
             text+="用户模块，字段bantime已经存在，无需添加。";
         }
+        //查询用户表是否存在posttime字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_users' and column_name = 'posttime';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_users ADD posttime integer(10) DEFAULT 0;");
+            text+="用户模块，字段posttime添加完成。";
+        }else{
+            text+="用户模块，字段posttime已经存在，无需添加。";
+        }
 
         //查询分类标签表是否存在imgurl字段
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_metas' and column_name = 'imgurl';", Integer.class);
@@ -925,11 +933,7 @@ public class InstallController {
         }else{
             text+="消息通知模块已经存在，无需添加。";
         }
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException ie) {
-            Thread.currentThread().interrupt();
-        }
+
         //关注模块
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_fan';", Integer.class);
         if (i == 0){
@@ -959,6 +963,11 @@ public class InstallController {
             text+="违规记录模块创建完成。";
         }else{
             text+="违规记录模块已经存在，无需添加。";
+        }
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
         }
         //聊天室模块
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_chat';", Integer.class);
@@ -1017,6 +1026,25 @@ public class InstallController {
             text+="聊天记录模块创建完成。";
         }else{
             text+="聊天记录模块已经存在，无需添加。";
+        }
+        //动态模块
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_space';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("CREATE TABLE `"+prefix+"space` (" +
+                    "  `id` int(11) NOT NULL AUTO_INCREMENT," +
+                    "  `uid` int(11) DEFAULT '0' COMMENT '发布者'," +
+                    "  `created` int(10) unsigned DEFAULT '0' COMMENT '发布时间'," +
+                    "  `modified` int(10) unsigned DEFAULT '0' COMMENT '修改时间'," +
+                    "  `text` text CHARACTER SET utf8mb4 COMMENT '内容'," +
+                    "  `pic` text COMMENT '图片，自己拆分',\n" +
+                    "  `type` int(2) DEFAULT NULL COMMENT '0普通动态，1转发和发布文章，2转发动态，3动态评论'," +
+                    "  `likes` int(10) DEFAULT '0' COMMENT '喜欢动态的数量'," +
+                    "  `toid` int(10) DEFAULT '0' COMMENT '文章id，动态id等'," +
+                    "  PRIMARY KEY (`id`)\n" +
+                    ") ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='个人动态表';");
+            text+="动态模块创建完成。";
+        }else{
+            text+="动态模块已经存在，无需添加。";
         }
         text+=" ------ 执行结束，安装执行完成";
 

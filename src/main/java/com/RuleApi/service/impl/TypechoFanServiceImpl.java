@@ -82,6 +82,31 @@ public class TypechoFanServiceImpl implements TypechoFanService {
 	}
 
 	@Override
+	public PageList<TypechoFan> selectUserPage(TypechoFan typechoFan, Integer offset, Integer pageSize) {
+		PageList<TypechoFan> pageList = new PageList<>();
+
+		int total = this.total(typechoFan);
+
+		Integer totalPage;
+		if (total % pageSize != 0) {
+			totalPage = (total /pageSize) + 1;
+		} else {
+			totalPage = total /pageSize;
+		}
+
+		int page = (offset - 1) * pageSize;
+
+		List<TypechoFan> list = dao.selectPage(typechoFan, page, pageSize);
+
+		pageList.setList(list);
+		pageList.setStartPageNo(offset);
+		pageList.setPageSize(pageSize);
+		pageList.setTotalCount(total);
+		pageList.setTotalPageCount(totalPage);
+		return pageList;
+	}
+
+	@Override
 	public int total(TypechoFan typechoFan) {
 		return dao.total(typechoFan);
 	}

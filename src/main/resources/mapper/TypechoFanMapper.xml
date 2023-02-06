@@ -8,6 +8,29 @@
         <result column="created" property="created" />
         <result column="uid" property="uid" />
         <result column="touid" property="touid" />
+        <collection property="users" ofType="com.RuleApi.entity.TypechoUsers">
+            <id  property="uid"  column="touid" />
+            <result column="name" property="name" />
+            <result column="password" property="password" />
+            <result column="mail" property="mail" />
+            <result column="url" property="url" />
+            <result column="screenName" property="screenName" />
+            <result column="created" property="created" />
+            <result column="activated" property="activated" />
+            <result column="logged" property="logged" />
+            <result column="group" property="groupKey" />
+            <result column="authCode" property="authCode" />
+            <result column="introduce" property="introduce" />
+            <result column="assets" property="assets" />
+            <result column="address" property="address" />
+            <result column="pay" property="pay" />
+            <result column="customize" property="customize" />
+            <result column="avatar" property="avatar" />
+            <result column="experience" property="experience" />
+            <result column="clientId" property="clientId" />
+            <result column="bantime" property="bantime" />
+            <result column="posttime" property="posttime" />
+        </collection>
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -15,6 +38,13 @@
         `created`,
         `uid`,
         `touid`
+    </sql>
+    <sql id="User_Column_List">
+        f.id,
+        f.created,
+        f.uid,
+        f.touid,
+        u.posttime,
     </sql>
 
     <!-- 插入数据 -->
@@ -133,8 +163,32 @@
                 and `touid` = #{typechoFan.touid}
             </if>
         </where>
+        order by created desc
         limit #{page,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
     </select>
+
+    <!-- 分页联表条件查询 -->
+    <select id="selectUserPage" resultMap="BaseResultMap">
+        SELECT <include refid="User_Column_List" />
+        FROM ${prefix}_fan f inner join ${prefix}_users u on f.touid = u.uid
+        <where>
+            <if test ='null != typechoFan.id'>
+                and f.id = #{typechoFan.id}
+            </if>
+            <if test ='null != typechoFan.created'>
+                and f.created = #{typechoFan.created}
+            </if>
+            <if test ='null != typechoFan.uid'>
+                and f.uid = #{typechoFan.uid}
+            </if>
+            <if test ='null != typechoFan.touid'>
+                and f.touid = #{typechoFan.touid}
+            </if>
+        </where>
+        order by u.posttime desc
+        limit #{page,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
+    </select>
+
 
     <!-- 总量查询 -->
     <select id="total" resultType="java.lang.Integer">

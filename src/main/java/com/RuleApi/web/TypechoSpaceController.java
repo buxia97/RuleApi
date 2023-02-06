@@ -53,8 +53,9 @@ public class TypechoSpaceController {
     @Autowired
     private RedisTemplate redisTemplate;
 
+
     @Autowired
-    private PushService pushService;
+    private TypechoInboxService inboxService;
 
     RedisHelp redisHelp =new RedisHelp();
     ResultAll Result = new ResultAll();
@@ -109,7 +110,7 @@ public class TypechoSpaceController {
                 if(frequency==4){
                     securityService.safetyMessage("用户ID："+uid+"，在聊天发送消息接口疑似存在攻击行为，请及时确认处理。","system");
                     redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",600,redisTemplate);
-                    return Result.getResultJson(0,"你的发言过于频繁，已被禁言十分钟！",null);
+                    return Result.getResultJson(0,"你的操作过于频繁，已被禁言十分钟！",null);
                 }else{
                     redisHelp.setRedis(this.dataprefix+"_"+uid+"_isAddSpace",frequency.toString(),5,redisTemplate);
                 }
@@ -166,7 +167,13 @@ public class TypechoSpaceController {
             space.setToid(toid);
             space.setCreated(Integer.parseInt(created));
             space.setModified(Integer.parseInt(created));
+            //修改用户最新发布时间
+            TypechoUsers user = new TypechoUsers();
+            user.setUid(uid);
+            user.setPosttime(Integer.parseInt(created));
+            usersService.update(user);
             int rows = service.insert(space);
+            editFile.setLog("用户"+uid+"发布了新动态。");
             JSONObject response = new JSONObject();
             response.put("code" , rows);
             response.put("msg"  , rows > 0 ? "发布成功" : "发布失败");
@@ -227,7 +234,7 @@ public class TypechoSpaceController {
                 if(frequency==4){
                     securityService.safetyMessage("用户ID："+uid+"，在聊天发送消息接口疑似存在攻击行为，请及时确认处理。","system");
                     redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",600,redisTemplate);
-                    return Result.getResultJson(0,"你的发言过于频繁，已被禁言十分钟！",null);
+                    return Result.getResultJson(0,"你的操作过于频繁，已被禁言十分钟！",null);
                 }else{
                     redisHelp.setRedis(this.dataprefix+"_"+uid+"_isAddSpace",frequency.toString(),5,redisTemplate);
                 }
@@ -292,6 +299,7 @@ public class TypechoSpaceController {
             space.setCreated(Integer.parseInt(created));
             space.setModified(Integer.parseInt(created));
             int rows = service.insert(space);
+            editFile.setLog("用户"+uid+"修改了动态"+id);
             JSONObject response = new JSONObject();
             response.put("code" , rows);
             response.put("msg"  , rows > 0 ? "保存成功" : "保存失败");
@@ -376,9 +384,6 @@ public class TypechoSpaceController {
                 jsonList = cacheList;
             }else{
 
-
-                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
-
                 PageList<TypechoSpace> pageList = service.selectPage(query, page, limit,order,searchKey);
                 List<TypechoSpace> list = pageList.getList();
                 if(list.size() < 1){
@@ -401,10 +406,20 @@ public class TypechoSpaceController {
 
                     }
                     json.put("userJson",userJson);
+                    if (uStatus != 0) {
+                        TypechoFan fan = new TypechoFan();
+                        fan.setUid(uid);
+                        fan.setTouid(space.getUid());
+                        Integer isFollow = fanService.total(fan);
+                        json.put("isFollow",isFollow);
+                    }else{
+                        json.put("isFollow",0);
+                    }
+
                     jsonList.add(json);
                 }
                 redisHelp.delete(this.dataprefix+"_"+"spaceList_"+page+"_"+limit,redisTemplate);
-                redisHelp.setList(this.dataprefix+"_"+"spaceList_"+page+"_"+limit,jsonList,20,redisTemplate);
+                redisHelp.setList(this.dataprefix+"_"+"spaceList_"+page+"_"+limit,jsonList,5,redisTemplate);
             }
         }catch (Exception e){
             e.printStackTrace();
@@ -419,6 +434,142 @@ public class TypechoSpaceController {
         response.put("count", jsonList.size());
         response.put("total", total);
         return response.toString();
+    }
+    /***
+     * 我关注的人的动态
+     */
+    @RequestMapping(value = "/myFollowSpace")
+    @ResponseBody
+    public String followList(@RequestParam(value = "token", required = false) String  token,
+                             @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
+                             @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit) {
+        if(limit>50){
+            limit = 50;
+        }
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+        if(uStatus==0){
+            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+        }
+        Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+        Integer uid =Integer.parseInt(map.get("uid").toString());
+        TypechoFan query = new TypechoFan();
+        List jsonList = new ArrayList();
+        List cacheList = redisHelp.getList(this.dataprefix+"_"+"myFollowSpace_"+page+"_"+limit+"_"+uid,redisTemplate);
+        query.setUid(uid);
+        Integer total = fanService.total(query);
+        try{
+            if(cacheList.size()>0){
+                jsonList = cacheList;
+            }else{
+                PageList<TypechoFan> pageList = fanService.selectUserPage(query, page, limit);
+                List<TypechoFan> list = pageList.getList();
+                if(list.size() < 1){
+                    JSONObject noData = new JSONObject();
+                    noData.put("code" , 1);
+                    noData.put("msg"  , "");
+                    noData.put("data" , new ArrayList());
+                    noData.put("count", 0);
+                    noData.put("total", total);
+                    return noData.toString();
+                }
+                for (int i = 0; i < list.size(); i++) {
+                    Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
+                    TypechoFan fan = list.get(i);
+                    Integer userid = fan.getTouid();
+                    //获取用户信息
+                    Map userJson = UserStatus.getUserInfo(userid,apiconfigService,usersService);
+                    json.put("userJson",userJson);
+                    //获取用户动态数据
+                    TypechoSpace space = new TypechoSpace();
+                    space.setUid(userid);
+                    List<TypechoSpace> spaceList = service.selectList(space);
+                    if(spaceList.size()>0){
+                        space = spaceList.get(0);
+                        Map spaceJson = JSONObject.parseObject(JSONObject.toJSONString(space), Map.class);
+                        json.put("spaceJson",spaceJson);
+                    }
+                    json.put("spaceNum",spaceList.size());
+                    jsonList.add(json);
+                }
+                redisHelp.delete(this.dataprefix+"_"+"myFollowSpace_"+page+"_"+limit+"_"+uid,redisTemplate);
+                redisHelp.setList(this.dataprefix+"_"+"myFollowSpace_"+page+"_"+limit+"_"+uid,jsonList,3,redisTemplate);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+            if(cacheList.size()>0){
+                jsonList = cacheList;
+            }
+        }
+        JSONObject response = new JSONObject();
+        response.put("code" , 1);
+        response.put("msg"  , "");
+        response.put("data" , jsonList);
+        response.put("count", jsonList.size());
+        response.put("total", total);
+        return response.toString();
+
+    }
+
+    /***
+     * 动态删除
+     */
+    @RequestMapping(value = "/spaceDelete")
+    @ResponseBody
+    public String spaceDelete(@RequestParam(value = "id", required = false) String  id, @RequestParam(value = "token", required = false) String  token) {
+        try {
+            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+            if(uStatus==0){
+                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+            }
+
+            //String group = (String) redisHelp.getValue("userInfo"+token,"group",redisTemplate);
+            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            Integer uid  = Integer.parseInt(map.get("uid").toString());
+            // 查询发布者是不是自己，如果是管理员则跳过
+            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+            TypechoSpace space = service.selectByKey(id);
+            String group = map.get("group").toString();
+            if(!group.equals("administrator")&&!group.equals("editor")){
+                if(!space.getUid().equals(uid)){
+                    return Result.getResultJson(0,"你没有操作权限",null);
+                }
+            }else{
+                Integer aid = space.getUid();
+                //如果管理员不是评论发布者，则发送消息给用户（但不推送通知）
+                if(!aid.equals(uid)){
+                    Long date = System.currentTimeMillis();
+                    String created = String.valueOf(date).substring(0,10);
+                    TypechoInbox insert = new TypechoInbox();
+                    insert.setUid(uid);
+                    insert.setTouid(aid);
+                    insert.setType("system");
+                    insert.setText("你的动态【"+space.getText()+"】已被删除");
+                    insert.setCreated(Integer.parseInt(created));
+                    inboxService.insert(insert);
+                }
+            }
+
+            //更新用户经验
+            Integer deleteExp = apiconfig.getDeleteExp();
+            TypechoUsers oldUser = usersService.selectByKey(space.getUid());
+            Integer experience = oldUser.getExperience();
+            experience = experience - deleteExp;
+            TypechoUsers updateUser = new TypechoUsers();
+            updateUser.setUid(space.getUid());
+            updateUser.setExperience(experience);
+            usersService.update(updateUser);
+
+            int rows = service.delete(id);
+            editFile.setLog("用户"+uid+"删除了动态"+id);
+            JSONObject response = new JSONObject();
+            response.put("code" ,rows > 0 ? 1: 0 );
+            response.put("data" , rows);
+            response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
+            return response.toString();
+        }catch (Exception e){
+            e.printStackTrace();
+            return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
+        }
     }
 
 }
