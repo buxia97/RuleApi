@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -123,30 +124,47 @@ public class TypechoShopController {
     @RequestMapping(value = "/shopInfo")
     @ResponseBody
     public String shopInfo(@RequestParam(value = "key", required = false) String  key,@RequestParam(value = "token", required = false) String  token) {
-        TypechoShop info =  service.selectByKey(key);
-        Map shopinfo = JSONObject.parseObject(JSONObject.toJSONString(info), Map.class);
-        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-
-        if(uStatus==0){
-
-            shopinfo.remove("value");
-        }else{
-            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
-            Integer uid  = Integer.parseInt(map.get("uid").toString());
-            //如果登陆，判断是否购买过
-            TypechoUserlog log = new TypechoUserlog();
-            log.setType("buy");
-            log.setUid(uid);
-            log.setCid(Integer.parseInt(key));
-            Integer isBuy = userlogService.total(log);
-            //判断自己是不是发布者
-            Integer aid = info.getUid();
-            if(!uid.equals(aid)&&isBuy < 1){
-                shopinfo.remove("value");
+        Map shopInfoJson = new HashMap<String, String>();
+        try{
+            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+            Map cacheInfo = null;
+            if(uStatus==0){
+                cacheInfo = redisHelp.getMapValue(this.dataprefix+"_"+"shopInfo"+key,redisTemplate);
             }
+            if(cacheInfo.size()>0){
+                shopInfoJson = cacheInfo;
+            }else{
+                TypechoShop info =  service.selectByKey(key);
+                Map shopinfo = JSONObject.parseObject(JSONObject.toJSONString(info), Map.class);
+                if(uStatus==0){
+                    shopinfo.remove("value");
+                    redisHelp.delete(this.dataprefix+"_"+"spaceInfo_"+key,redisTemplate);
+                    redisHelp.setKey(this.dataprefix+"_"+"spaceInfo_"+key,shopInfoJson,10,redisTemplate);
+                }else{
+                    Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+                    Integer uid  = Integer.parseInt(map.get("uid").toString());
+                    //如果登陆，判断是否购买过
+                    TypechoUserlog log = new TypechoUserlog();
+                    log.setType("buy");
+                    log.setUid(uid);
+                    log.setCid(Integer.parseInt(key));
+                    Integer isBuy = userlogService.total(log);
+                    //判断自己是不是发布者
+                    Integer aid = info.getUid();
+                    if(!uid.equals(aid)&&isBuy < 1){
+                        shopinfo.remove("value");
+                    }
+                    shopInfoJson = shopinfo;
+                }
+            }
+
+        }catch (Exception e){
+            e.printStackTrace();
         }
-        JSONObject JsonMap = JSON.parseObject(JSON.toJSONString(shopinfo),JSONObject.class);
+        JSONObject JsonMap = JSON.parseObject(JSON.toJSONString(shopInfoJson),JSONObject.class);
         return JsonMap.toJSONString();
+
+
 
     }
 

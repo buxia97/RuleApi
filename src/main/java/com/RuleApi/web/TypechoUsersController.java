@@ -2189,48 +2189,7 @@ public class TypechoUsersController {
                     Integer userid = inbox.getUid();
                     TypechoUsers user = service.selectByKey(userid);
                     //获取用户信息
-                    Map userJson = new HashMap();
-                    if(user!=null){
-                        String name = user.getName();
-                        if(user.getScreenName()!=null){
-                            name = user.getScreenName();
-                        }
-                        userJson.put("name", name);
-                        userJson.put("groupKey", user.getGroupKey());
-
-                        if(user.getAvatar()==null){
-                            if(user.getMail()!=null){
-                                String mail = user.getMail();
-
-                                if(mail.indexOf("@qq.com") != -1){
-                                    String qq = mail.replace("@qq.com","");
-                                    json.put("avatar", "https://q1.qlogo.cn/g?b=qq&nk="+qq+"&s=640");
-                                }else{
-                                    json.put("avatar", baseFull.getAvatar(apiconfig.getWebinfoAvatar(), mail));
-                                }
-                                //json.put("avatar",baseFull.getAvatar(apiconfig.getWebinfoAvatar(),user.getMail()));
-                            }else{
-                                json.put("avatar",apiconfig.getWebinfoAvatar()+"null");
-                            }
-                        }else{
-                            json.put("avatar", user.getAvatar());
-                        }
-                        userJson.put("customize", user.getCustomize());
-                        //判断是否为VIP
-                        userJson.put("vip", user.getVip());
-                        userJson.put("isvip", 0);
-                        Long date = System.currentTimeMillis();
-                        String curTime = String.valueOf(date).substring(0, 10);
-                        Integer viptime  = user.getVip();
-                        if(viptime>Integer.parseInt(curTime)||viptime.equals(1)){
-                            userJson.put("isvip", 1);
-                        }
-
-                    }else{
-                        userJson.put("name", "用户已注销");
-                        userJson.put("groupKey", "");
-                        userJson.put("avatar", apiconfig.getWebinfoAvatar() + "null");
-                    }
+                    Map userJson = UserStatus.getUserInfo(userid,apiconfigService,service);
                     json.put("userJson",userJson);
                     if(inbox.getType().equals("comment")){
                         TypechoContents contentsInfo = contentsService.selectByKey(inbox.getValue());
@@ -2522,49 +2481,7 @@ public class TypechoUsersController {
                     Integer userid = fan.getTouid();
                     TypechoUsers user = service.selectByKey(userid);
                     //获取用户信息
-                    Map userJson = new HashMap();
-                    if(user!=null){
-                        String name = user.getName();
-                        if(user.getScreenName()!=null){
-                            name = user.getScreenName();
-                        }
-                        userJson.put("name", name);
-                        userJson.put("groupKey", user.getGroupKey());
-
-                        if(user.getAvatar()==null){
-                            if(user.getMail()!=null){
-                                String mail = user.getMail();
-
-                                if(mail.indexOf("@qq.com") != -1){
-                                    String qq = mail.replace("@qq.com","");
-                                    userJson.put("avatar", "https://q1.qlogo.cn/g?b=qq&nk="+qq+"&s=640");
-                                }else{
-                                    userJson.put("avatar", baseFull.getAvatar(apiconfig.getWebinfoAvatar(), mail));
-                                }
-                                //json.put("avatar",baseFull.getAvatar(apiconfig.getWebinfoAvatar(),user.getMail()));
-                            }else{
-                                userJson.put("avatar",apiconfig.getWebinfoAvatar()+"null");
-                            }
-                        }else{
-                            userJson.put("avatar", user.getAvatar());
-                        }
-                        userJson.put("customize", user.getCustomize());
-                        userJson.put("introduce", user.getIntroduce());
-                        //判断是否为VIP
-                        userJson.put("vip", user.getVip());
-                        userJson.put("isvip", 0);
-                        Long date = System.currentTimeMillis();
-                        String curTime = String.valueOf(date).substring(0, 10);
-                        Integer viptime  = user.getVip();
-                        if(viptime>Integer.parseInt(curTime)||viptime.equals(1)){
-                            userJson.put("isvip", 1);
-                        }
-
-                    }else{
-                        userJson.put("name", "用户已注销");
-                        userJson.put("groupKey", "");
-                        userJson.put("avatar", apiconfig.getWebinfoAvatar() + "null");
-                    }
+                    Map userJson = UserStatus.getUserInfo(userid,apiconfigService,service);
                     json.put("userJson",userJson);
                     jsonList.add(json);
                 }
@@ -2626,50 +2543,7 @@ public class TypechoUsersController {
                     Integer userid = fan.getUid();
                     TypechoUsers user = service.selectByKey(userid);
                     //获取用户信息
-                    Map userJson = new HashMap();
-                    if(user!=null){
-                        String name = user.getName();
-                        if(user.getScreenName()!=null){
-                            name = user.getScreenName();
-                        }
-                        userJson.put("name", name);
-                        userJson.put("groupKey", user.getGroupKey());
-
-                        if(user.getAvatar()==null){
-                            if(user.getMail()!=null){
-                                String mail = user.getMail();
-
-                                if(mail.indexOf("@qq.com") != -1){
-                                    String qq = mail.replace("@qq.com","");
-                                    userJson.put("avatar", "https://q1.qlogo.cn/g?b=qq&nk="+qq+"&s=640");
-                                }else{
-                                    userJson.put("avatar", baseFull.getAvatar(apiconfig.getWebinfoAvatar(), mail));
-                                }
-                                //json.put("avatar",baseFull.getAvatar(apiconfig.getWebinfoAvatar(),user.getMail()));
-                            }else{
-                                userJson.put("avatar",apiconfig.getWebinfoAvatar()+"null");
-                            }
-                        }else{
-                            userJson.put("avatar", user.getAvatar());
-                        }
-                        userJson.put("customize", user.getCustomize());
-                        userJson.put("introduce", user.getIntroduce());
-
-                        //判断是否为VIP
-                        userJson.put("vip", user.getVip());
-                        userJson.put("isvip", 0);
-                        Long date = System.currentTimeMillis();
-                        String curTime = String.valueOf(date).substring(0, 10);
-                        Integer viptime  = user.getVip();
-                        if(viptime>Integer.parseInt(curTime)||viptime.equals(1)){
-                            userJson.put("isvip", 1);
-                        }
-
-                    }else{
-                        userJson.put("name", "用户已注销");
-                        userJson.put("groupKey", "");
-                        userJson.put("avatar", apiconfig.getWebinfoAvatar() + "null");
-                    }
+                    Map userJson = UserStatus.getUserInfo(userid,apiconfigService,service);
                     json.put("userJson",userJson);
                     jsonList.add(json);
                 }
@@ -2866,54 +2740,9 @@ public class TypechoUsersController {
                     Integer userid = violation.getUid();
                     TypechoUsers user = service.selectByKey(userid);
                     //获取用户信息
-                    Map userJson = new HashMap();
-                    if(user!=null){
-                        userJson.put("uid", user.getUid());
-                        String name = user.getName();
-                        if(user.getScreenName()!=null){
-                            name = user.getScreenName();
-                        }
-                        userJson.put("name", name);
-                        userJson.put("groupKey", user.getGroupKey());
-
-                        if(user.getAvatar()==null){
-                            if(user.getMail()!=null){
-                                String mail = user.getMail();
-
-                                if(mail.indexOf("@qq.com") != -1){
-                                    String qq = mail.replace("@qq.com","");
-                                    userJson.put("avatar", "https://q1.qlogo.cn/g?b=qq&nk="+qq+"&s=640");
-                                }else{
-                                    userJson.put("avatar", baseFull.getAvatar(apiconfig.getWebinfoAvatar(), mail));
-                                }
-                                //json.put("avatar",baseFull.getAvatar(apiconfig.getWebinfoAvatar(),user.getMail()));
-                            }else{
-                                userJson.put("avatar",apiconfig.getWebinfoAvatar()+"null");
-                            }
-                        }else{
-                            userJson.put("avatar", user.getAvatar());
-                        }
-                        userJson.put("customize", user.getCustomize());
-                        userJson.put("bantime", user.getBantime());
-                        //判断是否为VIP
-                        userJson.put("vip", user.getVip());
-                        userJson.put("isvip", 0);
-                        Long date = System.currentTimeMillis();
-                        String curTime = String.valueOf(date).substring(0, 10);
-                        Integer viptime  = user.getVip();
-                        if(viptime>Integer.parseInt(curTime)||viptime.equals(1)){
-                            userJson.put("isvip", 1);
-                        }
-
-                    }else{
-                        userJson.put("name", "用户已注销");
-                        userJson.put("groupKey", "");
-                        userJson.put("avatar", apiconfig.getWebinfoAvatar() + "null");
-                    }
+                    Map userJson = UserStatus.getUserInfo(userid,apiconfigService,service);
                     json.put("userJson",userJson);
                     jsonList.add(json);
-
-
                 }
 
                 redisHelp.delete(this.dataprefix+"_"+"violationList_"+page+"_"+limit+"_"+searchParams,redisTemplate);

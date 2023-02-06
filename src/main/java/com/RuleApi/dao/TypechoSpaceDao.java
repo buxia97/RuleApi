@@ -53,7 +53,7 @@ public interface TypechoSpaceDao {
     /**
      * [分页条件查询]
      **/
-    List<TypechoSpace> selectPage (@Param("typechoSpace") TypechoSpace typechoSpace, @Param("page") Integer page, @Param("pageSize") Integer pageSize);
+    List<TypechoSpace> selectPage (@Param("typechoSpace") TypechoSpace typechoSpace, @Param("page") Integer page, @Param("pageSize") Integer pageSize,@Param("order") String order,@Param("searchKey") String searchKey);
 
     /**
      * [总量查询]

@@ -29,7 +29,7 @@
 
     <!-- 插入数据 -->
     <insert id="insert" parameterType="com.RuleApi.entity.TypechoSpace">
-        INSERT INTO typecho_space
+        INSERT INTO ${prefix}_space
         <trim prefix="(" suffix=")" suffixOverrides=",">
             <if test ='null != id'>
                 `id`,
@@ -92,7 +92,7 @@
 
     <!-- 批量插入数据 -->
     <insert id="batchInsert" parameterType="java.util.List">
-        INSERT INTO typecho_space ( <include refid="Base_Column_List" /> ) VALUES
+        INSERT INTO ${prefix}_space ( <include refid="Base_Column_List" /> ) VALUES
         <foreach collection="list" item="curr" index="index" separator=",">
             (
                 #{curr.id},
@@ -110,7 +110,7 @@
 
     <!-- 更新 -->
     <update id="update" parameterType="com.RuleApi.entity.TypechoSpace">
-        UPDATE typecho_space
+        UPDATE ${prefix}_space
         <set>
             <if test ='null != uid'>`uid` = #{uid},</if>
             <if test ='null != created'>`created` = #{created},</if>
@@ -132,7 +132,7 @@
 
     <!-- 批量删除 -->
     <delete id="batchDelete" parameterType = "java.util.List">
-        DELETE FROM typecho_space WHERE id IN
+        DELETE FROM ${prefix}_space WHERE id IN
         <foreach collection="list"  item="item" open="(" separator="," close=")"  >
             #{item}
         </foreach>
@@ -141,14 +141,14 @@
     <!-- 主键查询 -->
     <select id="selectByKey" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List" />
-        FROM typecho_space
+        FROM ${prefix}_space
         WHERE `id` = #{key}
     </select>
 
     <!-- 条件查询 -->
     <select id="selectList" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List" />
-        FROM typecho_space
+        FROM ${prefix}_space
         <where>
             <if test ='null != id'>
                 and `id` = #{id}
@@ -183,7 +183,7 @@
     <!-- 分页条件查询 -->
     <select id="selectPage" resultMap="BaseResultMap">
         SELECT <include refid="Base_Column_List" />
-        FROM typecho_space
+        FROM ${prefix}_space
         <where>
             <if test ='null != typechoSpace.id'>
                 and `id` = #{typechoSpace.id}
@@ -212,13 +212,19 @@
             <if test ='null != typechoSpace.toid'>
                 and `toid` = #{typechoSpace.toid}
             </if>
+            <if test ='"" != searchKey'>
+                and CONCAT(IFNULL(`text`,'')) LIKE '%${searchKey}%'
+            </if>
         </where>
+        <if test ='"" != order'>
+            order by ${order} desc
+        </if>
         limit #{page,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
     </select>
 
     <!-- 总量查询 -->
     <select id="total" resultType="java.lang.Integer">
-        SELECT count(*) FROM typecho_space
+        SELECT count(*) FROM ${prefix}_space
         <where>
             <if test ='null != id'>
                 and `id` = #{id}

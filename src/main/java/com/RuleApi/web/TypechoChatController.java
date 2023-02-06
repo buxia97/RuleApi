@@ -79,6 +79,10 @@ public class TypechoChatController {
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer uid =Integer.parseInt(map.get("uid").toString());
             //登录情况下，刷聊天数据
+            String isSilence = redisHelp.getRedis(this.dataprefix+"_"+uid+"_silence",redisTemplate);
+            if(isSilence!=null){
+                return Result.getResultJson(0,"你的操作太频繁了，请稍后再试",null);
+            }
             String isRepeated = redisHelp.getRedis(this.dataprefix+"_"+uid+"_getChat",redisTemplate);
             if(isRepeated==null){
                 redisHelp.setRedis(this.dataprefix+"_"+uid+"_getChat","2",1,redisTemplate);
@@ -238,7 +242,7 @@ public class TypechoChatController {
                         if(frequency==4){
                             securityService.safetyMessage("用户ID："+uid+"，在聊天发送消息接口多次触发违禁，请及时确认处理。","system");
                             redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",3600,redisTemplate);
-                            return Result.getResultJson(0,"你已多次发送违禁词，被禁言一小时！",null);
+                            return Result.getResultJson(0,"您多次发送违禁内容，已被限制功能1小时",null);
                         }else{
                             redisHelp.setRedis(this.dataprefix+"_"+uid+"_isIntercept",frequency.toString(),600,redisTemplate);
                         }
@@ -311,7 +315,7 @@ public class TypechoChatController {
             }else{
                 TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
 
-                PageList<TypechoChat> pageList = service.selectPage(query, page, limit,order);
+                PageList<TypechoChat> pageList = service.selectPage(query, page, limit,order,null);
                 List<TypechoChat> list = pageList.getList();
                 if(list.size() < 1){
                     JSONObject noData = new JSONObject();
@@ -798,50 +802,7 @@ public class TypechoChatController {
                 TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
                 //获取创建人信息
                 Integer userid = chat.getUid();
-                TypechoUsers user = usersService.selectByKey(userid);
-                Map userJson = new HashMap();
-                if(user!=null){
-                    String name = user.getName();
-                    if(user.getScreenName()!=null){
-                        name = user.getScreenName();
-                    }
-                    userJson.put("name", name);
-                    userJson.put("groupKey", user.getGroupKey());
-                    userJson.put("uid", user.getUid());
-                    if(user.getAvatar()==null){
-                        if(user.getMail()!=null){
-                            String mail = user.getMail();
-
-                            if(mail.indexOf("@qq.com") != -1){
-                                String qq = mail.replace("@qq.com","");
-                                userJson.put("avatar", "https://q1.qlogo.cn/g?b=qq&nk="+qq+"&s=640");
-                            }else{
-                                userJson.put("avatar", baseFull.getAvatar(apiconfig.getWebinfoAvatar(), mail));
-                            }
-                            //json.put("avatar",baseFull.getAvatar(apiconfig.getWebinfoAvatar(),user.getMail()));
-                        }else{
-                            userJson.put("avatar",apiconfig.getWebinfoAvatar()+"null");
-                        }
-                    }else{
-                        userJson.put("avatar", user.getAvatar());
-                    }
-                    userJson.put("customize", user.getCustomize());
-                    userJson.put("introduce", user.getIntroduce());
-                    //判断是否为VIP
-                    userJson.put("vip", user.getVip());
-                    userJson.put("isvip", 0);
-                    Long date = System.currentTimeMillis();
-                    String curTime = String.valueOf(date).substring(0, 10);
-                    Integer viptime  = user.getVip();
-                    if(viptime>Integer.parseInt(curTime)||viptime.equals(1)){
-                        userJson.put("isvip", 1);
-                    }
-
-                }else{
-                    userJson.put("name", "用户已注销");
-                    userJson.put("groupKey", "");
-                    userJson.put("avatar", apiconfig.getWebinfoAvatar() + "null");
-                }
+                Map userJson = UserStatus.getUserInfo(userid,apiconfigService,usersService);
                 groupInfoJson.put("userJson",userJson);
                 groupInfoJson = JSONObject.parseObject(JSONObject.toJSONString(chat), Map.class);
                 redisHelp.delete(this.dataprefix+"_"+"groupInfoJson_"+id,redisTemplate);
@@ -856,6 +817,7 @@ public class TypechoChatController {
 
             return response.toString();
         }catch (Exception e){
+            e.printStackTrace();
             JSONObject response = new JSONObject();
             response.put("code", 1);
             response.put("msg", "");
@@ -873,7 +835,8 @@ public class TypechoChatController {
     public String allGroup (@RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
                             @RequestParam(value = "order", required = false, defaultValue = "created") String  order,
                             @RequestParam(value = "type", required = false, defaultValue = "1") Integer  type,
-                          @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
+                            @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
+                            @RequestParam(value = "searchKey"        , required = false, defaultValue = "") String searchKey,
                             @RequestParam(value = "token", required = false) String  token) {
         if(limit>50){
             limit = 50;
@@ -902,7 +865,7 @@ public class TypechoChatController {
             }else{
                 TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
 
-                PageList<TypechoChat> pageList = service.selectPage(query, page, limit,order);
+                PageList<TypechoChat> pageList = service.selectPage(query, page, limit,order,searchKey);
                 List<TypechoChat> list = pageList.getList();
                 if(list.size() < 1){
                     JSONObject noData = new JSONObject();
