@@ -96,7 +96,7 @@ public class UploadController {
             //检查是否是图片
             BufferedImage bi = ImageIO.read(file.getInputStream());
             if(bi == null&&!eName.equals(".WEBP")&&!eName.equals(".webp")){
-                return Result.getResultJson(0,"请上传图片文件",null);
+                return Result.getResultJson(0,"当前只允许上传图片文件",null);
             }
         }
         if(uploadLevel.equals(1)){
@@ -193,7 +193,7 @@ public class UploadController {
             //检查是否是图片
             BufferedImage bi = ImageIO.read(file.getInputStream());
             if(bi == null&&!filetype.equals(".WEBP")&&!filetype.equals(".webp")){
-                return Result.getResultJson(0,"请上传图片文件",null);
+                return Result.getResultJson(0,"当前只允许上传图片文件",null);
             }
         }
         if(uploadLevel.equals(1)){
@@ -286,7 +286,7 @@ public class UploadController {
             //检查是否是图片或视频
             BufferedImage bi = ImageIO.read(file.getInputStream());
             if(bi == null&&!eName.equals(".WEBP")&&!eName.equals(".webp")){
-                return Result.getResultJson(0,"请上传图片文件",null);
+                return Result.getResultJson(0,"当前只允许上传图片文件",null);
             }
         }
         if(uploadLevel.equals(1)){
@@ -363,7 +363,7 @@ public class UploadController {
                 //检查是否是图片
                 BufferedImage bi = ImageIO.read(file.getInputStream());
                 if(bi == null&&!suffix.equals(".WEBP")&&!suffix.equals(".webp")){
-                    return Result.getResultJson(0,"请上传图片文件",null);
+                    return Result.getResultJson(0,"当前只允许上传图片文件",null);
                 }
             }
             if(uploadLevel.equals(1)){

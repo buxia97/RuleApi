@@ -57,7 +57,7 @@ public class TypechoSpaceServiceImpl implements TypechoSpaceService {
 	}
 
 	@Override
-	public PageList<TypechoSpace> selectPage(TypechoSpace typechoSpace, Integer offset, Integer pageSize,String order,String searchKey) {
+	public PageList<TypechoSpace> selectPage(TypechoSpace typechoSpace, Integer offset, Integer pageSize,String order,String searchKey,Integer isReply) {
 		PageList<TypechoSpace> pageList = new PageList<>();
 
 		int total = this.total(typechoSpace);
@@ -71,7 +71,7 @@ public class TypechoSpaceServiceImpl implements TypechoSpaceService {
 
 		int page = (offset - 1) * pageSize;
 
-		List<TypechoSpace> list = dao.selectPage(typechoSpace, page, pageSize,order,searchKey);
+		List<TypechoSpace> list = dao.selectPage(typechoSpace, page, pageSize,order,searchKey,isReply);
 
 		pageList.setList(list);
 		pageList.setStartPageNo(offset);

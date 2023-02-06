@@ -365,7 +365,7 @@ public class TypechoCommentsController {
                     jsonToMap.put("author",user.getScreenName());
                     postName = user.getScreenName();
                 }
-                if(text.length()>4){
+                if(text.length()<4){
                     return Result.getResultJson(0,"评论长度过短",null);
                 }else{
                     if(text.length()>1500){
@@ -601,7 +601,7 @@ public class TypechoCommentsController {
                     updateUser.setUid(logUid);
                     updateUser.setExperience(experience);
                     usersService.update(updateUser);
-                    addtext = "获得"+reviewExp+"经验值";
+                    addtext = "，获得"+reviewExp+"经验值";
                 }
             }
             editFile.setLog("用户"+logUid+"提交发布评论，IP："+ip);

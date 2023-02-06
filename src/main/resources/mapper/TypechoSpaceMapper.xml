@@ -212,6 +212,12 @@
             <if test ='null != typechoSpace.toid'>
                 and `toid` = #{typechoSpace.toid}
             </if>
+            <if test ='0 == isReply'>
+                and `type` != 3
+            </if>
+            <if test ='1 == isReply'>
+                and `type` == 3
+            </if>
             <if test ='"" != searchKey'>
                 and CONCAT(IFNULL(`text`,'')) LIKE '%${searchKey}%'
             </if>

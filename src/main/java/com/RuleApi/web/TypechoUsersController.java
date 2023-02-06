@@ -353,11 +353,12 @@ public class TypechoUsersController {
                 json = cacheInfo;
             }else{
                 TypechoUsers info = service.selectByKey(key);
-                json = JSONObject.parseObject(JSONObject.toJSONString(info), Map.class);
-                //获取用户等级
-                if(key==null){
+                if(info==null){
                     return Result.getResultJson(0, "请传入正确的参数", null);
                 }
+                json = JSONObject.parseObject(JSONObject.toJSONString(info), Map.class);
+                //获取用户等级
+
                 Integer uid = Integer.parseInt(key);
 
                 TypechoComments comments = new TypechoComments();

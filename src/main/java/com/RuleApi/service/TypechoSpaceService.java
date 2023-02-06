@@ -51,7 +51,7 @@ public interface TypechoSpaceService {
     /**
      * [分页条件查询]
      **/
-    PageList<TypechoSpace> selectPage (TypechoSpace typechoSpace, Integer page, Integer pageSize,String order,String searchKey);
+    PageList<TypechoSpace> selectPage (TypechoSpace typechoSpace, Integer page, Integer pageSize,String order,String searchKey,Integer isReply);
 
     /**
      * [总量查询]

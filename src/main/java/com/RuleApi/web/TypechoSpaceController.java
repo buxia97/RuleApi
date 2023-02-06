@@ -163,6 +163,7 @@ public class TypechoSpaceController {
             TypechoSpace space = new TypechoSpace();
             space.setText(text);
             space.setUid(uid);
+            space.setType(type);
             space.setPic(pic);
             space.setToid(toid);
             space.setCreated(Integer.parseInt(created));
@@ -384,7 +385,7 @@ public class TypechoSpaceController {
                 jsonList = cacheList;
             }else{
 
-                PageList<TypechoSpace> pageList = service.selectPage(query, page, limit,order,searchKey);
+                PageList<TypechoSpace> pageList = service.selectPage(query, page, limit,order,searchKey,0);
                 List<TypechoSpace> list = pageList.getList();
                 if(list.size() < 1){
                     JSONObject noData = new JSONObject();
@@ -415,7 +416,15 @@ public class TypechoSpaceController {
                     }else{
                         json.put("isFollow",0);
                     }
-
+                    //获取转发，评论
+                    TypechoSpace dataSpace = new TypechoSpace();
+                    dataSpace.setType(2);
+                    dataSpace.setToid(space.getId());
+                    Integer forward = service.total(dataSpace);
+                    dataSpace.setType(3);
+                    Integer reply = service.total(dataSpace);
+                    json.put("forward",forward);
+                    json.put("reply",reply);
                     jsonList.add(json);
                 }
                 redisHelp.delete(this.dataprefix+"_"+"spaceList_"+page+"_"+limit,redisTemplate);
