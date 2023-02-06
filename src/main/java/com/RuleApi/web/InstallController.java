@@ -1036,8 +1036,8 @@ public class InstallController {
                     "  `created` int(10) unsigned DEFAULT '0' COMMENT '发布时间'," +
                     "  `modified` int(10) unsigned DEFAULT '0' COMMENT '修改时间'," +
                     "  `text` text CHARACTER SET utf8mb4 COMMENT '内容'," +
-                    "  `pic` text COMMENT '图片，自己拆分',\n" +
-                    "  `type` int(2) DEFAULT NULL COMMENT '0普通动态，1转发和发布文章，2转发动态，3动态评论'," +
+                    "  `pic` text COMMENT '图片或视频，自己拆分'," +
+                    "  `type` int(2) DEFAULT NULL COMMENT '0普通动态，1转发和发布文章，2转发动态，3动态评论，4视频，5商品'," +
                     "  `likes` int(10) DEFAULT '0' COMMENT '喜欢动态的数量'," +
                     "  `toid` int(10) DEFAULT '0' COMMENT '文章id，动态id等'," +
                     "  PRIMARY KEY (`id`)\n" +

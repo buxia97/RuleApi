@@ -1421,6 +1421,19 @@ public class TypechoUsersController {
                 jsonToMap.remove("assets");
                 jsonToMap.remove("experience");
                 jsonToMap.remove("vip");
+                if(jsonToMap.get("screenName")!=null){
+                    String screenName = jsonToMap.get("screenName").toString();
+                    TypechoUsers user = new TypechoUsers();
+                    user.setScreenName(screenName);
+                    List<TypechoUsers> userlist = service.selectList(user);
+                    if(userlist.size() > 0){
+                        if(!userlist.get(0).getUid().equals(uid)){
+                            return Result.getResultJson(0, "该昵称已被占用！", null);
+                        }
+
+                    }
+                }
+
                 update = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoUsers.class);
             }else{
                 return Result.getResultJson(0, "参数不正确", null);

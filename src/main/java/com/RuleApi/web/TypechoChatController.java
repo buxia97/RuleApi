@@ -886,7 +886,15 @@ public class TypechoChatController {
                     msg.setCid(chatid);
                     List<TypechoChatMsg> msgList = chatMsgService.selectList(msg);
                     if(msgList.size()>0) {
+                        Integer msgUid = msgList.get(0).getUid();
+                        TypechoUsers msgUser = usersService.selectByKey(msgUid);
+
                         Map lastMsg = JSONObject.parseObject(JSONObject.toJSONString(msgList.get(0)), Map.class);
+                        if(msgUser.getScreenName()!=null){
+                            lastMsg.put("name",msgUser.getScreenName());
+                        }else{
+                            lastMsg.put("name",msgUser.getName());
+                        }
                         json.put("lastMsg",lastMsg);
                     }
                     Integer msgNum = chatMsgService.total(msg);
