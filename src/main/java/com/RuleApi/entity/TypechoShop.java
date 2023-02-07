@@ -78,4 +78,9 @@ public class TypechoShop implements Serializable {
      */
     private String vipDiscount;
 
+    /**
+     * sellNum  卖出数量
+     */
+    private Integer sellNum;
+
 }

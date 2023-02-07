@@ -375,7 +375,7 @@ public class TypechoCommentsController {
                 if(map.get("url")!=null){
                     jsonToMap.put("url",user.getUrl());
                 }
-                if(isEmail.equals(1)){
+                if(isEmail > 0){
                     if(map.get("mail")!=null){
                         jsonToMap.put("mail",map.get("mail").toString());
                     }else{
@@ -474,8 +474,8 @@ public class TypechoCommentsController {
                     }
                     if(parent > 0){
                         TypechoComments pComments = service.selectByKey(parent);
-                        if(pComments.getMail()!=null){
-                            if(isEmail.equals(1)) {
+                        if(apiconfig.getIsEmail().equals(2)) {
+                            if (pComments.getMail() != null) {
                                 String pemail = pComments.getMail();
                                 try {
                                     MailService.send("您的评论有了新的回复！", "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><title></title>" +
@@ -485,10 +485,11 @@ public class TypechoCommentsController {
                                                     "<p>可前往<a href=\"" + apiconfig.getWebinfoUrl() + "\">" + title + "</a>查看详情</p>" +
                                                     "</div></div></body></html>",
                                             new String[]{pemail}, new String[]{});
-                                }catch (Exception e){
+                                } catch (Exception e) {
                                     System.err.println("邮箱发信配置错误");
                                     e.printStackTrace();
                                 }
+
                             }
                         }
                         //发送消息通知
@@ -517,21 +518,22 @@ public class TypechoCommentsController {
                         TypechoUsers author = usersService.selectByKey(contents.getAuthorId());
                         Integer uid = author.getUid();
                         if(!cuid.equals(contents.getAuthorId())){
-                            if(author.getMail()!=null){
-                                if(isEmail.equals(1)) {
+                            if(apiconfig.getIsEmail().equals(2)) {
+                                if (author.getMail() != null) {
                                     String email = author.getMail();
-                                    try{
+                                    try {
                                         MailService.send("您的文章有新的评论", "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><title></title>" +
-                                                    "<meta charset=\"utf-8\" /><style>*{padding:0px;margin:0px;box-sizing:border-box;}html{box-sizing:border-box;}body{font-size:15px;background:#fff}.main{margin:20px auto;max-width:500px;border:solid 1px #2299dd;overflow:hidden;}.main h1{display:block;width:100%;background:#2299dd;font-size:18px;color:#fff;text-align:center;padding:15px;}.text{padding:30px;}.text p{margin:10px 0px;line-height:25px;}.text p span{color:#2299dd;font-weight:bold;font-size:22px;margin-left:5px;}</style></head>" +
-                                                    "<body><div class=\"main\"><h1>文章评论</h1>" +
-                                                    "<div class=\"text\"><p>用户 " + uid + "，你的文章有新的评论：</p><p>”" + postName + "：" + jsonToMap.get("text") + "“</p>" +
-                                                    "<p>可前往<a href=\"" + apiconfig.getWebinfoUrl() + "\">" + title + "</a>查看详情</p>" +
-                                                    "</div></div></body></html>",
-                                            new String[]{email}, new String[]{});
-                                    }catch (Exception e){
+                                                        "<meta charset=\"utf-8\" /><style>*{padding:0px;margin:0px;box-sizing:border-box;}html{box-sizing:border-box;}body{font-size:15px;background:#fff}.main{margin:20px auto;max-width:500px;border:solid 1px #2299dd;overflow:hidden;}.main h1{display:block;width:100%;background:#2299dd;font-size:18px;color:#fff;text-align:center;padding:15px;}.text{padding:30px;}.text p{margin:10px 0px;line-height:25px;}.text p span{color:#2299dd;font-weight:bold;font-size:22px;margin-left:5px;}</style></head>" +
+                                                        "<body><div class=\"main\"><h1>文章评论</h1>" +
+                                                        "<div class=\"text\"><p>用户 " + uid + "，你的文章有新的评论：</p><p>”" + postName + "：" + jsonToMap.get("text") + "“</p>" +
+                                                        "<p>可前往<a href=\"" + apiconfig.getWebinfoUrl() + "\">" + title + "</a>查看详情</p>" +
+                                                        "</div></div></body></html>",
+                                                new String[]{email}, new String[]{});
+                                    } catch (Exception e) {
                                         System.err.println("邮箱发信配置错误");
                                         e.printStackTrace();
                                     }
+
                                 }
                             }
                             //发送消息通知
@@ -718,7 +720,6 @@ public class TypechoCommentsController {
 
                 comments.setStatus("approved");
                 rows = service.update(comments);
-                Integer isEmail = apiconfig.getIsEmail();
                 Integer isPush = apiconfig.getIsPush();
 
                 //给评论者发送邮件
@@ -742,10 +743,10 @@ public class TypechoCommentsController {
                 //给回复者发送信息
                 if(parent>0){
                     TypechoComments pComments = service.selectByKey(parent);
-                    if(pComments.getMail()!=null){
-                        if(isEmail.equals(1)) {
+                    if(apiconfig.getIsEmail().equals(2)) {
+                        if (pComments.getMail() != null) {
                             String pemail = pComments.getMail();
-                            try{
+                            try {
                                 MailService.send("您的评论有了新的回复！", "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><title></title>" +
                                                 "<meta charset=\"utf-8\" /><style>*{padding:0px;margin:0px;box-sizing:border-box;}html{box-sizing:border-box;}body{font-size:15px;background:#fff}.main{margin:20px auto;max-width:500px;border:solid 1px #2299dd;overflow:hidden;}.main h1{display:block;width:100%;background:#2299dd;font-size:18px;color:#fff;text-align:center;padding:15px;}.text{padding:30px;}.text p{margin:10px 0px;line-height:25px;}.text p span{color:#2299dd;font-weight:bold;font-size:22px;margin-left:5px;}</style></head>" +
                                                 "<body><div class=\"main\"><h1>文章评论</h1>" +
@@ -753,10 +754,11 @@ public class TypechoCommentsController {
                                                 "<p>可前往<a href=\"" + apiconfig.getWebinfoUrl() + "\">" + title + "</a>查看详情</p>" +
                                                 "</div></div></body></html>",
                                         new String[]{pemail}, new String[]{});
-                            }catch (Exception e){
+                            } catch (Exception e) {
                                 System.err.println("邮箱发信配置错误");
                                 e.printStackTrace();
                             }
+
                         }
                     }
                     //发送消息通知
@@ -787,10 +789,10 @@ public class TypechoCommentsController {
                 }else{
                     //不是作者本人才通知
                     if(!comments.getAuthorId().equals(author.getUid())){
-                        if(author.getMail()!=null){
-                            if(isEmail.equals(1)) {
+                        if(apiconfig.getIsEmail().equals(2)) {
+                            if (author.getMail() != null) {
                                 String aemail = author.getMail();
-                                try{
+                                try {
                                     MailService.send("您的文章有新的评论", "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><title></title>" +
                                                     "<meta charset=\"utf-8\" /><style>*{padding:0px;margin:0px;box-sizing:border-box;}html{box-sizing:border-box;}body{font-size:15px;background:#fff}.main{margin:20px auto;max-width:500px;border:solid 1px #2299dd;overflow:hidden;}.main h1{display:block;width:100%;background:#2299dd;font-size:18px;color:#fff;text-align:center;padding:15px;}.text{padding:30px;}.text p{margin:10px 0px;line-height:25px;}.text p span{color:#2299dd;font-weight:bold;font-size:22px;margin-left:5px;}</style></head>" +
                                                     "<body><div class=\"main\"><h1>文章评论</h1>" +
@@ -798,10 +800,11 @@ public class TypechoCommentsController {
                                                     "<p>可前往<a href=\"" + apiconfig.getWebinfoUrl() + "\">" + title + "</a>查看详情</p>" +
                                                     "</div></div></body></html>",
                                             new String[]{aemail}, new String[]{});
-                                }catch (Exception e){
+                                } catch (Exception e) {
                                     System.err.println("邮箱发信配置错误");
                                     e.printStackTrace();
                                 }
+
                             }
                         }
                         //发送消息通知

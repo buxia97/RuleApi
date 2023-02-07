@@ -16,6 +16,8 @@
         <result column="uid" property="uid" />
         <result column="status" property="status" />
         <result column="vipDiscount" property="vipDiscount" />
+        <result column="sellNum" property="sellNum" />
+
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -31,7 +33,8 @@
         `uid`,
         `created`,
         `status`,
-        `vipDiscount`
+        `vipDiscount`,
+        `sellNum`
     </sql>
 
     <!-- 插入数据 -->
@@ -73,6 +76,9 @@
             </if>
             <if test ='null != status'>
                 `status`,
+            </if>
+            <if test ='null != vipDiscount'>
+                `vipDiscount`
             </if>
             <if test ='null != vipDiscount'>
                 `vipDiscount`
@@ -136,7 +142,8 @@
             <if test ='null != uid'>`uid` = #{uid},</if>
             <if test ='null != created'>`created` = #{created},</if>
             <if test ='null != status'>`status` = #{status},</if>
-            <if test ='null != vipDiscount'>`vipDiscount` = #{vipDiscount}</if>
+            <if test ='null != vipDiscount'>`vipDiscount` = #{vipDiscount},</if>
+            <if test ='null != sellNum'>`sellNum` = #{sellNum}</if>
         </set>
         WHERE `id` = #{id}
     </update>
@@ -246,7 +253,9 @@
                 and CONCAT(IFNULL(`title`,''),IFNULL(`text`,'')) LIKE '%${searchKey}%'
             </if>
         </where>
-        order by created desc
+        <if test ='"" != order'>
+            order by ${order} desc
+        </if>
         limit #{page,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
     </select>
 

@@ -477,7 +477,7 @@ public class TypechoContentsController {
                 //判断是否开启邮箱验证
 
                 Integer isEmail = apiconfig.getIsEmail();
-                if(isEmail.equals(1)) {
+                if(isEmail>0) {
                     //判断用户是否绑定了邮箱
                     TypechoUsers users = usersService.selectByKey(uid);
                     if (users.getMail() == null) {
@@ -1046,10 +1046,8 @@ public class TypechoContentsController {
             Integer uid = ainfo.getUid();
             //根据过审状态发送不同的内容
             if(type.equals(0)) {
-
-                if (ainfo.getMail() != null) {
-                    Integer isEmail = apiconfig.getIsEmail();
-                    if (isEmail.equals(1)) {
+                if(apiconfig.getIsEmail().equals(2)){
+                    if (ainfo.getMail() != null) {
                         String email = ainfo.getMail();
                         try {
                             MailService.send("用户：" + uid + ",您的文章已审核通过", "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><title></title><meta charset=\"utf-8\" /><style>*{padding:0px;margin:0px;box-sizing:border-box;}html{box-sizing:border-box;}body{font-size:15px;background:#fff}.main{margin:20px auto;max-width:500px;border:solid 1px #2299dd;overflow:hidden;}.main h1{display:block;width:100%;background:#2299dd;font-size:18px;color:#fff;text-align:center;padding:15px;}.text{padding:30px;}.text p{margin:10px 0px;line-height:25px;}.text p span{color:#2299dd;font-weight:bold;font-size:22px;margin-left:5px;}</style></head>" +
@@ -1059,10 +1057,12 @@ public class TypechoContentsController {
                         } catch (Exception e) {
                             System.err.println("邮箱发信配置错误：" + e);
                         }
+
+
+
                     }
-
-
                 }
+
                 //发送消息
                 Long date = System.currentTimeMillis();
                 String created = String.valueOf(date).substring(0, 10);
@@ -1074,21 +1074,18 @@ public class TypechoContentsController {
                 insert.setCreated(Integer.parseInt(created));
                 inboxService.insert(insert);
             }else{
-                if (ainfo.getMail() != null) {
-                    Integer isEmail = apiconfig.getIsEmail();
-                    if (isEmail.equals(1)) {
+                if(apiconfig.getIsEmail().equals(2)) {
+                    if (ainfo.getMail() != null) {
                         String email = ainfo.getMail();
                         try {
                             MailService.send("用户：" + uid + ",您的文章未审核通过", "<!DOCTYPE html><html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /><title></title><meta charset=\"utf-8\" /><style>*{padding:0px;margin:0px;box-sizing:border-box;}html{box-sizing:border-box;}body{font-size:15px;background:#fff}.main{margin:20px auto;max-width:500px;border:solid 1px #2299dd;overflow:hidden;}.main h1{display:block;width:100%;background:#2299dd;font-size:18px;color:#fff;text-align:center;padding:15px;}.text{padding:30px;}.text p{margin:10px 0px;line-height:25px;}.text p span{color:#2299dd;font-weight:bold;font-size:22px;margin-left:5px;}</style></head>" +
-                                            "<body><div class=\"main\"><h1>文章审核</h1><div class=\"text\"><p>用户 " + uid + "，你的文章<" + title + ">未审核通过！理由如下："+reason+"</p>" +
+                                            "<body><div class=\"main\"><h1>文章审核</h1><div class=\"text\"><p>用户 " + uid + "，你的文章<" + title + ">未审核通过！理由如下：" + reason + "</p>" +
                                             "<p>可前往<a href=\"" + apiconfig.getWebinfoUrl() + "\">" + newtitle + "</a>查看详情</p></div></div></body></html>",
                                     new String[]{email}, new String[]{});
                         } catch (Exception e) {
                             System.err.println("邮箱发信配置错误：" + e);
                         }
                     }
-
-
                 }
                 //发送消息
                 Long date = System.currentTimeMillis();

@@ -1047,7 +1047,7 @@ public class TypechoUsersController {
                 Integer isInvite = apiconfig.getIsInvite();
                 //验证是否存在相同用户名或者邮箱
                 TypechoUsers toKey = new TypechoUsers();
-                if(isEmail.equals(1)) {
+                if(isEmail>0) {
 
                     toKey.setMail(jsonToMap.get("mail").toString());
                     List isMail = service.selectList(toKey);
@@ -1062,7 +1062,7 @@ public class TypechoUsersController {
                     return Result.getResultJson(0, "该用户名已注册", null);
                 }
                 //验证邮箱验证码
-                if(isEmail.equals(1)){
+                if(isEmail>0){
                     String email = jsonToMap.get("mail").toString();
                     String code = jsonToMap.get("code").toString();
                     String cur_code = redisHelp.getRedis(this.dataprefix + "_" + "sendCode" + email, redisTemplate);
@@ -1358,7 +1358,7 @@ public class TypechoUsersController {
                 if (jsonToMap.get("code") != null && jsonToMap.get("mail") != null) {
 
                     Integer isEmail = apiconfig.getIsEmail();
-                    if(isEmail.equals(1)){
+                    if(isEmail>0){
                         String email = jsonToMap.get("mail").toString();
                         if (redisHelp.getRedis(this.dataprefix + "_" + "sendCode" + email, redisTemplate) != null) {
                             String sendCode = redisHelp.getRedis(this.dataprefix + "_" + "sendCode" + email, redisTemplate);

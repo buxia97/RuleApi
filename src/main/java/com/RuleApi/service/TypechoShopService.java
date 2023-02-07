@@ -51,7 +51,7 @@ public interface TypechoShopService {
     /**
      * [分页条件查询]
      **/
-    PageList<TypechoShop> selectPage (TypechoShop typechoShop, Integer page, Integer pageSize,String searchKey);
+    PageList<TypechoShop> selectPage (TypechoShop typechoShop, Integer page, Integer pageSize,String searchKey,String order);
 
     /**
      * [总量查询]

@@ -45,6 +45,15 @@ public class TypechoSpaceController {
     private TypechoUsersService usersService;
 
     @Autowired
+    private TypechoContentsService contentsService;
+
+    @Autowired
+    private TypechoUserlogService userlogService;
+
+    @Autowired
+    private TypechoShopService shopService;
+
+    @Autowired
     private TypechoFanService fanService;
 
     @Value("${web.prefix}")
@@ -320,7 +329,7 @@ public class TypechoSpaceController {
     @ResponseBody
     public String spaceInfo (@RequestParam(value = "id", required = false) Integer  id) {
         try{
-            Map spaceInfoJson = new HashMap<String, String>();
+            Map spaceInfoJson = new HashMap();
             Map cacheInfo = redisHelp.getMapValue(this.dataprefix+"_"+"spaceInfo_"+id,redisTemplate);
 
             if(cacheInfo.size()>0){
@@ -328,11 +337,82 @@ public class TypechoSpaceController {
             }else{
                 TypechoSpace space;
                 space = service.selectByKey(id);
+                spaceInfoJson = JSONObject.parseObject(JSONObject.toJSONString(space), Map.class);
                 //获取创建人信息
                 Integer userid = space.getUid();
                 Map userJson = UserStatus.getUserInfo(userid,apiconfigService,usersService);
                 spaceInfoJson.put("userJson",userJson);
-                spaceInfoJson = JSONObject.parseObject(JSONObject.toJSONString(space), Map.class);
+                //获取转发，评论
+                TypechoSpace dataSpace = new TypechoSpace();
+                dataSpace.setType(2);
+                dataSpace.setToid(space.getId());
+                Integer forward = service.total(dataSpace);
+                dataSpace.setType(3);
+                Integer reply = service.total(dataSpace);
+                spaceInfoJson.put("forward",forward);
+                spaceInfoJson.put("reply",reply);
+
+                //对于转发和发布文章
+                if(space.getType().equals(1)){
+                    Integer cid = space.getToid();
+                    Map contentJson = new HashMap();
+                    TypechoContents contents = contentsService.selectByKey(cid);
+                    if(contents!=null){
+                        String text = contents.getText();
+                        List imgList = baseFull.getImageSrc(text);
+                        text = baseFull.toStrByChinese(text);
+                        contentJson.put("title",contents.getTitle());
+                        contentJson.put("images",imgList);
+                        contentJson.put("text",text.length()>300 ? text.substring(0,300) : text);
+                    }else{
+                        contentJson.put("title","该文章已被删除或屏蔽");
+                        contentJson.put("text","");
+                    }
+                    spaceInfoJson.put("contentJson",contentJson);
+                }
+                //对于转发动态
+                if(space.getType().equals(2)){
+                    Integer sid = space.getToid();
+                    Map forwardJson = new HashMap();
+                    TypechoSpace forwardSpace = service.selectByKey(sid);
+                    if(forwardSpace!=null){
+                        forwardJson = JSONObject.parseObject(JSONObject.toJSONString(forwardSpace), Map.class);
+                        Integer spaceUid = forwardSpace.getUid();
+                        TypechoUsers spaceUser = usersService.selectByKey(spaceUid);
+                        String name = spaceUser.getName();
+                        if(spaceUser.getScreenName()!=null){
+                            name = spaceUser.getScreenName();
+                        }
+                        forwardJson.put("username",name);
+                    }else{
+                        forwardJson.put("username","");
+                        forwardJson.put("text","该动态已被删除或屏蔽");
+                    }
+
+                    spaceInfoJson.put("forwardJson",forwardJson);
+                }
+                //对于商品
+                if(space.getType().equals(5)){
+                    Integer sid = space.getToid();
+                    TypechoShop shop = shopService.selectByKey(sid);
+                    Map shopJson = new HashMap();
+                    if(shop!=null){
+                        shopJson = JSONObject.parseObject(JSONObject.toJSONString(shop), Map.class);
+                        Integer shopUid = shop.getUid();
+                        TypechoUsers shopUser = usersService.selectByKey(shopUid);
+                        String name = shopUser.getName();
+                        if(shopUser.getScreenName()!=null){
+                            name = shopUser.getScreenName();
+                        }
+                        shopJson.put("username",name);
+
+                    }else{
+                        shopJson.put("username","");
+                        shopJson.put("title","该商品已被删除或屏蔽");
+                    }
+
+                }
+
                 redisHelp.delete(this.dataprefix+"_"+"spaceInfo_"+id,redisTemplate);
                 redisHelp.setKey(this.dataprefix+"_"+"spaceInfo_"+id,spaceInfoJson,5,redisTemplate);
             }
@@ -425,7 +505,69 @@ public class TypechoSpaceController {
                     Integer reply = service.total(dataSpace);
                     json.put("forward",forward);
                     json.put("reply",reply);
+
+                    //对于转发和发布文章
+                    if(space.getType().equals(1)){
+                        Integer cid = space.getToid();
+                        Map contentJson = new HashMap();
+                        TypechoContents contents = contentsService.selectByKey(cid);
+                        if(contents!=null){
+                            String text = contents.getText();
+                            List imgList = baseFull.getImageSrc(text);
+                            text = baseFull.toStrByChinese(text);
+                            contentJson.put("title",contents.getTitle());
+                            contentJson.put("images",imgList);
+                            contentJson.put("text",text.length()>300 ? text.substring(0,300) : text);
+                        }else{
+                            contentJson.put("title","该文章已被删除或屏蔽");
+                            contentJson.put("text","");
+                        }
+                        json.put("contentJson",contentJson);
+                    }
+                    //对于转发动态
+                    if(space.getType().equals(2)){
+                        Integer sid = space.getToid();
+                        Map forwardJson = new HashMap();
+                        TypechoSpace forwardSpace = service.selectByKey(sid);
+                        if(forwardSpace!=null){
+                            forwardJson = JSONObject.parseObject(JSONObject.toJSONString(forwardSpace), Map.class);
+                            Integer spaceUid = forwardSpace.getUid();
+                            TypechoUsers spaceUser = usersService.selectByKey(spaceUid);
+                            String name = spaceUser.getName();
+                            if(spaceUser.getScreenName()!=null){
+                                name = spaceUser.getScreenName();
+                            }
+                            forwardJson.put("username",name);
+                        }else{
+                            forwardJson.put("username","");
+                            forwardJson.put("text","该动态已被删除或屏蔽");
+                        }
+
+                        json.put("forwardJson",forwardJson);
+                    }
+                    //对于商品
+                    if(space.getType().equals(5)){
+                        Integer sid = space.getToid();
+                        TypechoShop shop = shopService.selectByKey(sid);
+                        Map shopJson = new HashMap();
+                        if(shop!=null){
+                            shopJson = JSONObject.parseObject(JSONObject.toJSONString(shop), Map.class);
+                            Integer shopUid = shop.getUid();
+                            TypechoUsers shopUser = usersService.selectByKey(shopUid);
+                            String name = shopUser.getName();
+                            if(shopUser.getScreenName()!=null){
+                                name = shopUser.getScreenName();
+                            }
+                            shopJson.put("username",name);
+
+                        }else{
+                            shopJson.put("username","");
+                            shopJson.put("title","该商品已被删除或屏蔽");
+                        }
+
+                    }
                     jsonList.add(json);
+
                 }
                 redisHelp.delete(this.dataprefix+"_"+"spaceList_"+page+"_"+limit,redisTemplate);
                 redisHelp.setList(this.dataprefix+"_"+"spaceList_"+page+"_"+limit,jsonList,5,redisTemplate);

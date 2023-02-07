@@ -474,6 +474,7 @@ public class InstallController {
         }else{
             text+="积分商城模块已经存在，无需添加。";
         }
+
         //查询商品表是否存在vipDiscount字段
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_shop' and column_name = 'vipDiscount';", Integer.class);
         if (i == 0){
@@ -497,6 +498,14 @@ public class InstallController {
             text+="积分商城模块，字段status添加完成。";
         }else{
             text+="积分商城模块，字段status已经存在，无需添加。";
+        }
+        //查询商品表是否存在sellNum字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_shop' and column_name = 'sellNum';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_shop ADD sellNum integer(11) DEFAULT 0;");
+            text+="积分商城模块，字段sellNum添加完成。";
+        }else{
+            text+="积分商城模块，字段sellNum已经存在，无需添加。";
         }
         //判断充值记录表是否存在
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_paylog';", Integer.class);
@@ -554,7 +563,7 @@ public class InstallController {
                     "  `vipPrice` int(11) NOT NULL DEFAULT '200' COMMENT 'VIP一天价格'," +
                     "  `vipDay` int(11) NOT NULL DEFAULT '300' COMMENT '多少天VIP等于永久'," +
                     "  `vipDiscount` varchar(11) NOT NULL DEFAULT '0.1' COMMENT 'VIP折扣'," +
-                    "  `isEmail` int(2) NOT NULL DEFAULT '1' COMMENT '是否开启邮箱注册（关闭后不再验证邮箱）'," +
+                    "  `isEmail` int(2) NOT NULL DEFAULT '1' COMMENT '邮箱开关（0完全关闭邮箱，1只开启邮箱注册，2邮箱注册和操作通知）'," +
                     "  `isInvite` int(11) NOT NULL DEFAULT '0' COMMENT '注册是否验证邀请码（默认关闭）'," +
                     "  `cosAccessKey` varchar(300) NOT NULL DEFAULT ''," +
                     "  `cosSecretKey` varchar(300) NOT NULL DEFAULT ''," +
