@@ -83,11 +83,11 @@ public class TypechoSpaceController {
                             @RequestParam(value = "pic", required = false) String  pic,
                              @RequestParam(value = "token", required = false) String  token) {
         try{
-            if(!type.equals(0)&&!type.equals(1)&&!type.equals(2)&&!type.equals(3)){
+            if(!type.equals(0)&&!type.equals(1)&&!type.equals(2)&&!type.equals(3)&&!type.equals(4)&&!type.equals(5)){
                 return Result.getResultJson(0,"参数不正确",null);
             }
             //类型不为0时，需要传toid
-            if(type > 0){
+            if(!type.equals(0)&&!type.equals(4)){
                 if(toid.equals(0)){
                     return Result.getResultJson(0,"参数不正确",null);
                 }
@@ -327,11 +327,18 @@ public class TypechoSpaceController {
      */
     @RequestMapping(value = "/spaceInfo")
     @ResponseBody
-    public String spaceInfo (@RequestParam(value = "id", required = false) Integer  id) {
+    public String spaceInfo (@RequestParam(value = "id", required = false) Integer  id,
+                             @RequestParam(value = "token", required = false) String  token) {
         try{
             Map spaceInfoJson = new HashMap();
             Map cacheInfo = redisHelp.getMapValue(this.dataprefix+"_"+"spaceInfo_"+id,redisTemplate);
-
+            Map map = new HashMap();
+            Integer uid = 0;
+            Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
+            if (uStatus != 0) {
+                map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+                uid =Integer.parseInt(map.get("uid").toString());
+            }
             if(cacheInfo.size()>0){
                 spaceInfoJson = cacheInfo;
             }else{
@@ -342,6 +349,15 @@ public class TypechoSpaceController {
                 Integer userid = space.getUid();
                 Map userJson = UserStatus.getUserInfo(userid,apiconfigService,usersService);
                 spaceInfoJson.put("userJson",userJson);
+                if (uStatus != 0) {
+                    TypechoFan fan = new TypechoFan();
+                    fan.setUid(uid);
+                    fan.setTouid(space.getUid());
+                    Integer isFollow = fanService.total(fan);
+                    spaceInfoJson.put("isFollow",isFollow);
+                }else{
+                    spaceInfoJson.put("isFollow",0);
+                }
                 //获取转发，评论
                 TypechoSpace dataSpace = new TypechoSpace();
                 dataSpace.setType(2);
@@ -361,10 +377,14 @@ public class TypechoSpaceController {
                         String text = contents.getText();
                         List imgList = baseFull.getImageSrc(text);
                         text = baseFull.toStrByChinese(text);
+                        contentJson.put("cid",contents.getCid());
+
                         contentJson.put("title",contents.getTitle());
                         contentJson.put("images",imgList);
                         contentJson.put("text",text.length()>300 ? text.substring(0,300) : text);
+                        contentJson.put("status",contents.getStatus());
                     }else{
+                        contentJson.put("cid",0);
                         contentJson.put("title","该文章已被删除或屏蔽");
                         contentJson.put("text","");
                     }
@@ -385,11 +405,34 @@ public class TypechoSpaceController {
                         }
                         forwardJson.put("username",name);
                     }else{
+                        forwardJson.put("id",0);
                         forwardJson.put("username","");
                         forwardJson.put("text","该动态已被删除或屏蔽");
                     }
 
                     spaceInfoJson.put("forwardJson",forwardJson);
+                }
+                //对于评论，获取上级动态
+                if(space.getType().equals(3)){
+                    Integer sid = space.getToid();
+                    Map parentJson = new HashMap();
+                    TypechoSpace parentSpace = service.selectByKey(sid);
+                    if(parentSpace!=null){
+                        parentJson = JSONObject.parseObject(JSONObject.toJSONString(parentSpace), Map.class);
+                        Integer spaceUid = parentSpace.getUid();
+                        TypechoUsers spaceUser = usersService.selectByKey(spaceUid);
+                        String name = spaceUser.getName();
+                        if(spaceUser.getScreenName()!=null){
+                            name = spaceUser.getScreenName();
+                        }
+                        parentJson.put("username",name);
+                    }else{
+                        parentJson.put("id",0);
+                        parentJson.put("username","");
+                        parentJson.put("text","该动态已被删除或屏蔽");
+                    }
+
+                    spaceInfoJson.put("parentJson",parentJson);
                 }
                 //对于商品
                 if(space.getType().equals(5)){
@@ -410,7 +453,7 @@ public class TypechoSpaceController {
                         shopJson.put("username","");
                         shopJson.put("title","该商品已被删除或屏蔽");
                     }
-
+                    spaceInfoJson.put("shopJson",shopJson);
                 }
 
                 redisHelp.delete(this.dataprefix+"_"+"spaceInfo_"+id,redisTemplate);
@@ -440,7 +483,9 @@ public class TypechoSpaceController {
      */
     @RequestMapping(value = "/spaceList")
     @ResponseBody
-    public String spaceList (@RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
+    public String spaceList (
+                            @RequestParam(value = "searchParams", required = false) String  searchParams,
+                            @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
                             @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
                             @RequestParam(value = "searchKey"        , required = false, defaultValue = "") String searchKey,
                             @RequestParam(value = "order", required = false, defaultValue = "created") String  order,
@@ -449,6 +494,12 @@ public class TypechoSpaceController {
             limit = 50;
         }
         TypechoSpace query = new TypechoSpace();
+        if (StringUtils.isNotBlank(searchParams)) {
+            JSONObject object = JSON.parseObject(searchParams);
+            query = object.toJavaObject(TypechoSpace.class);
+
+
+        }
         Map map = new HashMap();
         Integer uid = 0;
         Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
@@ -464,8 +515,13 @@ public class TypechoSpaceController {
             if(cacheList.size()>0){
                 jsonList = cacheList;
             }else{
-
-                PageList<TypechoSpace> pageList = service.selectPage(query, page, limit,order,searchKey,0);
+                Integer isReply = 0;
+                if(query.getType()!=null){
+                    if(query.getType().equals(3)){
+                        isReply = 1;
+                    }
+                }
+                PageList<TypechoSpace> pageList = service.selectPage(query, page, limit,order,searchKey,isReply);
                 List<TypechoSpace> list = pageList.getList();
                 if(list.size() < 1){
                     JSONObject noData = new JSONObject();
@@ -515,10 +571,13 @@ public class TypechoSpaceController {
                             String text = contents.getText();
                             List imgList = baseFull.getImageSrc(text);
                             text = baseFull.toStrByChinese(text);
+                            contentJson.put("cid",contents.getCid());
                             contentJson.put("title",contents.getTitle());
                             contentJson.put("images",imgList);
+                            contentJson.put("status",contents.getStatus());
                             contentJson.put("text",text.length()>300 ? text.substring(0,300) : text);
                         }else{
+                            contentJson.put("cid",0);
                             contentJson.put("title","该文章已被删除或屏蔽");
                             contentJson.put("text","");
                         }
@@ -539,11 +598,34 @@ public class TypechoSpaceController {
                             }
                             forwardJson.put("username",name);
                         }else{
+                            forwardJson.put("id",0);
                             forwardJson.put("username","");
                             forwardJson.put("text","该动态已被删除或屏蔽");
                         }
 
                         json.put("forwardJson",forwardJson);
+                    }
+                    //对于评论，获取上级动态
+                    if(space.getType().equals(3)){
+                        Integer sid = space.getToid();
+                        Map parentJson = new HashMap();
+                        TypechoSpace parentSpace = service.selectByKey(sid);
+                        if(parentSpace!=null){
+                            parentJson = JSONObject.parseObject(JSONObject.toJSONString(parentSpace), Map.class);
+                            Integer spaceUid = parentSpace.getUid();
+                            TypechoUsers spaceUser = usersService.selectByKey(spaceUid);
+                            String name = spaceUser.getName();
+                            if(spaceUser.getScreenName()!=null){
+                                name = spaceUser.getScreenName();
+                            }
+                            parentJson.put("username",name);
+                        }else{
+                            parentJson.put("id",0);
+                            parentJson.put("username","");
+                            parentJson.put("text","该动态已被删除或屏蔽");
+                        }
+
+                        json.put("parentJson",parentJson);
                     }
                     //对于商品
                     if(space.getType().equals(5)){
@@ -564,7 +646,7 @@ public class TypechoSpaceController {
                             shopJson.put("username","");
                             shopJson.put("title","该商品已被删除或屏蔽");
                         }
-
+                        json.put("shopJson",shopJson);
                     }
                     jsonList.add(json);
 

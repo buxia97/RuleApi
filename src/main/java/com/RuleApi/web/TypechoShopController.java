@@ -61,6 +61,9 @@ public class TypechoShopController {
     private TypechoInboxService inboxService;
 
     @Autowired
+    private TypechoSpaceService spaceService;
+
+    @Autowired
     private PushService pushService;
 
     @Value("${web.prefix}")
@@ -140,7 +143,7 @@ public class TypechoShopController {
                 if(uStatus==0){
                     shopinfo.remove("value");
                     redisHelp.delete(this.dataprefix+"_"+"spaceInfo_"+key,redisTemplate);
-                    redisHelp.setKey(this.dataprefix+"_"+"spaceInfo_"+key,shopInfoJson,10,redisTemplate);
+                    redisHelp.setKey(this.dataprefix+"_"+"spaceInfo_"+key,shopinfo,10,redisTemplate);
                 }else{
                     Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
                     Integer uid  = Integer.parseInt(map.get("uid").toString());
@@ -155,8 +158,9 @@ public class TypechoShopController {
                     if(!uid.equals(aid)&&isBuy < 1){
                         shopinfo.remove("value");
                     }
-                    shopInfoJson = shopinfo;
+
                 }
+                shopInfoJson = shopinfo;
             }
 
         }catch (Exception e){
@@ -177,7 +181,8 @@ public class TypechoShopController {
     @ResponseBody
     public String addShop(@RequestParam(value = "params", required = false) String  params,
                           @RequestParam(value = "token", required = false) String  token,
-                          @RequestParam(value = "text", required = false) String  text) {
+                          @RequestParam(value = "text", required = false) String  text,
+                          @RequestParam(value = "isSpace", required = false, defaultValue = "0") Integer isSpace) {
         Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
@@ -304,6 +309,19 @@ public class TypechoShopController {
         }
 
         int rows = service.insert(insert);
+        //同步到动态
+        if(isSpace.equals(1)){
+            Long date = System.currentTimeMillis();
+            String created = String.valueOf(date).substring(0,10);
+            TypechoSpace space = new TypechoSpace();
+            space.setType(5);
+            space.setText("发布了新商品");
+            space.setCreated(Integer.parseInt(created));
+            space.setModified(Integer.parseInt(created));
+            space.setUid(uid);
+            space.setToid(insert.getId());
+            spaceService.insert(space);
+        }
         editFile.setLog("用户"+uid+"请求添加商品");
         JSONObject response = new JSONObject();
         response.put("code" , rows);

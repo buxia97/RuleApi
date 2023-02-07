@@ -77,6 +77,9 @@ public class TypechoContentsController {
     @Autowired
     private TypechoInboxService inboxService;
 
+    @Autowired
+    private TypechoSpaceService spaceService;
+
 
     @Autowired
     private RedisTemplate redisTemplate;
@@ -428,7 +431,8 @@ public class TypechoContentsController {
     public String contentsAdd(@RequestParam(value = "params", required = false) String  params,
                               @RequestParam(value = "token", required = false) String  token,
                               @RequestParam(value = "text", required = false) String  text,
-                              @RequestParam(value = "isMd", required = false, defaultValue = "1") Integer  isMd) {
+                              @RequestParam(value = "isMd", required = false, defaultValue = "1") Integer  isMd,
+                              @RequestParam(value = "isSpace", required = false, defaultValue = "0") Integer  isSpace) {
         try {
             TypechoContents insert = null;
             Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
@@ -653,20 +657,32 @@ public class TypechoContentsController {
 
 
             }
+            Long date = System.currentTimeMillis();
+            String created = String.valueOf(date).substring(0,10);
+
+            if(isSpace.equals(1)){
+                TypechoSpace space = new TypechoSpace();
+                space.setType(1);
+                space.setText("发布了新文章");
+                space.setCreated(Integer.parseInt(created));
+                space.setModified(Integer.parseInt(created));
+                space.setUid(logUid);
+                space.setToid(cid);
+                spaceService.insert(space);
+            }
             String resText = "发布成功";
             if(isWaiting>0){
                 resText = "文章将在审核后发布！";
 
             }else{
+
                 //如果无需审核，则立即增加经验
                 Integer postExp = apiconfig.getPostExp();
                 if(postExp>0){
                     //生成操作记录
-                    Long date = System.currentTimeMillis();
-                    String created = String.valueOf(date).substring(0,10);
+
                     SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
                     String curtime = sdf.format(new Date(date));
-
                     TypechoUserlog userlog = new TypechoUserlog();
                     userlog.setUid(logUid);
                     //cid用于存放真实时间

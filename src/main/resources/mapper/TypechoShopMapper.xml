@@ -38,7 +38,7 @@
     </sql>
 
     <!-- 插入数据 -->
-    <insert id="insert" parameterType="com.RuleApi.entity.TypechoShop">
+    <insert id="insert" parameterType="com.RuleApi.entity.TypechoShop" keyProperty="id" useGeneratedKeys="true">
         INSERT INTO ${prefix}_shop
         <trim prefix="(" suffix=")" suffixOverrides=",">
             <if test ='null != id'>
@@ -76,9 +76,6 @@
             </if>
             <if test ='null != status'>
                 `status`,
-            </if>
-            <if test ='null != vipDiscount'>
-                `vipDiscount`
             </if>
             <if test ='null != vipDiscount'>
                 `vipDiscount`
