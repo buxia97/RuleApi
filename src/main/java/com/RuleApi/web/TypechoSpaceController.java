@@ -17,10 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * 控制层
@@ -355,9 +352,20 @@ public class TypechoSpaceController {
                     fan.setTouid(space.getUid());
                     Integer isFollow = fanService.total(fan);
                     spaceInfoJson.put("isFollow",isFollow);
+                    TypechoUserlog userlog = new TypechoUserlog();
+                    userlog.setCid(space.getId());
+                    userlog.setUid(uid);
+                    Integer isLikes = userlogService.total(userlog);
+                    if(isLikes > 0){
+                        spaceInfoJson.put("isLikes",1);
+                    }else{
+                        spaceInfoJson.put("isLikes",0);
+                    }
                 }else{
                     spaceInfoJson.put("isFollow",0);
+                    spaceInfoJson.put("isLikes",0);
                 }
+
                 //获取转发，评论
                 TypechoSpace dataSpace = new TypechoSpace();
                 dataSpace.setType(2);
@@ -549,8 +557,20 @@ public class TypechoSpaceController {
                         fan.setTouid(space.getUid());
                         Integer isFollow = fanService.total(fan);
                         json.put("isFollow",isFollow);
+
+                        TypechoUserlog userlog = new TypechoUserlog();
+                        userlog.setCid(space.getId());
+                        userlog.setUid(uid);
+                        Integer isLikes = userlogService.total(userlog);
+                        if(isLikes > 0){
+                            json.put("isLikes",1);
+                        }else{
+                            json.put("isLikes",0);
+                        }
+
                     }else{
                         json.put("isFollow",0);
+                        json.put("isLikes",0);
                     }
                     //获取转发，评论
                     TypechoSpace dataSpace = new TypechoSpace();
@@ -803,6 +823,55 @@ public class TypechoSpaceController {
             e.printStackTrace();
             return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
         }
+    }
+    /***
+     * 动态点赞
+     */
+    @RequestMapping(value = "/spaceLikes")
+    @ResponseBody
+    public String spaceLikes(@RequestParam(value = "id", required = false) Integer  id, @RequestParam(value = "token", required = false) String  token) {
+        try{
+            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+            if(uStatus==0){
+                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+            }
+
+            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            Integer uid  = Integer.parseInt(map.get("uid").toString());
+            Long date = System.currentTimeMillis();
+            String userTime = String.valueOf(date).substring(0,10);
+
+            //生成操作日志
+            TypechoUserlog userlog = new TypechoUserlog();
+            userlog.setUid(uid);
+            userlog.setCid(id);
+            Integer isLikes = userlogService.total(userlog);
+            if(isLikes>0){
+                return Result.getResultJson(0,"你已经点赞过了",null);
+            }
+            TypechoSpace space = service.selectByKey(id);
+            if(space==null){
+                return Result.getResultJson(0,"该动态不存在",null);
+            }
+            userlog.setType("spaceLike");
+            userlog.setCreated(Integer.parseInt(userTime));
+            userlogService.insert(userlog);
+            Integer likes = space.getLikes();
+            likes = likes + 1;
+            TypechoSpace newSpace = new TypechoSpace();
+            newSpace.setLikes(likes);
+            newSpace.setId(id);
+            int rows = service.update(newSpace);
+            JSONObject response = new JSONObject();
+            response.put("code" ,rows > 0 ? 1: 0 );
+            response.put("data" , rows);
+            response.put("msg"  , rows > 0 ? "点赞成功" : "点赞失败");
+            return response.toString();
+        }catch (Exception e){
+            e.printStackTrace();
+            return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
+        }
+
     }
 
 }
