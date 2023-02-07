@@ -837,7 +837,7 @@ public class InstallController {
         //查询配置中心表是否存在uploadLevel字段
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'uploadLevel';", Integer.class);
         if (i == 0){
-            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `uploadLevel` int(2) DEFAULT '0' COMMENT '上传限制等级（0只允许图片，2只允许图片视频，3允许所有类型文件）'");
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `uploadLevel` int(2) DEFAULT '0' COMMENT '上传限制等级（0只允许图片，1关闭上传接口，2只允许图片视频，3允许所有类型文件）'");
             text+="配置中心模块，字段uploadLevel添加完成。";
         }else{
             text+="配置中心模块，字段uploadLevel已经存在，无需添加。";

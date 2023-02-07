@@ -579,32 +579,35 @@ public class TypechoCommentsController {
                 //如果无需审核，则立即增加经验
                 Integer reviewExp = apiconfig.getReviewExp();
 
-                //生成操作记录
-                String cur = created + "000";
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
-                String curtime = sdf.format(new Date(Long.parseLong(cur)));
+                if(reviewExp > 0){
+                    //生成操作记录
+                    String cur = created + "000";
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+                    String curtime = sdf.format(new Date(Long.parseLong(cur)));
 
-                TypechoUserlog userlog = new TypechoUserlog();
-                userlog.setUid(logUid);
-                //cid用于存放真实时间
-                userlog.setCid(Integer.parseInt(curtime));
-                userlog.setType("reviewExp");
-                Integer size = userlogService.total(userlog);
-                //只有前三次评论获得姜堰
-                if(size < 3){
-                    userlog.setNum(reviewExp);
-                    userlog.setCreated(Integer.parseInt(created));
-                    userlogService.insert(userlog);
-                    //修改用户资产
-                    TypechoUsers oldUser = usersService.selectByKey(logUid);
-                    Integer experience = oldUser.getExperience();
-                    experience = experience + reviewExp;
-                    TypechoUsers updateUser = new TypechoUsers();
-                    updateUser.setUid(logUid);
-                    updateUser.setExperience(experience);
-                    usersService.update(updateUser);
-                    addtext = "，获得"+reviewExp+"经验值";
+                    TypechoUserlog userlog = new TypechoUserlog();
+                    userlog.setUid(logUid);
+                    //cid用于存放真实时间
+                    userlog.setCid(Integer.parseInt(curtime));
+                    userlog.setType("reviewExp");
+                    Integer size = userlogService.total(userlog);
+                    //只有前三次评论获得姜堰
+                    if(size < 3){
+                        userlog.setNum(reviewExp);
+                        userlog.setCreated(Integer.parseInt(created));
+                        userlogService.insert(userlog);
+                        //修改用户资产
+                        TypechoUsers oldUser = usersService.selectByKey(logUid);
+                        Integer experience = oldUser.getExperience();
+                        experience = experience + reviewExp;
+                        TypechoUsers updateUser = new TypechoUsers();
+                        updateUser.setUid(logUid);
+                        updateUser.setExperience(experience);
+                        usersService.update(updateUser);
+                        addtext = "，获得"+reviewExp+"经验值";
+                    }
                 }
+
             }
             editFile.setLog("用户"+logUid+"提交发布评论，IP："+ip);
             JSONObject response = new JSONObject();
@@ -835,33 +838,35 @@ public class TypechoCommentsController {
                 }
                 //如果无需审核，则立即增加经验
                 Integer reviewExp = apiconfig.getReviewExp();
+                if(reviewExp > 0){
+                    //生成操作记录
+                    Long date = System.currentTimeMillis();
+                    String created = String.valueOf(date).substring(0,10);
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+                    String curtime = sdf.format(new Date(date));
 
-                //生成操作记录
-                Long date = System.currentTimeMillis();
-                String created = String.valueOf(date).substring(0,10);
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
-                String curtime = sdf.format(new Date(date));
-
-                TypechoUserlog userlog = new TypechoUserlog();
-                userlog.setUid(logUid);
-                //cid用于存放真实时间
-                userlog.setCid(Integer.parseInt(curtime));
-                userlog.setType("reviewExp");
-                Integer size = userlogService.total(userlog);
-                //只有前三次评论获得姜堰
-                if(size < 3){
-                    userlog.setNum(reviewExp);
-                    userlog.setCreated(Integer.parseInt(created));
-                    userlogService.insert(userlog);
-                    //修改用户资产
-                    TypechoUsers oldUser = usersService.selectByKey(logUid);
-                    Integer experience = oldUser.getExperience();
-                    experience = experience + reviewExp;
-                    TypechoUsers updateUser = new TypechoUsers();
-                    updateUser.setUid(logUid);
-                    updateUser.setExperience(experience);
-                    usersService.update(updateUser);
+                    TypechoUserlog userlog = new TypechoUserlog();
+                    userlog.setUid(logUid);
+                    //cid用于存放真实时间
+                    userlog.setCid(Integer.parseInt(curtime));
+                    userlog.setType("reviewExp");
+                    Integer size = userlogService.total(userlog);
+                    //只有前三次评论获得姜堰
+                    if(size < 3){
+                        userlog.setNum(reviewExp);
+                        userlog.setCreated(Integer.parseInt(created));
+                        userlogService.insert(userlog);
+                        //修改用户经验
+                        TypechoUsers oldUser = usersService.selectByKey(logUid);
+                        Integer experience = oldUser.getExperience();
+                        experience = experience + reviewExp;
+                        TypechoUsers updateUser = new TypechoUsers();
+                        updateUser.setUid(logUid);
+                        updateUser.setExperience(experience);
+                        usersService.update(updateUser);
+                    }
                 }
+
             }else{
                 rows = service.delete(key);
                 //删除后发送消息通知
@@ -942,13 +947,16 @@ public class TypechoCommentsController {
             //删除
             //更新用户经验
             Integer deleteExp = apiconfig.getDeleteExp();
-            TypechoUsers oldUser = usersService.selectByKey(comments.getAuthorId());
-            Integer experience = oldUser.getExperience();
-            experience = experience - deleteExp;
-            TypechoUsers updateUser = new TypechoUsers();
-            updateUser.setUid(comments.getAuthorId());
-            updateUser.setExperience(experience);
-            usersService.update(updateUser);
+            if(deleteExp > 0){
+                TypechoUsers oldUser = usersService.selectByKey(comments.getAuthorId());
+                Integer experience = oldUser.getExperience();
+                experience = experience - deleteExp;
+                TypechoUsers updateUser = new TypechoUsers();
+                updateUser.setUid(comments.getAuthorId());
+                updateUser.setExperience(experience);
+                usersService.update(updateUser);
+            }
+
 
             int rows = service.delete(key);
             editFile.setLog("用户"+uid+"删除了评论"+key);

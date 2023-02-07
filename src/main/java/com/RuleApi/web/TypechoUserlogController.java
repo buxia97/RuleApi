@@ -350,10 +350,11 @@ public class TypechoUserlogController {
                 if(type.equals("clock")){
                     TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
                     Integer clockMax = apiconfig.getClock();
-                    if (clockMax < 1){
-                        return Result.getResultJson(0,"签到功能已关闭",null);
-                    }
                     int award = r.nextInt(clockMax) + 1;
+                    if (clockMax < 1){
+                        award = 0;
+                    }
+
                     int addExp = apiconfig.getClockExp();
                     TypechoUserlog log = new TypechoUserlog();
                     log.setType("clock");
@@ -379,13 +380,15 @@ public class TypechoUserlogController {
 
 
                     TypechoUsers user = usersService.selectByKey(uid);
-                    Integer account = user.getAssets();
-                    Integer oldExperience = user.getExperience();
-                    Integer Assets = account + award;
-                    Integer newExperience = oldExperience + addExp;
                     TypechoUsers newUser = new TypechoUsers();
                     newUser.setUid(uid);
-                    newUser.setAssets(Assets);
+                    if(award > 0){
+                        Integer account = user.getAssets();
+                        Integer Assets = account + award;
+                        newUser.setAssets(Assets);
+                    }
+                    Integer oldExperience = user.getExperience();
+                    Integer newExperience = oldExperience + addExp;
                     newUser.setExperience(newExperience);
                     usersService.update(newUser);
                     jsonToMap.put("num",award);

@@ -92,6 +92,9 @@ public class UploadController {
 
         //根据权限等级检查是否为图片
         Integer uploadLevel = apiconfig.getUploadLevel();
+        if(uploadLevel.equals(1)){
+            return Result.getResultJson(0,"管理员已关闭上传功能",null);
+        }
         if(uploadLevel.equals(0)){
             //检查是否是图片
             BufferedImage bi = ImageIO.read(file.getInputStream());
@@ -99,7 +102,7 @@ public class UploadController {
                 return Result.getResultJson(0,"当前只允许上传图片文件",null);
             }
         }
-        if(uploadLevel.equals(1)){
+        if(uploadLevel.equals(2)){
             //检查是否是图片或视频
             BufferedImage bi = ImageIO.read(file.getInputStream());
             Integer isVideo = baseFull.isVideo(eName);
@@ -189,6 +192,9 @@ public class UploadController {
         String newfile = UUID.randomUUID()+filetype;
         //根据权限等级检查是否为图片
         Integer uploadLevel = apiconfig.getUploadLevel();
+        if(uploadLevel.equals(1)){
+            return Result.getResultJson(0,"管理员已关闭上传功能",null);
+        }
         if(uploadLevel.equals(0)){
             //检查是否是图片
             BufferedImage bi = ImageIO.read(file.getInputStream());
@@ -196,7 +202,7 @@ public class UploadController {
                 return Result.getResultJson(0,"当前只允许上传图片文件",null);
             }
         }
-        if(uploadLevel.equals(1)){
+        if(uploadLevel.equals(2)){
             //检查是否是图片或视频
             BufferedImage bi = ImageIO.read(file.getInputStream());
             Integer isVideo = baseFull.isVideo(filetype);
@@ -282,6 +288,9 @@ public class UploadController {
         }
         //根据权限等级检查是否为图片
         Integer uploadLevel = apiconfig.getUploadLevel();
+        if(uploadLevel.equals(1)){
+            return Result.getResultJson(0,"管理员已关闭上传功能",null);
+        }
         if(uploadLevel.equals(0)){
             //检查是否是图片或视频
             BufferedImage bi = ImageIO.read(file.getInputStream());
@@ -289,7 +298,7 @@ public class UploadController {
                 return Result.getResultJson(0,"当前只允许上传图片文件",null);
             }
         }
-        if(uploadLevel.equals(1)){
+        if(uploadLevel.equals(2)){
             //检查是否是图片
             BufferedImage bi = ImageIO.read(file.getInputStream());
             Integer isVideo = baseFull.isVideo(eName);
@@ -366,7 +375,7 @@ public class UploadController {
                     return Result.getResultJson(0,"当前只允许上传图片文件",null);
                 }
             }
-            if(uploadLevel.equals(1)){
+            if(uploadLevel.equals(2)){
                 //检查是否是图片或视频
                 BufferedImage bi = ImageIO.read(file.getInputStream());
                 Integer isVideo = baseFull.isVideo(suffix);

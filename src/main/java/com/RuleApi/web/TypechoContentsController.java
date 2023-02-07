@@ -660,33 +660,35 @@ public class TypechoContentsController {
             }else{
                 //如果无需审核，则立即增加经验
                 Integer postExp = apiconfig.getPostExp();
+                if(postExp>0){
+                    //生成操作记录
+                    Long date = System.currentTimeMillis();
+                    String created = String.valueOf(date).substring(0,10);
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+                    String curtime = sdf.format(new Date(date));
 
-                //生成操作记录
-                Long date = System.currentTimeMillis();
-                String created = String.valueOf(date).substring(0,10);
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
-                String curtime = sdf.format(new Date(date));
-
-                TypechoUserlog userlog = new TypechoUserlog();
-                userlog.setUid(logUid);
-                //cid用于存放真实时间
-                userlog.setCid(Integer.parseInt(curtime));
-                userlog.setType("postExp");
-                Integer size = userlogService.total(userlog);
-                //只有前三次发布文章获得经验
-                if(size < 3){
-                    userlog.setNum(postExp);
-                    userlog.setCreated(Integer.parseInt(created));
-                    userlogService.insert(userlog);
-                    //修改用户资产
-                    TypechoUsers oldUser = usersService.selectByKey(logUid);
-                    Integer experience = oldUser.getExperience();
-                    experience = experience + postExp;
-                    TypechoUsers updateUser = new TypechoUsers();
-                    updateUser.setUid(logUid);
-                    updateUser.setExperience(experience);
-                    usersService.update(updateUser);
+                    TypechoUserlog userlog = new TypechoUserlog();
+                    userlog.setUid(logUid);
+                    //cid用于存放真实时间
+                    userlog.setCid(Integer.parseInt(curtime));
+                    userlog.setType("postExp");
+                    Integer size = userlogService.total(userlog);
+                    //只有前三次发布文章获得经验
+                    if(size < 3){
+                        userlog.setNum(postExp);
+                        userlog.setCreated(Integer.parseInt(created));
+                        userlogService.insert(userlog);
+                        //修改用户资产
+                        TypechoUsers oldUser = usersService.selectByKey(logUid);
+                        Integer experience = oldUser.getExperience();
+                        experience = experience + postExp;
+                        TypechoUsers updateUser = new TypechoUsers();
+                        updateUser.setUid(logUid);
+                        updateUser.setExperience(experience);
+                        usersService.update(updateUser);
+                    }
                 }
+
             }
 
             editFile.setLog("用户"+logUid+"请求发布了新文章");
@@ -980,14 +982,17 @@ public class TypechoContentsController {
 
             //更新用户经验
             Integer deleteExp = apiconfig.getDeleteExp();
-            TypechoUsers oldUser = usersService.selectByKey(contents.getAuthorId());
-            Integer experience = oldUser.getExperience();
-            experience = experience - deleteExp;
-            TypechoUsers updateUser = new TypechoUsers();
-            updateUser.setUid(contents.getAuthorId());
-            updateUser.setExperience(experience);
-            usersService.update(updateUser);
-            editFile.setLog("管理员"+logUid+"请求删除文章"+key);
+            if(deleteExp > 0){
+                TypechoUsers oldUser = usersService.selectByKey(contents.getAuthorId());
+                Integer experience = oldUser.getExperience();
+                experience = experience - deleteExp;
+                TypechoUsers updateUser = new TypechoUsers();
+                updateUser.setUid(contents.getAuthorId());
+                updateUser.setExperience(experience);
+                usersService.update(updateUser);
+                editFile.setLog("管理员"+logUid+"请求删除文章"+key);
+            }
+
 
 
             JSONObject response = new JSONObject();
@@ -1102,33 +1107,35 @@ public class TypechoContentsController {
                 if(type.equals(0)) {
                     //审核后增加经验
                     Integer postExp = apiconfig.getPostExp();
+                    if(postExp > 0){
+                        //生成操作记录
+                        Long date = System.currentTimeMillis();
+                        String created = String.valueOf(date).substring(0,10);
+                        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+                        String curtime = sdf.format(new Date(date));
 
-                    //生成操作记录
-                    Long date = System.currentTimeMillis();
-                    String created = String.valueOf(date).substring(0,10);
-                    SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
-                    String curtime = sdf.format(new Date(date));
-
-                    TypechoUserlog userlog = new TypechoUserlog();
-                    userlog.setUid(logUid);
-                    //cid用于存放真实时间
-                    userlog.setCid(Integer.parseInt(curtime));
-                    userlog.setType("postExp");
-                    Integer size = userlogService.total(userlog);
-                    //只有前三次发布文章获得经验
-                    if(size < 3){
-                        userlog.setNum(postExp);
-                        userlog.setCreated(Integer.parseInt(created));
-                        userlogService.insert(userlog);
-                        //修改用户资产
-                        TypechoUsers oldUser = usersService.selectByKey(logUid);
-                        Integer experience = oldUser.getExperience();
-                        experience = experience + postExp;
-                        TypechoUsers updateUser = new TypechoUsers();
-                        updateUser.setUid(logUid);
-                        updateUser.setExperience(experience);
-                        usersService.update(updateUser);
+                        TypechoUserlog userlog = new TypechoUserlog();
+                        userlog.setUid(logUid);
+                        //cid用于存放真实时间
+                        userlog.setCid(Integer.parseInt(curtime));
+                        userlog.setType("postExp");
+                        Integer size = userlogService.total(userlog);
+                        //只有前三次发布文章获得经验
+                        if(size < 3){
+                            userlog.setNum(postExp);
+                            userlog.setCreated(Integer.parseInt(created));
+                            userlogService.insert(userlog);
+                            //修改用户资产
+                            TypechoUsers oldUser = usersService.selectByKey(logUid);
+                            Integer experience = oldUser.getExperience();
+                            experience = experience + postExp;
+                            TypechoUsers updateUser = new TypechoUsers();
+                            updateUser.setUid(logUid);
+                            updateUser.setExperience(experience);
+                            usersService.update(updateUser);
+                        }
                     }
+
                 }
 
             }catch (Exception e){
