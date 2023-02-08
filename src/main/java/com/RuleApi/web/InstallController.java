@@ -1055,7 +1055,7 @@ public class InstallController {
         //动态模块
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_space';", Integer.class);
         if (i == 0){
-            jdbcTemplate.execute("CREATE TABLE `"+prefix+"space` (" +
+            jdbcTemplate.execute("CREATE TABLE `"+prefix+"_space` (" +
                     "  `id` int(11) NOT NULL AUTO_INCREMENT," +
                     "  `uid` int(11) DEFAULT '0' COMMENT '发布者'," +
                     "  `created` int(10) unsigned DEFAULT '0' COMMENT '发布时间'," +
@@ -1065,7 +1065,7 @@ public class InstallController {
                     "  `type` int(2) DEFAULT NULL COMMENT '0普通动态，1转发和发布文章，2转发动态，3动态评论，4视频，5商品'," +
                     "  `likes` int(10) DEFAULT '0' COMMENT '喜欢动态的数量'," +
                     "  `toid` int(10) DEFAULT '0' COMMENT '文章id，动态id等'," +
-                    "  PRIMARY KEY (`id`)\n" +
+                    "  PRIMARY KEY (`id`)" +
                     ") ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='个人动态表';");
             text+="动态模块创建完成。";
         }else{
