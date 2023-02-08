@@ -77,6 +77,7 @@ public class UserStatus {
             }
             userJson.put("customize", user.getCustomize());
             userJson.put("introduce", user.getIntroduce());
+            userJson.put("bantime", user.getBantime());
             //判断是否为VIP
             userJson.put("vip", user.getVip());
             userJson.put("isvip", 0);

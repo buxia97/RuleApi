@@ -882,6 +882,22 @@ public class InstallController {
         }else{
             text+="配置中心模块，字段deleteExp已经存在，无需添加。";
         }
+        //查询配置中心表是否存在spaceMinExp字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'spaceMinExp';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `spaceMinExp` int(11) DEFAULT '20' COMMENT '发布动态要求最低经验值'");
+            text+="配置中心模块，字段spaceMinExp添加完成。";
+        }else{
+            text+="配置中心模块，字段spaceMinExp已经存在，无需添加。";
+        }
+        //查询配置中心表是否存在chatMinExp字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'chatMinExp';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `chatMinExp` int(11) DEFAULT '20' COMMENT '聊天要求最低经验值'");
+            text+="配置中心模块，字段chatMinExp添加完成。";
+        }else{
+            text+="配置中心模块，字段chatMinExp已经存在，无需添加。";
+        }
         try {
             Thread.sleep(500);
         } catch (InterruptedException ie) {

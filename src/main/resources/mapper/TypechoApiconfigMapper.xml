@@ -82,6 +82,8 @@
         <result column="postExp" property="postExp" />
         <result column="violationExp" property="violationExp" />
         <result column="deleteExp" property="deleteExp" />
+        <result column="spaceMinExp" property="spaceMinExp" />
+        <result column="chatMinExp" property="chatMinExp" />
 
 
     </resultMap>
@@ -165,7 +167,9 @@
         `reviewExp`,
         `postExp`,
         `violationExp`,
-        `deleteExp`
+        `deleteExp`,
+        `spaceMinExp`,
+        `chatMinExp`
     </sql>
 
     <!-- 插入数据 -->
@@ -393,7 +397,13 @@
                 `violationExp`,
             </if>
             <if test ='null != deleteExp'>
-                `deleteExp`
+                `deleteExp`,
+            </if>
+            <if test ='null != spaceMinExp'>
+                `spaceMinExp`,
+            </if>
+            <if test ='null != chatMinExp'>
+                `chatMinExp`
             </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
@@ -618,7 +628,13 @@
                 #{violationExp},
             </if>
             <if test ='null != deleteExp'>
-                #{deleteExp}
+                #{deleteExp},
+            </if>
+            <if test ='null != spaceMinExp'>
+                #{spaceMinExp},
+            </if>
+            <if test ='null != chatMinExp'>
+                #{chatMinExp}
             </if>
         </trim>
     </insert>
@@ -704,7 +720,9 @@
             <if test ='null != reviewExp'>`reviewExp` = #{reviewExp},</if>
             <if test ='null != postExp'>`postExp` = #{postExp},</if>
             <if test ='null != violationExp'>`violationExp` = #{violationExp},</if>
-            <if test ='null != deleteExp'>`deleteExp` = #{deleteExp}</if>
+            <if test ='null != deleteExp'>`deleteExp` = #{deleteExp},</if>
+            <if test ='null != spaceMinExp'>`spaceMinExp` = #{spaceMinExp},</if>
+            <if test ='null != chatMinExp'>`chatMinExp` = #{chatMinExp}</if>
         </set>
         WHERE `id` = #{id}
     </update>

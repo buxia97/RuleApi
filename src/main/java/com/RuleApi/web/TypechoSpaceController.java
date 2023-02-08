@@ -124,8 +124,18 @@ public class TypechoSpaceController {
             }
 
             //攻击拦截结束
-            //违禁词拦截
+
             TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+
+            //判断用户经验值
+            Integer spaceMinExp = apiconfig.getSpaceMinExp();
+            TypechoUsers curUser = usersService.selectByKey(uid);
+            Integer Exp = curUser.getExperience();
+            if(Exp < spaceMinExp){
+                return Result.getResultJson(0,"发布动态最低要求经验值为"+spaceMinExp+",你当前经验值"+Exp,null);
+            }
+
+            //违禁词拦截
             String forbidden = apiconfig.getForbidden();
             Integer intercept = 0;
             if(forbidden!=null){
@@ -164,6 +174,9 @@ public class TypechoSpaceController {
             //违禁词拦截结束
             Long date = System.currentTimeMillis();
             String created = String.valueOf(date).substring(0,10);
+
+
+
 
 
             TypechoSpace space = new TypechoSpace();
@@ -515,7 +528,7 @@ public class TypechoSpaceController {
             map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
             uid =Integer.parseInt(map.get("uid").toString());
         }
-        List cacheList =  redisHelp.getList(this.dataprefix+"_"+"spaceList_"+page+"_"+limit+"_"+searchKey+"_"+uid,redisTemplate);
+        List cacheList =  redisHelp.getList(this.dataprefix+"_"+"spaceList_"+page+"_"+limit+"_"+searchKey+"_"+uid+"_"+searchParams,redisTemplate);
         List jsonList = new ArrayList();
 
         Integer total = service.total(query);
@@ -671,8 +684,8 @@ public class TypechoSpaceController {
                     jsonList.add(json);
 
                 }
-                redisHelp.delete(this.dataprefix+"_"+"spaceList_"+page+"_"+limit,redisTemplate);
-                redisHelp.setList(this.dataprefix+"_"+"spaceList_"+page+"_"+limit,jsonList,5,redisTemplate);
+                redisHelp.delete(this.dataprefix+"_"+"spaceList_"+page+"_"+limit+"_"+searchKey+"_"+uid+"_"+searchParams,redisTemplate);
+                redisHelp.setList(this.dataprefix+"_"+"spaceList_"+page+"_"+limit+"_"+searchKey+"_"+uid+"_"+searchParams,jsonList,5,redisTemplate);
             }
         }catch (Exception e){
             e.printStackTrace();

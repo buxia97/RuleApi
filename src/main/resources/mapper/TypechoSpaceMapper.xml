@@ -216,7 +216,7 @@
                 and `type` != 3
             </if>
             <if test ='1 == isReply'>
-                and `type` == 3
+                and `type` = 3
             </if>
             <if test ='"" != searchKey'>
                 and CONCAT(IFNULL(`text`,'')) LIKE '%${searchKey}%'

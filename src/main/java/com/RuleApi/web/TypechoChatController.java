@@ -116,6 +116,14 @@ public class TypechoChatController {
             }
             //如果未聊天过，则创建聊天室
             if(chatid==null){
+                //判断用户经验值
+                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+                Integer chatMinExp = apiconfig.getChatMinExp();
+                TypechoUsers curUser = usersService.selectByKey(uid);
+                Integer Exp = curUser.getExperience();
+                if(Exp < chatMinExp){
+                    return Result.getResultJson(0,"聊天最低要求经验值为"+chatMinExp+",你当前经验值"+Exp,null);
+                }
                 TypechoChat insert = new TypechoChat();
                 insert.setUid(uid);
                 insert.setToid(touid);
@@ -209,12 +217,20 @@ public class TypechoChatController {
                 }
 
             }
+            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+            //判断用户经验值
+            Integer chatMinExp = apiconfig.getChatMinExp();
+            TypechoUsers curUser = usersService.selectByKey(uid);
+            Integer Exp = curUser.getExperience();
+            if(Exp < chatMinExp){
+                return Result.getResultJson(0,"聊天最低要求经验值为"+chatMinExp+",你当前经验值"+Exp,null);
+            }
             if(type.equals(0)){
                 if(msg.length()>1500){
                     return Result.getResultJson(0,"最大发言字数不超过1500",null);
                 }
                 //违禁词拦截
-                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+
                 String forbidden = apiconfig.getForbidden();
                 Integer intercept = 0;
                 if(forbidden!=null){
@@ -847,17 +863,19 @@ public class TypechoChatController {
         Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
         if(uStatus==0){
             query.setType(1);
+            type = 1;
         }else{
             Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
             String group = map.get("group").toString();
             if(group.equals("administrator")||group.equals("editor")){
                 query.setType(type);
+
             }
 
         }
 
         List jsonList = new ArrayList();
-        List cacheList = redisHelp.getList(this.dataprefix+"_"+"allGroup_"+page+"_"+limit,redisTemplate);
+        List cacheList = redisHelp.getList(this.dataprefix+"_"+"allGroup_"+page+"_"+limit+"_"+type+"_"+order+"_"+searchKey,redisTemplate);
         Integer total = service.total(query);
         try{
             if(cacheList.size()>0){
@@ -962,8 +980,8 @@ public class TypechoChatController {
 
                     jsonList.add(json);
                 }
-                redisHelp.delete(this.dataprefix+"_"+"allGroup_"+page+"_"+limit,redisTemplate);
-                redisHelp.setList(this.dataprefix+"_"+"allGroup_"+page+"_"+limit,jsonList,5,redisTemplate);
+                redisHelp.delete(this.dataprefix+"_"+"allGroup_"+page+"_"+limit+"_"+type+"_"+order+"_"+searchKey,redisTemplate);
+                redisHelp.setList(this.dataprefix+"_"+"allGroup_"+page+"_"+limit+"_"+type+"_"+order+"_"+searchKey,jsonList,5,redisTemplate);
             }
         }catch (Exception e){
             e.printStackTrace();

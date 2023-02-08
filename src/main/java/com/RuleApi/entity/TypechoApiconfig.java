@@ -385,6 +385,15 @@ public class TypechoApiconfig implements Serializable {
      */
     private Integer deleteExp;
 
+    /**
+     * 发布动态要求最低经验值
+     */
+    private Integer spaceMinExp;
+
+    /**
+     * 聊天要求最低经验值
+     */
+    private Integer chatMinExp;
 
 
 
