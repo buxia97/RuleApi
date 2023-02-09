@@ -572,6 +572,7 @@ public class PayController {
         response.put("total", total);
         return response.toString();
     }
+
     @RequestMapping(value = "/tokenPayExcel")
     @ResponseBody
     public void tokenPayExcel(@RequestParam(value = "limit" , required = false, defaultValue = "15") Integer limit,@RequestParam(value = "token", required = false) String  token,HttpServletResponse response) throws IOException {
@@ -658,8 +659,10 @@ public class PayController {
 
             //修改用户账户
             Integer newassets = assets + pirce;
-            users.setAssets(newassets);
-            usersService.update(users);
+            TypechoUsers newUser = new TypechoUsers();
+            newUser.setUid(uid);
+            newUser.setAssets(newassets);
+            usersService.update(newUser);
 
             //修改卡密状态
             paykey.setStatus(1);
@@ -684,6 +687,7 @@ public class PayController {
             response.put("msg"  , "卡密充值成功");
             return response.toString();
         }catch (Exception e){
+            e.printStackTrace();
             JSONObject response = new JSONObject();
             response.put("code" , 0);
             response.put("msg"  , "卡密充值失败");

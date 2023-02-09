@@ -144,8 +144,17 @@ public class TypechoAdsController {
                 }
                 total = service.total(query);
                 PageList<TypechoAds> pageList = service.selectPage(query, page, limit,searchKey);
+                List list = pageList.getList();
+                if(list.size() < 1){
+                    JSONObject noData = new JSONObject();
+                    noData.put("code" , 1);
+                    noData.put("msg"  , "");
+                    noData.put("data" , new ArrayList());
+                    noData.put("count", 0);
+                    noData.put("total", total);
+                    return noData.toString();
+                }
                 jsonList = pageList.getList();
-
                 redisHelp.delete(this.dataprefix + "_" + "adsList_" + page + "_" + limit + "_" + searchParams+"_"+searchKey,redisTemplate);
                 //为了性能和用户体验，广告数据缓存10分钟
                 redisHelp.setList(this.dataprefix + "_" + "adsList_" + page + "_" + limit + "_" + searchParams+"_"+searchKey,jsonList,600,redisTemplate);

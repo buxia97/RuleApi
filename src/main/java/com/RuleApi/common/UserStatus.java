@@ -1,6 +1,7 @@
 package com.RuleApi.common;
 
 import com.RuleApi.entity.TypechoApiconfig;
+import com.RuleApi.entity.TypechoComments;
 import com.RuleApi.entity.TypechoUsers;
 import com.RuleApi.service.TypechoApiconfigService;
 import com.RuleApi.service.TypechoUsersService;
@@ -58,6 +59,8 @@ public class UserStatus {
             userJson.put("name", name);
             userJson.put("groupKey", user.getGroupKey());
             userJson.put("uid", user.getUid());
+
+
             if(user.getAvatar()==null){
                 if(user.getMail()!=null){
                     String mail = user.getMail();

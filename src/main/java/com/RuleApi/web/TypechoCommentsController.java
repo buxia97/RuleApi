@@ -358,7 +358,7 @@ public class TypechoCommentsController {
 
                 TypechoUsers user = usersService.selectByKey(map.get("uid").toString());
                 String postName = "";
-                if(user.getScreenName().length()<1){
+                if(user.getScreenName()==null){
                     jsonToMap.put("author",user.getName());
                     postName = user.getName();
                 }else{

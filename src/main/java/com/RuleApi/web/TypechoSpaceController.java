@@ -51,6 +51,9 @@ public class TypechoSpaceController {
     private TypechoShopService shopService;
 
     @Autowired
+    private TypechoCommentsService commentsService;
+
+    @Autowired
     private TypechoFanService fanService;
 
     @Value("${web.prefix}")
@@ -358,6 +361,11 @@ public class TypechoSpaceController {
                 //获取创建人信息
                 Integer userid = space.getUid();
                 Map userJson = UserStatus.getUserInfo(userid,apiconfigService,usersService);
+                //获取用户等级
+                TypechoComments comments = new TypechoComments();
+                comments.setAuthorId(userid);
+                Integer lv = commentsService.total(comments);
+                userJson.put("lv", baseFull.getLv(lv));
                 spaceInfoJson.put("userJson",userJson);
                 if (uStatus != 0) {
                     TypechoFan fan = new TypechoFan();
@@ -471,6 +479,7 @@ public class TypechoSpaceController {
                         shopJson.put("username",name);
 
                     }else{
+                        shopJson.put("id",0);
                         shopJson.put("username","");
                         shopJson.put("title","该商品已被删除或屏蔽");
                     }
@@ -560,9 +569,11 @@ public class TypechoSpaceController {
                     TypechoUsers user = usersService.selectByKey(userid);
                     //获取用户信息
                     Map userJson = UserStatus.getUserInfo(userid,apiconfigService,usersService);
-                    if(uStatus!=0){
-
-                    }
+                    //获取用户等级
+                    TypechoComments comments = new TypechoComments();
+                    comments.setAuthorId(userid);
+                    Integer lv = commentsService.total(comments);
+                    userJson.put("lv", baseFull.getLv(lv));
                     json.put("userJson",userJson);
                     if (uStatus != 0) {
                         TypechoFan fan = new TypechoFan();
@@ -674,8 +685,14 @@ public class TypechoSpaceController {
                                 name = shopUser.getScreenName();
                             }
                             shopJson.put("username",name);
+                            //获取用户等级
+                            TypechoComments shopUserComments = new TypechoComments();
+                            comments.setAuthorId(shopUser.getUid());
+                            Integer userlv = commentsService.total(shopUserComments);
+                            userJson.put("lv", baseFull.getLv(userlv));
 
                         }else{
+                            shopJson.put("id",0);
                             shopJson.put("username","");
                             shopJson.put("title","该商品已被删除或屏蔽");
                         }
@@ -744,6 +761,11 @@ public class TypechoSpaceController {
                     Integer userid = fan.getTouid();
                     //获取用户信息
                     Map userJson = UserStatus.getUserInfo(userid,apiconfigService,usersService);
+                    //获取用户等级
+                    TypechoComments comments = new TypechoComments();
+                    comments.setAuthorId(userid);
+                    Integer lv = commentsService.total(comments);
+                    userJson.put("lv", baseFull.getLv(lv));
                     json.put("userJson",userJson);
                     //获取用户动态数据
                     TypechoSpace space = new TypechoSpace();

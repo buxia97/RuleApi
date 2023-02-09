@@ -511,6 +511,7 @@ public class TypechoUsersController {
                 jsonToMap.put("screenName", rows.get(0).getScreenName());
                 jsonToMap.put("customize", rows.get(0).getCustomize());
                 jsonToMap.put("introduce", rows.get(0).getIntroduce());
+                jsonToMap.put("experience", rows.get(0).getExperience());
                 //判断是否为VIP
                 jsonToMap.put("vip", rows.get(0).getVip());
                 jsonToMap.put("isvip", 0);
@@ -708,6 +709,7 @@ public class TypechoUsersController {
                 jsonToMap.put("screenName", user.getScreenName());
                 jsonToMap.put("customize", user.getCustomize());
                 jsonToMap.put("introduce", user.getIntroduce());
+                jsonToMap.put("experience", user.getExperience());
                 //判断是否为VIP
                 jsonToMap.put("vip", user.getVip());
                 jsonToMap.put("isvip", 0);
@@ -808,6 +810,7 @@ public class TypechoUsersController {
                 jsonToMap.put("avatar", apiconfig.getWebinfoAvatar() + "null");
                 jsonToMap.put("lv", 0);
                 jsonToMap.put("customize", "");
+                jsonToMap.put("experience", 0);
                 //VIP
                 jsonToMap.put("vip", 0);
                 jsonToMap.put("isvip", 0);
@@ -2202,9 +2205,13 @@ public class TypechoUsersController {
                     Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
                     TypechoInbox inbox = list.get(i);
                     Integer userid = inbox.getUid();
-                    TypechoUsers user = service.selectByKey(userid);
                     //获取用户信息
                     Map userJson = UserStatus.getUserInfo(userid,apiconfigService,service);
+                    //获取用户等级
+                    TypechoComments comments = new TypechoComments();
+                    comments.setAuthorId(userid);
+                    Integer lv = commentsService.total(comments);
+                    userJson.put("lv", baseFull.getLv(lv));
                     json.put("userJson",userJson);
                     if(inbox.getType().equals("comment")){
                         TypechoContents contentsInfo = contentsService.selectByKey(inbox.getValue());
@@ -2497,6 +2504,11 @@ public class TypechoUsersController {
                     TypechoUsers user = service.selectByKey(userid);
                     //获取用户信息
                     Map userJson = UserStatus.getUserInfo(userid,apiconfigService,service);
+                    //获取用户等级
+                    TypechoComments comments = new TypechoComments();
+                    comments.setAuthorId(userid);
+                    Integer lv = commentsService.total(comments);
+                    userJson.put("lv", baseFull.getLv(lv));
                     json.put("userJson",userJson);
                     jsonList.add(json);
                 }
@@ -2556,9 +2568,13 @@ public class TypechoUsersController {
                     Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
                     TypechoFan fan = list.get(i);
                     Integer userid = fan.getUid();
-                    TypechoUsers user = service.selectByKey(userid);
                     //获取用户信息
                     Map userJson = UserStatus.getUserInfo(userid,apiconfigService,service);
+                    //获取用户等级
+                    TypechoComments comments = new TypechoComments();
+                    comments.setAuthorId(userid);
+                    Integer lv = commentsService.total(comments);
+                    userJson.put("lv", baseFull.getLv(lv));
                     json.put("userJson",userJson);
                     jsonList.add(json);
                 }
@@ -2753,9 +2769,13 @@ public class TypechoUsersController {
                     Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
                     TypechoViolation violation = list.get(i);
                     Integer userid = violation.getUid();
-                    TypechoUsers user = service.selectByKey(userid);
                     //获取用户信息
                     Map userJson = UserStatus.getUserInfo(userid,apiconfigService,service);
+                    //获取用户等级
+                    TypechoComments comments = new TypechoComments();
+                    comments.setAuthorId(userid);
+                    Integer lv = commentsService.total(comments);
+                    userJson.put("lv", baseFull.getLv(lv));
                     json.put("userJson",userJson);
                     jsonList.add(json);
                 }

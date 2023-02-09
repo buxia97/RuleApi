@@ -191,7 +191,7 @@
             <if test ='null != avatar'>`avatar` = #{avatar},</if>
             <if test ='null != experience'>`experience` = #{experience},</if>
             <if test ='null != clientId'>`clientId` = #{clientId},</if>
-            <if test ='null != bantime'>`bantime` = #{bantime}</if>
+            <if test ='null != bantime'>`bantime` = #{bantime},</if>
             <if test ='null != posttime'>`posttime` = #{posttime}</if>
         </set>
         WHERE `uid` = #{uid}
