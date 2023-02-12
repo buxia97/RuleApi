@@ -1134,9 +1134,30 @@ public class TypechoUsersController {
             Map jsonToMap = null;
             String  agent =  request.getHeader("User-Agent");
             String  ip = baseFull.getIpAddr(request);
+            //刷邮件攻击拦截
+            String isSilence = redisHelp.getRedis(ip+"_silence",redisTemplate);
+            if(isSilence!=null){
+                return Result.getResultJson(0,"你已被暂时禁止请求，请耐心等待",null);
+            }
+            String isRepeated = redisHelp.getRedis(ip+"_isOperation",redisTemplate);
+            if(isRepeated==null){
+                redisHelp.setRedis(ip+"_isOperation","1",2,redisTemplate);
+            }else{
+                Integer frequency = Integer.parseInt(isRepeated) + 1;
+                if(frequency==3){
+                    securityService.safetyMessage("IP："+ip+"，在邮箱发信疑似存在攻击行为，请及时确认处理。","system");
+                    redisHelp.setRedis(ip+"_silence","1",1800,redisTemplate);
+                    return Result.getResultJson(0,"你的请求存在恶意行为，30分钟内禁止操作！",null);
+                }
+                redisHelp.setRedis(ip+"_isOperation",frequency.toString(),3,redisTemplate);
+                return Result.getResultJson(0,"你的操作太频繁了",null);
+            }
+            //攻击拦截结束
+
+            //邮件59秒只能发送一次
             String iSsendCode = redisHelp.getRedis(this.dataprefix + "_" + "iSsendCode_"+agent+"_"+ip, redisTemplate);
             if(iSsendCode==null){
-                redisHelp.setRedis(this.dataprefix + "_" + "iSsendCode_"+agent+"_"+ip, "data", 30, redisTemplate);
+                redisHelp.setRedis(this.dataprefix + "_" + "iSsendCode_"+agent+"_"+ip, "data", 59, redisTemplate);
             }else{
                 return Result.getResultJson(0, "你的操作太频繁了", null);
             }
@@ -1145,8 +1166,6 @@ public class TypechoUsersController {
             if(isEmail.equals(0)){
                 return Result.getResultJson(0, "邮箱验证已经关闭", null);
             }
-
-
 
             if (StringUtils.isNotBlank(params)) {
                 jsonToMap = JSONObject.parseObject(JSON.parseObject(params).toString());
@@ -1201,10 +1220,28 @@ public class TypechoUsersController {
             }
             String  agent =  request.getHeader("User-Agent");
             String  ip = baseFull.getIpAddr(request);
-
+            //刷邮件攻击拦截
+            String isSilence = redisHelp.getRedis(ip+"_silence",redisTemplate);
+            if(isSilence!=null){
+                return Result.getResultJson(0,"你已被暂时禁止请求，请耐心等待",null);
+            }
+            String isRepeated = redisHelp.getRedis(ip+"_isOperation",redisTemplate);
+            if(isRepeated==null){
+                redisHelp.setRedis(ip+"_isOperation","1",2,redisTemplate);
+            }else{
+                Integer frequency = Integer.parseInt(isRepeated) + 1;
+                if(frequency==3){
+                    securityService.safetyMessage("IP："+ip+"，在邮箱发信疑似存在攻击行为，请及时确认处理。","system");
+                    redisHelp.setRedis(ip+"_silence","1",1800,redisTemplate);
+                    return Result.getResultJson(0,"你的请求存在恶意行为，30分钟内禁止操作！",null);
+                }
+                redisHelp.setRedis(ip+"_isOperation",frequency.toString(),3,redisTemplate);
+                return Result.getResultJson(0,"你的操作太频繁了",null);
+            }
+            //攻击拦截结束
             String regISsendCode = redisHelp.getRedis(this.dataprefix + "_" + "regISsendCode_"+agent+"_"+ip, redisTemplate);
             if(regISsendCode==null){
-                redisHelp.setRedis(this.dataprefix + "_" + "regISsendCode_"+agent+"_"+ip, "data", 30, redisTemplate);
+                redisHelp.setRedis(this.dataprefix + "_" + "regISsendCode_"+agent+"_"+ip, "data", 59, redisTemplate);
             }else{
                 return Result.getResultJson(0, "你的操作太频繁了", null);
             }
@@ -2797,6 +2834,71 @@ public class TypechoUsersController {
         response.put("count", jsonList.size());
         response.put("total", total);
         return response.toString();
+    }
+    /***
+     * 用户数据清理
+     */
+    @RequestMapping(value = "/userClean")
+    @ResponseBody
+    public String dataClean(@RequestParam(value = "clean", required = false) Integer  clean,
+                            @RequestParam(value = "token", required = false) String  token,
+                            @RequestParam(value = "uid", required = false) Integer  uid) {
+        try {
+            //1是清理用户签到，2是清理用户资产日志，3是清理用户订单数据，4是清理无效卡密
+            Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
+            if (uStatus == 0) {
+                return Result.getResultJson(0, "用户未登录或Token验证失败", null);
+            }
+            Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+            Integer logUid =Integer.parseInt(map.get("uid").toString());
+            String group = map.get("group").toString();
+            if (!group.equals("administrator")) {
+                return Result.getResultJson(0, "你没有操作权限", null);
+            }
+            TypechoUsers users = service.selectByKey(uid);
+            if(users==null){
+                return Result.getResultJson(0, "该用户不存在", null);
+            }
+            if(users.getGroupKey().equals("administrator")){
+                return Result.getResultJson(0, "不允许删除管理员的文章", null);
+            }
+            String text = "文章数据";
+            //清除该用户所有文章
+            if(clean.equals(1)){
+                jdbcTemplate.execute("DELETE FROM "+this.prefix+"_contents WHERE authorId = "+uid+";");
+            }
+            //清除该用户所有评论
+            if(clean.equals(2)){
+                jdbcTemplate.execute("DELETE FROM "+this.prefix+"_comments WHERE authorId = "+uid+";");
+                text = "评论数据";
+            }
+            //清除该用户所有动态
+            if(clean.equals(3)){
+                jdbcTemplate.execute("DELETE FROM "+this.prefix+"_space WHERE uid = "+uid+";");
+                text = "动态数据";
+            }
+            //清除该用户所有商品
+            if(clean.equals(4)){
+                jdbcTemplate.execute("DELETE FROM "+this.prefix+"_shop WHERE uid = "+uid+";");
+                text = "商品数据";
+            }
+            //清除该用户签到记录
+            if(clean.equals(5)){
+                jdbcTemplate.execute("DELETE FROM "+this.prefix+"_userlog WHERE type='clock' and uid = "+uid+";");
+                text = "日志数据";
+            }
+            securityService.safetyMessage("管理员："+logUid+"，清除了用户"+uid+"所有"+text,"system");
+            JSONObject response = new JSONObject();
+            response.put("code" , 1);
+            response.put("msg"  , "清理成功");
+            return response.toString();
+        }catch (Exception e){
+            JSONObject response = new JSONObject();
+            response.put("code" , 0);
+            response.put("msg"  , "操作失败");
+            return response.toString();
+        }
+
     }
 
 }

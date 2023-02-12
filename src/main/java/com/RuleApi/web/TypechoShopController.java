@@ -131,7 +131,7 @@ public class TypechoShopController {
         Map shopInfoJson = new HashMap<String, String>();
         try{
             Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-            Map cacheInfo = null;
+            Map cacheInfo = new HashMap();
             if(uStatus==0){
                 cacheInfo = redisHelp.getMapValue(this.dataprefix+"_"+"shopInfo"+key,redisTemplate);
             }

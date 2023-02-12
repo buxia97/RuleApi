@@ -813,8 +813,10 @@ public class TypechoChatController {
             if(cacheInfo.size()>0){
                 groupInfoJson = cacheInfo;
             }else{
-                TypechoChat chat;
-                chat = service.selectByKey(id);
+                TypechoChat chat = service.selectByKey(id);
+                if(chat == null){
+                    return Result.getResultJson(0,"群聊不存在",null);
+                }
                 TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
                 //获取创建人信息
                 Integer userid = chat.getUid();

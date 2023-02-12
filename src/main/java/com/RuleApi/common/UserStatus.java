@@ -93,6 +93,7 @@ public class UserStatus {
             }
 
         }else{
+            userJson.put("uid", 0);
             userJson.put("name", "用户已注销");
             userJson.put("groupKey", "");
             userJson.put("avatar", apiconfig.getWebinfoAvatar() + "null");

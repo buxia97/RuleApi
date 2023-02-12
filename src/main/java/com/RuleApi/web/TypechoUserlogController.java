@@ -350,9 +350,9 @@ public class TypechoUserlogController {
                 if(type.equals("clock")){
                     TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
                     Integer clockMax = apiconfig.getClock();
-                    int award = r.nextInt(clockMax) + 1;
-                    if (clockMax < 1){
-                        award = 0;
+                    int award = 0;
+                    if (clockMax > 0){
+                        award = r.nextInt(clockMax) + 1;
                     }
 
                     int addExp = apiconfig.getClockExp();
