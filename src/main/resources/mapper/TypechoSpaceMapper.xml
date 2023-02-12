@@ -126,7 +126,7 @@
 
     <!-- 删除 -->
     <delete id="delete">
-        DELETE FROM typecho_space
+        DELETE FROM ${prefix}_space
         WHERE `id` = #{key}
     </delete>
 
