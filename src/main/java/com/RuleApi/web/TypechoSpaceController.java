@@ -840,12 +840,15 @@ public class TypechoSpaceController {
             //更新用户经验
             Integer deleteExp = apiconfig.getDeleteExp();
             TypechoUsers oldUser = usersService.selectByKey(space.getUid());
-            Integer experience = oldUser.getExperience();
-            experience = experience - deleteExp;
-            TypechoUsers updateUser = new TypechoUsers();
-            updateUser.setUid(space.getUid());
-            updateUser.setExperience(experience);
-            usersService.update(updateUser);
+            if(oldUser!=null){
+                Integer experience = oldUser.getExperience();
+                experience = experience - deleteExp;
+                TypechoUsers updateUser = new TypechoUsers();
+                updateUser.setUid(space.getUid());
+                updateUser.setExperience(experience);
+                usersService.update(updateUser);
+            }
+
 
             int rows = service.delete(id);
             editFile.setLog("用户"+uid+"删除了动态"+id);

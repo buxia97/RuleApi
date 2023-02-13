@@ -1000,16 +1000,18 @@ public class TypechoContentsController {
             Integer deleteExp = apiconfig.getDeleteExp();
             if(deleteExp > 0){
                 TypechoUsers oldUser = usersService.selectByKey(contents.getAuthorId());
-                Integer experience = oldUser.getExperience();
-                experience = experience - deleteExp;
-                TypechoUsers updateUser = new TypechoUsers();
-                updateUser.setUid(contents.getAuthorId());
-                updateUser.setExperience(experience);
-                usersService.update(updateUser);
-                editFile.setLog("管理员"+logUid+"请求删除文章"+key);
+                if(oldUser!=null){
+                    Integer experience = oldUser.getExperience();
+                    experience = experience - deleteExp;
+                    TypechoUsers updateUser = new TypechoUsers();
+                    updateUser.setUid(contents.getAuthorId());
+                    updateUser.setExperience(experience);
+                    usersService.update(updateUser);
+                }
+
+
             }
-
-
+            editFile.setLog("管理员"+logUid+"请求删除文章"+key);
 
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );

@@ -1458,6 +1458,8 @@ public class TypechoUsersController {
                 jsonToMap.remove("activated");
                 jsonToMap.remove("logged");
                 jsonToMap.remove("authCode");
+                jsonToMap.remove("bantime");
+                jsonToMap.remove("posttime");
                 //jsonToMap.remove("introduce");
                 jsonToMap.remove("assets");
                 jsonToMap.remove("experience");
@@ -2900,5 +2902,6 @@ public class TypechoUsersController {
         }
 
     }
+
 
 }

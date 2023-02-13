@@ -949,12 +949,14 @@ public class TypechoCommentsController {
             Integer deleteExp = apiconfig.getDeleteExp();
             if(deleteExp > 0){
                 TypechoUsers oldUser = usersService.selectByKey(comments.getAuthorId());
-                Integer experience = oldUser.getExperience();
-                experience = experience - deleteExp;
-                TypechoUsers updateUser = new TypechoUsers();
-                updateUser.setUid(comments.getAuthorId());
-                updateUser.setExperience(experience);
-                usersService.update(updateUser);
+                if(oldUser!=null){
+                    Integer experience = oldUser.getExperience();
+                    experience = experience - deleteExp;
+                    TypechoUsers updateUser = new TypechoUsers();
+                    updateUser.setUid(comments.getAuthorId());
+                    updateUser.setExperience(experience);
+                    usersService.update(updateUser);
+                }
             }
 
 
