@@ -527,7 +527,9 @@ public class TypechoContentsController {
                     }
 
                 }
-
+                if(isMd.equals(1)){
+                    text = text.replace("||rn||","\n");
+                }
                 //写入创建时间和作者
                 jsonToMap.put("created",userTime);
                 jsonToMap.put("authorId",uid);
@@ -803,7 +805,9 @@ public class TypechoContentsController {
                     }
 
                 }
-
+                if(isMd.equals(1)){
+                    text = text.replace("||rn||","\n");
+                }
                 jsonToMap.put("text",text);
                 //部分字段不允许定义
                 jsonToMap.remove("authorId");
@@ -1029,7 +1033,7 @@ public class TypechoContentsController {
     @ResponseBody
     public String contentsAudit(@RequestParam(value = "key", required = false) String  key,
                                 @RequestParam(value = "token", required = false) String  token,
-                                @RequestParam(value = "type", required = false) Integer  type,
+                                @RequestParam(value = "type", required = false, defaultValue = "0") Integer  type,
                                 @RequestParam(value = "reason", required = false) String  reason) {
         try {
             if(type==null){
@@ -1044,10 +1048,10 @@ public class TypechoContentsController {
             //String group = (String) redisHelp.getValue("userInfo"+token,"group",redisTemplate);
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             String group = map.get("group").toString();
+            Integer logUid  = Integer.parseInt(map.get("uid").toString());
             if(!group.equals("administrator")&&!group.equals("editor")){
                 return Result.getResultJson(0,"你没有操作权限",null);
             }
-            Integer logUid =Integer.parseInt(map.get("uid").toString());
             TypechoContents info = service.selectByKey(key);
             if(info.getStatus().equals("publish")){
                 return Result.getResultJson(0,"该文章已审核通过",null);
@@ -1090,7 +1094,7 @@ public class TypechoContentsController {
                 Long date = System.currentTimeMillis();
                 String created = String.valueOf(date).substring(0, 10);
                 TypechoInbox insert = new TypechoInbox();
-                insert.setUid(uid);
+                insert.setUid(logUid);
                 insert.setTouid(info.getAuthorId());
                 insert.setType("system");
                 insert.setText("你的文章【" + info.getTitle() + "】已审核通过");
@@ -1114,7 +1118,7 @@ public class TypechoContentsController {
                 Long date = System.currentTimeMillis();
                 String created = String.valueOf(date).substring(0, 10);
                 TypechoInbox insert = new TypechoInbox();
-                insert.setUid(uid);
+                insert.setUid(logUid);
                 insert.setTouid(info.getAuthorId());
                 insert.setType("system");
                 insert.setText("你的文章【" + info.getTitle() + "】未审核通过。理由如下："+reason);

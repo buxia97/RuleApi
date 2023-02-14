@@ -446,15 +446,15 @@ public class TypechoUsersController {
             }
             String isRepeated = redisHelp.getRedis(ip+"_isOperation",redisTemplate);
             if(isRepeated==null){
-                redisHelp.setRedis(ip+"_isOperation","1",3,redisTemplate);
+                redisHelp.setRedis(ip+"_isOperation","1",2,redisTemplate);
             }else{
                 Integer frequency = Integer.parseInt(isRepeated) + 1;
-                if(frequency==3){
+                if(frequency==4){
                     securityService.safetyMessage("IP："+ip+"，在登录接口疑似存在攻击行为，请及时确认处理。","system");
                     redisHelp.setRedis(ip+"_silence","1",600,redisTemplate);
                     return Result.getResultJson(0,"你的请求存在恶意行为，10分钟内禁止操作！",null);
                 }
-                redisHelp.setRedis(ip+"_isOperation",frequency.toString(),3,redisTemplate);
+                redisHelp.setRedis(ip+"_isOperation",frequency.toString(),2,redisTemplate);
                 return Result.getResultJson(0,"你的操作太频繁了",null);
             }
             //攻击拦截结束

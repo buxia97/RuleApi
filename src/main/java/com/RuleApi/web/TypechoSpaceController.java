@@ -178,11 +178,8 @@ public class TypechoSpaceController {
             Long date = System.currentTimeMillis();
             String created = String.valueOf(date).substring(0,10);
 
-
-
-
-
             TypechoSpace space = new TypechoSpace();
+            text = text.replace("||rn||","\r\n");
             space.setText(text);
             space.setUid(uid);
             space.setType(type);
@@ -315,6 +312,7 @@ public class TypechoSpaceController {
                 }
             }
             TypechoSpace space = new TypechoSpace();
+            text = text.replace("||rn||","\r\n");
             space.setText(text);
             space.setUid(uid);
             space.setPic(pic);
@@ -689,7 +687,7 @@ public class TypechoSpaceController {
                             TypechoComments shopUserComments = new TypechoComments();
                             comments.setAuthorId(shopUser.getUid());
                             Integer userlv = commentsService.total(shopUserComments);
-                            userJson.put("lv", baseFull.getLv(userlv));
+                            shopJson.put("lv", baseFull.getLv(userlv));
 
                         }else{
                             shopJson.put("id",0);
