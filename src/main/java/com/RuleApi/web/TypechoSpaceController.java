@@ -222,7 +222,7 @@ public class TypechoSpaceController {
                 return Result.getResultJson(0,"参数不正确",null);
             }
             //类型不为0时，需要传toid
-            if(type > 0){
+            if(!type.equals(0)&&!type.equals(4)){
                 if(toid.equals(0)){
                     return Result.getResultJson(0,"参数不正确",null);
                 }
