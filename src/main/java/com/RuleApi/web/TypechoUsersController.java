@@ -1470,7 +1470,8 @@ public class TypechoUsersController {
                     user.setScreenName(screenName);
                     List<TypechoUsers> userlist = service.selectList(user);
                     if(userlist.size() > 0){
-                        if(!userlist.get(0).getUid().equals(uid)){
+                        Integer myuid = Integer.parseInt(uid);
+                        if(!userlist.get(0).getUid().equals(myuid)){
                             return Result.getResultJson(0, "该昵称已被占用！", null);
                         }
 

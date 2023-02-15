@@ -796,18 +796,17 @@ public class TypechoContentsController {
                             return Result.getResultJson(0,"你的内容包含敏感代码，请修改后重试！",null);
                         }
                     }
-                    if(isMd.equals(1)){
-                        boolean status = text.contains("<!--markdown-->");
-                        if(!status){
-                            text = "<!--markdown-->"+text;
 
-                        }
-                    }
 
                 }
                 if(isMd.equals(1)){
-                    text = text.replace("||rn||","\n");
+                    boolean status = text.contains("<!--markdown-->");
+                    if(!status){
+                        text = "<!--markdown-->"+text;
+
+                    }
                 }
+                text = text.replace("||rn||","\r\n");
                 jsonToMap.put("text",text);
                 //部分字段不允许定义
                 jsonToMap.remove("authorId");

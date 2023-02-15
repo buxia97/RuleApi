@@ -218,7 +218,7 @@ public class TypechoSpaceController {
                             @RequestParam(value = "pic", required = false) String  pic,
                             @RequestParam(value = "token", required = false) String  token) {
         try{
-            if(!type.equals(0)&&!type.equals(1)&&!type.equals(2)&&!type.equals(3)){
+            if(!type.equals(0)&&!type.equals(1)&&!type.equals(2)&&!type.equals(3)&&!type.equals(4)&&!type.equals(5)){
                 return Result.getResultJson(0,"参数不正确",null);
             }
             //类型不为0时，需要传toid
@@ -313,13 +313,13 @@ public class TypechoSpaceController {
             }
             TypechoSpace space = new TypechoSpace();
             text = text.replace("||rn||","\r\n");
+            space.setId(id);
             space.setText(text);
             space.setUid(uid);
             space.setPic(pic);
             space.setToid(toid);
-            space.setCreated(Integer.parseInt(created));
             space.setModified(Integer.parseInt(created));
-            int rows = service.insert(space);
+            int rows = service.update(space);
             editFile.setLog("用户"+uid+"修改了动态"+id);
             JSONObject response = new JSONObject();
             response.put("code" , rows);

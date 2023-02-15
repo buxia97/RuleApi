@@ -244,6 +244,7 @@ public class TypechoShopController {
                     return Result.getResultJson(0,"你的内容包含敏感代码，请修改后重试！",null);
                 }
             }
+            text = text.replace("||rn||","\r\n");
             jsonToMap.put("text",text);
             jsonToMap.put("created",userTime);
 
@@ -420,6 +421,7 @@ public class TypechoShopController {
                     return Result.getResultJson(0,"你的内容包含敏感代码，请修改后重试！",null);
                 }
             }
+            text = text.replace("||rn||","\r\n");
             jsonToMap.put("text",text);
             jsonToMap.remove("created");
             update = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoShop.class);
