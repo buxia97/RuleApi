@@ -812,7 +812,6 @@ public class TypechoSpaceController {
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer uid  = Integer.parseInt(map.get("uid").toString());
             // 查询发布者是不是自己，如果是管理员则跳过
-            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
             TypechoSpace space = service.selectByKey(id);
             String group = map.get("group").toString();
             if(!group.equals("administrator")&&!group.equals("editor")){
@@ -834,19 +833,6 @@ public class TypechoSpaceController {
                     inboxService.insert(insert);
                 }
             }
-
-            //更新用户经验
-            Integer deleteExp = apiconfig.getDeleteExp();
-            TypechoUsers oldUser = usersService.selectByKey(space.getUid());
-            if(oldUser!=null){
-                Integer experience = oldUser.getExperience();
-                experience = experience - deleteExp;
-                TypechoUsers updateUser = new TypechoUsers();
-                updateUser.setUid(space.getUid());
-                updateUser.setExperience(experience);
-                usersService.update(updateUser);
-            }
-
 
             int rows = service.delete(id);
             editFile.setLog("用户"+uid+"删除了动态"+id);

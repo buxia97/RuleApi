@@ -532,6 +532,7 @@ public class TypechoContentsController {
                 }
                 //写入创建时间和作者
                 jsonToMap.put("created",userTime);
+                jsonToMap.put("modified",userTime);
                 jsonToMap.put("authorId",uid);
 
                 //根据后台的开关判断
