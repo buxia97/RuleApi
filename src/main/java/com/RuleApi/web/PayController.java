@@ -370,8 +370,7 @@ public class PayController {
             return Result.getResultJson(0, "用户未登录或Token验证失败", null);
         }
         TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
-
-
+        Integer scale = apiconfig.getScale();
         //商户订单号
         Date now = new Date();
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss");//可以方便地修改日期格式
@@ -385,7 +384,8 @@ public class PayController {
             Long date = System.currentTimeMillis();
             String created = String.valueOf(date).substring(0,10);
             TypechoPaylog paylog = new TypechoPaylog();
-            Integer TotalAmount = price * apiconfig.getScale();
+
+            Integer TotalAmount = price * scale;
             paylog.setStatus(0);
             paylog.setCreated(Integer.parseInt(created));
             paylog.setUid(uid);
@@ -445,10 +445,10 @@ public class PayController {
                 paylog.setPid(pid);
                 paylog.setCreated(Integer.parseInt(created));
                 paylogService.update(paylog);
+
                 //订单修改后，插入用户表
                 String total_amount = logList.get(0).getTotalAmount();
-                Integer scale = apiconfig.getScale();
-                Integer integral = Double.valueOf(total_amount).intValue() * scale;
+                Integer integral = Double.valueOf(total_amount).intValue();
                 TypechoUsers users = usersService.selectByKey(uid);
                 Integer oldAssets = users.getAssets();
                 Integer assets = oldAssets + integral;

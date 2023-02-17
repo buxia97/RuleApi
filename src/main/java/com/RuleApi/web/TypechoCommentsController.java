@@ -152,14 +152,19 @@ public class TypechoCommentsController {
                     if(Integer.parseInt(json.get("parent").toString())>0){
                         String coid = json.get("parent").toString();
                         TypechoComments parent = service.selectByKey(coid);
-                        if(parent.getStatus().equals("approved")){
-                            parentComments.put("author",parent.getAuthor());
-                            parentComments.put("text",parent.getText());
-                            parentComments.put("created",JSONObject.toJSONString(parent.getCreated()));
+                        if(parent!=null){
+                            if(parent.getStatus().equals("approved")){
+                                parentComments.put("author",parent.getAuthor());
+                                parentComments.put("text",parent.getText());
+                                parentComments.put("created",JSONObject.toJSONString(parent.getCreated()));
 
+                            }else{
+                                parentComments.put("text","该评论已被删除");
+                            }
                         }else{
-                            parentComments.put("text","评论已删除");
+                            parentComments.put("text","该评论已被删除");
                         }
+
                     }
 
 
