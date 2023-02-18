@@ -295,10 +295,11 @@
             <if test ='"" != searchKey'>
                 and CONCAT(IFNULL(`text`,'')) LIKE '%${searchKey}%'
             </if>
-            <if test ='"" != order'>
-                order by ${order} desc
-            </if>
+
         </where>
+        <if test ='"" != order'>
+            order by ${order} desc
+        </if>
         limit #{page,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
     </select>
 

@@ -263,6 +263,14 @@ public class TypechoMetasController {
             } else {
                 PageList<TypechoMetas> pageList = service.selectPage(query, page, limit, searchKey, order);
                 jsonList = pageList.getList();
+                if(jsonList.size() < 1){
+                    JSONObject noData = new JSONObject();
+                    noData.put("code" , 1);
+                    noData.put("msg"  , "");
+                    noData.put("data" , new ArrayList());
+                    noData.put("count", 0);
+                    return noData.toString();
+                }
                 redisHelp.delete(this.dataprefix+"_"+"metasList_"+page+"_"+limit+"_"+searchParams,redisTemplate);
                 redisHelp.setList(this.dataprefix+"_"+"metasList_"+page+"_"+limit+"_"+searchParams,jsonList,10,redisTemplate);
             }
