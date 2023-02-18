@@ -58,6 +58,9 @@ public class PayController {
     private TypechoPaylogService paylogService;
 
     @Autowired
+    private SecurityService securityService;
+
+    @Autowired
     private TypechoPaykeyService paykeyService;
 
 
@@ -88,6 +91,7 @@ public class PayController {
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
         }
+
         Pattern pattern = Pattern.compile("[0-9]*");
         if(!pattern.matcher(num).matches()){
             return Result.getResultJson(0,"充值金额必须为正整数",null);
@@ -95,6 +99,30 @@ public class PayController {
         if(Integer.parseInt(num) <= 0){
             return Result.getResultJson(0,"充值金额不正确",null);
         }
+
+        Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+        Integer uid =Integer.parseInt(map.get("uid").toString());
+        //登录情况下，恶意充值攻击拦截
+        String isSilence = redisHelp.getRedis(this.dataprefix+"_"+uid+"_silence",redisTemplate);
+        if(isSilence!=null){
+            return Result.getResultJson(0,"你的操作太频繁了，请稍后再试",null);
+        }
+        String isRepeated = redisHelp.getRedis(this.dataprefix+"_"+uid+"_isRepeated",redisTemplate);
+        if(isRepeated==null){
+            redisHelp.setRedis(this.dataprefix+"_"+uid+"_isRepeated","1",2,redisTemplate);
+        }else{
+            Integer frequency = Integer.parseInt(isRepeated) + 1;
+            if(frequency==3){
+                securityService.safetyMessage("用户ID："+uid+"，在微信充值接口疑似存在攻击行为，请及时确认处理。","system");
+                redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",900,redisTemplate);
+                return Result.getResultJson(0,"你的请求存在恶意行为，15分钟内禁止操作！",null);
+            }else{
+                redisHelp.setRedis(this.dataprefix+"_"+uid+"_isRepeated",frequency.toString(),3,redisTemplate);
+            }
+            return Result.getResultJson(0,"你的操作太频繁了",null);
+        }
+        //攻击拦截结束
+
         TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
 
         final String APPID = apiconfig.getAlipayAppId();
@@ -126,8 +154,6 @@ public class PayController {
         //根据response中的结果继续业务逻辑处理
         if (response.getMsg().equals("Success")) {
             //先生成订单
-            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
-            Integer uid  = Integer.parseInt(map.get("uid").toString());
             Long date = System.currentTimeMillis();
             String created = String.valueOf(date).substring(0,10);
             TypechoPaylog paylog = new TypechoPaylog();
@@ -369,6 +395,28 @@ public class PayController {
         if (uStatus == 0) {
             return Result.getResultJson(0, "用户未登录或Token验证失败", null);
         }
+        Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+        Integer uid =Integer.parseInt(map.get("uid").toString());
+        //登录情况下，恶意充值攻击拦截
+        String isSilence = redisHelp.getRedis(this.dataprefix+"_"+uid+"_silence",redisTemplate);
+        if(isSilence!=null){
+            return Result.getResultJson(0,"你的操作太频繁了，请稍后再试",null);
+        }
+        String isRepeated = redisHelp.getRedis(this.dataprefix+"_"+uid+"_isRepeated",redisTemplate);
+        if(isRepeated==null){
+            redisHelp.setRedis(this.dataprefix+"_"+uid+"_isRepeated","1",2,redisTemplate);
+        }else{
+            Integer frequency = Integer.parseInt(isRepeated) + 1;
+            if(frequency==3){
+                securityService.safetyMessage("用户ID："+uid+"，在微信充值接口疑似存在攻击行为，请及时确认处理。","system");
+                redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",900,redisTemplate);
+                return Result.getResultJson(0,"你的请求存在恶意行为，15分钟内禁止操作！",null);
+            }else{
+                redisHelp.setRedis(this.dataprefix+"_"+uid+"_isRepeated",frequency.toString(),3,redisTemplate);
+            }
+            return Result.getResultJson(0,"你的操作太频繁了",null);
+        }
+        //攻击拦截结束
         TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
         Integer scale = apiconfig.getScale();
         //商户订单号
@@ -379,8 +427,6 @@ public class PayController {
         Map<String, String> data = WeChatPayUtils.native_payment_order(price.toString(), "微信商品下单", outTradeNo,apiconfig);
         if("200".equals(data.get("code"))){
             //先生成订单
-            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
-            Integer uid  = Integer.parseInt(map.get("uid").toString());
             Long date = System.currentTimeMillis();
             String created = String.valueOf(date).substring(0,10);
             TypechoPaylog paylog = new TypechoPaylog();
@@ -643,6 +689,26 @@ public class PayController {
             }
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer uid =Integer.parseInt(map.get("uid").toString());
+            //登录情况下，恶意充值攻击拦截
+            String isSilence = redisHelp.getRedis(this.dataprefix+"_"+uid+"_silence",redisTemplate);
+            if(isSilence!=null){
+                return Result.getResultJson(0,"你的操作太频繁了，请稍后再试",null);
+            }
+            String isRepeated = redisHelp.getRedis(this.dataprefix+"_"+uid+"_isRepeated",redisTemplate);
+            if(isRepeated==null){
+                redisHelp.setRedis(this.dataprefix+"_"+uid+"_isRepeated","1",2,redisTemplate);
+            }else{
+                Integer frequency = Integer.parseInt(isRepeated) + 1;
+                if(frequency==3){
+                    securityService.safetyMessage("用户ID："+uid+"，在卡密充值接口疑似存在攻击行为，请及时确认处理。","system");
+                    redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",900,redisTemplate);
+                    return Result.getResultJson(0,"你的请求存在恶意行为，15分钟内禁止操作！",null);
+                }else{
+                    redisHelp.setRedis(this.dataprefix+"_"+uid+"_isRepeated",frequency.toString(),3,redisTemplate);
+                }
+                return Result.getResultJson(0,"你的操作太频繁了",null);
+            }
+            //攻击拦截结束
 
             TypechoPaykey paykey = paykeyService.selectByKey(key);
             if(paykey==null){
@@ -656,13 +722,6 @@ public class PayController {
             if(!paykey.getStatus().equals(0)){
                 return Result.getResultJson(0,"卡密已失效",null);
             }
-
-            //修改用户账户
-            Integer newassets = assets + pirce;
-            TypechoUsers newUser = new TypechoUsers();
-            newUser.setUid(uid);
-            newUser.setAssets(newassets);
-            usersService.update(newUser);
 
             //修改卡密状态
             paykey.setStatus(1);
@@ -681,6 +740,15 @@ public class PayController {
             paylog.setPaytype("tokenPay");
             paylog.setSubject("卡密充值");
             paylogService.insert(paylog);
+
+            //修改用户账户
+            Integer newassets = assets + pirce;
+            TypechoUsers newUser = new TypechoUsers();
+            newUser.setUid(uid);
+            newUser.setAssets(newassets);
+            usersService.update(newUser);
+
+
 
             JSONObject response = new JSONObject();
             response.put("code" , 1);
@@ -710,6 +778,30 @@ public class PayController {
             if(uStatus==0){
                 return Result.getResultJson(0,"用户未登录或Token验证失败",null);
             }
+
+            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            Integer uid =Integer.parseInt(map.get("uid").toString());
+            //登录情况下，恶意充值攻击拦截
+            String isSilence = redisHelp.getRedis(this.dataprefix+"_"+uid+"_silence",redisTemplate);
+            if(isSilence!=null){
+                return Result.getResultJson(0,"你的操作太频繁了，请稍后再试",null);
+            }
+            String isRepeated = redisHelp.getRedis(this.dataprefix+"_"+uid+"_isRepeated",redisTemplate);
+            if(isRepeated==null){
+                redisHelp.setRedis(this.dataprefix+"_"+uid+"_isRepeated","1",2,redisTemplate);
+            }else{
+                Integer frequency = Integer.parseInt(isRepeated) + 1;
+                if(frequency==3){
+                    securityService.safetyMessage("用户ID："+uid+"，在微信充值接口疑似存在攻击行为，请及时确认处理。","system");
+                    redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",900,redisTemplate);
+                    return Result.getResultJson(0,"你的请求存在恶意行为，15分钟内禁止操作！",null);
+                }else{
+                    redisHelp.setRedis(this.dataprefix+"_"+uid+"_isRepeated",frequency.toString(),3,redisTemplate);
+                }
+                return Result.getResultJson(0,"你的操作太频繁了",null);
+            }
+            //攻击拦截结束
+
             TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
             String url = apiconfig.getEpayUrl();
             Date now = new Date();
@@ -748,8 +840,6 @@ public class PayController {
             HashMap  jsonMap = JSON.parseObject(data, HashMap.class);
             if(jsonMap.get("code").toString().equals("1")){
                 //先生成订单
-                Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
-                Integer uid  = Integer.parseInt(map.get("uid").toString());
                 Long date = System.currentTimeMillis();
                 String created = String.valueOf(date).substring(0,10);
                 TypechoPaylog paylog = new TypechoPaylog();
