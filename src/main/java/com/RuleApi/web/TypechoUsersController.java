@@ -1566,6 +1566,9 @@ public class TypechoUsersController {
                 //jsonToMap.remove("introduce");
                 jsonToMap.remove("assets");
                 update = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoUsers.class);
+                if (jsonToMap.get("customize") == null) {
+                    update.setCustomize("");
+                }
             }
 
             int rows = service.update(update);
@@ -2902,6 +2905,45 @@ public class TypechoUsersController {
             return response.toString();
         }
 
+    }
+    /***
+     * 限制和解除限制（普通功能限制，不记录数据库）
+     */
+    @RequestMapping(value = "/restrict")
+    @ResponseBody
+    public String restrict(@RequestParam(value = "token", required = false) String  token,
+                            @RequestParam(value = "uid", required = false) Integer  uid,
+                            @RequestParam(value = "type", required = false, defaultValue = "0") Integer  type) {
+        try {
+            Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
+            if (uStatus == 0) {
+                return Result.getResultJson(0, "用户未登录或Token验证失败", null);
+            }
+            Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+            Integer logUid =Integer.parseInt(map.get("uid").toString());
+            String group = map.get("group").toString();
+            if (!group.equals("administrator")) {
+                return Result.getResultJson(0, "你没有操作权限", null);
+            }
+            if(type.equals(1)){
+                redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",900,redisTemplate);
+            }else{
+                String isSilence = redisHelp.getRedis(this.dataprefix+"_"+logUid+"_silence",redisTemplate);
+                if(isSilence==null){
+                    return Result.getResultJson(0,"用户状态正常，无需操作",null);
+                }
+                redisHelp.delete(this.dataprefix+"_"+uid+"_silence", redisTemplate);
+            }
+            JSONObject response = new JSONObject();
+            response.put("code" , 1);
+            response.put("msg"  , "操作成功");
+            return response.toString();
+        }catch (Exception e){
+            JSONObject response = new JSONObject();
+            response.put("code" , 0);
+            response.put("msg"  , "操作失败");
+            return response.toString();
+        }
     }
 
 
