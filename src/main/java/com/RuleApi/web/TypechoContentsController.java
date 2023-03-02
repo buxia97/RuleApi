@@ -535,9 +535,28 @@ public class TypechoContentsController {
                 jsonToMap.put("modified",userTime);
                 jsonToMap.put("authorId",uid);
 
-                //根据后台的开关判断
+
                 Map userMap =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
                 String group = userMap.get("group").toString();
+                //普通用户最大发文限制
+                if(!group.equals("administrator")&&!group.equals("editor")){
+                    String postNum = redisHelp.getRedis(this.dataprefix+"_"+logUid+"_postNum",redisTemplate);
+                    if(postNum==null){
+                        redisHelp.setRedis(this.dataprefix+"_"+logUid+"_postNum","1",86400,redisTemplate);
+                    }else{
+                        Integer post_Num = Integer.parseInt(postNum) + 1;
+                        if(post_Num > 5){
+                            return Result.getResultJson(0,"你已超过最大发布数量限制，请您24小时后再操作",null);
+                        }else{
+                            redisHelp.setRedis(this.dataprefix+"_"+logUid+"_postNum",post_Num.toString(),86400,redisTemplate);
+                        }
+
+
+                    }
+                }
+                //限制结束
+
+                //根据后台的开关判断
                 Integer contentAuditlevel = apiconfig.getContentAuditlevel();
                 if(contentAuditlevel.equals(0)){
                     jsonToMap.put("status","publish");

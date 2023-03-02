@@ -127,6 +127,23 @@ public class TypechoSpaceController {
             }
 
             //攻击拦截结束
+            //普通用户最大发文限制
+            Map userMap =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            String group = userMap.get("group").toString();
+            if(!group.equals("administrator")&&!group.equals("editor")){
+                String spaceNum = redisHelp.getRedis(this.dataprefix+"_"+uid+"_spaceNum",redisTemplate);
+                if(spaceNum==null){
+                    redisHelp.setRedis(this.dataprefix+"_"+uid+"_spaceNum","1",86400,redisTemplate);
+                }else{
+                    Integer space_Num = Integer.parseInt(spaceNum) + 1;
+                    if(space_Num > 8){
+                        return Result.getResultJson(0,"你已超过最大发布数量限制，请您24小时后再操作",null);
+                    }else{
+                        redisHelp.setRedis(this.dataprefix+"_"+uid+"_spaceNum",space_Num.toString(),86400,redisTemplate);
+                    }
+                }
+            }
+            //限制结束
 
             TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
 

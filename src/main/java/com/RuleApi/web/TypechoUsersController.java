@@ -1154,6 +1154,20 @@ public class TypechoUsersController {
             }
             //攻击拦截结束
 
+            //邮件每天最多发送五次
+            String sendCode = redisHelp.getRedis(this.dataprefix+"_"+ip+"_sendCode",redisTemplate);
+            if(sendCode==null){
+                redisHelp.setRedis(this.dataprefix+"_"+ip+"_sendCode","1",86400,redisTemplate);
+            }else{
+                Integer send_Code = Integer.parseInt(sendCode) + 1;
+                if(send_Code > 5){
+                    return Result.getResultJson(0,"你已超过最大邮件限制，请您24小时后再操作",null);
+                }else{
+                    redisHelp.setRedis(this.dataprefix+"_"+ip+"_sendCode",send_Code.toString(),86400,redisTemplate);
+                }
+            }
+            //限制结束
+
             //邮件59秒只能发送一次
             String iSsendCode = redisHelp.getRedis(this.dataprefix + "_" + "iSsendCode_"+agent+"_"+ip, redisTemplate);
             if(iSsendCode==null){
@@ -2378,6 +2392,23 @@ public class TypechoUsersController {
                 }
             }
             Integer muid =Integer.parseInt(map.get("uid").toString());
+
+            //普通用户最大邮件限制
+            if(!group.equals("administrator")&&!group.equals("editor")){
+                String sendUser = redisHelp.getRedis(this.dataprefix+"_"+muid+"_sendUser",redisTemplate);
+                if(sendUser==null){
+                    redisHelp.setRedis(this.dataprefix+"_"+muid+"_sendUser","1",86400,redisTemplate);
+                }else{
+                    Integer send_User = Integer.parseInt(sendUser) + 1;
+                    if(send_User > 4){
+                        return Result.getResultJson(0,"你已超过最大邮件限制，请您24小时后再操作",null);
+                    }else{
+                        redisHelp.setRedis(this.dataprefix+"_"+muid+"_sendUser",send_User.toString(),86400,redisTemplate);
+                    }
+                }
+            }
+            //限制结束
+
             Long date = System.currentTimeMillis();
             String created = String.valueOf(date).substring(0,10);
             TypechoInbox insert = new TypechoInbox();
