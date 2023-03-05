@@ -607,6 +607,7 @@ public class TypechoUsersController {
                     if(jsonToMap.get("type").toString().equals("applets")){
                         String requestUrl = "https://api.weixin.qq.com/sns/jscode2session?appid="+apiconfig.getAppletsAppid()+"&secret="+apiconfig.getAppletsSecret()+"&js_code="+js_code+"&grant_type=authorization_code";
                         String res = HttpClient.doGet(requestUrl);
+                        System.out.println(res);
                         if(res==null){
                             return Result.getResultJson(0, "接口配置异常，微信官方接口请求失败", null);
                         }
@@ -620,6 +621,7 @@ public class TypechoUsersController {
                     }else{
                         String requestUrl = "https://api.weixin.qq.com/sns/oauth2/access_token?appid="+apiconfig.getWxAppId()+"&secret="+apiconfig.getWxAppSecret()+"&code="+js_code+"&grant_type=authorization_code";
                         String res = HttpClient.doGet(requestUrl);
+                        System.out.println(res);
                         if(res==null){
                             return Result.getResultJson(0, "接口配置异常，微信官方接口请求失败", null);
                         }
@@ -1093,6 +1095,27 @@ public class TypechoUsersController {
                     }
 
                 }
+                //验证用户名是否违禁
+                String userName = jsonToMap.get("name").toString();
+                String forbidden = apiconfig.getForbidden();
+                if(forbidden!=null){
+                    if(forbidden.indexOf(",") != -1){
+                        String[] strarray=forbidden.split(",");
+                        for (int i = 0; i < strarray.length; i++){
+                            String str = strarray[i];
+                            if(userName.indexOf(str) != -1){
+                                return Result.getResultJson(0, "用户名包含违规词语", null);
+                            }
+
+                        }
+                    }else{
+                        if(userName.indexOf(forbidden) != -1){
+                            return Result.getResultJson(0, "用户名包含违规词语", null);
+                        }
+                    }
+                }
+
+
                 String p = jsonToMap.get("password").toString();
                 String passwd = phpass.HashPassword(p);
                 Long date = System.currentTimeMillis();
@@ -1479,7 +1502,27 @@ public class TypechoUsersController {
                 jsonToMap.remove("experience");
                 jsonToMap.remove("vip");
                 if(jsonToMap.get("screenName")!=null){
+                    //验证用户名是否违禁
                     String screenName = jsonToMap.get("screenName").toString();
+
+                    String forbidden = apiconfig.getForbidden();
+                    if(forbidden!=null){
+                        if(forbidden.indexOf(",") != -1){
+                            String[] strarray=forbidden.split(",");
+                            for (int i = 0; i < strarray.length; i++){
+                                String str = strarray[i];
+                                if(screenName.indexOf(str) != -1){
+                                    return Result.getResultJson(0, "用户名包含违规词语", null);
+                                }
+
+                            }
+                        }else{
+                            if(screenName.indexOf(forbidden) != -1){
+                                return Result.getResultJson(0, "用户名包含违规词语", null);
+                            }
+                        }
+                    }
+
                     TypechoUsers user = new TypechoUsers();
                     user.setScreenName(screenName);
                     List<TypechoUsers> userlist = service.selectList(user);

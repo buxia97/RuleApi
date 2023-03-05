@@ -683,6 +683,13 @@ public class TypechoContentsController {
             String created = String.valueOf(date).substring(0,10);
 
             if(isSpace.equals(1)){
+                //判断用户经验值
+                Integer spaceMinExp = apiconfig.getSpaceMinExp();
+                TypechoUsers curUser = usersService.selectByKey(logUid);
+                Integer Exp = curUser.getExperience();
+                if(Exp < spaceMinExp){
+                    return Result.getResultJson(0,"发布动态最低要求经验值为"+spaceMinExp+",你当前经验值"+Exp,null);
+                }
                 TypechoSpace space = new TypechoSpace();
                 space.setType(1);
                 space.setText("发布了新文章");
