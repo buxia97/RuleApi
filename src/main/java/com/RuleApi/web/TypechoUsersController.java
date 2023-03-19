@@ -1123,7 +1123,7 @@ public class TypechoUsersController {
                 jsonToMap.put("created", userTime);
                 jsonToMap.put("group", "contributor");
                 jsonToMap.put("groupKey", "contributor");
-
+                jsonToMap.put("screenName", userName);
                 jsonToMap.put("password", passwd);
                 //jsonToMap.remove("introduce");
                 jsonToMap.remove("assets");
@@ -2973,9 +2973,10 @@ public class TypechoUsersController {
             response.put("msg"  , "清理成功");
             return response.toString();
         }catch (Exception e){
+            e.printStackTrace();
             JSONObject response = new JSONObject();
             response.put("code" , 0);
-            response.put("msg"  , "操作失败");
+            response.put("msg"  , "接口请求异常，请联系管理员");
             return response.toString();
         }
 
@@ -2986,8 +2987,8 @@ public class TypechoUsersController {
     @RequestMapping(value = "/restrict")
     @ResponseBody
     public String restrict(@RequestParam(value = "token", required = false) String  token,
-                            @RequestParam(value = "uid", required = false) Integer  uid,
-                            @RequestParam(value = "type", required = false, defaultValue = "0") Integer  type) {
+                           @RequestParam(value = "uid", required = false) Integer  uid,
+                           @RequestParam(value = "type", required = false, defaultValue = "0") Integer  type) {
         try {
             Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
             if (uStatus == 0) {
@@ -3013,12 +3014,86 @@ public class TypechoUsersController {
             response.put("msg"  , "操作成功");
             return response.toString();
         }catch (Exception e){
+            e.printStackTrace();
             JSONObject response = new JSONObject();
             response.put("code" , 0);
-            response.put("msg"  , "操作失败");
+            response.put("msg"  , "接口请求异常，请联系管理员");
             return response.toString();
         }
     }
+    @RequestMapping(value = "/giftVIP")
+    @ResponseBody
+    public String giftVIP(@RequestParam(value = "token", required = false) String  token,
+                          @RequestParam(value = "uid", required = false) Integer  uid,
+                          @RequestParam(value = "day", required = false, defaultValue = "0") Integer  day) {
+        try{
+            Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
+            if (uStatus == 0) {
+                return Result.getResultJson(0, "用户未登录或Token验证失败", null);
+            }
+            Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+            Integer logUid =Integer.parseInt(map.get("uid").toString());
+            String group = map.get("group").toString();
+            if (!group.equals("administrator")) {
+                return Result.getResultJson(0, "你没有操作权限", null);
+            }
+            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
 
+            Long date = System.currentTimeMillis();
+            String curTime = String.valueOf(date).substring(0, 10);
+            Integer days = 86400;
+            TypechoUsers users = service.selectByKey(uid);
+            Integer assets = users.getAssets();
+            //判断用户是否为VIP，决定是续期还是从当前时间开始计算
+            Integer vip = users.getVip();
+            //默认是从当前时间开始相加
+            Integer vipTime = Integer.parseInt(curTime) + days*day;
+            if(vip.equals(1)){
+                return Result.getResultJson(0,"用户已经是永久VIP，无需购买",null);
+            }
+            //如果已经是vip，走续期逻辑。
+            if(vip>Integer.parseInt(curTime)){
+                vipTime = vip+ days*day;
+            }
+
+            Integer AllPrice = day * apiconfig.getVipPrice();
+            if(day >= apiconfig.getVipDay()){
+                //如果时间戳为1就是永久会员
+                vipTime = 1;
+            }
+            if(AllPrice < 0 ){
+                return Result.getResultJson(0,"参数错误！",null);
+            }
+            Integer newassets = assets - AllPrice;
+            //更新用户资产与登录状态
+            users.setAssets(newassets);
+            users.setVip(vipTime);
+
+            int rows =  service.update(users);
+            String created = String.valueOf(date).substring(0,10);
+            TypechoPaylog paylog = new TypechoPaylog();
+            paylog.setStatus(1);
+            paylog.setCreated(Integer.parseInt(created));
+            paylog.setUid(uid);
+            paylog.setOutTradeNo(created+"buyvip");
+            paylog.setTotalAmount("-"+AllPrice);
+            paylog.setPaytype("buyvip");
+            paylog.setSubject("管理员赠送VIP");
+            paylogService.insert(paylog);
+            editFile.setLog("管理员"+uid+"为用户"+uid+"开通VIP"+day+"天");
+            JSONObject response = new JSONObject();
+            response.put("code" , rows);
+            response.put("msg"  , rows > 0 ? "开通VIP成功" : "操作失败");
+            return response.toString();
+        }catch (Exception e){
+            e.printStackTrace();
+            JSONObject response = new JSONObject();
+            response.put("code" , 0);
+            response.put("msg"  , "接口请求异常，请联系管理员");
+            return response.toString();
+        }
+
+
+    }
 
 }

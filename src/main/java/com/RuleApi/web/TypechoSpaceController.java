@@ -78,10 +78,11 @@ public class TypechoSpaceController {
     @RequestMapping(value = "/addSpace")
     @ResponseBody
     public String addSpace (@RequestParam(value = "text", required = false, defaultValue = "") String  text,
-                             @RequestParam(value = "type", required = false, defaultValue = "0") Integer  type,
-                             @RequestParam(value = "toid", required = false, defaultValue = "0") Integer  toid,
+                            @RequestParam(value = "type", required = false, defaultValue = "0") Integer  type,
+                            @RequestParam(value = "toid", required = false, defaultValue = "0") Integer  toid,
                             @RequestParam(value = "pic", required = false) String  pic,
-                             @RequestParam(value = "token", required = false) String  token) {
+                            @RequestParam(value = "token", required = false) String  token,
+                            HttpServletRequest request) {
         try{
             if(!type.equals(0)&&!type.equals(1)&&!type.equals(2)&&!type.equals(3)&&!type.equals(4)&&!type.equals(5)){
                 return Result.getResultJson(0,"参数不正确",null);
@@ -144,7 +145,7 @@ public class TypechoSpaceController {
                 }
             }
             //限制结束
-
+            String  ip = baseFull.getIpAddr(request);
             TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
 
             //判断用户经验值
@@ -181,7 +182,7 @@ public class TypechoSpaceController {
                 }else{
                     Integer frequency = Integer.parseInt(isIntercept) + 1;
                     if(frequency==4){
-                        securityService.safetyMessage("用户ID："+uid+"，在聊天发送消息接口多次触发违禁，请及时确认处理。","system");
+                        securityService.safetyMessage("用户ID："+uid+"，在动态发布接口多次触发违禁，请及时确认处理。","system");
                         redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",3600,redisTemplate);
                         return Result.getResultJson(0,"你已多次发送违禁词，被禁言一小时！",null);
                     }else{
@@ -189,7 +190,7 @@ public class TypechoSpaceController {
                     }
 
                 }
-                return Result.getResultJson(0,"消息存在违禁词",null);
+                return Result.getResultJson(0,"内容存在违禁词",null);
             }
             //违禁词拦截结束
             Long date = System.currentTimeMillis();
@@ -228,12 +229,12 @@ public class TypechoSpaceController {
     @RequestMapping(value = "/editSpace")
     @ResponseBody
     public String editSpace (
-                            @RequestParam(value = "id", required = false) Integer  id,
-                            @RequestParam(value = "text", required = false, defaultValue = "") String  text,
-                            @RequestParam(value = "type", required = false, defaultValue = "0") Integer  type,
-                            @RequestParam(value = "toid", required = false, defaultValue = "0") Integer  toid,
-                            @RequestParam(value = "pic", required = false) String  pic,
-                            @RequestParam(value = "token", required = false) String  token) {
+            @RequestParam(value = "id", required = false) Integer  id,
+            @RequestParam(value = "text", required = false, defaultValue = "") String  text,
+            @RequestParam(value = "type", required = false, defaultValue = "0") Integer  type,
+            @RequestParam(value = "toid", required = false, defaultValue = "0") Integer  toid,
+            @RequestParam(value = "pic", required = false) String  pic,
+            @RequestParam(value = "token", required = false) String  token) {
         try{
             if(!type.equals(0)&&!type.equals(1)&&!type.equals(2)&&!type.equals(3)&&!type.equals(4)&&!type.equals(5)){
                 return Result.getResultJson(0,"参数不正确",null);
@@ -529,12 +530,12 @@ public class TypechoSpaceController {
     @RequestMapping(value = "/spaceList")
     @ResponseBody
     public String spaceList (
-                            @RequestParam(value = "searchParams", required = false) String  searchParams,
-                            @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
-                            @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
-                            @RequestParam(value = "searchKey"        , required = false, defaultValue = "") String searchKey,
-                            @RequestParam(value = "order", required = false, defaultValue = "created") String  order,
-                            @RequestParam(value = "token", required = false) String  token) {
+            @RequestParam(value = "searchParams", required = false) String  searchParams,
+            @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
+            @RequestParam(value = "searchKey"        , required = false, defaultValue = "") String searchKey,
+            @RequestParam(value = "order", required = false, defaultValue = "created") String  order,
+            @RequestParam(value = "token", required = false) String  token) {
         if(limit>50){
             limit = 50;
         }
