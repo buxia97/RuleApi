@@ -569,11 +569,13 @@ public class TypechoCommentsController {
 
                 insert = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoComments.class);
                 //更新文章评论数量
+                TypechoContents updateContents = new TypechoContents();
                 TypechoComments suminfo = new TypechoComments();
                 suminfo.setCid(Integer.parseInt(cid));
                 Integer cnum = service.total(suminfo);
-                contents.setCommentsNum(cnum);
-                contentsService.update(contents);
+                updateContents.setCid(Integer.parseInt(cid));
+                updateContents.setCommentsNum(cnum);
+                contentsService.update(updateContents);
             }
             insert.setStatus(cstatus);
             int rows = service.insert(insert);
@@ -949,6 +951,7 @@ public class TypechoCommentsController {
             contents.setCid(cid);
             contents.setCommentsNum(total);
             contentsService.update(contents);
+
             //删除
             //更新用户经验
             Integer deleteExp = apiconfig.getDeleteExp();
