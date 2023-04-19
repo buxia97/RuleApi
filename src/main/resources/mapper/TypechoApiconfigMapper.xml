@@ -84,7 +84,10 @@
         <result column="deleteExp" property="deleteExp" />
         <result column="spaceMinExp" property="spaceMinExp" />
         <result column="chatMinExp" property="chatMinExp" />
-
+        <result column="qiniuDomain" property="qiniuDomain" />
+        <result column="qiniuAccessKey" property="qiniuAccessKey" />
+        <result column="qiniuSecretKey" property="qiniuSecretKey" />
+        <result column="qiniuBucketName" property="qiniuBucketName" />
 
     </resultMap>
 
@@ -169,7 +172,12 @@
         `violationExp`,
         `deleteExp`,
         `spaceMinExp`,
-        `chatMinExp`
+        `chatMinExp`,
+
+        `qiniuDomain`,
+        `qiniuAccessKey`,
+        `qiniuSecretKey`,
+        `qiniuBucketName`
     </sql>
 
     <!-- 插入数据 -->
@@ -403,7 +411,19 @@
                 `spaceMinExp`,
             </if>
             <if test ='null != chatMinExp'>
-                `chatMinExp`
+                `chatMinExp`,
+            </if>
+            <if test ='null != qiniuDomain'>
+                `qiniuDomain`,
+            </if>
+            <if test ='null != qiniuAccessKey'>
+                `qiniuAccessKey`,
+            </if>
+            <if test ='null != qiniuSecretKey'>
+                `qiniuSecretKey`,
+            </if>
+            <if test ='null != qiniuBucketName'>
+                `qiniuBucketName`
             </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
@@ -634,7 +654,19 @@
                 #{spaceMinExp},
             </if>
             <if test ='null != chatMinExp'>
-                #{chatMinExp}
+                #{chatMinExp},
+            </if>
+            <if test ='null != qiniuDomain'>
+                #{qiniuDomain},
+            </if>
+            <if test ='null != qiniuAccessKey'>
+                #{qiniuAccessKey},
+            </if>
+            <if test ='null != qiniuSecretKey'>
+                #{qiniuSecretKey},
+            </if>
+            <if test ='null != qiniuBucketName'>
+                #{qiniuBucketName}
             </if>
         </trim>
     </insert>
@@ -722,7 +754,11 @@
             <if test ='null != violationExp'>`violationExp` = #{violationExp},</if>
             <if test ='null != deleteExp'>`deleteExp` = #{deleteExp},</if>
             <if test ='null != spaceMinExp'>`spaceMinExp` = #{spaceMinExp},</if>
-            <if test ='null != chatMinExp'>`chatMinExp` = #{chatMinExp}</if>
+            <if test ='null != chatMinExp'>`chatMinExp` = #{chatMinExp},</if>
+            <if test ='null != qiniuDomain'>`qiniuDomain` = #{qiniuDomain},</if>
+            <if test ='null != qiniuAccessKey'>`qiniuAccessKey` = #{qiniuAccessKey},</if>
+            <if test ='null != qiniuSecretKey'>`qiniuSecretKey` = #{qiniuSecretKey},</if>
+            <if test ='null != qiniuBucketName'>`qiniuBucketName` = #{qiniuBucketName}</if>
         </set>
         WHERE `id` = #{id}
     </update>

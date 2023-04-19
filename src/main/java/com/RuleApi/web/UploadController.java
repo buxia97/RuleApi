@@ -5,6 +5,14 @@ import com.RuleApi.entity.TypechoApiconfig;
 import com.RuleApi.service.TypechoApiconfigService;
 import com.aliyun.oss.OSS;
 import com.aliyun.oss.OSSClientBuilder;
+import com.google.gson.Gson;
+import com.qiniu.common.QiniuException;
+import com.qiniu.common.Zone;
+import com.qiniu.http.Response;
+import com.qiniu.storage.Configuration;
+import com.qiniu.storage.UploadManager;
+import com.qiniu.storage.model.DefaultPutRet;
+import com.qiniu.util.Auth;
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
 import org.joda.time.DateTime;
@@ -322,6 +330,111 @@ public class UploadController {
         editFile.setLog("用户"+uid+"通过ossUpload成功上传了图片");
         return Result.getResultJson(1,"上传成功",info);
     }
+    /**
+     * 上传到七牛云
+     * */
+    @RequestMapping(value = "/qiniuUpload",method = RequestMethod.POST)
+    @ResponseBody
+    public String qiniuUpload(@RequestParam("file") MultipartFile file, @RequestParam(value = "token", required = false) String  token) throws IOException {
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+        if(uStatus==0){
+            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+        }
+        Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+        Integer uid =Integer.parseInt(map.get("uid").toString());
+        TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+        //获取上传文件MultipartFile
+        //返回上传到oss的路径
+        OSS ossClient = new OSSClientBuilder().build(apiconfig.getAliyunEndpoint(), apiconfig.getAliyunAccessKeyId(),apiconfig.getAliyunAccessKeySecret());
+        InputStream inputStream = null;
+
+        try {
+            //获取文件流
+            inputStream = file.getInputStream();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        //生成时间，用于创建目录
+        Calendar cal = Calendar.getInstance();
+        int year = cal.get(Calendar.YEAR);
+        int month=cal.get(Calendar.MONTH)+1;
+        int day=cal.get(Calendar.DATE);
+        //获取文件名称
+        String filename = file.getOriginalFilename();
+        //String eName = filename.substring(filename.lastIndexOf("."));
+        //应对图片剪裁后的无后缀图片
+        String eName = "";
+        try{
+            eName = filename.substring(filename.lastIndexOf("."));
+        }catch (Exception e){
+            filename = filename +".png";
+            eName = filename.substring(filename.lastIndexOf("."));
+        }
+        //根据权限等级检查是否为图片
+        Integer uploadLevel = apiconfig.getUploadLevel();
+        if(uploadLevel.equals(1)){
+            return Result.getResultJson(0,"管理员已关闭上传功能",null);
+        }
+        if(uploadLevel.equals(0)){
+            //检查是否是图片或视频
+            BufferedImage bi = ImageIO.read(file.getInputStream());
+            if(bi == null&&!eName.equals(".WEBP")&&!eName.equals(".webp")){
+                return Result.getResultJson(0,"当前只允许上传图片文件",null);
+            }
+        }
+        if(uploadLevel.equals(2)){
+            //检查是否是图片
+            BufferedImage bi = ImageIO.read(file.getInputStream());
+            Integer isVideo = baseFull.isVideo(eName);
+            if(bi == null&&!eName.equals(".WEBP")&&!eName.equals(".webp")&&!isVideo.equals(1)){
+                return Result.getResultJson(0,"请上传图片或者视频文件",null);
+            }
+        }
+        //1.在文件名称中添加随机唯一的值
+        String newFileName = UUID.randomUUID()+eName;
+
+        // String uuid = UUID.randomUUID().toString().replaceAll("-","");
+        filename = newFileName;
+
+        String key = "/"+year+"/"+month+"/"+day+"/"+filename;
+
+        // 构造一个带指定Zone对象的配置类, 注意这里的Zone.zone0需要根据主机选择
+        Configuration cfg = new Configuration(Zone.zone1());
+        // 其他参数参考类注释
+        UploadManager uploadManager = new UploadManager(cfg);
+        // 生成上传凭证，然后准备上传
+
+        try {
+            Auth auth = Auth.create(apiconfig.getQiniuAccessKey(), apiconfig.getQiniuSecretKey());
+            String upToken = auth.uploadToken(apiconfig.getQiniuBucketName());
+            FileInputStream fileInputStream = (FileInputStream) file.getInputStream();
+            try {
+                Response response = uploadManager.put(fileInputStream, key, upToken, null, null);
+                // 解析上传成功的结果
+                DefaultPutRet putRet = new Gson().fromJson(response.bodyString(), DefaultPutRet.class);
+
+                String returnPath = apiconfig.getQiniuDomain() + "/" + putRet.key;
+                // 这个returnPath是获得到的外链地址,通过这个地址可以直接打开图片
+                Map<String,String> info =new HashMap<String, String>();
+                info.put("url",returnPath);
+                editFile.setLog("用户"+uid+"通过qiniuUpload成功上传了图片");
+                return Result.getResultJson(1,"上传成功",info);
+            } catch (QiniuException ex) {
+                Response r = ex.response;
+                System.err.println(r.toString());
+                try {
+                    System.err.println(r.bodyString());
+                } catch (QiniuException ex2) {
+                    //ignore
+                }
+                return Result.getResultJson(1,"上传失败",null);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Result.getResultJson(1,"上传失败",null);
+        }
+    }
+
     /**
      * 上传到远程ftp
      * */

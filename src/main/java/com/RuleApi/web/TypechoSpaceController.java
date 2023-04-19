@@ -392,6 +392,7 @@ public class TypechoSpaceController {
                     TypechoUserlog userlog = new TypechoUserlog();
                     userlog.setCid(space.getId());
                     userlog.setUid(uid);
+                    userlog.setType("spaceLike");
                     Integer isLikes = userlogService.total(userlog);
                     if(isLikes > 0){
                         spaceInfoJson.put("isLikes",1);
@@ -582,7 +583,6 @@ public class TypechoSpaceController {
                     Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
                     TypechoSpace space = list.get(i);
                     Integer userid = space.getUid();
-                    TypechoUsers user = usersService.selectByKey(userid);
                     //获取用户信息
                     Map userJson = UserStatus.getUserInfo(userid,apiconfigService,usersService);
                     //获取用户等级
@@ -600,6 +600,7 @@ public class TypechoSpaceController {
 
                         TypechoUserlog userlog = new TypechoUserlog();
                         userlog.setCid(space.getId());
+                        userlog.setType("spaceLike");
                         userlog.setUid(uid);
                         Integer isLikes = userlogService.total(userlog);
                         if(isLikes > 0){

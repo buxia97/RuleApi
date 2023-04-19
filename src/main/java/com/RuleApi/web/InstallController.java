@@ -898,6 +898,38 @@ public class InstallController {
         }else{
             text+="配置中心模块，字段chatMinExp已经存在，无需添加。";
         }
+        //查询配置中心表是否存在qiniuDomain字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'qiniuDomain';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `qiniuDomain` varchar(400) DEFAULT '' COMMENT '七牛云访问域名'");
+            text+="配置中心模块，字段qiniuDomain添加完成。";
+        }else{
+            text+="配置中心模块，字段qiniuDomain已经存在，无需添加。";
+        }
+        //查询配置中心表是否存在qiniuAccessKey字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'qiniuAccessKey';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `qiniuAccessKey` varchar(400) DEFAULT '' COMMENT '七牛云公钥'");
+            text+="配置中心模块，字段qiniuAccessKey添加完成。";
+        }else{
+            text+="配置中心模块，字段qiniuAccessKey已经存在，无需添加。";
+        }
+        //查询配置中心表是否存在qiniuSecretKey字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'qiniuSecretKey';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `qiniuSecretKey` varchar(400) DEFAULT '' COMMENT '七牛云私钥'");
+            text+="配置中心模块，字段qiniuSecretKey添加完成。";
+        }else{
+            text+="配置中心模块，字段qiniuSecretKey已经存在，无需添加。";
+        }
+        //查询配置中心表是否存在qiniuBucketName字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'qiniuBucketName';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `qiniuBucketName` varchar(255) DEFAULT '' COMMENT '七牛云存储桶名称'");
+            text+="配置中心模块，字段qiniuBucketName添加完成。";
+        }else{
+            text+="配置中心模块，字段qiniuBucketName已经存在，无需添加。";
+        }
         try {
             Thread.sleep(500);
         } catch (InterruptedException ie) {

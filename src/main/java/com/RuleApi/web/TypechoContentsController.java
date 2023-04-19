@@ -201,7 +201,7 @@ public class TypechoContentsController {
                 String  ip = baseFull.getIpAddr(request);
                 String isRead = redisHelp.getRedis(this.dataprefix+"_"+"isRead"+"_"+ip+"_"+agent+"_"+key,redisTemplate);
                 if(isRead==null){
-                   //添加阅读量
+                    //添加阅读量
                     Integer views = Integer.parseInt(contensjson.get("views").toString());
                     views = views + 1;
                     TypechoContents toContents = new TypechoContents();
@@ -236,12 +236,12 @@ public class TypechoContentsController {
     @RequestMapping(value = "/contentsList")
     @ResponseBody
     public String contentsList (@RequestParam(value = "searchParams", required = false) String  searchParams,
-                            @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
-                            @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
-                            @RequestParam(value = "searchKey"        , required = false, defaultValue = "") String searchKey,
-                            @RequestParam(value = "order"        , required = false, defaultValue = "") String order,
-                               @RequestParam(value = "random"        , required = false, defaultValue = "0") Integer random,
-                               @RequestParam(value = "token"        , required = false, defaultValue = "") String token){
+                                @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
+                                @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
+                                @RequestParam(value = "searchKey"        , required = false, defaultValue = "") String searchKey,
+                                @RequestParam(value = "order"        , required = false, defaultValue = "") String order,
+                                @RequestParam(value = "random"        , required = false, defaultValue = "0") Integer random,
+                                @RequestParam(value = "token"        , required = false, defaultValue = "") String token){
         TypechoContents query = new TypechoContents();
         String aid = "null";
         if(limit>50){
@@ -432,7 +432,8 @@ public class TypechoContentsController {
                               @RequestParam(value = "token", required = false) String  token,
                               @RequestParam(value = "text", required = false) String  text,
                               @RequestParam(value = "isMd", required = false, defaultValue = "1") Integer  isMd,
-                              @RequestParam(value = "isSpace", required = false, defaultValue = "0") Integer  isSpace) {
+                              @RequestParam(value = "isSpace", required = false, defaultValue = "0") Integer  isSpace,
+                              HttpServletRequest request) {
         try {
             TypechoContents insert = null;
             Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
@@ -466,7 +467,7 @@ public class TypechoContentsController {
                 return Result.getResultJson(0,"你的操作太频繁了",null);
             }
             //攻击拦截结束
-
+            String  ip = baseFull.getIpAddr(request);
             TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
             Integer isWaiting = 0;
             if (StringUtils.isNotBlank(params)) {
@@ -1447,11 +1448,11 @@ public class TypechoContentsController {
 
                 imgList = HttpClient.doGetImg("https://api.pexels.com/v1/curated?per_page=15&page="+page,apiconfig.getPexelsKey());
             }else{
-//                try {
-//                    searchKey = URLEncoder.encode(searchKey,"UTF-8");
-//                } catch (UnsupportedEncodingException e) {
-//                    e.printStackTrace();
-//                }
+                try {
+                    searchKey = URLEncoder.encode(searchKey,"UTF-8");
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                }
                 imgList = HttpClient.doGetImg("https://api.pexels.com/v1/search?query="+searchKey+"&page="+page,apiconfig.getPexelsKey());
             }
 
@@ -1462,8 +1463,11 @@ public class TypechoContentsController {
             if(jsonMap.get("code")!=null||jsonMap.get("error")!=null){
                 return Result.getResultJson(0,"图片获取失败，请重试",null);
             }
-            redisHelp.delete(this.dataprefix+"_"+"ImagePexels",redisTemplate);
-            redisHelp.setRedis(this.dataprefix+"_"+"ImagePexels_"+searchKey+"_"+page,imgList,21600,redisTemplate);
+            if(imgList!=null){
+                redisHelp.delete(this.dataprefix+"_"+"ImagePexels",redisTemplate);
+                redisHelp.setRedis(this.dataprefix+"_"+"ImagePexels_"+searchKey+"_"+page,imgList,21600,redisTemplate);
+            }
+
         }else{
             imgList = cacheImage;
         }

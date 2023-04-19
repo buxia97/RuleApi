@@ -583,7 +583,7 @@ public class TypechoUsersController {
      */
     @RequestMapping(value = "/apiLogin")
     @ResponseBody
-    public String apiLogin(@RequestParam(value = "params", required = false) String params) {
+    public String apiLogin(@RequestParam(value = "params", required = false) String params,HttpServletRequest request) {
 
 
         Map jsonToMap = null;
@@ -594,45 +594,46 @@ public class TypechoUsersController {
             } else {
                 return Result.getResultJson(0, "请输入正确的参数", null);
             }
+            String  ip = baseFull.getIpAddr(request);
             TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
             Integer isInvite = apiconfig.getIsInvite();
             //如果是微信，则走两步判断，是小程序还是APP
             if(jsonToMap.get("appLoginType").toString().equals("weixin")){
 
-                    //走官方接口获取accessToken和openid
-                    if (jsonToMap.get("js_code") == null) {
-                        return Result.getResultJson(0, "APP配置异常，js_code参数不存在", null);
+                //走官方接口获取accessToken和openid
+                if (jsonToMap.get("js_code") == null) {
+                    return Result.getResultJson(0, "APP配置异常，js_code参数不存在", null);
+                }
+                String js_code = jsonToMap.get("js_code").toString();
+                if(jsonToMap.get("type").toString().equals("applets")){
+                    String requestUrl = "https://api.weixin.qq.com/sns/jscode2session?appid="+apiconfig.getAppletsAppid()+"&secret="+apiconfig.getAppletsSecret()+"&js_code="+js_code+"&grant_type=authorization_code";
+                    String res = HttpClient.doGet(requestUrl);
+                    System.out.println(res);
+                    if(res==null){
+                        return Result.getResultJson(0, "接口配置异常，微信官方接口请求失败", null);
                     }
-                    String js_code = jsonToMap.get("js_code").toString();
-                    if(jsonToMap.get("type").toString().equals("applets")){
-                        String requestUrl = "https://api.weixin.qq.com/sns/jscode2session?appid="+apiconfig.getAppletsAppid()+"&secret="+apiconfig.getAppletsSecret()+"&js_code="+js_code+"&grant_type=authorization_code";
-                        String res = HttpClient.doGet(requestUrl);
-                        System.out.println(res);
-                        if(res==null){
-                            return Result.getResultJson(0, "接口配置异常，微信官方接口请求失败", null);
-                        }
-                        System.out.println("微信登录小程序接口返回"+res);
-                        HashMap data = JSON.parseObject(res, HashMap.class);
-                        if(data.get("openid")==null){
-                            return Result.getResultJson(0, "接口配置异常，小程序openid获取失败", null);
-                        }
-                        jsonToMap.put("accessToken",data.get("openid"));
-                        jsonToMap.put("openId",data.get("openid"));
-                    }else{
-                        String requestUrl = "https://api.weixin.qq.com/sns/oauth2/access_token?appid="+apiconfig.getWxAppId()+"&secret="+apiconfig.getWxAppSecret()+"&code="+js_code+"&grant_type=authorization_code";
-                        String res = HttpClient.doGet(requestUrl);
-                        System.out.println(res);
-                        if(res==null){
-                            return Result.getResultJson(0, "接口配置异常，微信官方接口请求失败", null);
-                        }
-                        System.out.println("微信登录app接口返回"+res);
-                        HashMap data = JSON.parseObject(res, HashMap.class);
-                        if(data.get("openid")==null){
-                            return Result.getResultJson(0, "接口配置异常，openid获取失败", null);
-                        }
-                        jsonToMap.put("accessToken",data.get("openid"));
-                        jsonToMap.put("openId",data.get("openid"));
+                    System.out.println("微信登录小程序接口返回"+res);
+                    HashMap data = JSON.parseObject(res, HashMap.class);
+                    if(data.get("openid")==null){
+                        return Result.getResultJson(0, "接口配置异常，小程序openid获取失败", null);
                     }
+                    jsonToMap.put("accessToken",data.get("openid"));
+                    jsonToMap.put("openId",data.get("openid"));
+                }else{
+                    String requestUrl = "https://api.weixin.qq.com/sns/oauth2/access_token?appid="+apiconfig.getWxAppId()+"&secret="+apiconfig.getWxAppSecret()+"&code="+js_code+"&grant_type=authorization_code";
+                    String res = HttpClient.doGet(requestUrl);
+                    System.out.println(res);
+                    if(res==null){
+                        return Result.getResultJson(0, "接口配置异常，微信官方接口请求失败", null);
+                    }
+                    System.out.println("微信登录app接口返回"+res);
+                    HashMap data = JSON.parseObject(res, HashMap.class);
+                    if(data.get("openid")==null){
+                        return Result.getResultJson(0, "接口配置异常，openid获取失败", null);
+                    }
+                    jsonToMap.put("accessToken",data.get("openid"));
+                    jsonToMap.put("openId",data.get("openid"));
+                }
 
 
             }
@@ -1883,6 +1884,7 @@ public class TypechoUsersController {
             }
             //String group = (String) redisHelp.getValue("userInfo"+token,"group",redisTemplate);
             Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+            Integer loguid =Integer.parseInt(map.get("uid").toString());
             String group = map.get("group").toString();
             if (!group.equals("administrator")) {
                 return Result.getResultJson(0, "你没有操作权限", null);
@@ -1914,6 +1916,16 @@ public class TypechoUsersController {
                 paylog.setPaytype("withdraw");
                 paylog.setSubject("申请提现");
                 paylogService.insert(paylog);
+                //发送消息通知
+                String created = String.valueOf(date).substring(0,10);
+                TypechoInbox inbox = new TypechoInbox();
+                inbox.setUid(loguid);
+                inbox.setTouid(uid);
+                inbox.setType("finance");
+                inbox.setText("你的提现审核已经审核通过");
+                inbox.setValue(0);
+                inbox.setCreated(Integer.parseInt(created));
+                inboxService.insert(inbox);
             } else {
                 userlog.setCid(-2);
             }
@@ -2128,7 +2140,7 @@ public class TypechoUsersController {
                 return Result.getResultJson(0, "用户未登录或Token验证失败", null);
             }
             Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
-            String group = map.get("group").toString();;
+            String group = map.get("group").toString();
             Integer uid =Integer.parseInt(map.get("uid").toString());
             if (!group.equals("administrator")) {
                 return Result.getResultJson(0, "你没有操作权限", null);
@@ -2168,9 +2180,9 @@ public class TypechoUsersController {
     @RequestMapping(value = "/invitationList")
     @ResponseBody
     public String invitationList (@RequestParam(value = "searchParams", required = false) String  searchParams,
-                                @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
-                                @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
-                                @RequestParam(value = "token", required = false) String  token) {
+                                  @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
+                                  @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
+                                  @RequestParam(value = "token", required = false) String  token) {
         Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
         if (uStatus == 0) {
             return Result.getResultJson(0, "用户未登录或Token验证失败", null);
@@ -2265,8 +2277,8 @@ public class TypechoUsersController {
     @RequestMapping(value = "/inbox")
     @ResponseBody
     public String inbox (@RequestParam(value = "token", required = false) String  token,
-                            @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
-                            @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit) {
+                         @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
+                         @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit) {
         if(limit>50){
             limit = 50;
         }
@@ -2403,8 +2415,8 @@ public class TypechoUsersController {
     @RequestMapping(value = "/sendUser")
     @ResponseBody
     public String sendUser(@RequestParam(value = "token", required = false) String  token,
-                             @RequestParam(value = "uid", required = false, defaultValue = "1") Integer uid,
-                             @RequestParam(value = "text", required = false, defaultValue = "1") String text) {
+                           @RequestParam(value = "uid", required = false, defaultValue = "1") Integer uid,
+                           @RequestParam(value = "text", required = false, defaultValue = "1") String text) {
         try{
             Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
             if (uStatus == 0) {
@@ -2478,8 +2490,8 @@ public class TypechoUsersController {
     @RequestMapping(value = "/follow")
     @ResponseBody
     public String follow(@RequestParam(value = "token", required = false) String  token,
-                           @RequestParam(value = "touid", required = false, defaultValue = "1") Integer touid,
-                           @RequestParam(value = "type", required = false, defaultValue = "1") Integer type) {
+                         @RequestParam(value = "touid", required = false, defaultValue = "1") Integer touid,
+                         @RequestParam(value = "type", required = false, defaultValue = "1") Integer type) {
         try{
             if(touid==0||touid==null||type==null){
                 return Result.getResultJson(0, "参数不正确", null);
@@ -2560,7 +2572,7 @@ public class TypechoUsersController {
     @RequestMapping(value = "/isFollow")
     @ResponseBody
     public String isFollow(@RequestParam(value = "token", required = false) String  token,
-                         @RequestParam(value = "touid", required = false, defaultValue = "1") Integer touid) {
+                           @RequestParam(value = "touid", required = false, defaultValue = "1") Integer touid) {
         if(touid==0||touid==null){
             return Result.getResultJson(0, "参数不正确", null);
         }
@@ -2586,8 +2598,8 @@ public class TypechoUsersController {
     @RequestMapping(value = "/followList")
     @ResponseBody
     public String followList(@RequestParam(value = "uid", required = false) Integer  uid,
-                           @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
-                           @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit) {
+                             @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
+                             @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit) {
         if(limit>50){
             limit = 50;
         }
@@ -2653,8 +2665,8 @@ public class TypechoUsersController {
     @RequestMapping(value = "/fanList")
     @ResponseBody
     public String fanList(@RequestParam(value = "touid", required = false) Integer  touid,
-                             @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
-                             @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit) {
+                          @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
+                          @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit) {
         if(limit>50){
             limit = 50;
         }
@@ -2845,7 +2857,7 @@ public class TypechoUsersController {
 
         }catch (Exception e){
             e.printStackTrace();
-            return Result.getResultJson(0, "接口异常，请联系管理员", null);
+            return Result.getResultJson(0, "接口请求异常，请联系管理员", null);
         }
 
     }
@@ -2855,8 +2867,8 @@ public class TypechoUsersController {
     @RequestMapping(value = "/violationList")
     @ResponseBody
     public String violationList (@RequestParam(value = "searchParams", required = false) String  searchParams,
-                            @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
-                            @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit) {
+                                 @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
+                                 @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit) {
         TypechoViolation query = new TypechoViolation();
         Integer total = 0;
         List jsonList = new ArrayList();
@@ -2870,7 +2882,6 @@ public class TypechoUsersController {
             if (cacheList.size() > 0) {
                 jsonList = cacheList;
             } else {
-                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
                 PageList<TypechoViolation> pageList = violationService.selectPage(query, page, limit);
                 List<TypechoViolation> list = pageList.getList();
                 if(list.size() < 1){
@@ -3095,5 +3106,6 @@ public class TypechoUsersController {
 
 
     }
+
 
 }

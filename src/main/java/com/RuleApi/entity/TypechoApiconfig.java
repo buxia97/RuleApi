@@ -395,6 +395,26 @@ public class TypechoApiconfig implements Serializable {
      */
     private Integer chatMinExp;
 
+    /**
+     * 七牛云访问域名
+     */
+    private String qiniuDomain;
+
+    /**
+     * 七牛云公钥
+     */
+    private String qiniuAccessKey;
+
+    /**
+     * 七牛云私钥
+     */
+    private String qiniuSecretKey;
+
+    /**
+     * 七牛云存储桶名称
+     */
+    private String qiniuBucketName;
+
 
 
 
