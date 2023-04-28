@@ -117,7 +117,7 @@ public class TypechoChatController {
             //如果未聊天过，则创建聊天室
             if(chatid==null){
                 //判断用户经验值
-                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+                TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
                 Integer chatMinExp = apiconfig.getChatMinExp();
                 TypechoUsers curUser = usersService.selectByKey(uid);
                 Integer Exp = curUser.getExperience();
@@ -217,7 +217,7 @@ public class TypechoChatController {
                 }
 
             }
-            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+            TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
             //判断用户经验值
             Integer chatMinExp = apiconfig.getChatMinExp();
             TypechoUsers curUser = usersService.selectByKey(uid);
@@ -233,20 +233,9 @@ public class TypechoChatController {
 
                 String forbidden = apiconfig.getForbidden();
                 Integer intercept = 0;
-                if(forbidden!=null){
-                    if(forbidden.indexOf(",") != -1){
-                        String[] strarray=forbidden.split(",");
-                        for (int i = 0; i < strarray.length; i++){
-                            String str = strarray[i];
-                            if(msg.indexOf(str) != -1){
-                                intercept = 1;
-                            }
-                        }
-                    }else{
-                        if(msg.indexOf(forbidden) != -1){
-                            intercept = 1;
-                        }
-                    }
+                Integer isForbidden = baseFull.getForbidden(forbidden,msg);
+                if(isForbidden.equals(1)){
+                    intercept = 1;
                 }
                 if(intercept.equals(1)){
                     //以十分钟为检测周期，违禁一次刷新一次，等于4次则禁言
@@ -329,7 +318,7 @@ public class TypechoChatController {
             if(cacheList.size()>0){
                 jsonList = cacheList;
             }else{
-                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+                TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
 
                 PageList<TypechoChat> pageList = service.selectPage(query, page, limit,order,null);
                 List<TypechoChat> list = pageList.getList();
@@ -467,7 +456,7 @@ public class TypechoChatController {
             if(cacheList.size()>0){
                 jsonList = cacheList;
             }else{
-                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+                TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
 
                 PageList<TypechoChatMsg> pageList = chatMsgService.selectPage(query, page, limit);
                 List<TypechoChatMsg> list = pageList.getList();
@@ -817,7 +806,7 @@ public class TypechoChatController {
                 if(chat == null){
                     return Result.getResultJson(0,"群聊不存在",null);
                 }
-                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+                TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
                 //获取创建人信息
                 Integer userid = chat.getUid();
                 Map userJson = UserStatus.getUserInfo(userid,apiconfigService,usersService);
@@ -883,7 +872,7 @@ public class TypechoChatController {
             if(cacheList.size()>0){
                 jsonList = cacheList;
             }else{
-                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+                TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
 
                 PageList<TypechoChat> pageList = service.selectPage(query, page, limit,order,searchKey);
                 List<TypechoChat> list = pageList.getList();

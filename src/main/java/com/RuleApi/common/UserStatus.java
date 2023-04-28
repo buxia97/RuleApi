@@ -2,9 +2,12 @@ package com.RuleApi.common;
 
 import com.RuleApi.entity.TypechoApiconfig;
 import com.RuleApi.entity.TypechoComments;
+import com.RuleApi.entity.TypechoMetas;
 import com.RuleApi.entity.TypechoUsers;
 import com.RuleApi.service.TypechoApiconfigService;
 import com.RuleApi.service.TypechoUsersService;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -44,6 +47,28 @@ public class UserStatus {
 //        }
         this.status=1;
         return this.status;
+    }
+    //获取总系统配置
+    public TypechoApiconfig getConfig(String dataprefix, TypechoApiconfigService apiconfigService, RedisTemplate redisTemplate){
+
+        TypechoApiconfig config = new TypechoApiconfig();
+        try{
+            Map configJson = new HashMap<String, String>();
+            Map cacheInfo = redisHelp.getMapValue(dataprefix+"_"+"config",redisTemplate);
+            if(cacheInfo.size()>0){
+                configJson = cacheInfo;
+            }else{
+                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+                configJson = JSONObject.parseObject(JSONObject.toJSONString(apiconfig), Map.class);
+                redisHelp.delete(dataprefix+"_"+"config",redisTemplate);
+                redisHelp.setKey(dataprefix+"_"+"config",configJson,6000,redisTemplate);
+            }
+            config = JSON.parseObject(JSON.toJSONString(configJson), TypechoApiconfig.class);
+        }catch (Exception e){
+            System.err.println("读取配置出错！");
+            e.printStackTrace();
+        }
+        return config;
     }
 
     public static Map getUserInfo(Integer id,TypechoApiconfigService apiconfigService,TypechoUsersService usersService){

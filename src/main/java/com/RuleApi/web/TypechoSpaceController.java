@@ -146,7 +146,7 @@ public class TypechoSpaceController {
             }
             //限制结束
             String  ip = baseFull.getIpAddr(request);
-            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+            TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
 
             //判断用户经验值
             Integer spaceMinExp = apiconfig.getSpaceMinExp();
@@ -159,20 +159,9 @@ public class TypechoSpaceController {
             //违禁词拦截
             String forbidden = apiconfig.getForbidden();
             Integer intercept = 0;
-            if(forbidden!=null){
-                if(forbidden.indexOf(",") != -1){
-                    String[] strarray=forbidden.split(",");
-                    for (int i = 0; i < strarray.length; i++){
-                        String str = strarray[i];
-                        if(text.indexOf(str) != -1){
-                            intercept = 1;
-                        }
-                    }
-                }else{
-                    if(text.indexOf(forbidden) != -1){
-                        intercept = 1;
-                    }
-                }
+            Integer isForbidden = baseFull.getForbidden(forbidden,text);
+            if(isForbidden.equals(1)){
+                intercept = 1;
             }
             if(intercept.equals(1)){
                 //以十分钟为检测周期，违禁一次刷新一次，等于4次则禁言
@@ -262,7 +251,7 @@ public class TypechoSpaceController {
             if(isSilence!=null){
                 return Result.getResultJson(0,"你的操作太频繁了，请稍后再试",null);
             }
-
+            TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
             //登录情况下，刷数据攻击拦截
             String isRepeated = redisHelp.getRedis(this.dataprefix+"_"+uid+"_isAddSpace",redisTemplate);
             if(isRepeated==null){
@@ -270,7 +259,7 @@ public class TypechoSpaceController {
             }else{
                 Integer frequency = Integer.parseInt(isRepeated) + 1;
                 if(frequency==4){
-                    securityService.safetyMessage("用户ID："+uid+"，在聊天发送消息接口疑似存在攻击行为，请及时确认处理。","system");
+                    securityService.safetyMessage("用户ID："+uid+"，在动态编辑接口疑似存在攻击行为，请及时确认处理。","system");
                     redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",600,redisTemplate);
                     return Result.getResultJson(0,"你的操作过于频繁，已被禁言十分钟！",null);
                 }else{
@@ -281,23 +270,13 @@ public class TypechoSpaceController {
 
             //攻击拦截结束
             //违禁词拦截
-            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+
             String forbidden = apiconfig.getForbidden();
             Integer intercept = 0;
-            if(forbidden!=null){
-                if(forbidden.indexOf(",") != -1){
-                    String[] strarray=forbidden.split(",");
-                    for (int i = 0; i < strarray.length; i++){
-                        String str = strarray[i];
-                        if(text.indexOf(str) != -1){
-                            intercept = 1;
-                        }
-                    }
-                }else{
-                    if(text.indexOf(forbidden) != -1){
-                        intercept = 1;
-                    }
-                }
+
+            Integer isForbidden = baseFull.getForbidden(forbidden,text);
+            if(isForbidden.equals(1)){
+                intercept = 1;
             }
             if(intercept.equals(1)){
                 //以十分钟为检测周期，违禁一次刷新一次，等于4次则禁言
@@ -307,7 +286,7 @@ public class TypechoSpaceController {
                 }else{
                     Integer frequency = Integer.parseInt(isIntercept) + 1;
                     if(frequency==4){
-                        securityService.safetyMessage("用户ID："+uid+"，在聊天发送消息接口多次触发违禁，请及时确认处理。","system");
+                        securityService.safetyMessage("用户ID："+uid+"，在动态编辑接口接口多次触发违禁，请及时确认处理。","system");
                         redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",3600,redisTemplate);
                         return Result.getResultJson(0,"你已多次发送违禁词，被禁言一小时！",null);
                     }else{

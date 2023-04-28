@@ -192,7 +192,7 @@ public class TypechoAdsController {
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             String uid = map.get("uid").toString();
             String group = map.get("group").toString();
-            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+            TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
             Integer price = 0;
             Integer typeNum = 0;
             if (StringUtils.isNotBlank(params)) {
@@ -408,7 +408,7 @@ public class TypechoAdsController {
             return Result.getResultJson(0,"购买天数不正确",null);
         }
         TypechoAds ads = service.selectByKey(id);
-        TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+        TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
         Integer type = ads.getType();
         Integer price = 0;
         if(type.equals(0)){
@@ -469,7 +469,7 @@ public class TypechoAdsController {
             if(cacheInfo.size()>0){
                 adsConfigJSon = cacheInfo;
             }else{
-                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+                TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
                 TypechoAds ads = new TypechoAds();
                 ads.setStatus(1);
                 Integer pushAdsPrice = apiconfig.getPushAdsPrice();

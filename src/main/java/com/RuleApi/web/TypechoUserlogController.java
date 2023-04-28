@@ -348,7 +348,7 @@ public class TypechoUserlogController {
                 }
                 //签到，每天一次
                 if(type.equals("clock")){
-                    TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+                    TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
                     Integer clockMax = apiconfig.getClock();
                     int award = 0;
                     if (clockMax > 0){

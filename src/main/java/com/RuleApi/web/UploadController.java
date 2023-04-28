@@ -87,7 +87,7 @@ public class UploadController {
         if(file == null){
             return new UploadMsg(0,"文件为空",null);
         }
-        TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+        TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
         String oldFileName = file.getOriginalFilename();
         //String eName = oldFileName.substring(oldFileName.lastIndexOf("."));
         String eName = "";
@@ -185,7 +185,7 @@ public class UploadController {
         }
         Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         Integer uid =Integer.parseInt(map.get("uid").toString());
-        TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+        TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
 
         String filename = file.getOriginalFilename();
         //String filetype = filename.substring(filename.lastIndexOf("."));
@@ -264,7 +264,7 @@ public class UploadController {
         }
         Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         Integer uid =Integer.parseInt(map.get("uid").toString());
-        TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+        TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
         //获取上传文件MultipartFile
         //返回上传到oss的路径
         OSS ossClient = new OSSClientBuilder().build(apiconfig.getAliyunEndpoint(), apiconfig.getAliyunAccessKeyId(),apiconfig.getAliyunAccessKeySecret());
@@ -342,7 +342,7 @@ public class UploadController {
         }
         Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         Integer uid =Integer.parseInt(map.get("uid").toString());
-        TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+        TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
         //获取上传文件MultipartFile
         //返回上传到oss的路径
         OSS ossClient = new OSSClientBuilder().build(apiconfig.getAliyunEndpoint(), apiconfig.getAliyunAccessKeyId(),apiconfig.getAliyunAccessKeySecret());
@@ -448,7 +448,7 @@ public class UploadController {
         Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         Integer uid =Integer.parseInt(map.get("uid").toString());
         String oldFileName = file.getOriginalFilename();
-        TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+        TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
         FTPClient ftpClient = new FTPClient();
         try {
 

@@ -157,7 +157,7 @@ public class TypechoUsersController {
             if (cacheList.size() > 0) {
                 jsonList = cacheList;
             } else {
-                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+                TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
                 PageList<TypechoUsers> pageList = service.selectPage(query, page, limit, searchKey, order);
                 List<TypechoUsers> list = pageList.getList();
                 if(list.size() < 1){
@@ -388,7 +388,7 @@ public class TypechoUsersController {
                 }
 
 
-                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+                TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
                 if(json.get("avatar")==null){
                     if (json.get("mail") != null) {
                         String mail = json.get("mail").toString();
@@ -526,7 +526,7 @@ public class TypechoUsersController {
                 comments.setAuthorId(uid);
                 Integer lv = commentsService.total(comments);
                 jsonToMap.put("lv", baseFull.getLv(lv));
-                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+                TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
                 if(rows.get(0).getAvatar()!=null){
                     jsonToMap.put("avatar",rows.get(0).getAvatar());
                 }else{
@@ -595,7 +595,7 @@ public class TypechoUsersController {
                 return Result.getResultJson(0, "请输入正确的参数", null);
             }
             String  ip = baseFull.getIpAddr(request);
-            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+            TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
             Integer isInvite = apiconfig.getIsInvite();
             //如果是微信，则走两步判断，是小程序还是APP
             if(jsonToMap.get("appLoginType").toString().equals("weixin")){
@@ -862,7 +862,7 @@ public class TypechoUsersController {
             } else {
                 return Result.getResultJson(0, "请输入正确的参数", null);
             }
-            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+            TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
             //如果是微信，则走两步判断，是小程序还是APP
             //如果是微信，则走两步判断，是小程序还是APP
             if(jsonToMap.get("appLoginType").toString().equals("weixin")){
@@ -1048,7 +1048,7 @@ public class TypechoUsersController {
                 jsonToMap = JSONObject.parseObject(JSON.parseObject(params).toString());
                 //在之前需要做判断，验证用户名或者邮箱在数据库中是否存在
                 //判断是否开启邮箱验证
-                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+                TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
                 Integer isEmail = apiconfig.getIsEmail();
                 Integer isInvite = apiconfig.getIsInvite();
                 //验证是否存在相同用户名或者邮箱
@@ -1099,21 +1099,9 @@ public class TypechoUsersController {
                 //验证用户名是否违禁
                 String userName = jsonToMap.get("name").toString();
                 String forbidden = apiconfig.getForbidden();
-                if(forbidden!=null){
-                    if(forbidden.indexOf(",") != -1){
-                        String[] strarray=forbidden.split(",");
-                        for (int i = 0; i < strarray.length; i++){
-                            String str = strarray[i];
-                            if(userName.indexOf(str) != -1){
-                                return Result.getResultJson(0, "用户名包含违规词语", null);
-                            }
-
-                        }
-                    }else{
-                        if(userName.indexOf(forbidden) != -1){
-                            return Result.getResultJson(0, "用户名包含违规词语", null);
-                        }
-                    }
+                Integer isForbidden = baseFull.getForbidden(forbidden,userName);
+                if(isForbidden.equals(1)){
+                    return Result.getResultJson(0, "用户名包含违规词语", null);
                 }
 
 
@@ -1199,7 +1187,7 @@ public class TypechoUsersController {
             }else{
                 return Result.getResultJson(0, "你的操作太频繁了", null);
             }
-            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+            TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
             Integer isEmail = apiconfig.getIsEmail();
             if(isEmail.equals(0)){
                 return Result.getResultJson(0, "邮箱验证已经关闭", null);
@@ -1251,7 +1239,7 @@ public class TypechoUsersController {
     public String RegSendCode(@RequestParam(value = "params", required = false) String params, HttpServletRequest request) throws MessagingException {
         try{
             Map jsonToMap = null;
-            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+            TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
             Integer isEmail = apiconfig.getIsEmail();
             if(isEmail.equals(0)){
                 return Result.getResultJson(0, "邮箱验证已经关闭", null);
@@ -1331,7 +1319,7 @@ public class TypechoUsersController {
             TypechoUsers update = null;
             Map jsonToMap = null;
             if (StringUtils.isNotBlank(params)) {
-                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+                TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
                 Integer isEmail = apiconfig.getIsEmail();
                 if(isEmail.equals(0)){
                     return Result.getResultJson(0, "邮箱验证已经关闭，请联系管理员找回密码", null);
@@ -1428,9 +1416,10 @@ public class TypechoUsersController {
             }
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             String uid = map.get("uid").toString();
+            TypechoUsers user = new TypechoUsers();
             Integer isForbidden = 0;
             if (StringUtils.isNotBlank(params)) {
-                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+                TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
                 jsonToMap = JSONObject.parseObject(JSON.parseObject(params).toString());
                 //根据验证码判断是否要修改邮箱
                 if (jsonToMap.get("code") != null && jsonToMap.get("mail") != null) {
@@ -1465,26 +1454,13 @@ public class TypechoUsersController {
                 if (isName.size() == 0) {
                     return Result.getResultJson(0, "用户不存在", null);
                 }
+                String forbidden = apiconfig.getForbidden();
                 if(jsonToMap.get("introduce") != null){
                     String introduce = jsonToMap.get("introduce").toString();
-                    String forbidden = apiconfig.getForbidden();
-                    if(forbidden!=null){
-                        if(forbidden.indexOf(",") != -1){
-                            String[] strarray=forbidden.split(",");
-                            for (int i = 0; i < strarray.length; i++){
-                                String str = strarray[i];
-                                if(introduce.indexOf(str) != -1){
-                                    isForbidden = 1;
-                                    jsonToMap.remove("introduce");
-                                }
-                                //break;
-                            }
-                        }else{
-                            if(introduce.indexOf(forbidden) != -1){
-                                isForbidden = 1;
-                                jsonToMap.remove("introduce");
-                            }
-                        }
+                    Integer isIntroForbidden = baseFull.getForbidden(forbidden,introduce);
+                    if(isIntroForbidden.equals(1)){
+                        isForbidden = 1;
+                        jsonToMap.remove("introduce");
                     }
                 }
 
@@ -1506,25 +1482,10 @@ public class TypechoUsersController {
                     //验证用户名是否违禁
                     String screenName = jsonToMap.get("screenName").toString();
 
-                    String forbidden = apiconfig.getForbidden();
-                    if(forbidden!=null){
-                        if(forbidden.indexOf(",") != -1){
-                            String[] strarray=forbidden.split(",");
-                            for (int i = 0; i < strarray.length; i++){
-                                String str = strarray[i];
-                                if(screenName.indexOf(str) != -1){
-                                    return Result.getResultJson(0, "用户名包含违规词语", null);
-                                }
-
-                            }
-                        }else{
-                            if(screenName.indexOf(forbidden) != -1){
-                                return Result.getResultJson(0, "用户名包含违规词语", null);
-                            }
-                        }
+                    Integer isNameForbidden = baseFull.getForbidden(forbidden,screenName);
+                    if(isNameForbidden.equals(1)){
+                        return Result.getResultJson(0, "用户名包含违规词语", null);
                     }
-
-                    TypechoUsers user = new TypechoUsers();
                     user.setScreenName(screenName);
                     List<TypechoUsers> userlist = service.selectList(user);
                     if(userlist.size() > 0){
@@ -1532,7 +1493,6 @@ public class TypechoUsersController {
                         if(!userlist.get(0).getUid().equals(myuid)){
                             return Result.getResultJson(0, "该昵称已被占用！", null);
                         }
-
                     }
                 }
 
@@ -2061,7 +2021,7 @@ public class TypechoUsersController {
         json.remove("password");
         json.put("lv", baseFull.getLv(lv));
         json.put("token", token);
-        TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+        TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
         if (json.get("mail") != null) {
             String mail = json.get("mail").toString();
 
@@ -2118,7 +2078,7 @@ public class TypechoUsersController {
     @ResponseBody
     public String regConfig() {
         JSONObject data = new JSONObject();
-        TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+        TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
         data.put("isEmail",apiconfig.getIsEmail());
         data.put("isInvite",apiconfig.getIsInvite());
         JSONObject response = new JSONObject();
@@ -2300,7 +2260,7 @@ public class TypechoUsersController {
             }else{
 
 
-                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+                TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
 
                 PageList<TypechoInbox> pageList = inboxService.selectPage(query, page, limit);
                 List<TypechoInbox> list = pageList.getList();
@@ -2436,7 +2396,7 @@ public class TypechoUsersController {
             }else{
                 //如果用户存在客户端id，则发送app通知
                 if(user.getClientId()!=null){
-                    TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+                    TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
                     String title = apiconfig.getWebinfoTitle();
                     try {
                         pushService.sendPushMsg(user.getClientId(),title+"系统消息",text,"payload","system");
@@ -2613,7 +2573,7 @@ public class TypechoUsersController {
                 jsonList = cacheList;
             }else{
 
-                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+                TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
 
                 PageList<TypechoFan> pageList = fanService.selectPage(query, page, limit);
                 List<TypechoFan> list = pageList.getList();
@@ -2680,7 +2640,7 @@ public class TypechoUsersController {
                 jsonList = cacheList;
             }else{
 
-                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+                TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
 
                 PageList<TypechoFan> pageList = fanService.selectPage(query, page, limit);
                 List<TypechoFan> list = pageList.getList();
@@ -3048,7 +3008,7 @@ public class TypechoUsersController {
             if (!group.equals("administrator")) {
                 return Result.getResultJson(0, "你没有操作权限", null);
             }
-            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+            TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
 
             Long date = System.currentTimeMillis();
             String curTime = String.valueOf(date).substring(0, 10);

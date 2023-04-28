@@ -284,7 +284,7 @@ public class TypechoContentsController {
             if(cacheList.size()>0){
                 jsonList = cacheList;
             }else{
-                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+                TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
                 PageList<TypechoContents> pageList = service.selectPage(query, page, limit, searchKey,order,random);
                 List list = pageList.getList();
                 if(list.size() < 1){
@@ -557,6 +557,13 @@ public class TypechoContentsController {
                 }
                 //限制结束
 
+                //标题强制验证违禁
+                String forbidden = apiconfig.getForbidden();
+                String title = jsonToMap.get("title").toString();
+                Integer titleForbidden = baseFull.getForbidden(forbidden,title);
+                if(titleForbidden.equals(1)){
+                    return Result.getResultJson(0,"标题存在违禁词",null);
+                }
                 //根据后台的开关判断
                 Integer contentAuditlevel = apiconfig.getContentAuditlevel();
                 if(contentAuditlevel.equals(0)){
@@ -564,25 +571,11 @@ public class TypechoContentsController {
                 }
                 if(contentAuditlevel.equals(1)){
                     if(!group.equals("administrator")&&!group.equals("editor")){
-                        String forbidden = apiconfig.getForbidden();
-                        if(forbidden!=null){
-                            if(forbidden.indexOf(",") != -1){
-                                String[] strarray=forbidden.split(",");
-                                for (int i = 0; i < strarray.length; i++){
-                                    String str = strarray[i];
-                                    if(text.indexOf(str) != -1){
-                                        jsonToMap.put("status","waiting");
-                                        isWaiting = 1;
-                                    }
-                                }
-                            }else{
-                                if(text.indexOf(forbidden) != -1){
-                                    jsonToMap.put("status","waiting");
-                                    isWaiting = 1;
-                                }
-                            }
-                        }else{
+                        Integer isForbidden = baseFull.getForbidden(forbidden,text);
+                        if(isForbidden.equals(0)){
                             jsonToMap.put("status","publish");
+                        }else{
+                            jsonToMap.put("status","waiting");
                         }
                     }else{
                         jsonToMap.put("status","publish");
@@ -775,7 +768,7 @@ public class TypechoContentsController {
             Integer isWaiting = 0;
             Integer logUid =Integer.parseInt(map.get("uid").toString());
             if (StringUtils.isNotBlank(params)) {
-                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+                TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
                 jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
                 //支持两种模式提交评论内容
                 if(text==null){
@@ -858,27 +851,25 @@ public class TypechoContentsController {
 //                if(!group.equals("administrator")){
 //                    jsonToMap.put("status","waiting");
 //                }
+                //标题强制验证违禁
+                String forbidden = apiconfig.getForbidden();
+                String title = jsonToMap.get("title").toString();
+                Integer titleForbidden = baseFull.getForbidden(forbidden,title);
+                if(titleForbidden.equals(1)){
+                    return Result.getResultJson(0,"标题存在违禁词",null);
+                }
                 //根据后台的开关判断
                 Integer contentAuditlevel = apiconfig.getContentAuditlevel();
                 if(contentAuditlevel.equals(0)){
                     jsonToMap.put("status","publish");
                 }
                 if(contentAuditlevel.equals(1)){
-                    String forbidden = apiconfig.getForbidden();
-                    if(forbidden!=null){
-                        if(forbidden.indexOf(",") != -1){
-                            String[] strarray=forbidden.split(",");
-                            for (int i = 0; i < strarray.length; i++){
-                                String str = strarray[i];
-                                if(text.indexOf(str) != -1){
-                                    jsonToMap.put("status","waiting");
-                                }
-
-                            }
+                    if(!group.equals("administrator")&&!group.equals("editor")){
+                        Integer isForbidden = baseFull.getForbidden(forbidden,text);
+                        if(isForbidden.equals(0)){
+                            jsonToMap.put("status","publish");
                         }else{
-                            if(text.indexOf(forbidden) != -1){
-                                jsonToMap.put("status","waiting");
-                            }
+                            jsonToMap.put("status","waiting");
                         }
                     }else{
                         jsonToMap.put("status","publish");
@@ -998,7 +989,7 @@ public class TypechoContentsController {
             Integer uid  = Integer.parseInt(map.get("uid").toString());
             String group = map.get("group").toString();
             TypechoContents contents = service.selectByKey(key);
-            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+            TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
             if(!group.equals("administrator")&&!group.equals("editor")){
 
                 if(apiconfig.getAllowDelete().equals(0)){
@@ -1070,7 +1061,7 @@ public class TypechoContentsController {
             if(uStatus==0){
                 return Result.getResultJson(0,"用户未登录或Token验证失败",null);
             }
-            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+            TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
             String newtitle = apiconfig.getWebinfoTitle();
             //String group = (String) redisHelp.getValue("userInfo"+token,"group",redisTemplate);
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
@@ -1217,7 +1208,7 @@ public class TypechoContentsController {
             }
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer logUid =Integer.parseInt(map.get("uid").toString());
-            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+            TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
             String fieldstext = apiconfig.getFields();
             Integer status = 1;
             if(fieldstext!=null){
@@ -1434,7 +1425,7 @@ public class TypechoContentsController {
 
         String cacheImage = redisHelp.getRedis(this.dataprefix+"_"+"ImagePexels_"+searchKey+"_"+page,redisTemplate);
         String imgList = "";
-        TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+        TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
         if(searchKey!=null){
             try {
                 searchKey = URLDecoder.decode(searchKey, "utf-8");
@@ -1509,7 +1500,7 @@ public class TypechoContentsController {
             if(cacheInfo.size()>0){
                 contentConfig = cacheInfo;
             }else{
-                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+                TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
                 contentConfig.put("allowDelete",apiconfig.getAllowDelete());
                 redisHelp.delete(this.dataprefix+"_contentConfig",redisTemplate);
                 redisHelp.setKey(this.dataprefix+"_contentConfig",contentConfig,5,redisTemplate);

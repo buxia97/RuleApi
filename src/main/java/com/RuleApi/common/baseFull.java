@@ -257,5 +257,29 @@ public class baseFull {
             return 1;
         }
     }
+    //验证字符串是否违规
+    public Integer getForbidden(String forbidden, String text){
+        Integer isForbidden = 0;
+        if(forbidden!=null&&forbidden.length()>0){
+            if(forbidden.indexOf(",") != -1){
+                String[] strarray=forbidden.split(",");
+                for (int i = 0; i < strarray.length; i++){
+                    String str = strarray[i];
+                    if(text.indexOf(str) != -1){
+                        isForbidden = 1;
+                    }
+
+                }
+            }else{
+                if(text.indexOf(forbidden) != -1){
+                    isForbidden = 1;
+                }
+                if(text.equals(forbidden)){
+                    isForbidden = 1;
+                }
+            }
+        }
+        return  isForbidden;
+    }
 
 }

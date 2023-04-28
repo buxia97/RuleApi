@@ -97,7 +97,7 @@ public class TypechoMetasController {
             if(cacheList.size()>0){
                 jsonList = cacheList;
             }else{
-                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+                TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
                 //首先查询typechoRelationships获取映射关系
                 PageList<TypechoRelationships> pageList = relationshipsService.selectPage(query, page, limit);
                 List<TypechoRelationships> list = pageList.getList();

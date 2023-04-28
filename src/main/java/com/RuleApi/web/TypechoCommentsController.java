@@ -129,7 +129,7 @@ public class TypechoCommentsController {
             if(cacheList.size()>0){
                 jsonList = cacheList;
             }else{
-                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+                TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
                 PageList<TypechoComments> pageList = service.selectPage(query, page, limit,searchKey,order);
                 List<TypechoComments> list = pageList.getList();
                 if(list.size() < 1){
@@ -336,7 +336,7 @@ public class TypechoCommentsController {
             Long date = System.currentTimeMillis();
             String created = String.valueOf(date).substring(0,10);
             String cstatus = "approved";
-            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+            TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
             String title = apiconfig.getWebinfoTitle();
 
             TypechoComments insert = null;
@@ -411,7 +411,7 @@ public class TypechoCommentsController {
                 jsonToMap.put("ip",ip);
                 //下面这个属性控制评论状态，判断是否已经有评论过审，有则直接通过审核，没有则默认审核状态
                 Integer auditlevel = apiconfig.getAuditlevel();
-
+                String forbidden = apiconfig.getForbidden();
                 if(auditlevel.equals(0)){
                     //为0不审核
                     cstatus = "approved";
@@ -427,44 +427,20 @@ public class TypechoCommentsController {
                         cstatus = "waiting";
                     }
                 } else if(auditlevel.equals(2)){
-                    //为2违禁词匹配审核
-                    String forbidden = apiconfig.getForbidden();
-                    if(forbidden!=null){
-                        if(forbidden.indexOf(",") != -1){
-                            String[] strarray=forbidden.split(",");
-                            for (int i = 0; i < strarray.length; i++){
-                                String str = strarray[i];
-                                if(text.indexOf(str) != -1){
-                                    cstatus = "waiting";
-                                }
 
-                            }
-                        }else{
-                            if(text.indexOf(forbidden) != -1){
-                                cstatus = "waiting";
-                            }
-                        }
-                    }else{
+                    Integer isForbidden = baseFull.getForbidden(forbidden,text);
+                    if(isForbidden.equals(0)){
                         cstatus = "approved";
+                    }else{
+                        cstatus = "waiting";
                     }
 
                 } else if(auditlevel.equals(3)){
                     //为2违禁词匹配拦截
-                    String forbidden = apiconfig.getForbidden();
-                    if(forbidden!=null){
-                        if(forbidden.indexOf(",") != -1){
-                            String[] strarray=forbidden.split(",");
-                            for (int i = 0; i < strarray.length; i++){
-                                String str = strarray[i];
-                                if(text.indexOf(str) != -1){
-                                    return Result.getResultJson(0,"存在违规内容，评论发布失败",null);
-                                }
-                            }
-                        }else{
-                            if(text.indexOf(forbidden) != -1){
-                                return Result.getResultJson(0,"存在违规内容，评论发布失败",null);
-                            }
-                        }
+
+                    Integer isForbidden = baseFull.getForbidden(forbidden,text);
+                    if(isForbidden.equals(0)){
+                        return Result.getResultJson(0,"存在违规内容，评论发布失败",null);
                     }else{
                         cstatus = "approved";
                     }
@@ -655,7 +631,7 @@ public class TypechoCommentsController {
             Map jsonToMap =new HashMap();
             //String group = (String) redisHelp.getValue("userInfo"+token,"group",redisTemplate);
             if (StringUtils.isNotBlank(params)) {
-                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+                TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
                 jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
                 if(jsonToMap.get("coid")==null){
                     return Result.getResultJson(0,"请传入评论id",null);
@@ -715,7 +691,7 @@ public class TypechoCommentsController {
             if(uStatus==0){
                 return Result.getResultJson(0,"用户未登录或Token验证失败",null);
             }
-            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+            TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
             String title = apiconfig.getWebinfoTitle();
             //String group = (String) redisHelp.getValue("userInfo"+token,"group",redisTemplate);
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
@@ -922,7 +898,7 @@ public class TypechoCommentsController {
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer uid  = Integer.parseInt(map.get("uid").toString());
             // 查询发布者是不是自己，如果是管理员则跳过
-            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+            TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
             TypechoComments comments = service.selectByKey(key);
             String group = map.get("group").toString();
             if(!group.equals("administrator")&&!group.equals("editor")){

@@ -213,7 +213,7 @@ public class TypechoShopController {
         TypechoShop insert = null;
 
         if (StringUtils.isNotBlank(params)) {
-            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+            TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
             jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
             //支持两种模式提交商品内容
             if(text==null){
@@ -348,7 +348,7 @@ public class TypechoShopController {
         Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         Integer uid  = Integer.parseInt(map.get("uid").toString());
         if (StringUtils.isNotBlank(params)) {
-            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+            TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
             jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
             //支持两种模式提交评论内容
             if(text==null){
@@ -682,7 +682,7 @@ public class TypechoShopController {
             paylogB.setSubject("出售商品收益");
             paylogService.insert(paylogB);
 
-            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+            TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
             //给店家发送邮件
             if(apiconfig.getIsEmail().equals(2)){
                 String email = minfo.getMail();
@@ -750,7 +750,7 @@ public class TypechoShopController {
             }
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer uid  = Integer.parseInt(map.get("uid").toString());
-            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+            TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
 
             Long date = System.currentTimeMillis();
             String curTime = String.valueOf(date).substring(0, 10);
@@ -819,7 +819,7 @@ public class TypechoShopController {
     @ResponseBody
     public String vipInfo() {
         JSONObject data = new JSONObject();
-        TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+        TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
         data.put("vipDiscount",apiconfig.getVipDiscount());
         data.put("vipPrice",apiconfig.getVipPrice());
         data.put("scale",apiconfig.getScale());

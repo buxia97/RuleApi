@@ -123,7 +123,7 @@ public class PayController {
         }
         //攻击拦截结束
 
-        TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+        TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
 
         final String APPID = apiconfig.getAlipayAppId();
         String RSA2_PRIVATE = apiconfig.getAlipayPrivateKey();
@@ -199,7 +199,7 @@ public class PayController {
             params.put(name, valueStr);
         }
         System.err.println(params);
-        TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+        TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
         String CHARSET = "UTF-8";
         //支付宝公钥
         String ALIPAY_PUBLIC_KEY = apiconfig.getAlipayPublicKey();
@@ -417,7 +417,7 @@ public class PayController {
             return Result.getResultJson(0,"你的操作太频繁了",null);
         }
         //攻击拦截结束
-        TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+        TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
         Integer scale = apiconfig.getScale();
         //商户订单号
         Date now = new Date();
@@ -466,7 +466,7 @@ public class PayController {
     public String wxPayNotify(
             HttpServletRequest request,
             HttpServletResponse response) throws Exception {
-        TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+        TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
         Map<String, Object> map = new ObjectMapper().readValue(request.getInputStream(), Map.class);
         Map<String, Object> dataMap = WeChatPayUtils.paramDecodeForAPIV3(map,apiconfig);
         //判断是否⽀付成功
@@ -802,7 +802,7 @@ public class PayController {
             }
             //攻击拦截结束
 
-            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+            TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
             String url = apiconfig.getEpayUrl();
             Date now = new Date();
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss");//可以方便地修改日期格式
@@ -895,7 +895,7 @@ public class PayController {
         System.err.println(params);
         try{
             if(params.get("trade_status").equals("TRADE_SUCCESS")){
-                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+                TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
                 //支付完成后，写入充值日志
                 String trade_no = params.get("trade_no");
                 String out_trade_no = params.get("out_trade_no");
