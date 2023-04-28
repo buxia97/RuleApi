@@ -415,6 +415,36 @@ public class TypechoApiconfig implements Serializable {
      */
     private String qiniuBucketName;
 
+    /**
+     * 疑似攻击自动封禁时间(s)
+     */
+    private Integer silenceTime;
+
+    /**
+     * 多次触发违规自动封禁时间(s)
+     */
+    private Integer interceptTime;
+
+    /**
+     * 开启全局登录
+     */
+    private Integer isLogin;
+
+    /**
+     * 每日最大发布
+     */
+    private Integer postMax;
+
+    /**
+     * 帖子及帖子评论是否需要审核
+     */
+    private Integer forumAudit;
+
+    /**
+     * 动态是否需要审核
+     */
+    private Integer spaceAudit;
+
 
 
 

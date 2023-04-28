@@ -930,6 +930,55 @@ public class InstallController {
         }else{
             text+="配置中心模块，字段qiniuBucketName已经存在，无需添加。";
         }
+        //查询配置中心表是否存在silenceTime字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'silenceTime';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `silenceTime` int(11) DEFAULT '600' COMMENT '疑似攻击自动封禁时间(s)'");
+            text+="配置中心模块，字段silenceTime添加完成。";
+        }else{
+            text+="配置中心模块，字段silenceTime已经存在，无需添加。";
+        }
+        //查询配置中心表是否存在interceptTime字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'interceptTime';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `interceptTime` int(11) DEFAULT '3600' COMMENT '多次触发违规自动封禁时间(s)'");
+            text+="配置中心模块，字段interceptTime添加完成。";
+        }else{
+            text+="配置中心模块，字段interceptTime已经存在，无需添加。";
+        }
+        //查询配置中心表是否存在isLogin字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'isLogin';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `isLogin` int(2) DEFAULT '0' COMMENT '开启全局登录'");
+            text+="配置中心模块，字段isLogin添加完成。";
+        }else{
+            text+="配置中心模块，字段isLogin已经存在，无需添加。";
+        }
+
+        //查询配置中心表是否存在postMax字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'postMax';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `postMax` int(11) DEFAULT '5' COMMENT '每日最大发布'");
+            text+="配置中心模块，字段postMax添加完成。";
+        }else{
+            text+="配置中心模块，字段postMax已经存在，无需添加。";
+        }
+        //查询配置中心表是否存在forumAudit字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'forumAudit';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `forumAudit` int(11) DEFAULT '1' COMMENT '帖子及帖子评论是否需要审核'");
+            text+="配置中心模块，字段forumAudit添加完成。";
+        }else{
+            text+="配置中心模块，字段forumAudit已经存在，无需添加。";
+        }
+        //查询配置中心表是否存在spaceAudit字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'spaceAudit';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `spaceAudit` int(11) DEFAULT '0' COMMENT '动态是否需要审核'");
+            text+="配置中心模块，字段spaceAudit添加完成。";
+        }else{
+            text+="配置中心模块，字段spaceAudit已经存在，无需添加。";
+        }
         try {
             Thread.sleep(500);
         } catch (InterruptedException ie) {
@@ -1102,6 +1151,14 @@ public class InstallController {
             text+="动态模块创建完成。";
         }else{
             text+="动态模块已经存在，无需添加。";
+        }
+        //查询动态模块是否存在status字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_space' and column_name = 'status';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_chat ADD `status` int(2) unsigned DEFAULT '1' COMMENT '动态状态，0审核，1发布，2锁定'");
+            text+="动态模块，字段status添加完成。";
+        }else{
+            text+="动态模块，字段status已经存在，无需添加。";
         }
         text+=" ------ 执行结束，安装执行完成";
 

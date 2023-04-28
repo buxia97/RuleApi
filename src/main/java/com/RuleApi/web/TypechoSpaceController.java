@@ -110,7 +110,7 @@ public class TypechoSpaceController {
             if(isSilence!=null){
                 return Result.getResultJson(0,"你的操作太频繁了，请稍后再试",null);
             }
-
+            TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
             //登录情况下，刷数据攻击拦截
             String isRepeated = redisHelp.getRedis(this.dataprefix+"_"+uid+"_isAddSpace",redisTemplate);
             if(isRepeated==null){
@@ -119,7 +119,7 @@ public class TypechoSpaceController {
                 Integer frequency = Integer.parseInt(isRepeated) + 1;
                 if(frequency==4){
                     securityService.safetyMessage("用户ID："+uid+"，在聊天发送消息接口疑似存在攻击行为，请及时确认处理。","system");
-                    redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",600,redisTemplate);
+                    redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",apiconfig.getSilenceTime(),redisTemplate);
                     return Result.getResultJson(0,"你的操作过于频繁，已被禁言十分钟！",null);
                 }else{
                     redisHelp.setRedis(this.dataprefix+"_"+uid+"_isAddSpace",frequency.toString(),5,redisTemplate);
@@ -137,16 +137,16 @@ public class TypechoSpaceController {
                     redisHelp.setRedis(this.dataprefix+"_"+uid+"_spaceNum","1",86400,redisTemplate);
                 }else{
                     Integer space_Num = Integer.parseInt(spaceNum) + 1;
-                    if(space_Num > 8){
+                    if(space_Num > apiconfig.getPostMax()){
                         return Result.getResultJson(0,"你已超过最大发布数量限制，请您24小时后再操作",null);
                     }else{
-                        redisHelp.setRedis(this.dataprefix+"_"+uid+"_spaceNum",space_Num.toString(),86400,redisTemplate);
+                        redisHelp.setRedis(this.dataprefix+"_"+uid+"_spaceNum",space_Num.toString(),apiconfig.getInterceptTime(),redisTemplate);
                     }
                 }
             }
             //限制结束
             String  ip = baseFull.getIpAddr(request);
-            TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
+
 
             //判断用户经验值
             Integer spaceMinExp = apiconfig.getSpaceMinExp();

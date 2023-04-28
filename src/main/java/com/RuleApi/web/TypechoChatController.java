@@ -78,6 +78,7 @@ public class TypechoChatController {
             Integer chatid = null;
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer uid =Integer.parseInt(map.get("uid").toString());
+            TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
             //登录情况下，刷聊天数据
             String isSilence = redisHelp.getRedis(this.dataprefix+"_"+uid+"_silence",redisTemplate);
             if(isSilence!=null){
@@ -90,7 +91,7 @@ public class TypechoChatController {
                 Integer frequency = Integer.parseInt(isRepeated) + 1;
                 if(frequency==4){
                     securityService.safetyMessage("用户ID："+uid+"，在聊天发起接口疑似存在攻击行为，请及时确认处理。","system");
-                    redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",900,redisTemplate);
+                    redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",apiconfig.getSilenceTime(),redisTemplate);
                     return Result.getResultJson(0,"你的操作过于频繁，已被禁用15分钟聊天室！",null);
                 }else{
                     redisHelp.setRedis(this.dataprefix+"_"+uid+"_isSendMsg",frequency.toString(),5,redisTemplate);
@@ -117,7 +118,7 @@ public class TypechoChatController {
             //如果未聊天过，则创建聊天室
             if(chatid==null){
                 //判断用户经验值
-                TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
+
                 Integer chatMinExp = apiconfig.getChatMinExp();
                 TypechoUsers curUser = usersService.selectByKey(uid);
                 Integer Exp = curUser.getExperience();
@@ -181,7 +182,7 @@ public class TypechoChatController {
             if(isSilence!=null){
                 return Result.getResultJson(0,"你的操作太频繁了，请稍后再试",null);
             }
-
+            TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
             //登录情况下，刷数据攻击拦截
             String isRepeated = redisHelp.getRedis(this.dataprefix+"_"+uid+"_isSendMsg",redisTemplate);
             if(isRepeated==null){
@@ -190,7 +191,7 @@ public class TypechoChatController {
                 Integer frequency = Integer.parseInt(isRepeated) + 1;
                 if(frequency==4){
                     securityService.safetyMessage("用户ID："+uid+"，在聊天发送消息接口疑似存在攻击行为，请及时确认处理。","system");
-                    redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",600,redisTemplate);
+                    redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",apiconfig.getSilenceTime(),redisTemplate);
                     return Result.getResultJson(0,"你的发言过于频繁，已被禁言十分钟！",null);
                 }else{
                     redisHelp.setRedis(this.dataprefix+"_"+uid+"_isSendMsg",frequency.toString(),5,redisTemplate);
@@ -217,7 +218,7 @@ public class TypechoChatController {
                 }
 
             }
-            TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
+
             //判断用户经验值
             Integer chatMinExp = apiconfig.getChatMinExp();
             TypechoUsers curUser = usersService.selectByKey(uid);
@@ -246,7 +247,7 @@ public class TypechoChatController {
                         Integer frequency = Integer.parseInt(isIntercept) + 1;
                         if(frequency==4){
                             securityService.safetyMessage("用户ID："+uid+"，在聊天发送消息接口多次触发违禁，请及时确认处理。","system");
-                            redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",3600,redisTemplate);
+                            redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",apiconfig.getInterceptTime(),redisTemplate);
                             return Result.getResultJson(0,"您多次发送违禁内容，已被限制功能1小时",null);
                         }else{
                             redisHelp.setRedis(this.dataprefix+"_"+uid+"_isIntercept",frequency.toString(),600,redisTemplate);

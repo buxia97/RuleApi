@@ -116,10 +116,17 @@ public class TypechoContentsController {
         TypechoContents typechoContents = null;
         Map contensjson = new HashMap<String, String>();
         Map cacheInfo = redisHelp.getMapValue(this.dataprefix+"_"+"contentsInfo_"+key+"_"+isMd,redisTemplate);
-
+        //如果开启全局登录，则必须登录才能得到数据
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+        TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
+        if(apiconfig.getIsLogin().equals(1)){
+            if(uStatus==0){
+                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+            }
+        }
+        //验证结束
         try{
             Integer isLogin;
-            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
             if(uStatus==0){
                 isLogin=0;
             }else{
@@ -251,11 +258,18 @@ public class TypechoContentsController {
         List cacheList = new ArrayList();
         String group = "";
         Integer total = 0;
-
+        //如果开启全局登录，则必须登录才能得到数据
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+        TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
+        if(apiconfig.getIsLogin().equals(1)){
+            if(uStatus==0){
+                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+            }
+        }
+        //验证结束
         if (StringUtils.isNotBlank(searchParams)) {
             JSONObject object = JSON.parseObject(searchParams);
             //如果不是登陆状态，那么只显示开放状态文章。如果是，则查询自己发布的文章
-            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
             if(token==""||uStatus==0){
 
                 object.put("status","publish");
@@ -284,7 +298,7 @@ public class TypechoContentsController {
             if(cacheList.size()>0){
                 jsonList = cacheList;
             }else{
-                TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
+
                 PageList<TypechoContents> pageList = service.selectPage(query, page, limit, searchKey,order,random);
                 List list = pageList.getList();
                 if(list.size() < 1){
@@ -446,7 +460,7 @@ public class TypechoContentsController {
             }
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer logUid =Integer.parseInt(map.get("uid").toString());
-
+            TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
             //登录情况下，刷数据攻击拦截
             String isSilence = redisHelp.getRedis(this.dataprefix+"_"+logUid+"_silence",redisTemplate);
             if(isSilence!=null){
@@ -459,7 +473,7 @@ public class TypechoContentsController {
                 Integer frequency = Integer.parseInt(isRepeated) + 1;
                 if(frequency==3){
                     securityService.safetyMessage("用户ID："+logUid+"，在文章发布接口疑似存在攻击行为，请及时确认处理。","system");
-                    redisHelp.setRedis(this.dataprefix+"_"+logUid+"_silence","1",600,redisTemplate);
+                    redisHelp.setRedis(this.dataprefix+"_"+logUid+"_silence","1",apiconfig.getSilenceTime(),redisTemplate);
                     return Result.getResultJson(0,"你的请求存在恶意行为，10分钟内禁止操作！",null);
                 }else{
                     redisHelp.setRedis(this.dataprefix+"_"+logUid+"_isRepeated",frequency.toString(),3,redisTemplate);
@@ -468,7 +482,7 @@ public class TypechoContentsController {
             }
             //攻击拦截结束
             String  ip = baseFull.getIpAddr(request);
-            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+
             Integer isWaiting = 0;
             if (StringUtils.isNotBlank(params)) {
                 jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
@@ -546,7 +560,7 @@ public class TypechoContentsController {
                         redisHelp.setRedis(this.dataprefix+"_"+logUid+"_postNum","1",86400,redisTemplate);
                     }else{
                         Integer post_Num = Integer.parseInt(postNum) + 1;
-                        if(post_Num > 5){
+                        if(post_Num > apiconfig.getPostMax()){
                             return Result.getResultJson(0,"你已超过最大发布数量限制，请您24小时后再操作",null);
                         }else{
                             redisHelp.setRedis(this.dataprefix+"_"+logUid+"_postNum",post_Num.toString(),86400,redisTemplate);

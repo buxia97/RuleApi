@@ -671,7 +671,11 @@ public class SystemController {
         }
         update.setId(1);
         int rows = apiconfigService.update(update);
-
+        //更新Redis缓存
+        TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+        Map configJson = JSONObject.parseObject(JSONObject.toJSONString(apiconfig), Map.class);
+        redisHelp.delete(dataprefix+"_"+"config",redisTemplate);
+        redisHelp.setKey(dataprefix+"_"+"config",configJson,6000,redisTemplate);
         JSONObject response = new JSONObject();
         response.put("code" , rows);
         response.put("msg"  , rows > 0 ? "修改成功，当前配置已生效！" : "修改失败");
