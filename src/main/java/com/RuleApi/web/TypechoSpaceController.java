@@ -342,7 +342,14 @@ public class TypechoSpaceController {
             Map cacheInfo = redisHelp.getMapValue(this.dataprefix+"_"+"spaceInfo_"+id,redisTemplate);
             Map map = new HashMap();
             Integer uid = 0;
-            Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
+            //如果开启全局登录，则必须登录才能得到数据
+            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+            TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
+            if(apiconfig.getIsLogin().equals(1)){
+                if(uStatus==0){
+                    return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+                }
+            }
             if (uStatus != 0) {
                 map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
                 uid =Integer.parseInt(map.get("uid").toString());
@@ -528,7 +535,13 @@ public class TypechoSpaceController {
         }
         Map map = new HashMap();
         Integer uid = 0;
-        Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+        TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
+        if(apiconfig.getIsLogin().equals(1)){
+            if(uStatus==0){
+                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+            }
+        }
         if (uStatus != 0) {
             map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
             uid =Integer.parseInt(map.get("uid").toString());

@@ -166,8 +166,11 @@ public class TypechoContentsController {
                 }
                 //获取文章id，从而获取自定义字段，和分类标签
                 String cid = typechoContents.getCid().toString();
-                List<TypechoFields> fields = fieldsService.selectByKey(cid);
-                List<TypechoRelationships> relationships = relationshipsService.selectByKey(cid);
+                TypechoFields f = new TypechoFields();
+                List<TypechoFields> fields = fieldsService.selectList(f);
+                TypechoRelationships rs = new TypechoRelationships();
+                rs.setCid(Integer.parseInt(cid));
+                List<TypechoRelationships> relationships = relationshipsService.selectList(rs);
 
                 List metas = new ArrayList();
                 List tags = new ArrayList();
@@ -314,10 +317,13 @@ public class TypechoContentsController {
                     Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
                     //加入自定义字段信息，这里取消注释即可开启，但是数据库查询会消耗性能
                     String cid = json.get("cid").toString();
-                    List<TypechoFields> fields = fieldsService.selectByKey(cid);
+                    TypechoFields f = new TypechoFields();
+                    List<TypechoFields> fields = fieldsService.selectList(f);
                     json.put("fields",fields);
 
-                    List<TypechoRelationships> relationships = relationshipsService.selectByKey(cid);
+                    TypechoRelationships rs = new TypechoRelationships();
+                    rs.setCid(Integer.parseInt(cid));
+                    List<TypechoRelationships> relationships = relationshipsService.selectList(rs);
 
                     List metas = new ArrayList();
                     List tags = new ArrayList();
