@@ -13,6 +13,7 @@
         <result column="type" property="type" />
         <result column="likes" property="likes" />
         <result column="toid" property="toid" />
+        <result column="status" property="status" />
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -24,7 +25,8 @@
         `pic`,
         `type`,
         `likes`,
-        `toid`
+        `toid`,
+        `status`
     </sql>
 
     <!-- 插入数据 -->
@@ -56,7 +58,10 @@
                 `likes`,
             </if>
             <if test ='null != toid'>
-                `toid`
+                `toid`,
+            </if>
+            <if test ='null != status'>
+                `status`
             </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
@@ -85,7 +90,10 @@
                 #{likes},
             </if>
             <if test ='null != toid'>
-                #{toid}
+                #{toid},
+            </if>
+            <if test ='null != status'>
+                #{status}
             </if>
         </trim>
     </insert>
@@ -95,15 +103,16 @@
         INSERT INTO ${prefix}_space ( <include refid="Base_Column_List" /> ) VALUES
         <foreach collection="list" item="curr" index="index" separator=",">
             (
-                #{curr.id},
-                #{curr.uid},
-                #{curr.created},
-                #{curr.modified},
-                #{curr.text},
-                #{curr.pic},
-                #{curr.type},
-                #{curr.likes},
-                #{curr.toid}
+            #{curr.id},
+            #{curr.uid},
+            #{curr.created},
+            #{curr.modified},
+            #{curr.text},
+            #{curr.pic},
+            #{curr.type},
+            #{curr.likes},
+            #{curr.toid},
+            #{curr.status}
             )
         </foreach>
     </insert>
@@ -119,7 +128,8 @@
             <if test ='null != pic'>`pic` = #{pic},</if>
             <if test ='null != type'>`type` = #{type},</if>
             <if test ='null != likes'>`likes` = #{likes},</if>
-            <if test ='null != toid'>`toid` = #{toid}</if>
+            <if test ='null != toid'>`toid` = #{toid},</if>
+            <if test ='null != status'>`status` = #{status}</if>
         </set>
         WHERE `id` = #{id}
     </update>
@@ -177,6 +187,9 @@
             <if test ='null != toid'>
                 and `toid` = #{toid}
             </if>
+            <if test ='null != status'>
+                and `status` = #{status}
+            </if>
         </where>
     </select>
 
@@ -211,6 +224,9 @@
             </if>
             <if test ='null != typechoSpace.toid'>
                 and `toid` = #{typechoSpace.toid}
+            </if>
+            <if test ='null != typechoSpace.status'>
+                and `status` = #{typechoSpace.status}
             </if>
             <if test ='0 == isReply'>
                 and `type` != 3

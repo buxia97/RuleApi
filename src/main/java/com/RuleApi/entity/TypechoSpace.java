@@ -58,4 +58,9 @@ public class TypechoSpace implements Serializable {
      * toid  文章id，动态id等
      */
     private Integer toid;
+
+    /**
+     * status  动态状态，0审核，1发布，2锁定
+     */
+    private Integer status;
 }

@@ -194,6 +194,11 @@ public class TypechoSpaceController {
             space.setToid(toid);
             space.setCreated(Integer.parseInt(created));
             space.setModified(Integer.parseInt(created));
+            if(apiconfig.getSpaceAudit().equals(1)){
+                space.setStatus(0);
+            }else{
+                space.setStatus(1);
+            }
             //修改用户最新发布时间
             TypechoUsers user = new TypechoUsers();
             user.setUid(uid);
@@ -727,6 +732,68 @@ public class TypechoSpaceController {
         response.put("total", total);
         return response.toString();
     }
+
+    /***
+     * 动态审核
+     */
+    @RequestMapping(value = "/spaceReview")
+    @ResponseBody
+    public String spaceReview(@RequestParam(value = "id", required = false) Integer  id,
+                              @RequestParam(value = "type", required = false, defaultValue = "1") Integer  type,
+                              @RequestParam(value = "token", required = false) String  token) {
+        try{
+            if(!type.equals(1)&&!type.equals(0)){
+                return Result.getResultJson(0,"参数错误",null);
+            }
+            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+            if(uStatus==0){
+                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+            }
+            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            Integer uid  = Integer.parseInt(map.get("uid").toString());
+            String group = map.get("group").toString();
+            TypechoSpace space = service.selectByKey(id);
+            if(space==null){
+                return Result.getResultJson(0,"动态不存在",null);
+            }
+            if(space.getStatus().equals(type)){
+                return Result.getResultJson(0,"动态已被进行相同操作",null);
+            }
+            int rows = 0;
+            if(type.equals(1)){
+                TypechoSpace newPost = new TypechoSpace();
+                newPost.setId(id);
+                newPost.setStatus(type);
+                rows = service.update(newPost);
+            }else{
+                rows = service.delete(id);
+            }
+            Long date = System.currentTimeMillis();
+            String created = String.valueOf(date).substring(0,10);
+            TypechoInbox insert = new TypechoInbox();
+            insert.setUid(uid);
+            insert.setTouid(space.getUid());
+            insert.setType("system");
+            if(type.equals(1)){
+                insert.setText("你的动态已审核通过");
+            }
+            if(type.equals(0)){
+                insert.setText("你的动态未审核通过，已被删除");
+            }
+            insert.setCreated(Integer.parseInt(created));
+            inboxService.insert(insert);
+
+            JSONObject response = new JSONObject();
+            response.put("code" ,rows > 0 ? 1: 0 );
+            response.put("data" , rows);
+            response.put("msg"  , rows > 0 ? "操作成功，请等待缓存刷新" : "操作失败");
+            return response.toString();
+        }catch (Exception e){
+            e.printStackTrace();
+            return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
+        }
+    }
+
     /***
      * 我关注的人的动态
      */
