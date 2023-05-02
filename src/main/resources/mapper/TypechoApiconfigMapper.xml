@@ -185,7 +185,6 @@
         `qiniuAccessKey`,
         `qiniuSecretKey`,
         `qiniuBucketName`,
-        `isPhone`,
         `silenceTime`,
         `interceptTime`,
         `isLogin`,
