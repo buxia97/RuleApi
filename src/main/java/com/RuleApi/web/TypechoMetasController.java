@@ -81,9 +81,14 @@ public class TypechoMetasController {
         if(limit>50){
             limit = 50;
         }
+
         if (StringUtils.isNotBlank(searchParams)) {
             JSONObject object = JSON.parseObject(searchParams);
-            Integer mid = Integer.parseInt(object.get("mid").toString());
+            Integer mid = 0;
+            if(object.get("mid")!=null){
+                mid = Integer.parseInt(object.get("mid").toString());
+            }
+
             query.setMid(mid);
             TypechoContents contents = new TypechoContents();
             contents.setType("post");
@@ -181,7 +186,9 @@ public class TypechoMetasController {
                     List<TypechoFields> fields = fieldsService.selectByKey(cid);
                     contentsInfo.put("fields",fields);
 
-                    List<TypechoRelationships> relationships = relationshipsService.selectByKey(cid);
+                    TypechoRelationships rs = new TypechoRelationships();
+                    rs.setCid(cid);
+                    List<TypechoRelationships> relationships = relationshipsService.selectList(rs);
 
                     List metas = new ArrayList();
                     List tags = new ArrayList();
