@@ -184,6 +184,18 @@ public class TypechoSpaceController {
             //违禁词拦截结束
             Long date = System.currentTimeMillis();
             String created = String.valueOf(date).substring(0,10);
+            if(type.equals(3)){
+                TypechoSpace toSpace = service.selectByKey(toid);
+                if(toSpace==null){
+                    return Result.getResultJson(0,"动态不存在",null);
+                }
+                if(toSpace.getStatus().equals(0)){
+                    return Result.getResultJson(0,"动态还未通过审核",null);
+                }
+                if(toSpace.getStatus().equals(2)){
+                    return Result.getResultJson(0,"动态已锁定，无法评论及转发",null);
+                }
+            }
 
             TypechoSpace space = new TypechoSpace();
             text = text.replace("||rn||","\r\n");
@@ -752,6 +764,9 @@ public class TypechoSpaceController {
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer uid  = Integer.parseInt(map.get("uid").toString());
             String group = map.get("group").toString();
+            if(!group.equals("administrator")&&!group.equals("editor")){
+                return Result.getResultJson(0,"你没有操作权限",null);
+            }
             TypechoSpace space = service.selectByKey(id);
             if(space==null){
                 return Result.getResultJson(0,"动态不存在",null);
@@ -787,6 +802,69 @@ public class TypechoSpaceController {
             response.put("code" ,rows > 0 ? 1: 0 );
             response.put("data" , rows);
             response.put("msg"  , rows > 0 ? "操作成功，请等待缓存刷新" : "操作失败");
+            return response.toString();
+        }catch (Exception e){
+            e.printStackTrace();
+            return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
+        }
+    }
+    /***
+     * 动态锁定&解锁
+     */
+    @RequestMapping(value = "/spaceLock")
+    @ResponseBody
+    public String postLock(@RequestParam(value = "id", required = false) Integer  id,
+                           @RequestParam(value = "type", required = false, defaultValue = "1") Integer  type,
+                           @RequestParam(value = "token", required = false) String  token) {
+        try{
+            if(!type.equals(1)&&!type.equals(2)){
+                return Result.getResultJson(0,"参数错误",null);
+            }
+            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+            if(uStatus==0){
+                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+            }
+            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            Integer uid  = Integer.parseInt(map.get("uid").toString());
+            String group = map.get("group").toString();
+            if(!group.equals("administrator")&&!group.equals("editor")){
+                return Result.getResultJson(0,"你没有操作权限",null);
+            }
+            TypechoSpace space = service.selectByKey(id);
+            if(space==null){
+                return Result.getResultJson(0,"动态不存在",null);
+            }
+            if(space.getStatus().equals(0)){
+                return Result.getResultJson(0,"动态未过审，暂无法操作",null);
+            }
+            if(space.getStatus().equals(type)){
+                return Result.getResultJson(0,"动态已被进行相同操作",null);
+            }
+
+            TypechoSpace newSpace = new TypechoSpace();
+            newSpace.setId(id);
+            newSpace.setStatus(type);
+            int rows = service.update(newSpace);
+
+            Long date = System.currentTimeMillis();
+            String created = String.valueOf(date).substring(0,10);
+            TypechoInbox insert = new TypechoInbox();
+            insert.setUid(uid);
+            insert.setTouid(space.getUid());
+            insert.setType("system");
+            if(type.equals(1)){
+                insert.setText("你的动态【ID:"+space.getId()+"】已被解锁");
+            }
+            if(type.equals(2)){
+                insert.setText("你的动态【ID:"+space.getId()+"】已被锁定");
+            }
+            insert.setCreated(Integer.parseInt(created));
+            inboxService.insert(insert);
+
+            JSONObject response = new JSONObject();
+            response.put("code" ,rows > 0 ? 1: 0 );
+            response.put("data" , rows);
+            response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
             return response.toString();
         }catch (Exception e){
             e.printStackTrace();

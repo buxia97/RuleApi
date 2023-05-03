@@ -1155,7 +1155,7 @@ public class InstallController {
         //查询动态模块是否存在status字段
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_space' and column_name = 'status';", Integer.class);
         if (i == 0){
-            jdbcTemplate.execute("alter table "+prefix+"_chat ADD `status` int(2) unsigned DEFAULT '1' COMMENT '动态状态，0审核，1发布，2锁定'");
+            jdbcTemplate.execute("alter table "+prefix+"_space ADD `status` int(2) unsigned DEFAULT '1' COMMENT '动态状态，0审核，1发布，2锁定'");
             text+="动态模块，字段status添加完成。";
         }else{
             text+="动态模块，字段status已经存在，无需添加。";
