@@ -864,7 +864,7 @@ public class TypechoSpaceController {
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );
             response.put("data" , rows);
-            response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
+            response.put("msg"  , rows > 0 ? "操作成功，请等待缓存刷新" : "操作失败");
             return response.toString();
         }catch (Exception e){
             e.printStackTrace();
@@ -969,6 +969,9 @@ public class TypechoSpaceController {
             Integer uid  = Integer.parseInt(map.get("uid").toString());
             // 查询发布者是不是自己，如果是管理员则跳过
             TypechoSpace space = service.selectByKey(id);
+            if(space==null){
+                return Result.getResultJson(0,"帖子不存在",null);
+            }
             String group = map.get("group").toString();
             if(!group.equals("administrator")&&!group.equals("editor")){
                 if(!space.getUid().equals(uid)){
@@ -995,7 +998,7 @@ public class TypechoSpaceController {
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );
             response.put("data" , rows);
-            response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
+            response.put("msg"  , rows > 0 ? "操作成功，请等待缓存刷新" : "操作失败");
             return response.toString();
         }catch (Exception e){
             e.printStackTrace();

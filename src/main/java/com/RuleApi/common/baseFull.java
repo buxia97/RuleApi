@@ -30,23 +30,28 @@ public class baseFull {
 
     //获取字符串内图片地址
     public List<String> getImageSrc(String htmlCode) {
-        List<String> containedUrls = new ArrayList<String>();
-        String urlRegex = "((https?|http):((//)|(\\\\))+[\\w\\d:#@%/;$()~_?\\+-=\\\\\\.&]*)";
-        Pattern pattern = Pattern.compile(urlRegex, Pattern.CASE_INSENSITIVE);
-        Matcher urlMatcher = pattern.matcher(htmlCode);
+        List<String> urls = extractUrls(htmlCode);
+        List<String> imageUrls = new ArrayList<>();
 
-        while (urlMatcher.find()) {
-            containedUrls.add(htmlCode.substring(urlMatcher.start(0),
-                    urlMatcher.end(0)));
-        }
-        List<String> imageList = new ArrayList<String>();
-        for (int i = 0; i < containedUrls.size(); i++) {
-            String word = containedUrls.get(i);
-            if (word.indexOf(".ico") != -1 || word.indexOf(".jpg") != -1 || word.indexOf(".JPG") != -1 || word.indexOf(".jpeg") != -1 || word.indexOf(".png") != -1 || word.indexOf(".PNG") != -1 || word.indexOf(".bmp") != -1 || word.indexOf(".gif") != -1 || word.indexOf(".GIF") != -1 || word.indexOf(".webp") != -1 || word.indexOf(".WEBP") != -1) {
-                imageList.add(word.replaceAll("\\)", ""));
+        for (String url : urls) {
+            if (url.matches(".+\\.(ico|jpe?g|png|bmp|gif|webp)$")) {
+                imageUrls.add(url.replaceAll("\\)", ""));
             }
         }
-        return imageList;
+
+        return imageUrls;
+    }
+
+    private List<String> extractUrls(String text) {
+        List<String> urls = new ArrayList<>();
+        Pattern pattern = Pattern.compile("\\b(https?|ftp|file)://[-A-Z0-9+&@#/%?=~_|!:,.;]*[-A-Z0-9+&@#/%=~_|]", Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher(text);
+
+        while (matcher.find()) {
+            urls.add(text.substring(matcher.start(0), matcher.end(0)));
+        }
+
+        return urls;
     }
 
     //获取markdown内图片引用
