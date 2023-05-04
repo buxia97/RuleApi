@@ -167,6 +167,7 @@ public class TypechoContentsController {
                 //获取文章id，从而获取自定义字段，和分类标签
                 String cid = typechoContents.getCid().toString();
                 TypechoFields f = new TypechoFields();
+                f.setCid(Integer.parseInt(cid));
                 List<TypechoFields> fields = fieldsService.selectList(f);
                 TypechoRelationships rs = new TypechoRelationships();
                 rs.setCid(Integer.parseInt(cid));
@@ -318,6 +319,7 @@ public class TypechoContentsController {
                     //加入自定义字段信息，这里取消注释即可开启，但是数据库查询会消耗性能
                     String cid = json.get("cid").toString();
                     TypechoFields f = new TypechoFields();
+                    f.setCid(Integer.parseInt(cid));
                     List<TypechoFields> fields = fieldsService.selectList(f);
                     json.put("fields",fields);
 

@@ -183,7 +183,9 @@ public class TypechoMetasController {
                     contentsInfo.put("images",imgList);
                     //加入自定义字段，分类和标签
                     //加入自定义字段信息，这里取消注释即可开启，但是数据库查询会消耗性能
-                    List<TypechoFields> fields = fieldsService.selectByKey(cid);
+                    TypechoFields f = new TypechoFields();
+                    f.setCid(cid);
+                    List<TypechoFields> fields = fieldsService.selectList(f);
                     contentsInfo.put("fields",fields);
 
                     TypechoRelationships rs = new TypechoRelationships();
