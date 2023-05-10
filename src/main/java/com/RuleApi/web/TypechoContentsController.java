@@ -278,12 +278,13 @@ public class TypechoContentsController {
 
                 object.put("status","publish");
             }else{
-                aid = redisHelp.getValue(this.dataprefix+"_"+"userInfo"+token,"uid",redisTemplate).toString();
-                Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
-                group = map.get("group").toString();
-                if(!group.equals("administrator")&&!group.equals("editor")){
-                    object.put("authorId",aid);
-                }
+                //后面再优化
+//                aid = redisHelp.getValue(this.dataprefix+"_"+"userInfo"+token,"uid",redisTemplate).toString();
+//                Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+//                group = map.get("group").toString();
+//                if(!group.equals("administrator")&&!group.equals("editor")){
+//                    object.put("status","publish");
+//                }
 
             }
 

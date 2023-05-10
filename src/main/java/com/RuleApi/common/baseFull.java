@@ -34,7 +34,7 @@ public class baseFull {
         List<String> imageUrls = new ArrayList<>();
 
         for (String url : urls) {
-            if (url.matches(".+\\.(ico|jpe?g|png|bmp|gif|webp)$")) {
+            if (url.matches(".+\\.(ico|jpe?g|png|bmp|gif|webp|ICO|JPE?G|PNG|BMP|GIF|WEBP)$")) {
                 imageUrls.add(url.replaceAll("\\)", ""));
             }
         }
