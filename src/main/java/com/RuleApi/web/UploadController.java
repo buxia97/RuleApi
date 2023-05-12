@@ -344,8 +344,6 @@ public class UploadController {
         Integer uid =Integer.parseInt(map.get("uid").toString());
         TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
         //获取上传文件MultipartFile
-        //返回上传到oss的路径
-        OSS ossClient = new OSSClientBuilder().build(apiconfig.getAliyunEndpoint(), apiconfig.getAliyunAccessKeyId(),apiconfig.getAliyunAccessKeySecret());
         InputStream inputStream = null;
 
         try {

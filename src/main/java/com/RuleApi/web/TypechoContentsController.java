@@ -278,6 +278,9 @@ public class TypechoContentsController {
 
                 object.put("status","publish");
             }else{
+                if(object.get("status")==null){
+                    object.put("status","publish");
+                }
                 //后面再优化
 //                aid = redisHelp.getValue(this.dataprefix+"_"+"userInfo"+token,"uid",redisTemplate).toString();
 //                Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
