@@ -397,7 +397,7 @@ public class UploadController {
         String key = "/"+year+"/"+month+"/"+day+"/"+filename;
 
         // 构造一个带指定Zone对象的配置类, 注意这里的Zone.zone0需要根据主机选择
-        Configuration cfg = new Configuration(Zone.zone1());
+        Configuration cfg = new Configuration();
         // 其他参数参考类注释
         UploadManager uploadManager = new UploadManager(cfg);
         // 生成上传凭证，然后准备上传
