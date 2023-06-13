@@ -114,6 +114,7 @@ public class TypechoAdsController {
         if(limit>100){
             limit = 50;
         }
+        String sqlParams = "null";
         Integer total = 0;
         List jsonList = new ArrayList();
         List cacheList = new ArrayList();
@@ -142,6 +143,8 @@ public class TypechoAdsController {
                         query.setUid(Integer.parseInt(uid));
                     }
                 }
+                Map paramsJson = JSONObject.parseObject(JSONObject.toJSONString(query), Map.class);
+                sqlParams = paramsJson.toString();
                 total = service.total(query);
                 PageList<TypechoAds> pageList = service.selectPage(query, page, limit,searchKey);
                 List list = pageList.getList();
@@ -155,9 +158,9 @@ public class TypechoAdsController {
                     return noData.toString();
                 }
                 jsonList = pageList.getList();
-                redisHelp.delete(this.dataprefix + "_" + "adsList_" + page + "_" + limit + "_" + searchParams+"_"+searchKey,redisTemplate);
+                redisHelp.delete(this.dataprefix + "_" + "adsList_" + page + "_" + limit + "_" + sqlParams+"_"+searchKey,redisTemplate);
                 //为了性能和用户体验，广告数据缓存10分钟
-                redisHelp.setList(this.dataprefix + "_" + "adsList_" + page + "_" + limit + "_" + searchParams+"_"+searchKey,jsonList,600,redisTemplate);
+                redisHelp.setList(this.dataprefix + "_" + "adsList_" + page + "_" + limit + "_" + sqlParams+"_"+searchKey,jsonList,600,redisTemplate);
             }
         }catch (Exception e){
             e.printStackTrace();

@@ -100,6 +100,7 @@ public class TypechoCommentsController {
         if(limit>50){
             limit = 50;
         }
+        String sqlParams = "null";
         Integer uid = 0;
         Integer total = 0;
         if (StringUtils.isNotBlank(searchParams)) {
@@ -117,12 +118,15 @@ public class TypechoCommentsController {
                 }
             }
             query = object.toJavaObject(TypechoComments.class);
-            total = service.total(query);
+            Map paramsJson = JSONObject.parseObject(JSONObject.toJSONString(query), Map.class);
+            sqlParams = paramsJson.toString();
+
         }
+        total = service.total(query);
         List jsonList = new ArrayList();
-        List cacheList = redisHelp.getList(this.dataprefix+"_"+"searchParams_"+page+"_"+limit+"_"+searchKey+"_"+searchParams+"_"+uid+"_"+order,redisTemplate);
+        List cacheList = redisHelp.getList(this.dataprefix+"_"+"searchParams_"+page+"_"+limit+"_"+searchKey+"_"+sqlParams+"_"+uid+"_"+order,redisTemplate);
         if(uStatus!=0){
-            cacheList = redisHelp.getList(this.dataprefix+"_"+"searchParams_"+page+"_"+limit+"_"+searchKey+"_"+searchParams+"_"+order,redisTemplate);
+            cacheList = redisHelp.getList(this.dataprefix+"_"+"searchParams_"+page+"_"+limit+"_"+searchKey+"_"+sqlParams+"_"+order,redisTemplate);
         }
 
         try{
@@ -268,11 +272,11 @@ public class TypechoCommentsController {
 
                 }
                 if(uStatus!=0){
-                    redisHelp.delete(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchKey+"_"+searchParams+"_"+uid+"_"+order,redisTemplate);
-                    redisHelp.setList(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchKey+"_"+searchParams+"_"+uid+"_"+order,jsonList,this.CommentCache,redisTemplate);
+                    redisHelp.delete(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchKey+"_"+sqlParams+"_"+uid+"_"+order,redisTemplate);
+                    redisHelp.setList(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchKey+"_"+sqlParams+"_"+uid+"_"+order,jsonList,this.CommentCache,redisTemplate);
                 }else{
-                    redisHelp.delete(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchKey+"_"+searchParams+"_"+order,redisTemplate);
-                    redisHelp.setList(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchKey+"_"+searchParams+"_"+order,jsonList,this.CommentCache,redisTemplate);
+                    redisHelp.delete(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchKey+"_"+sqlParams+"_"+order,redisTemplate);
+                    redisHelp.setList(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchKey+"_"+sqlParams+"_"+order,jsonList,this.CommentCache,redisTemplate);
                 }
             }
         }catch (Exception e){
@@ -550,15 +554,18 @@ public class TypechoCommentsController {
                 }
 
                 insert = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoComments.class);
-                //更新文章评论数量
-                TypechoComments suminfo = new TypechoComments();
-                suminfo.setCid(Integer.parseInt(cid));
-                Integer cnum = service.total(suminfo);
-                contents.setCommentsNum(cnum);
-                contentsService.update(contents);
+
             }
             insert.setStatus(cstatus);
             int rows = service.insert(insert);
+            //更新文章评论数量
+            TypechoComments suminfo = new TypechoComments();
+            suminfo.setCid(insert.getCid());
+            Integer cnum = service.total(suminfo);
+            TypechoContents c = new TypechoContents();
+            c.setCid(insert.getCid());
+            c.setCommentsNum(cnum);
+            contentsService.update(c);
             String addtext ="";
             if(cstatus.equals("waiting")){
                 addtext = "，将在审核通过后显示！";
@@ -926,16 +933,7 @@ public class TypechoCommentsController {
                     inboxService.insert(insert);
                 }
             }
-            //更新文章评论数量
 
-            Integer cid = comments.getCid();
-            TypechoContents contents = new TypechoContents();
-            TypechoComments sum = new TypechoComments();
-            sum.setCid(cid);
-            Integer total = service.total(sum);
-            contents.setCid(cid);
-            contents.setCommentsNum(total);
-            contentsService.update(contents);
             //删除
             //更新用户经验
             Integer deleteExp = apiconfig.getDeleteExp();
@@ -953,6 +951,15 @@ public class TypechoCommentsController {
 
 
             int rows = service.delete(key);
+            //更新文章评论数量
+            Integer cid = comments.getCid();
+            TypechoContents contents = new TypechoContents();
+            TypechoComments sum = new TypechoComments();
+            sum.setCid(cid);
+            Integer total = service.total(sum);
+            contents.setCid(cid);
+            contents.setCommentsNum(total);
+            contentsService.update(contents);
             editFile.setLog("用户"+uid+"删除了评论"+key);
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );

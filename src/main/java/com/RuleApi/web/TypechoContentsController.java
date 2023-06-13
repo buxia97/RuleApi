@@ -255,6 +255,7 @@ public class TypechoContentsController {
                                 @RequestParam(value = "token"        , required = false, defaultValue = "") String token){
         TypechoContents query = new TypechoContents();
         String aid = "null";
+        String sqlParams = "null";
         if(limit>50){
             limit = 50;
         }
@@ -289,17 +290,19 @@ public class TypechoContentsController {
 //                    object.put("status","publish");
 //                }
 
+
             }
 
             query = object.toJavaObject(TypechoContents.class);
-
+            Map paramsJson = JSONObject.parseObject(JSONObject.toJSONString(query), Map.class);
+            sqlParams = paramsJson.toString();
 
         }
         total = service.total(query);
         List jsonList = new ArrayList();
         //管理员和编辑以登录状态请求时，不调用缓存
         if(!group.equals("administrator")&&!group.equals("editor")) {
-            cacheList = redisHelp.getList(this.dataprefix + "_" + "contentsList_" + page + "_" + limit + "_" + searchParams + "_" + order + "_" + searchKey + "_" + random + "_" + aid, redisTemplate);
+            cacheList = redisHelp.getList(this.dataprefix + "_" + "contentsList_" + page + "_" + limit + "_" + sqlParams + "_" + order + "_" + searchKey + "_" + random + "_" + aid, redisTemplate);
         }
         //监听异常，如果有异常则调用redis缓存中的list，如果无异常也调用redis，但是会更新数据
         try{
@@ -427,8 +430,8 @@ public class TypechoContentsController {
                     jsonList.add(json);
 
                 }
-                redisHelp.delete(this.dataprefix+"_"+"contentsList_"+page+"_"+limit+"_"+searchParams+"_"+order+"_"+searchKey+"_"+random+"_"+aid,redisTemplate);
-                redisHelp.setList(this.dataprefix+"_"+"contentsList_"+page+"_"+limit+"_"+searchParams+"_"+order+"_"+searchKey+"_"+random+"_"+aid,jsonList,this.contentCache,redisTemplate);
+                redisHelp.delete(this.dataprefix+"_"+"contentsList_"+page+"_"+limit+"_"+sqlParams+"_"+order+"_"+searchKey+"_"+random+"_"+aid,redisTemplate);
+                redisHelp.setList(this.dataprefix+"_"+"contentsList_"+page+"_"+limit+"_"+sqlParams+"_"+order+"_"+searchKey+"_"+random+"_"+aid,jsonList,this.contentCache,redisTemplate);
             }
         }catch (Exception e){
             e.printStackTrace();

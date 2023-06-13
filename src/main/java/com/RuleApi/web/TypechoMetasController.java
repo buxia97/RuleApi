@@ -81,7 +81,7 @@ public class TypechoMetasController {
         if(limit>50){
             limit = 50;
         }
-
+        String sqlParams = "null";
         if (StringUtils.isNotBlank(searchParams)) {
             JSONObject object = JSON.parseObject(searchParams);
             Integer mid = 0;
@@ -94,9 +94,11 @@ public class TypechoMetasController {
             contents.setType("post");
             contents.setStatus("publish");
             query.setContents(contents);
+            Map paramsJson = JSONObject.parseObject(JSONObject.toJSONString(query), Map.class);
+            sqlParams = paramsJson.toString();
         }
         List jsonList = new ArrayList();
-        List cacheList = redisHelp.getList(this.dataprefix+"_"+"selectContents_"+page+"_"+limit+"_"+searchParams,redisTemplate);
+        List cacheList = redisHelp.getList(this.dataprefix+"_"+"selectContents_"+page+"_"+limit+"_"+sqlParams,redisTemplate);
 
         try{
             if(cacheList.size()>0){
@@ -222,8 +224,8 @@ public class TypechoMetasController {
                     //存入redis
 
                 }
-                redisHelp.delete(this.dataprefix+"_"+"selectContents_"+page+"_"+limit+"_"+searchParams,redisTemplate);
-                redisHelp.setList(this.dataprefix+"_"+"selectContents_"+page+"_"+limit+"_"+searchParams,jsonList,this.contentCache,redisTemplate);
+                redisHelp.delete(this.dataprefix+"_"+"selectContents_"+page+"_"+limit+"_"+sqlParams,redisTemplate);
+                redisHelp.setList(this.dataprefix+"_"+"selectContents_"+page+"_"+limit+"_"+sqlParams,jsonList,this.contentCache,redisTemplate);
             }
         }catch (Exception e){
             if(cacheList.size()>0){
@@ -249,22 +251,26 @@ public class TypechoMetasController {
     @RequestMapping(value = "/metasList")
     @ResponseBody
     public String metasList (@RequestParam(value = "searchParams", required = false) String  searchParams,
-                            @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
-                            @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
+                             @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
+                             @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
                              @RequestParam(value = "searchKey"        , required = false, defaultValue = "") String searchKey,
                              @RequestParam(value = "order"        , required = false, defaultValue = "") String order) {
         TypechoMetas query = new TypechoMetas();
+        String sqlParams = "null";
         if(limit>50){
             limit = 50;
         }
         Integer total = 0;
         List jsonList = new ArrayList();
-        List cacheList = redisHelp.getList(this.dataprefix+"_"+"metasList_"+page+"_"+limit+"_"+searchParams,redisTemplate);
 
         if (StringUtils.isNotBlank(searchParams)) {
             JSONObject object = JSON.parseObject(searchParams);
             query = object.toJavaObject(TypechoMetas.class);
+            Map paramsJson = JSONObject.parseObject(JSONObject.toJSONString(query), Map.class);
+            sqlParams = paramsJson.toString();
         }
+        List cacheList = redisHelp.getList(this.dataprefix+"_"+"metasList_"+page+"_"+limit+"_"+searchKey+"_"+sqlParams,redisTemplate);
+
         total = service.total(query);
         try {
             if (cacheList.size() > 0) {
@@ -280,8 +286,8 @@ public class TypechoMetasController {
                     noData.put("count", 0);
                     return noData.toString();
                 }
-                redisHelp.delete(this.dataprefix+"_"+"metasList_"+page+"_"+limit+"_"+searchParams,redisTemplate);
-                redisHelp.setList(this.dataprefix+"_"+"metasList_"+page+"_"+limit+"_"+searchParams,jsonList,10,redisTemplate);
+                redisHelp.delete(this.dataprefix+"_"+"metasList_"+page+"_"+limit+"_"+searchKey+"_"+sqlParams,redisTemplate);
+                redisHelp.setList(this.dataprefix+"_"+"metasList_"+page+"_"+limit+"_"+searchKey+"_"+sqlParams,jsonList,10,redisTemplate);
             }
         }catch (Exception e){
             e.printStackTrace();

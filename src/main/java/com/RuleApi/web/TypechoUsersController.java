@@ -126,7 +126,7 @@ public class TypechoUsersController {
                            @RequestParam(value = "limit", required = false, defaultValue = "15") Integer limit,
                            @RequestParam(value = "token", required = false, defaultValue = "") String token) {
         TypechoUsers query = new TypechoUsers();
-
+        String sqlParams = "null";
         if(limit>50){
             limit = 50;
         }
@@ -135,8 +135,11 @@ public class TypechoUsersController {
             JSONObject object = JSON.parseObject(searchParams);
             object.remove("password");
             query = object.toJavaObject(TypechoUsers.class);
-            total = service.total(query);
+            Map paramsJson = JSONObject.parseObject(JSONObject.toJSONString(query), Map.class);
+            sqlParams = paramsJson.toString();
+
         }
+        total = service.total(query);
         List jsonList = new ArrayList();
         List cacheList = new ArrayList();
         //如果是管理员，则不缓存且显示用户资产
@@ -150,7 +153,7 @@ public class TypechoUsersController {
             }
         }
         if(isAdmin.equals(0)){
-            cacheList = redisHelp.getList(this.dataprefix + "_" + "userList_" + page + "_" + limit + "_" + searchParams + "_" + order + "_" + searchKey, redisTemplate);
+            cacheList = redisHelp.getList(this.dataprefix + "_" + "userList_" + page + "_" + limit + "_" + sqlParams + "_" + order + "_" + searchKey, redisTemplate);
         }
 
         try {
@@ -218,8 +221,8 @@ public class TypechoUsersController {
                     jsonList.add(json);
 
                 }
-                redisHelp.delete(this.dataprefix + "_" + "userList_" + page + "_" + limit + "_" + searchParams + "_" + order + "_" + searchKey, redisTemplate);
-                redisHelp.setList(this.dataprefix + "_" + "userList_" + page + "_" + limit + "_" + searchParams + "_" + order + "_" + searchKey, jsonList, this.userCache, redisTemplate);
+                redisHelp.delete(this.dataprefix + "_" + "userList_" + page + "_" + limit + "_" + sqlParams + "_" + order + "_" + searchKey, redisTemplate);
+                redisHelp.setList(this.dataprefix + "_" + "userList_" + page + "_" + limit + "_" + sqlParams + "_" + order + "_" + searchKey, jsonList, this.userCache, redisTemplate);
             }
         } catch (Exception e) {
 

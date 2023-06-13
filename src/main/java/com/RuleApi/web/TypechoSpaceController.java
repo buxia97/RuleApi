@@ -543,10 +543,13 @@ public class TypechoSpaceController {
         if(limit>50){
             limit = 50;
         }
+        String sqlParams = "null";
         TypechoSpace query = new TypechoSpace();
         if (StringUtils.isNotBlank(searchParams)) {
             JSONObject object = JSON.parseObject(searchParams);
             query = object.toJavaObject(TypechoSpace.class);
+            Map paramsJson = JSONObject.parseObject(JSONObject.toJSONString(query), Map.class);
+            sqlParams = paramsJson.toString();
 
 
         }
@@ -563,7 +566,7 @@ public class TypechoSpaceController {
             map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
             uid =Integer.parseInt(map.get("uid").toString());
         }
-        List cacheList =  redisHelp.getList(this.dataprefix+"_"+"spaceList_"+page+"_"+limit+"_"+searchKey+"_"+uid+"_"+searchParams,redisTemplate);
+        List cacheList =  redisHelp.getList(this.dataprefix+"_"+"spaceList_"+page+"_"+limit+"_"+searchKey+"_"+uid+"_"+sqlParams,redisTemplate);
         List jsonList = new ArrayList();
 
         Integer total = service.total(query);
@@ -727,8 +730,8 @@ public class TypechoSpaceController {
                     jsonList.add(json);
 
                 }
-                redisHelp.delete(this.dataprefix+"_"+"spaceList_"+page+"_"+limit+"_"+searchKey+"_"+uid+"_"+searchParams,redisTemplate);
-                redisHelp.setList(this.dataprefix+"_"+"spaceList_"+page+"_"+limit+"_"+searchKey+"_"+uid+"_"+searchParams,jsonList,5,redisTemplate);
+                redisHelp.delete(this.dataprefix+"_"+"spaceList_"+page+"_"+limit+"_"+searchKey+"_"+uid+"_"+sqlParams,redisTemplate);
+                redisHelp.setList(this.dataprefix+"_"+"spaceList_"+page+"_"+limit+"_"+searchKey+"_"+uid+"_"+sqlParams,jsonList,5,redisTemplate);
             }
         }catch (Exception e){
             e.printStackTrace();

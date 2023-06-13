@@ -86,33 +86,54 @@ public class TypechoShopController {
                             @RequestParam(value = "order", required = false, defaultValue = "created") String  order,
                             @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit) {
         TypechoShop query = new TypechoShop();
+        String sqlParams = "null";
         if(limit>50){
             limit = 50;
         }
         Integer total = 0;
+        List jsonList = new ArrayList();
         if (StringUtils.isNotBlank(searchParams)) {
             JSONObject object = JSON.parseObject(searchParams);
             query = object.toJavaObject(TypechoShop.class);
-            total = service.total(query);
+            Map paramsJson = JSONObject.parseObject(JSONObject.toJSONString(query), Map.class);
+            sqlParams = paramsJson.toString();
+
+        }
+        total = service.total(query);
+        List cacheList = redisHelp.getList(this.dataprefix+"_"+"shopList_"+page+"_"+limit+"_"+searchKey+"_"+sqlParams+"_"+order,redisTemplate);
+
+
+        try {
+            if (cacheList.size() > 0) {
+                jsonList = cacheList;
+            } else {
+                PageList<TypechoShop> pageList = service.selectPage(query, page, limit,searchKey,order);
+                List list = pageList.getList();
+                if(list.size() < 1){
+                    JSONObject noData = new JSONObject();
+                    noData.put("code" , 1);
+                    noData.put("msg"  , "");
+                    noData.put("data" , new ArrayList());
+                    noData.put("count", 0);
+                    noData.put("total", total);
+                    return noData.toString();
+                }
+                for (int i = 0; i < list.size(); i++) {
+                    Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
+                    json.remove("value");
+                    jsonList.add(json);
+                }
+                redisHelp.delete(this.dataprefix+"_"+"shopList_"+page+"_"+limit+"_"+searchKey+"_"+sqlParams+"_"+order,redisTemplate);
+                redisHelp.setList(this.dataprefix+"_"+"shopList_"+page+"_"+limit+"_"+searchKey+"_"+sqlParams+"_"+order,jsonList,10,redisTemplate);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+            if(cacheList.size()>0){
+                jsonList = cacheList;
+            }
         }
 
-        PageList<TypechoShop> pageList = service.selectPage(query, page, limit,searchKey,order);
-        List jsonList = new ArrayList();
-        List list = pageList.getList();
-        if(list.size() < 1){
-            JSONObject noData = new JSONObject();
-            noData.put("code" , 1);
-            noData.put("msg"  , "");
-            noData.put("data" , new ArrayList());
-            noData.put("count", 0);
-            noData.put("total", total);
-            return noData.toString();
-        }
-        for (int i = 0; i < list.size(); i++) {
-            Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
-            json.remove("value");
-            jsonList.add(json);
-        }
+
         JSONObject response = new JSONObject();
         response.put("code" , 1);
         response.put("msg"  , "");
