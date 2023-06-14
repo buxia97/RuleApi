@@ -394,7 +394,7 @@ public class UploadController {
         // String uuid = UUID.randomUUID().toString().replaceAll("-","");
         filename = newFileName;
 
-        String key = "/"+year+"/"+month+"/"+day+"/"+filename;
+        String key = "/app/"+year+"/"+month+"/"+day+"/"+filename;
 
         // 构造一个带指定Zone对象的配置类, 注意这里的Zone.zone0需要根据主机选择
         Configuration cfg = new Configuration();
@@ -411,7 +411,7 @@ public class UploadController {
                 // 解析上传成功的结果
                 DefaultPutRet putRet = new Gson().fromJson(response.bodyString(), DefaultPutRet.class);
 
-                String returnPath = apiconfig.getQiniuDomain() + "/" + putRet.key;
+                String returnPath = apiconfig.getQiniuDomain() + putRet.key;
                 // 这个returnPath是获得到的外链地址,通过这个地址可以直接打开图片
                 Map<String,String> info =new HashMap<String, String>();
                 info.put("url",returnPath);
