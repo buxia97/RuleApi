@@ -979,6 +979,21 @@ public class InstallController {
         }else{
             text+="配置中心模块，字段spaceAudit已经存在，无需添加。";
         }
+        //查询配置中心表是否存在uploadType字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'uploadType';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `uploadType` varchar(100) DEFAULT 'local' COMMENT '上传类型'");
+            text+="配置中心模块，字段uploadType添加完成。";
+        }else{
+            text+="配置中心模块，字段uploadType已经存在，无需添加。";
+        }
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'banRobots';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `banRobots` int(2) DEFAULT '0' COMMENT '是否开启机器人严格限制模式'");
+            text+="配置中心模块，字段banRobots添加完成。";
+        }else{
+            text+="配置中心模块，字段banRobots已经存在，无需添加。";
+        }
         try {
             Thread.sleep(500);
         } catch (InterruptedException ie) {
@@ -1159,6 +1174,34 @@ public class InstallController {
             text+="动态模块，字段status添加完成。";
         }else{
             text+="动态模块，字段status已经存在，无需添加。";
+        }
+        //安装应用表
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_app';", Integer.class);
+        if (i == 0) {
+            jdbcTemplate.execute("CREATE TABLE `" + prefix + "_app` (" +
+                    "  `id` int(11) NOT NULL AUTO_INCREMENT," +
+                    "  `key` varchar(255) DEFAULT NULL COMMENT '链接密钥'," +
+                    "  `name` varchar(255) CHARACTER SET utf8 DEFAULT NULL COMMENT '应用名称'," +
+                    "  `type` varchar(255) CHARACTER SET utf8 DEFAULT 'app' COMMENT '应用类型（web或App）'," +
+                    "  `logo` varchar(500) CHARACTER SET utf8 DEFAULT NULL COMMENT 'logo图标地址'," +
+                    "  `keywords` varchar(255) CHARACTER SET utf8 DEFAULT NULL COMMENT 'web专属，SEO关键词'," +
+                    "  `description` varchar(255) DEFAULT NULL COMMENT '应用简介'," +
+                    "  `announcement` varchar(400) DEFAULT NULL COMMENT '弹窗公告（支持html）'," +
+                    "  `mail` varchar(400) CHARACTER SET utf8 DEFAULT NULL COMMENT '邮箱地址（用于通知和显示）'," +
+                    "  `website` varchar(400) CHARACTER SET utf8 DEFAULT NULL COMMENT '网址（非Api地址）'," +
+                    "  `currencyName` varchar(255) CHARACTER SET utf8 DEFAULT NULL COMMENT '货币名称'," +
+                    "  `version` varchar(255) CHARACTER SET utf8 DEFAULT 'v1.0.0 beta' COMMENT 'app专属，版本号'," +
+                    "  `versionCode` int(11) DEFAULT '10' COMMENT 'app专属，版本码'," +
+                    "  `versionIntro` varchar(400) DEFAULT NULL COMMENT '版本简介'," +
+                    "  `androidUrl` varchar(400) CHARACTER SET utf8 DEFAULT NULL COMMENT '安卓下载地址'," +
+                    "  `iosUrl` varchar(255) CHARACTER SET utf8 DEFAULT NULL COMMENT 'ios下载地址'," +
+                    "  `field1` varchar(400) CHARACTER SET utf8 DEFAULT NULL COMMENT '预留字段1'," +
+                    "  `field2` varchar(400) CHARACTER SET utf8 DEFAULT NULL COMMENT '预留字段2'," +
+                    "  PRIMARY KEY (`id`)\n" +
+                    ") ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COMMENT='应用表（web应用和APP应用）';");
+            text += "应用模块创建完成。";
+        }else{
+            text+="应用模块已存在，无需安装。";
         }
         text+=" ------ 执行结束，安装执行完成";
 

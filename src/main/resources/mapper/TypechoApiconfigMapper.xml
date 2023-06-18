@@ -95,6 +95,8 @@
         <result column="postMax" property="postMax" />
         <result column="forumAudit" property="forumAudit" />
         <result column="spaceAudit" property="spaceAudit" />
+        <result column="uploadType" property="uploadType" />
+        <result column="banRobots" property="banRobots" />
 
     </resultMap>
 
@@ -190,7 +192,9 @@
         `isLogin`,
         `postMax`,
         `forumAudit`,
-        `spaceAudit`
+        `spaceAudit`,
+        `uploadType`,
+        `banRobots`
     </sql>
 
     <!-- 插入数据 -->
@@ -454,7 +458,13 @@
                 `forumAudit`,
             </if>
             <if test ='null != spaceAudit'>
-                `spaceAudit`
+                `spaceAudit`,
+            </if>
+            <if test ='null != uploadType'>
+                `uploadType`,
+            </if>
+            <if test ='null != banRobots'>
+                `banRobots`
             </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
@@ -715,7 +725,13 @@
                 #{forumAudit},
             </if>
             <if test ='null != spaceAudit'>
-                #{spaceAudit}
+                #{spaceAudit},
+            </if>
+            <if test ='null != uploadType'>
+                #{uploadType},
+            </if>
+            <if test ='null != banRobots'>
+                #{banRobots}
             </if>
         </trim>
     </insert>
@@ -813,7 +829,9 @@
             <if test ='null != isLogin'>`isLogin` = #{isLogin},</if>
             <if test ='null != postMax'>`postMax` = #{postMax},</if>
             <if test ='null != forumAudit'>`forumAudit` = #{forumAudit},</if>
-            <if test ='null != spaceAudit'>`spaceAudit` = #{spaceAudit}</if>
+            <if test ='null != spaceAudit'>`spaceAudit` = #{spaceAudit},</if>
+            <if test ='null != uploadType'>`uploadType` = #{uploadType},</if>
+            <if test ='null != banRobots'>`banRobots` = #{banRobots}</if>
         </set>
         WHERE `id` = #{id}
     </update>

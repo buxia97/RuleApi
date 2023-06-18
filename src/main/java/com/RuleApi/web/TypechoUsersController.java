@@ -441,24 +441,26 @@ public class TypechoUsersController {
         String oldpw = null;
         try {
             //未登录情况下，撞库类攻击拦截
-
+            TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
             String  ip = baseFull.getIpAddr(request);
-            String isSilence = redisHelp.getRedis(ip+"_silence",redisTemplate);
-            if(isSilence!=null){
-                return Result.getResultJson(0,"你已被禁止请求，请耐心等待",null);
-            }
-            String isRepeated = redisHelp.getRedis(ip+"_isOperation",redisTemplate);
-            if(isRepeated==null){
-                redisHelp.setRedis(ip+"_isOperation","1",2,redisTemplate);
-            }else{
-                Integer frequency = Integer.parseInt(isRepeated) + 1;
-                if(frequency==4){
-                    securityService.safetyMessage("IP："+ip+"，在登录接口疑似存在攻击行为，请及时确认处理。","system");
-                    redisHelp.setRedis(ip+"_silence","1",600,redisTemplate);
-                    return Result.getResultJson(0,"你的请求存在恶意行为，10分钟内禁止操作！",null);
+            if(apiconfig.getBanRobots().equals(1)) {
+                String isSilence = redisHelp.getRedis(ip + "_silence", redisTemplate);
+                if (isSilence != null) {
+                    return Result.getResultJson(0, "你已被禁止请求，请耐心等待", null);
                 }
-                redisHelp.setRedis(ip+"_isOperation",frequency.toString(),2,redisTemplate);
-                return Result.getResultJson(0,"你的操作太频繁了",null);
+                String isRepeated = redisHelp.getRedis(ip + "_isOperation", redisTemplate);
+                if (isRepeated == null) {
+                    redisHelp.setRedis(ip + "_isOperation", "1", 2, redisTemplate);
+                } else {
+                    Integer frequency = Integer.parseInt(isRepeated) + 1;
+                    if (frequency == 4) {
+                        securityService.safetyMessage("IP：" + ip + "，在登录接口疑似存在攻击行为，请及时确认处理。", "system");
+                        redisHelp.setRedis(ip + "_silence", "1", 600, redisTemplate);
+                        return Result.getResultJson(0, "你的请求存在恶意行为，10分钟内禁止操作！", null);
+                    }
+                    redisHelp.setRedis(ip + "_isOperation", frequency.toString(), 2, redisTemplate);
+                    return Result.getResultJson(0, "你的操作太频繁了", null);
+                }
             }
             //攻击拦截结束
             if (StringUtils.isNotBlank(params)) {
@@ -529,7 +531,6 @@ public class TypechoUsersController {
                 comments.setAuthorId(uid);
                 Integer lv = commentsService.total(comments);
                 jsonToMap.put("lv", baseFull.getLv(lv));
-                TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
                 if(rows.get(0).getAvatar()!=null){
                     jsonToMap.put("avatar",rows.get(0).getAvatar());
                 }else{
@@ -1027,31 +1028,32 @@ public class TypechoUsersController {
         Map jsonToMap = null;
         try{
             //未登录情况下，撞库类攻击拦截
-
+            TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
             String  ip = baseFull.getIpAddr(request);
-            String isSilence = redisHelp.getRedis(ip+"_silence",redisTemplate);
-            if(isSilence!=null){
-                return Result.getResultJson(0,"你已被禁止请求，请耐心等待",null);
-            }
-            String isRepeated = redisHelp.getRedis(ip+"_isOperation",redisTemplate);
-            if(isRepeated==null){
-                redisHelp.setRedis(ip+"_isOperation","1",3,redisTemplate);
-            }else{
-                Integer frequency = Integer.parseInt(isRepeated) + 1;
-                if(frequency==3){
-                    securityService.safetyMessage("IP："+ip+"，在注册接口疑似存在攻击行为，请及时确认处理。","system");
-                    redisHelp.setRedis(ip+"_silence","1",600,redisTemplate);
-                    return Result.getResultJson(0,"你的请求存在恶意行为，10分钟内禁止操作！",null);
+            if(apiconfig.getBanRobots().equals(1)) {
+                String isSilence = redisHelp.getRedis(ip + "_silence", redisTemplate);
+                if (isSilence != null) {
+                    return Result.getResultJson(0, "你已被禁止请求，请耐心等待", null);
                 }
-                redisHelp.setRedis(ip+"_isOperation",frequency.toString(),3,redisTemplate);
-                return Result.getResultJson(0,"你的操作太频繁了",null);
+                String isRepeated = redisHelp.getRedis(ip + "_isOperation", redisTemplate);
+                if (isRepeated == null) {
+                    redisHelp.setRedis(ip + "_isOperation", "1", 3, redisTemplate);
+                } else {
+                    Integer frequency = Integer.parseInt(isRepeated) + 1;
+                    if (frequency == 3) {
+                        securityService.safetyMessage("IP：" + ip + "，在注册接口疑似存在攻击行为，请及时确认处理。", "system");
+                        redisHelp.setRedis(ip + "_silence", "1", 600, redisTemplate);
+                        return Result.getResultJson(0, "你的请求存在恶意行为，10分钟内禁止操作！", null);
+                    }
+                    redisHelp.setRedis(ip + "_isOperation", frequency.toString(), 3, redisTemplate);
+                    return Result.getResultJson(0, "你的操作太频繁了", null);
+                }
             }
             //攻击拦截结束
             if (StringUtils.isNotBlank(params)) {
                 jsonToMap = JSONObject.parseObject(JSON.parseObject(params).toString());
                 //在之前需要做判断，验证用户名或者邮箱在数据库中是否存在
                 //判断是否开启邮箱验证
-                TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
                 Integer isEmail = apiconfig.getIsEmail();
                 Integer isInvite = apiconfig.getIsInvite();
                 //验证是否存在相同用户名或者邮箱
@@ -1150,22 +1152,25 @@ public class TypechoUsersController {
             String  agent =  request.getHeader("User-Agent");
             String  ip = baseFull.getIpAddr(request);
             //刷邮件攻击拦截
-            String isSilence = redisHelp.getRedis(ip+"_silence",redisTemplate);
-            if(isSilence!=null){
-                return Result.getResultJson(0,"你已被暂时禁止请求，请耐心等待",null);
-            }
-            String isRepeated = redisHelp.getRedis(ip+"_isOperation",redisTemplate);
-            if(isRepeated==null){
-                redisHelp.setRedis(ip+"_isOperation","1",2,redisTemplate);
-            }else{
-                Integer frequency = Integer.parseInt(isRepeated) + 1;
-                if(frequency==3){
-                    securityService.safetyMessage("IP："+ip+"，在邮箱发信疑似存在攻击行为，请及时确认处理。","system");
-                    redisHelp.setRedis(ip+"_silence","1",1800,redisTemplate);
-                    return Result.getResultJson(0,"你的请求存在恶意行为，30分钟内禁止操作！",null);
+            TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
+            if(apiconfig.getBanRobots().equals(1)) {
+                String isSilence = redisHelp.getRedis(ip + "_silence", redisTemplate);
+                if (isSilence != null) {
+                    return Result.getResultJson(0, "你已被暂时禁止请求，请耐心等待", null);
                 }
-                redisHelp.setRedis(ip+"_isOperation",frequency.toString(),3,redisTemplate);
-                return Result.getResultJson(0,"你的操作太频繁了",null);
+                String isRepeated = redisHelp.getRedis(ip + "_isOperation", redisTemplate);
+                if (isRepeated == null) {
+                    redisHelp.setRedis(ip + "_isOperation", "1", 2, redisTemplate);
+                } else {
+                    Integer frequency = Integer.parseInt(isRepeated) + 1;
+                    if (frequency == 3) {
+                        securityService.safetyMessage("IP：" + ip + "，在邮箱发信疑似存在攻击行为，请及时确认处理。", "system");
+                        redisHelp.setRedis(ip + "_silence", "1", 1800, redisTemplate);
+                        return Result.getResultJson(0, "你的请求存在恶意行为，30分钟内禁止操作！", null);
+                    }
+                    redisHelp.setRedis(ip + "_isOperation", frequency.toString(), 3, redisTemplate);
+                    return Result.getResultJson(0, "你的操作太频繁了", null);
+                }
             }
             //攻击拦截结束
 
@@ -1190,7 +1195,6 @@ public class TypechoUsersController {
             }else{
                 return Result.getResultJson(0, "你的操作太频繁了", null);
             }
-            TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
             Integer isEmail = apiconfig.getIsEmail();
             if(isEmail.equals(0)){
                 return Result.getResultJson(0, "邮箱验证已经关闭", null);
@@ -2466,24 +2470,28 @@ public class TypechoUsersController {
             Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
             Integer uid =Integer.parseInt(map.get("uid").toString());
             //登录情况下，刷数据攻击拦截
-            String isSilence = redisHelp.getRedis(this.dataprefix+"_"+uid+"_silence",redisTemplate);
-            if(isSilence!=null){
-                return Result.getResultJson(0,"你已被禁止请求，请耐心等待",null);
-            }
-            String isRepeated = redisHelp.getRedis(this.dataprefix+"_"+uid+"_isRepeated",redisTemplate);
-            if(isRepeated==null){
-                redisHelp.setRedis(this.dataprefix+"_"+uid+"_isRepeated","1",1,redisTemplate);
-            }else{
-                Integer frequency = Integer.parseInt(isRepeated) + 1;
-                if(frequency==1){
-                    securityService.safetyMessage("用户ID："+uid+"，在关注接口疑似存在攻击行为，请及时确认处理。","system");
-                    redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",600,redisTemplate);
-                    return Result.getResultJson(0,"你的请求存在恶意行为，10分钟内禁止操作！",null);
-                }else{
-                    redisHelp.setRedis(this.dataprefix+"_"+uid+"_isRepeated",frequency.toString(),3,redisTemplate);
+            TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
+            if(apiconfig.getBanRobots().equals(1)){
+                String isSilence = redisHelp.getRedis(this.dataprefix+"_"+uid+"_silence",redisTemplate);
+                if(isSilence!=null){
+                    return Result.getResultJson(0,"你已被禁止请求，请耐心等待",null);
                 }
-                return Result.getResultJson(0,"你的操作太频繁了",null);
+                String isRepeated = redisHelp.getRedis(this.dataprefix+"_"+uid+"_isRepeated",redisTemplate);
+                if(isRepeated==null){
+                    redisHelp.setRedis(this.dataprefix+"_"+uid+"_isRepeated","1",1,redisTemplate);
+                }else{
+                    Integer frequency = Integer.parseInt(isRepeated) + 1;
+                    if(frequency==1){
+                        securityService.safetyMessage("用户ID："+uid+"，在关注接口疑似存在攻击行为，请及时确认处理。","system");
+                        redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",600,redisTemplate);
+                        return Result.getResultJson(0,"你的请求存在恶意行为，10分钟内禁止操作！",null);
+                    }else{
+                        redisHelp.setRedis(this.dataprefix+"_"+uid+"_isRepeated",frequency.toString(),3,redisTemplate);
+                    }
+                    return Result.getResultJson(0,"你的操作太频繁了",null);
+                }
             }
+
             //攻击拦截结束
 
             if(uid.equals(touid)){
@@ -2643,7 +2651,6 @@ public class TypechoUsersController {
                 jsonList = cacheList;
             }else{
 
-                TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
 
                 PageList<TypechoFan> pageList = fanService.selectPage(query, page, limit);
                 List<TypechoFan> list = pageList.getList();
@@ -2977,7 +2984,7 @@ public class TypechoUsersController {
             if(type.equals(1)){
                 redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",900,redisTemplate);
             }else{
-                String isSilence = redisHelp.getRedis(this.dataprefix+"_"+logUid+"_silence",redisTemplate);
+                String isSilence = redisHelp.getRedis(this.dataprefix+"_"+uid+"_silence",redisTemplate);
                 if(isSilence==null){
                     return Result.getResultJson(0,"用户状态正常，无需操作",null);
                 }

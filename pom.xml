@@ -11,7 +11,7 @@
 
     <groupId>com.RuleApi</groupId>
     <artifactId>RuleApi</artifactId>
-    <version>1.3.2</version>
+    <version>1.3.3</version>
     <name>RuleApi</name>
     <description>RuleApi is a Typecho-based API program developed by buxia97.</description>
     <packaging>jar</packaging>

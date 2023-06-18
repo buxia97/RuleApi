@@ -1,0 +1,423 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.RuleApi.dao.TypechoAppDao">
+
+    <resultMap id="BaseResultMap" type="com.RuleApi.entity.TypechoApp" >
+        <result column="id" property="id" />
+        <result column="key" property="keyKey" />
+        <result column="name" property="name" />
+        <result column="type" property="type" />
+        <result column="logo" property="logo" />
+        <result column="keywords" property="keywords" />
+        <result column="description" property="description" />
+        <result column="announcement" property="announcement" />
+        <result column="mail" property="mail" />
+        <result column="website" property="website" />
+        <result column="currencyName" property="currencyName" />
+        <result column="version" property="version" />
+        <result column="versionCode" property="versionCode" />
+        <result column="versionIntro" property="versionIntro" />
+        <result column="androidUrl" property="androidUrl" />
+        <result column="iosUrl" property="iosUrl" />
+        <result column="field1" property="field1" />
+        <result column="field2" property="field2" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        `id`,
+        `key`,
+        `name`,
+        `type`,
+        `logo`,
+        `keywords`,
+        `description`,
+        `announcement`,
+        `mail`,
+        `website`,
+        `currencyName`,
+        `version`,
+        `versionCode`,
+        `versionIntro`,
+        `androidUrl`,
+        `iosUrl`,
+        `field1`,
+        `field2`
+    </sql>
+
+    <!-- 插入数据 -->
+    <insert id="insert" parameterType="com.RuleApi.entity.TypechoApp">
+        INSERT INTO ${prefix}_app
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test ='null != id'>
+                `id`,
+            </if>
+            <if test ='null != keyKey'>
+                `key`,
+            </if>
+            <if test ='null != name'>
+                `name`,
+            </if>
+            <if test ='null != type'>
+                `type`,
+            </if>
+            <if test ='null != logo'>
+                `logo`,
+            </if>
+            <if test ='null != keywords'>
+                `keywords`,
+            </if>
+            <if test ='null != description'>
+                `description`,
+            </if>
+            <if test ='null != announcement'>
+                `announcement`,
+            </if>
+            <if test ='null != mail'>
+                `mail`,
+            </if>
+            <if test ='null != website'>
+                `website`,
+            </if>
+            <if test ='null != currencyName'>
+                `currencyName`,
+            </if>
+            <if test ='null != version'>
+                `version`,
+            </if>
+            <if test ='null != versionCode'>
+                `versionCode`,
+            </if>
+            <if test ='null != versionIntro'>
+                `versionIntro`,
+            </if>
+            <if test ='null != androidUrl'>
+                `androidUrl`,
+            </if>
+            <if test ='null != iosUrl'>
+                `iosUrl`,
+            </if>
+            <if test ='null != field1'>
+                `field1`,
+            </if>
+            <if test ='null != field2'>
+                `field2`
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test ='null != id'>
+                #{id},
+            </if>
+            <if test ='null != keyKey'>
+                #{keyKey},
+            </if>
+            <if test ='null != name'>
+                #{name},
+            </if>
+            <if test ='null != type'>
+                #{type},
+            </if>
+            <if test ='null != logo'>
+                #{logo},
+            </if>
+            <if test ='null != keywords'>
+                #{keywords},
+            </if>
+            <if test ='null != description'>
+                #{description},
+            </if>
+            <if test ='null != announcement'>
+                #{announcement},
+            </if>
+            <if test ='null != mail'>
+                #{mail},
+            </if>
+            <if test ='null != website'>
+                #{website},
+            </if>
+            <if test ='null != currencyName'>
+                #{currencyName},
+            </if>
+            <if test ='null != version'>
+                #{version},
+            </if>
+            <if test ='null != versionCode'>
+                #{versionCode},
+            </if>
+            <if test ='null != versionIntro'>
+                #{versionIntro},
+            </if>
+            <if test ='null != androidUrl'>
+                #{androidUrl},
+            </if>
+            <if test ='null != iosUrl'>
+                #{iosUrl},
+            </if>
+            <if test ='null != field1'>
+                #{field1},
+            </if>
+            <if test ='null != field2'>
+                #{field2}
+            </if>
+        </trim>
+    </insert>
+
+    <!-- 批量插入数据 -->
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO ${prefix}_app ( <include refid="Base_Column_List" /> ) VALUES
+        <foreach collection="list" item="curr" index="index" separator=",">
+            (
+                #{curr.id},
+                #{curr.keyKey},
+                #{curr.name},
+                #{curr.type},
+                #{curr.logo},
+                #{curr.keywords},
+                #{curr.description},
+                #{curr.announcement},
+                #{curr.mail},
+                #{curr.website},
+                #{curr.currencyName},
+                #{curr.version},
+                #{curr.versionCode},
+                #{curr.versionIntro},
+                #{curr.androidUrl},
+                #{curr.iosUrl},
+                #{curr.field1},
+                #{curr.field2}
+            )
+        </foreach>
+    </insert>
+
+    <!-- 更新 -->
+    <update id="update" parameterType="com.RuleApi.entity.TypechoApp">
+        UPDATE ${prefix}_app
+        <set>
+            <if test ='null != keyKey'>`key` = #{keyKey},</if>
+            <if test ='null != name'>`name` = #{name},</if>
+            <if test ='null != type'>`type` = #{type},</if>
+            <if test ='null != logo'>`logo` = #{logo},</if>
+            <if test ='null != keywords'>`keywords` = #{keywords},</if>
+            <if test ='null != description'>`description` = #{description},</if>
+            <if test ='null != announcement'>`announcement` = #{announcement},</if>
+            <if test ='null != mail'>`mail` = #{mail},</if>
+            <if test ='null != website'>`website` = #{website},</if>
+            <if test ='null != currencyName'>`currencyName` = #{currencyName},</if>
+            <if test ='null != version'>`version` = #{version},</if>
+            <if test ='null != versionCode'>`versionCode` = #{versionCode},</if>
+            <if test ='null != versionIntro'>`versionIntro` = #{versionIntro},</if>
+            <if test ='null != androidUrl'>`androidUrl` = #{androidUrl},</if>
+            <if test ='null != iosUrl'>`iosUrl` = #{iosUrl},</if>
+            <if test ='null != field1'>`field1` = #{field1},</if>
+            <if test ='null != field2'>`field2` = #{field2}</if>
+        </set>
+        WHERE `id` = #{id}
+    </update>
+
+    <!-- 删除 -->
+    <delete id="delete">
+        DELETE FROM ${prefix}_app
+        WHERE `id` = #{key}
+    </delete>
+
+    <!-- 批量删除 -->
+    <delete id="batchDelete" parameterType = "java.util.List">
+        DELETE FROM ${prefix}_app WHERE id IN
+        <foreach collection="list"  item="item" open="(" separator="," close=")"  >
+            #{item}
+        </foreach>
+    </delete>
+
+    <!-- 主键查询 -->
+    <select id="selectByKey" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM ${prefix}_app
+        WHERE `key` = #{key}
+    </select>
+
+    <!-- 条件查询 -->
+    <select id="selectList" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM ${prefix}_app
+        <where>
+            <if test ='null != id'>
+                and `id` = #{id}
+            </if>
+            <if test ='null != keyKey'>
+                and `key` = #{keyKey}
+            </if>
+            <if test ='null != name'>
+                and `name` = #{name}
+            </if>
+            <if test ='null != type'>
+                and `type` = #{type}
+            </if>
+            <if test ='null != logo'>
+                and `logo` = #{logo}
+            </if>
+            <if test ='null != keywords'>
+                and `keywords` = #{keywords}
+            </if>
+            <if test ='null != description'>
+                and `description` = #{description}
+            </if>
+            <if test ='null != announcement'>
+                and `announcement` = #{announcement}
+            </if>
+            <if test ='null != mail'>
+                and `mail` = #{mail}
+            </if>
+            <if test ='null != website'>
+                and `website` = #{website}
+            </if>
+            <if test ='null != currencyName'>
+                and `currencyName` = #{currencyName}
+            </if>
+            <if test ='null != version'>
+                and `version` = #{version}
+            </if>
+            <if test ='null != versionCode'>
+                and `versionCode` = #{versionCode}
+            </if>
+            <if test ='null != versionIntro'>
+                and `versionIntro` = #{versionIntro}
+            </if>
+            <if test ='null != androidUrl'>
+                and `androidUrl` = #{androidUrl}
+            </if>
+            <if test ='null != iosUrl'>
+                and `iosUrl` = #{iosUrl}
+            </if>
+            <if test ='null != field1'>
+                and `field1` = #{field1}
+            </if>
+            <if test ='null != field2'>
+                and `field2` = #{field2}
+            </if>
+        </where>
+    </select>
+
+    <!-- 分页条件查询 -->
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM ${prefix}_app
+        <where>
+            <if test ='null != typechoApp.id'>
+                and `id` = #{typechoApp.id}
+            </if>
+            <if test ='null != typechoApp.keyKey'>
+                and `key` = #{typechoApp.keyKey}
+            </if>
+            <if test ='null != typechoApp.name'>
+                and `name` = #{typechoApp.name}
+            </if>
+            <if test ='null != typechoApp.type'>
+                and `type` = #{typechoApp.type}
+            </if>
+            <if test ='null != typechoApp.logo'>
+                and `logo` = #{typechoApp.logo}
+            </if>
+            <if test ='null != typechoApp.keywords'>
+                and `keywords` = #{typechoApp.keywords}
+            </if>
+            <if test ='null != typechoApp.description'>
+                and `description` = #{typechoApp.description}
+            </if>
+            <if test ='null != typechoApp.announcement'>
+                and `announcement` = #{typechoApp.announcement}
+            </if>
+            <if test ='null != typechoApp.mail'>
+                and `mail` = #{typechoApp.mail}
+            </if>
+            <if test ='null != typechoApp.website'>
+                and `website` = #{typechoApp.website}
+            </if>
+            <if test ='null != typechoApp.currencyName'>
+                and `currencyName` = #{typechoApp.currencyName}
+            </if>
+            <if test ='null != typechoApp.version'>
+                and `version` = #{typechoApp.version}
+            </if>
+            <if test ='null != typechoApp.versionCode'>
+                and `versionCode` = #{typechoApp.versionCode}
+            </if>
+            <if test ='null != typechoApp.versionIntro'>
+                and `versionIntro` = #{typechoApp.versionIntro}
+            </if>
+            <if test ='null != typechoApp.androidUrl'>
+                and `androidUrl` = #{typechoApp.androidUrl}
+            </if>
+            <if test ='null != typechoApp.iosUrl'>
+                and `iosUrl` = #{typechoApp.iosUrl}
+            </if>
+            <if test ='null != typechoApp.field1'>
+                and `field1` = #{typechoApp.field1}
+            </if>
+            <if test ='null != typechoApp.field2'>
+                and `field2` = #{typechoApp.field2}
+            </if>
+        </where>
+        limit #{page,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
+    </select>
+
+    <!-- 总量查询 -->
+    <select id="total" resultType="java.lang.Integer">
+        SELECT count(*) FROM ${prefix}_app
+        <where>
+            <if test ='null != id'>
+                and `id` = #{id}
+            </if>
+            <if test ='null != keyKey'>
+                and `key` = #{keyKey}
+            </if>
+            <if test ='null != name'>
+                and `name` = #{name}
+            </if>
+            <if test ='null != type'>
+                and `type` = #{type}
+            </if>
+            <if test ='null != logo'>
+                and `logo` = #{logo}
+            </if>
+            <if test ='null != keywords'>
+                and `keywords` = #{keywords}
+            </if>
+            <if test ='null != description'>
+                and `description` = #{description}
+            </if>
+            <if test ='null != announcement'>
+                and `announcement` = #{announcement}
+            </if>
+            <if test ='null != mail'>
+                and `mail` = #{mail}
+            </if>
+            <if test ='null != website'>
+                and `website` = #{website}
+            </if>
+            <if test ='null != currencyName'>
+                and `currencyName` = #{currencyName}
+            </if>
+            <if test ='null != version'>
+                and `version` = #{version}
+            </if>
+            <if test ='null != versionCode'>
+                and `versionCode` = #{versionCode}
+            </if>
+            <if test ='null != versionIntro'>
+                and `versionIntro` = #{versionIntro}
+            </if>
+            <if test ='null != androidUrl'>
+                and `androidUrl` = #{androidUrl}
+            </if>
+            <if test ='null != iosUrl'>
+                and `iosUrl` = #{iosUrl}
+            </if>
+            <if test ='null != field1'>
+                and `field1` = #{field1}
+            </if>
+            <if test ='null != field2'>
+                and `field2` = #{field2}
+            </if>
+        </where>
+    </select>
+</mapper>

@@ -211,30 +211,32 @@ public class TypechoShopController {
         Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         Integer uid  = Integer.parseInt(map.get("uid").toString());
         //登录情况下，刷数据攻击拦截
-        String isSilence = redisHelp.getRedis(this.dataprefix+"_"+uid+"_silence",redisTemplate);
-        if(isSilence!=null){
-            return Result.getResultJson(0,"你已被禁言，请耐心等待",null);
-        }
-        String isRepeated = redisHelp.getRedis(this.dataprefix+"_"+uid+"_isRepeated",redisTemplate);
-        if(isRepeated==null){
-            redisHelp.setRedis(this.dataprefix+"_"+uid+"_isRepeated","1",3,redisTemplate);
-        }else{
-            Integer frequency = Integer.parseInt(isRepeated) + 1;
-            if(frequency==3){
-                securityService.safetyMessage("用户ID："+uid+"，在商品发布接口疑似存在攻击行为，请及时确认处理。","system");
-                redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",600,redisTemplate);
-                return Result.getResultJson(0,"你的请求存在恶意行为，10分钟内禁止操作！",null);
-            }else{
-                redisHelp.setRedis(this.dataprefix+"_"+uid+"_isRepeated",frequency.toString(),3,redisTemplate);
+        TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
+        if(apiconfig.getBanRobots().equals(1)) {
+            String isSilence = redisHelp.getRedis(this.dataprefix + "_" + uid + "_silence", redisTemplate);
+            if (isSilence != null) {
+                return Result.getResultJson(0, "你的操作太频繁了，请稍后再试", null);
             }
-            return Result.getResultJson(0,"你的操作太频繁了",null);
+            String isRepeated = redisHelp.getRedis(this.dataprefix + "_" + uid + "_isRepeated", redisTemplate);
+            if (isRepeated == null) {
+                redisHelp.setRedis(this.dataprefix + "_" + uid + "_isRepeated", "1", 3, redisTemplate);
+            } else {
+                Integer frequency = Integer.parseInt(isRepeated) + 1;
+                if (frequency == 3) {
+                    securityService.safetyMessage("用户ID：" + uid + "，在商品发布接口疑似存在攻击行为，请及时确认处理。", "system");
+                    redisHelp.setRedis(this.dataprefix + "_" + uid + "_silence", "1", 600, redisTemplate);
+                    return Result.getResultJson(0, "你的请求存在恶意行为，10分钟内禁止操作！", null);
+                } else {
+                    redisHelp.setRedis(this.dataprefix + "_" + uid + "_isRepeated", frequency.toString(), 3, redisTemplate);
+                }
+                return Result.getResultJson(0, "你的操作太频繁了", null);
+            }
         }
         //攻击拦截结束
         Map jsonToMap =null;
         TypechoShop insert = null;
 
         if (StringUtils.isNotBlank(params)) {
-            TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
             jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
             //支持两种模式提交商品内容
             if(text==null){

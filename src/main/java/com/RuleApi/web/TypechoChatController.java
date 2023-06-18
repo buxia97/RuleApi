@@ -79,22 +79,24 @@ public class TypechoChatController {
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer uid =Integer.parseInt(map.get("uid").toString());
             TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
-            //登录情况下，刷聊天数据
-            String isSilence = redisHelp.getRedis(this.dataprefix+"_"+uid+"_silence",redisTemplate);
-            if(isSilence!=null){
-                return Result.getResultJson(0,"你的操作太频繁了，请稍后再试",null);
-            }
-            String isRepeated = redisHelp.getRedis(this.dataprefix+"_"+uid+"_getChat",redisTemplate);
-            if(isRepeated==null){
-                redisHelp.setRedis(this.dataprefix+"_"+uid+"_getChat","2",1,redisTemplate);
-            }else{
-                Integer frequency = Integer.parseInt(isRepeated) + 1;
-                if(frequency==4){
-                    securityService.safetyMessage("用户ID："+uid+"，在聊天发起接口疑似存在攻击行为，请及时确认处理。","system");
-                    redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",apiconfig.getSilenceTime(),redisTemplate);
-                    return Result.getResultJson(0,"你的操作过于频繁，已被禁用15分钟聊天室！",null);
-                }else{
-                    redisHelp.setRedis(this.dataprefix+"_"+uid+"_isSendMsg",frequency.toString(),5,redisTemplate);
+            if(apiconfig.getBanRobots().equals(1)) {
+                //登录情况下，刷聊天数据
+                String isSilence = redisHelp.getRedis(this.dataprefix + "_" + uid + "_silence", redisTemplate);
+                if (isSilence != null) {
+                    return Result.getResultJson(0, "你的操作太频繁了，请稍后再试", null);
+                }
+                String isRepeated = redisHelp.getRedis(this.dataprefix + "_" + uid + "_getChat", redisTemplate);
+                if (isRepeated == null) {
+                    redisHelp.setRedis(this.dataprefix + "_" + uid + "_getChat", "2", 1, redisTemplate);
+                } else {
+                    Integer frequency = Integer.parseInt(isRepeated) + 1;
+                    if (frequency == 4) {
+                        securityService.safetyMessage("用户ID：" + uid + "，在聊天发起接口疑似存在攻击行为，请及时确认处理。", "system");
+                        redisHelp.setRedis(this.dataprefix + "_" + uid + "_silence", "1", apiconfig.getSilenceTime(), redisTemplate);
+                        return Result.getResultJson(0, "你的操作过于频繁，已被禁用15分钟聊天室！", null);
+                    } else {
+                        redisHelp.setRedis(this.dataprefix + "_" + uid + "_isSendMsg", frequency.toString(), 5, redisTemplate);
+                    }
                 }
             }
             //攻击拦截结束
@@ -177,28 +179,28 @@ public class TypechoChatController {
             Integer uid =Integer.parseInt(map.get("uid").toString());
             String group = map.get("group").toString();
             //禁言判断
-
-            String isSilence = redisHelp.getRedis(this.dataprefix+"_"+uid+"_silence",redisTemplate);
-            if(isSilence!=null){
-                return Result.getResultJson(0,"你的操作太频繁了，请稍后再试",null);
-            }
             TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
-            //登录情况下，刷数据攻击拦截
-            String isRepeated = redisHelp.getRedis(this.dataprefix+"_"+uid+"_isSendMsg",redisTemplate);
-            if(isRepeated==null){
-                redisHelp.setRedis(this.dataprefix+"_"+uid+"_isSendMsg","1",1,redisTemplate);
-            }else{
-                Integer frequency = Integer.parseInt(isRepeated) + 1;
-                if(frequency==4){
-                    securityService.safetyMessage("用户ID："+uid+"，在聊天发送消息接口疑似存在攻击行为，请及时确认处理。","system");
-                    redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",apiconfig.getSilenceTime(),redisTemplate);
-                    return Result.getResultJson(0,"你的发言过于频繁，已被禁言十分钟！",null);
-                }else{
-                    redisHelp.setRedis(this.dataprefix+"_"+uid+"_isSendMsg",frequency.toString(),5,redisTemplate);
+            if(apiconfig.getBanRobots().equals(1)) {
+                String isSilence = redisHelp.getRedis(this.dataprefix + "_" + uid + "_silence", redisTemplate);
+                if (isSilence != null) {
+                    return Result.getResultJson(0, "你的操作太频繁了，请稍后再试", null);
                 }
-                return Result.getResultJson(0,"你的操作太频繁了",null);
+                //登录情况下，刷数据攻击拦截
+                String isRepeated = redisHelp.getRedis(this.dataprefix + "_" + uid + "_isSendMsg", redisTemplate);
+                if (isRepeated == null) {
+                    redisHelp.setRedis(this.dataprefix + "_" + uid + "_isSendMsg", "1", 1, redisTemplate);
+                } else {
+                    Integer frequency = Integer.parseInt(isRepeated) + 1;
+                    if (frequency == 4) {
+                        securityService.safetyMessage("用户ID：" + uid + "，在聊天发送消息接口疑似存在攻击行为，请及时确认处理。", "system");
+                        redisHelp.setRedis(this.dataprefix + "_" + uid + "_silence", "1", apiconfig.getSilenceTime(), redisTemplate);
+                        return Result.getResultJson(0, "你的发言过于频繁，已被禁言十分钟！", null);
+                    } else {
+                        redisHelp.setRedis(this.dataprefix + "_" + uid + "_isSendMsg", frequency.toString(), 5, redisTemplate);
+                    }
+                    return Result.getResultJson(0, "你的操作太频繁了", null);
+                }
             }
-
             //攻击拦截结束
             if(baseFull.haveCode(msg).equals(1)){
                 return Result.getResultJson(0,"消息内容存在敏感代码",null);

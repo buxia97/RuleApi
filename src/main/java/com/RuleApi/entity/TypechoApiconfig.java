@@ -445,6 +445,16 @@ public class TypechoApiconfig implements Serializable {
      */
     private Integer spaceAudit;
 
+    /**
+     * 图片上传通道
+     */
+    private String uploadType;
+
+    /**
+     * 是否开启机器人严格限制模式
+     */
+    private Integer banRobots;
+
 
 
 
