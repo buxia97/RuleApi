@@ -1,8 +1,9 @@
 package com.RuleApi.entity;
 
-import lombok.Data;
-
 import java.io.Serializable;
+import lombok.Data;
+import java.util.Date;
+import java.util.List;
 
 /**
  * TypechoApp
@@ -14,7 +15,7 @@ public class TypechoApp implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * id  
+     * id
      */
     private Integer id;
 
@@ -92,6 +93,11 @@ public class TypechoApp implements Serializable {
      * iosUrl  ios下载地址
      */
     private String iosUrl;
+
+    /**
+     * adpid  广告联盟ID
+     */
+    private String adpid;
 
     /**
      * field1  预留字段1

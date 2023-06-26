@@ -316,29 +316,29 @@ public class TypechoCommentsController {
             }
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer logUid =Integer.parseInt(map.get("uid").toString());
+            //登录情况下，刷数据攻击拦截
             TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
             if(apiconfig.getBanRobots().equals(1)) {
-                //登录情况下，刷数据攻击拦截
-
-                String isSilence = redisHelp.getRedis(this.dataprefix + "_" + logUid + "_silence", redisTemplate);
-                if (isSilence != null) {
-                    return Result.getResultJson(0, "你的操作太频繁了，请稍后再试", null);
+                String isSilence = redisHelp.getRedis(this.dataprefix+"_"+logUid+"_silence",redisTemplate);
+                if(isSilence!=null){
+                    return Result.getResultJson(0,"你的操作太频繁了，请稍后再试",null);
                 }
-                String isRepeated = redisHelp.getRedis(this.dataprefix + "_" + logUid + "_isRepeated", redisTemplate);
-                if (isRepeated == null) {
-                    redisHelp.setRedis(this.dataprefix + "_" + logUid + "_isRepeated", "1", 2, redisTemplate);
-                } else {
+                String isRepeated = redisHelp.getRedis(this.dataprefix+"_"+logUid+"_isRepeated",redisTemplate);
+                if(isRepeated==null){
+                    redisHelp.setRedis(this.dataprefix+"_"+logUid+"_isRepeated","1",2,redisTemplate);
+                }else{
                     Integer frequency = Integer.parseInt(isRepeated) + 1;
-                    if (frequency == 3) {
-                        securityService.safetyMessage("用户ID：" + logUid + "，在评论发布接口疑似存在攻击行为，请及时确认处理。", "system");
-                        redisHelp.setRedis(this.dataprefix + "_" + logUid + "_silence", "1", apiconfig.getSilenceTime(), redisTemplate);
-                        return Result.getResultJson(0, "你的请求存在恶意行为，15分钟内禁止操作！", null);
-                    } else {
-                        redisHelp.setRedis(this.dataprefix + "_" + logUid + "_isRepeated", frequency.toString(), 3, redisTemplate);
+                    if(frequency==3){
+                        securityService.safetyMessage("用户ID："+logUid+"，在评论发布接口疑似存在攻击行为，请及时确认处理。","system");
+                        redisHelp.setRedis(this.dataprefix+"_"+logUid+"_silence","1",apiconfig.getSilenceTime(),redisTemplate);
+                        return Result.getResultJson(0,"你的请求存在恶意行为，15分钟内禁止操作！",null);
+                    }else{
+                        redisHelp.setRedis(this.dataprefix+"_"+logUid+"_isRepeated",frequency.toString(),3,redisTemplate);
                     }
-                    return Result.getResultJson(0, "你的操作太频繁了", null);
+                    return Result.getResultJson(0,"你的操作太频繁了",null);
                 }
             }
+
             //攻击拦截结束
             Integer cuid =Integer.parseInt(map.get("uid").toString());
             Long date = System.currentTimeMillis();
@@ -391,8 +391,8 @@ public class TypechoCommentsController {
                     jsonToMap.put("url",user.getUrl());
                 }
                 if(isEmail > 0){
-                    if(map.get("mail")!=null){
-                        jsonToMap.put("mail",map.get("mail").toString());
+                    if(user.getMail()!=null&&user.getMail()!=""){
+                        jsonToMap.put("mail",user.getMail());
                     }else{
                         return Result.getResultJson(0,"请先绑定邮箱！",null);
                     }
@@ -419,6 +419,7 @@ public class TypechoCommentsController {
                 jsonToMap.put("ip",ip);
                 //下面这个属性控制评论状态，判断是否已经有评论过审，有则直接通过审核，没有则默认审核状态
                 Integer auditlevel = apiconfig.getAuditlevel();
+                //为2违禁词匹配审核
                 String forbidden = apiconfig.getForbidden();
                 if(auditlevel.equals(0)){
                     //为0不审核
@@ -488,7 +489,7 @@ public class TypechoCommentsController {
                         inbox.setUid(logUid);
                         inbox.setTouid(pComments.getAuthorId());
                         inbox.setType("comment");
-                        inbox.setText(jsonToMap.get("text").toString());
+                        inbox.setText(text);
                         inbox.setValue(Integer.parseInt(cid));
                         inbox.setCreated(Integer.parseInt(created));
                         inboxService.insert(inbox);
@@ -558,6 +559,8 @@ public class TypechoCommentsController {
 
                 insert = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoComments.class);
 
+            }else{
+                return Result.getResultJson(0,"参数不正确",null);
             }
             insert.setStatus(cstatus);
             int rows = service.insert(insert);
@@ -707,14 +710,18 @@ public class TypechoCommentsController {
             //String group = (String) redisHelp.getValue("userInfo"+token,"group",redisTemplate);
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             String group = map.get("group").toString();
-            Integer logUid =Integer.parseInt(map.get("uid").toString());
+            Integer logUid = Integer.parseInt(map.get("uid").toString());
             if(!group.equals("administrator")&&!group.equals("editor")){
                 return Result.getResultJson(0,"你没有操作权限",null);
             }
             TypechoComments comments = service.selectByKey(key);
+            if(comments==null){
+                return Result.getResultJson(0,"评论不存在",null);
+            }
             if(comments.getStatus().equals("approved")){
                 return Result.getResultJson(0,"该评论已被通过",null);
             }
+            Integer cUid = comments.getAuthorId();
             Integer rows = 0;
             if(type.equals(0)){
 
@@ -791,7 +798,7 @@ public class TypechoCommentsController {
 
                 }else{
                     //不是作者本人才通知
-                    if(!comments.getAuthorId().equals(author.getUid())){
+                    if(!comments.getAuthorId().equals(author.getUid())&&!comments.getAuthorId().equals(0)){
                         if(apiconfig.getIsEmail().equals(2)) {
                             if (author.getMail() != null) {
                                 String aemail = author.getMail();
@@ -840,45 +847,51 @@ public class TypechoCommentsController {
                 Integer reviewExp = apiconfig.getReviewExp();
                 if(reviewExp > 0){
                     //生成操作记录
-                    Long date = System.currentTimeMillis();
-                    String created = String.valueOf(date).substring(0,10);
-                    SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
-                    String curtime = sdf.format(new Date(date));
+                    if(!cUid.equals(0)){
+                        Long date = System.currentTimeMillis();
+                        String created = String.valueOf(date).substring(0,10);
+                        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+                        String curtime = sdf.format(new Date(date));
 
-                    TypechoUserlog userlog = new TypechoUserlog();
-                    userlog.setUid(logUid);
-                    //cid用于存放真实时间
-                    userlog.setCid(Integer.parseInt(curtime));
-                    userlog.setType("reviewExp");
-                    Integer size = userlogService.total(userlog);
-                    //只有前三次评论获得姜堰
-                    if(size < 3){
-                        userlog.setNum(reviewExp);
-                        userlog.setCreated(Integer.parseInt(created));
-                        userlogService.insert(userlog);
-                        //修改用户经验
-                        TypechoUsers oldUser = usersService.selectByKey(logUid);
-                        Integer experience = oldUser.getExperience();
-                        experience = experience + reviewExp;
-                        TypechoUsers updateUser = new TypechoUsers();
-                        updateUser.setUid(logUid);
-                        updateUser.setExperience(experience);
-                        usersService.update(updateUser);
+                        TypechoUserlog userlog = new TypechoUserlog();
+                        userlog.setUid(cUid);
+                        //cid用于存放真实时间
+                        userlog.setCid(Integer.parseInt(curtime));
+                        userlog.setType("reviewExp");
+                        Integer size = userlogService.total(userlog);
+                        //只有前三次评论获得姜堰
+                        if(size < 3){
+                            userlog.setNum(reviewExp);
+                            userlog.setCreated(Integer.parseInt(created));
+                            userlogService.insert(userlog);
+                            //修改用户经验
+                            TypechoUsers oldUser = usersService.selectByKey(cUid);
+                            Integer experience = oldUser.getExperience();
+                            experience = experience + reviewExp;
+                            TypechoUsers updateUser = new TypechoUsers();
+                            updateUser.setUid(cUid);
+                            updateUser.setExperience(experience);
+                            usersService.update(updateUser);
+                        }
                     }
+
                 }
 
             }else{
                 rows = service.delete(key);
-                //删除后发送消息通知
-                Long date = System.currentTimeMillis();
-                String created = String.valueOf(date).substring(0,10);
-                TypechoInbox inbox = new TypechoInbox();
-                inbox.setUid(logUid);
-                inbox.setTouid(comments.getAuthorId());
-                inbox.setType("system");
-                inbox.setText("你的评论【"+comments.getText()+"】未审核通过，已被删除！");
-                inbox.setCreated(Integer.parseInt(created));
-                inboxService.insert(inbox);
+                if(!cUid.equals(0)){
+                    //删除后发送消息通知
+                    Long date = System.currentTimeMillis();
+                    String created = String.valueOf(date).substring(0,10);
+                    TypechoInbox inbox = new TypechoInbox();
+                    inbox.setUid(cUid);
+                    inbox.setTouid(comments.getAuthorId());
+                    inbox.setType("system");
+                    inbox.setText("你的评论【"+comments.getText()+"】未审核通过，已被删除！");
+                    inbox.setCreated(Integer.parseInt(created));
+                    inboxService.insert(inbox);
+                }
+
 
 
             }

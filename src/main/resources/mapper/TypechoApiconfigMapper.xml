@@ -97,6 +97,8 @@
         <result column="spaceAudit" property="spaceAudit" />
         <result column="uploadType" property="uploadType" />
         <result column="banRobots" property="banRobots" />
+        <result column="adsGiftNum" property="adsGiftNum" />
+        <result column="adsGiftAward" property="adsGiftAward" />
 
     </resultMap>
 
@@ -194,7 +196,9 @@
         `forumAudit`,
         `spaceAudit`,
         `uploadType`,
-        `banRobots`
+        `banRobots`,
+        `adsGiftNum`,
+        `adsGiftAward`
     </sql>
 
     <!-- 插入数据 -->
@@ -464,7 +468,13 @@
                 `uploadType`,
             </if>
             <if test ='null != banRobots'>
-                `banRobots`
+                `banRobots`,
+            </if>
+            <if test ='null != adsGiftNum'>
+                `adsGiftNum`,
+            </if>
+            <if test ='null != adsGiftAward'>
+                `adsGiftAward`
             </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
@@ -731,7 +741,13 @@
                 #{uploadType},
             </if>
             <if test ='null != banRobots'>
-                #{banRobots}
+                #{banRobots},
+            </if>
+            <if test ='null != adsGiftNum'>
+                #{adsGiftNum},
+            </if>
+            <if test ='null != adsGiftAward'>
+                #{adsGiftAward}
             </if>
         </trim>
     </insert>
@@ -831,7 +847,9 @@
             <if test ='null != forumAudit'>`forumAudit` = #{forumAudit},</if>
             <if test ='null != spaceAudit'>`spaceAudit` = #{spaceAudit},</if>
             <if test ='null != uploadType'>`uploadType` = #{uploadType},</if>
-            <if test ='null != banRobots'>`banRobots` = #{banRobots}</if>
+            <if test ='null != banRobots'>`banRobots` = #{banRobots},</if>
+            <if test ='null != adsGiftNum'>`adsGiftNum` = #{adsGiftNum},</if>
+            <if test ='null != adsGiftAward'>`adsGiftAward` = #{adsGiftAward}</if>
         </set>
         WHERE `id` = #{id}
     </update>

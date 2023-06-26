@@ -455,8 +455,15 @@ public class TypechoApiconfig implements Serializable {
      */
     private Integer banRobots;
 
+    /**
+     * 每日广告奖励次数
+     */
+    private Integer adsGiftNum;
 
-
+    /**
+     * 看一次广告奖励多少积分
+     */
+    private Integer adsGiftAward;
 
 
 }

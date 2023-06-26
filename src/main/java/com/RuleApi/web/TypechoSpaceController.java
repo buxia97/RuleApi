@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -84,7 +85,7 @@ public class TypechoSpaceController {
                             @RequestParam(value = "token", required = false) String  token,
                             HttpServletRequest request) {
         try{
-            if(!type.equals(0)&&!type.equals(1)&&!type.equals(2)&&!type.equals(3)&&!type.equals(4)&&!type.equals(5)){
+            if(!type.equals(0)&&!type.equals(1)&&!type.equals(2)&&!type.equals(3)&&!type.equals(4)&&!type.equals(5)&&!type.equals(6)){
                 return Result.getResultJson(0,"参数不正确",null);
             }
             //类型不为0时，需要传toid
@@ -106,29 +107,30 @@ public class TypechoSpaceController {
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer uid =Integer.parseInt(map.get("uid").toString());
 
-
+            String isSilence = redisHelp.getRedis(this.dataprefix+"_"+uid+"_silence",redisTemplate);
+            if(isSilence!=null){
+                return Result.getResultJson(0,"你的操作太频繁了，请稍后再试",null);
+            }
             TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
+            //登录情况下，刷数据攻击拦截
             if(apiconfig.getBanRobots().equals(1)) {
-                //登录情况下，刷数据攻击拦截
-                String isSilence = redisHelp.getRedis(this.dataprefix+"_"+uid+"_silence",redisTemplate);
-                if(isSilence!=null){
-                    return Result.getResultJson(0,"你的操作太频繁了，请稍后再试",null);
-                }
-                String isRepeated = redisHelp.getRedis(this.dataprefix + "_" + uid + "_isAddSpace", redisTemplate);
-                if (isRepeated == null) {
-                    redisHelp.setRedis(this.dataprefix + "_" + uid + "_isAddSpace", "1", 4, redisTemplate);
-                } else {
+                String isRepeated = redisHelp.getRedis(this.dataprefix+"_"+uid+"_isAddSpace",redisTemplate);
+                if(isRepeated==null){
+                    redisHelp.setRedis(this.dataprefix+"_"+uid+"_isAddSpace","1",4,redisTemplate);
+                }else{
                     Integer frequency = Integer.parseInt(isRepeated) + 1;
-                    if (frequency == 4) {
-                        securityService.safetyMessage("用户ID：" + uid + "，在聊天发送消息接口疑似存在攻击行为，请及时确认处理。", "system");
-                        redisHelp.setRedis(this.dataprefix + "_" + uid + "_silence", "1", apiconfig.getSilenceTime(), redisTemplate);
-                        return Result.getResultJson(0, "你的操作过于频繁，已被禁言十分钟！", null);
-                    } else {
-                        redisHelp.setRedis(this.dataprefix + "_" + uid + "_isAddSpace", frequency.toString(), 5, redisTemplate);
+                    if(frequency==4){
+                        securityService.safetyMessage("用户ID："+uid+"，在聊天发送消息接口疑似存在攻击行为，请及时确认处理。","system");
+                        redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",apiconfig.getSilenceTime(),redisTemplate);
+                        return Result.getResultJson(0,"你的操作过于频繁，已被禁言十分钟！",null);
+                    }else{
+                        redisHelp.setRedis(this.dataprefix+"_"+uid+"_isAddSpace",frequency.toString(),5,redisTemplate);
                     }
-                    return Result.getResultJson(0, "你的操作太频繁了", null);
+                    return Result.getResultJson(0,"你的操作太频繁了",null);
                 }
             }
+
+
             //攻击拦截结束
             //普通用户最大发文限制
             Map userMap =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
@@ -142,7 +144,7 @@ public class TypechoSpaceController {
                     if(space_Num > apiconfig.getPostMax()){
                         return Result.getResultJson(0,"你已超过最大发布数量限制，请您24小时后再操作",null);
                     }else{
-                        redisHelp.setRedis(this.dataprefix+"_"+uid+"_spaceNum",space_Num.toString(),apiconfig.getInterceptTime(),redisTemplate);
+                        redisHelp.setRedis(this.dataprefix+"_"+uid+"_spaceNum",space_Num.toString(),86400,redisTemplate);
                     }
                 }
             }
@@ -174,7 +176,7 @@ public class TypechoSpaceController {
                     Integer frequency = Integer.parseInt(isIntercept) + 1;
                     if(frequency==4){
                         securityService.safetyMessage("用户ID："+uid+"，在动态发布接口多次触发违禁，请及时确认处理。","system");
-                        redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",3600,redisTemplate);
+                        redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",apiconfig.getInterceptTime(),redisTemplate);
                         return Result.getResultJson(0,"你已多次发送违禁词，被禁言一小时！",null);
                     }else{
                         redisHelp.setRedis(this.dataprefix+"_"+uid+"_isIntercept",frequency.toString(),600,redisTemplate);
@@ -198,7 +200,6 @@ public class TypechoSpaceController {
                     return Result.getResultJson(0,"动态已锁定，无法评论及转发",null);
                 }
             }
-
             TypechoSpace space = new TypechoSpace();
             text = text.replace("||rn||","\r\n");
             space.setText(text);
@@ -213,12 +214,39 @@ public class TypechoSpaceController {
             }else{
                 space.setStatus(1);
             }
-            //修改用户最新发布时间
-            TypechoUsers user = new TypechoUsers();
-            user.setUid(uid);
-            user.setPosttime(Integer.parseInt(created));
-            usersService.update(user);
+            //修改用户最新发布时间和IP
+            TypechoUsers updateUser = new TypechoUsers();
+            updateUser.setUid(uid);
+            updateUser.setPosttime(Integer.parseInt(created));
             int rows = service.insert(space);
+            if(apiconfig.getSpaceAudit().equals(0)){
+                //如果无需审核，则立即增加经验
+                Integer postExp = apiconfig.getPostExp();
+                if(postExp>0){
+                    //生成操作记录
+
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+                    String curtime = sdf.format(new Date(date));
+                    TypechoUserlog userlog = new TypechoUserlog();
+                    userlog.setUid(uid);
+                    //cid用于存放真实时间
+                    userlog.setCid(Integer.parseInt(curtime));
+                    userlog.setType("postExp");
+                    Integer size = userlogService.total(userlog);
+                    //只有前三次发布内容获得经验
+                    if(size < 3){
+                        userlog.setNum(postExp);
+                        userlog.setCreated(Integer.parseInt(created));
+                        userlogService.insert(userlog);
+                        //修改用户资产
+                        TypechoUsers oldUser = usersService.selectByKey(uid);
+                        Integer experience = oldUser.getExperience();
+                        experience = experience + postExp;
+                        updateUser.setExperience(experience);
+                    }
+                }
+            }
+            usersService.update(updateUser);
             editFile.setLog("用户"+uid+"发布了新动态。");
             JSONObject response = new JSONObject();
             response.put("code" , rows);

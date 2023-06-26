@@ -20,6 +20,7 @@
         <result column="versionIntro" property="versionIntro" />
         <result column="androidUrl" property="androidUrl" />
         <result column="iosUrl" property="iosUrl" />
+        <result column="adpid" property="adpid" />
         <result column="field1" property="field1" />
         <result column="field2" property="field2" />
     </resultMap>
@@ -41,6 +42,7 @@
         `versionIntro`,
         `androidUrl`,
         `iosUrl`,
+        `adpid`,
         `field1`,
         `field2`
     </sql>
@@ -96,6 +98,9 @@
             </if>
             <if test ='null != iosUrl'>
                 `iosUrl`,
+            </if>
+            <if test ='null != adpid'>
+                `adpid`,
             </if>
             <if test ='null != field1'>
                 `field1`,
@@ -153,6 +158,9 @@
             <if test ='null != iosUrl'>
                 #{iosUrl},
             </if>
+            <if test ='null != adpid'>
+                #{adpid},
+            </if>
             <if test ='null != field1'>
                 #{field1},
             </if>
@@ -167,24 +175,25 @@
         INSERT INTO ${prefix}_app ( <include refid="Base_Column_List" /> ) VALUES
         <foreach collection="list" item="curr" index="index" separator=",">
             (
-                #{curr.id},
-                #{curr.keyKey},
-                #{curr.name},
-                #{curr.type},
-                #{curr.logo},
-                #{curr.keywords},
-                #{curr.description},
-                #{curr.announcement},
-                #{curr.mail},
-                #{curr.website},
-                #{curr.currencyName},
-                #{curr.version},
-                #{curr.versionCode},
-                #{curr.versionIntro},
-                #{curr.androidUrl},
-                #{curr.iosUrl},
-                #{curr.field1},
-                #{curr.field2}
+            #{curr.id},
+            #{curr.keyKey},
+            #{curr.name},
+            #{curr.type},
+            #{curr.logo},
+            #{curr.keywords},
+            #{curr.description},
+            #{curr.announcement},
+            #{curr.mail},
+            #{curr.website},
+            #{curr.currencyName},
+            #{curr.version},
+            #{curr.versionCode},
+            #{curr.versionIntro},
+            #{curr.androidUrl},
+            #{curr.iosUrl},
+            #{curr.adpid},
+            #{curr.field1},
+            #{curr.field2}
             )
         </foreach>
     </insert>
@@ -208,6 +217,7 @@
             <if test ='null != versionIntro'>`versionIntro` = #{versionIntro},</if>
             <if test ='null != androidUrl'>`androidUrl` = #{androidUrl},</if>
             <if test ='null != iosUrl'>`iosUrl` = #{iosUrl},</if>
+            <if test ='null != adpid'>`adpid` = #{adpid},</if>
             <if test ='null != field1'>`field1` = #{field1},</if>
             <if test ='null != field2'>`field2` = #{field2}</if>
         </set>

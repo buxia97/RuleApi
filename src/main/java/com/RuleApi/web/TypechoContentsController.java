@@ -462,6 +462,7 @@ public class TypechoContentsController {
                               @RequestParam(value = "text", required = false) String  text,
                               @RequestParam(value = "isMd", required = false, defaultValue = "1") Integer  isMd,
                               @RequestParam(value = "isSpace", required = false, defaultValue = "0") Integer  isSpace,
+                              @RequestParam(value = "isDraft", required = false, defaultValue = "0") Integer  isDraft,
                               HttpServletRequest request) {
         try {
             TypechoContents insert = null;
@@ -475,28 +476,29 @@ public class TypechoContentsController {
             }
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer logUid =Integer.parseInt(map.get("uid").toString());
-            //登录情况下，刷数据攻击拦截
             TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
             if(apiconfig.getBanRobots().equals(1)) {
-                String isSilence = redisHelp.getRedis(this.dataprefix + "_" + logUid + "_silence", redisTemplate);
-                if (isSilence != null) {
-                    return Result.getResultJson(0, "你已被禁言，请耐心等待", null);
+                //登录情况下，刷数据攻击拦截
+                String isSilence = redisHelp.getRedis(this.dataprefix+"_"+logUid+"_silence",redisTemplate);
+                if(isSilence!=null){
+                    return Result.getResultJson(0,"你已被禁言，请耐心等待",null);
                 }
-                String isRepeated = redisHelp.getRedis(this.dataprefix + "_" + logUid + "_isRepeated", redisTemplate);
-                if (isRepeated == null) {
-                    redisHelp.setRedis(this.dataprefix + "_" + logUid + "_isRepeated", "1", 3, redisTemplate);
-                } else {
+                String isRepeated = redisHelp.getRedis(this.dataprefix+"_"+logUid+"_isRepeated",redisTemplate);
+                if(isRepeated==null){
+                    redisHelp.setRedis(this.dataprefix+"_"+logUid+"_isRepeated","1",3,redisTemplate);
+                }else{
                     Integer frequency = Integer.parseInt(isRepeated) + 1;
-                    if (frequency == 3) {
-                        securityService.safetyMessage("用户ID：" + logUid + "，在文章发布接口疑似存在攻击行为，请及时确认处理。", "system");
-                        redisHelp.setRedis(this.dataprefix + "_" + logUid + "_silence", "1", apiconfig.getSilenceTime(), redisTemplate);
-                        return Result.getResultJson(0, "你的请求存在恶意行为，10分钟内禁止操作！", null);
-                    } else {
-                        redisHelp.setRedis(this.dataprefix + "_" + logUid + "_isRepeated", frequency.toString(), 3, redisTemplate);
+                    if(frequency==3){
+                        securityService.safetyMessage("用户ID："+logUid+"，在文章发布接口疑似存在攻击行为，请及时确认处理。","system");
+                        redisHelp.setRedis(this.dataprefix+"_"+logUid+"_silence","1",apiconfig.getSilenceTime(),redisTemplate);
+                        return Result.getResultJson(0,"你的请求存在恶意行为，10分钟内禁止操作！",null);
+                    }else{
+                        redisHelp.setRedis(this.dataprefix+"_"+logUid+"_isRepeated",frequency.toString(),3,redisTemplate);
                     }
-                    return Result.getResultJson(0, "你的操作太频繁了", null);
+                    return Result.getResultJson(0,"你的操作太频繁了",null);
                 }
             }
+
             //攻击拦截结束
             String  ip = baseFull.getIpAddr(request);
 
@@ -587,7 +589,6 @@ public class TypechoContentsController {
                     }
                 }
                 //限制结束
-
                 //标题强制验证违禁
                 String forbidden = apiconfig.getForbidden();
                 String title = jsonToMap.get("title").toString();
@@ -595,34 +596,43 @@ public class TypechoContentsController {
                 if(titleForbidden.equals(1)){
                     return Result.getResultJson(0,"标题存在违禁词",null);
                 }
-                //根据后台的开关判断
-                Integer contentAuditlevel = apiconfig.getContentAuditlevel();
-                if(contentAuditlevel.equals(0)){
-                    jsonToMap.put("status","publish");
-                }
-                if(contentAuditlevel.equals(1)){
-                    if(!group.equals("administrator")&&!group.equals("editor")){
-                        Integer isForbidden = baseFull.getForbidden(forbidden,text);
-                        if(isForbidden.equals(0)){
-                            jsonToMap.put("status","publish");
-                        }else{
-                            jsonToMap.put("status","waiting");
-                        }
-                    }else{
+                //根据后台的开关判断是否需要审核
+                if(isDraft.equals(0)){
+                    Integer contentAuditlevel = apiconfig.getContentAuditlevel();
+                    if(contentAuditlevel.equals(0)){
                         jsonToMap.put("status","publish");
+                    }
+                    if(contentAuditlevel.equals(1)){
+
+                        if(!group.equals("administrator")&&!group.equals("editor")){
+                            Integer isForbidden = baseFull.getForbidden(forbidden,text);
+                            if(isForbidden.equals(0)){
+                                jsonToMap.put("status","publish");
+                            }else{
+                                jsonToMap.put("status","waiting");
+                            }
+                        }else{
+                            jsonToMap.put("status","publish");
+                        }
+
+                    }
+                    if(contentAuditlevel.equals(2)){
+                        if(!group.equals("administrator")&&!group.equals("editor")){
+                            jsonToMap.put("status","waiting");
+                        }else{
+                            jsonToMap.put("status","publish");
+                        }
                     }
 
+
+                }else{
+                    jsonToMap.put("status","publish");
+                    jsonToMap.put("type","post_draft");
                 }
-                if(contentAuditlevel.equals(2)){
-                    if(!group.equals("administrator")&&!group.equals("editor")){
-                        jsonToMap.put("status","waiting");
-                    }else{
-                        jsonToMap.put("status","publish");
-                    }
-                }
+
                 jsonToMap.put("text",text);
                 //部分字段不允许定义
-                jsonToMap.put("type","post");
+
                 jsonToMap.put("commentsNum",0);
                 jsonToMap.put("allowPing",1);
                 jsonToMap.put("allowFeed",1);
@@ -729,7 +739,9 @@ public class TypechoContentsController {
                 resText = "文章将在审核后发布！";
 
             }else{
-
+                TypechoUsers updateUser = new TypechoUsers();
+                updateUser.setUid(logUid);
+                updateUser.setPosttime(Integer.parseInt(created));
                 //如果无需审核，则立即增加经验
                 Integer postExp = apiconfig.getPostExp();
                 if(postExp>0){
@@ -752,12 +764,12 @@ public class TypechoContentsController {
                         TypechoUsers oldUser = usersService.selectByKey(logUid);
                         Integer experience = oldUser.getExperience();
                         experience = experience + postExp;
-                        TypechoUsers updateUser = new TypechoUsers();
-                        updateUser.setUid(logUid);
                         updateUser.setExperience(experience);
-                        usersService.update(updateUser);
+
+
                     }
                 }
+                usersService.update(updateUser);
 
             }
 
@@ -1105,6 +1117,7 @@ public class TypechoContentsController {
             if(info.getStatus().equals("publish")){
                 return Result.getResultJson(0,"该文章已审核通过",null);
             }
+            Integer cUid = info.getAuthorId();
             info.setCid(Integer.parseInt(key));
             //0为审核通过，1为不通过，并发送消息
             if(type.equals(0)){
@@ -1186,7 +1199,7 @@ public class TypechoContentsController {
                         String curtime = sdf.format(new Date(date));
 
                         TypechoUserlog userlog = new TypechoUserlog();
-                        userlog.setUid(logUid);
+                        userlog.setUid(cUid);
                         //cid用于存放真实时间
                         userlog.setCid(Integer.parseInt(curtime));
                         userlog.setType("postExp");
@@ -1197,11 +1210,11 @@ public class TypechoContentsController {
                             userlog.setCreated(Integer.parseInt(created));
                             userlogService.insert(userlog);
                             //修改用户资产
-                            TypechoUsers oldUser = usersService.selectByKey(logUid);
+                            TypechoUsers oldUser = usersService.selectByKey(cUid);
                             Integer experience = oldUser.getExperience();
                             experience = experience + postExp;
                             TypechoUsers updateUser = new TypechoUsers();
-                            updateUser.setUid(logUid);
+                            updateUser.setUid(cUid);
                             updateUser.setExperience(experience);
                             usersService.update(updateUser);
                         }

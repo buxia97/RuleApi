@@ -44,6 +44,12 @@ public class TypechoUserlogController {
     private TypechoMetasService metasService;
 
     @Autowired
+    private SecurityService securityService;
+
+    @Autowired
+    private TypechoAppService appService;
+
+    @Autowired
     private TypechoContentsService contentsService;
 
     @Autowired
@@ -726,11 +732,174 @@ public class TypechoUserlogController {
     }
 
     /***
+     * 发起广告
+     */
+    @RequestMapping(value = "/adsGift")
+    @ResponseBody
+    public String adsGift(@RequestParam(value = "token", required = false) String  token,
+                          @RequestParam(value = "appkey", required = false) String  appkey) {
+        try{
+            Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
+            if (uStatus == 0) {
+                return Result.getResultJson(0, "用户未登录或Token验证失败", null);
+            }
+            Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+            Integer uid =Integer.parseInt(map.get("uid").toString());
+            TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
+            if(apiconfig.getBanRobots().equals(1)) {
+                //登录情况下，刷数据攻击拦截
+                String isSilence = redisHelp.getRedis(this.dataprefix+"_"+uid+"_silence",redisTemplate);
+                if(isSilence!=null){
+                    return Result.getResultJson(0,"你已被禁言，请耐心等待",null);
+                }
+                String isRepeated = redisHelp.getRedis(this.dataprefix+"_"+uid+"_isRepeated",redisTemplate);
+                if(isRepeated==null){
+                    redisHelp.setRedis(this.dataprefix+"_"+uid+"_isRepeated","1",3,redisTemplate);
+                }else{
+                    Integer frequency = Integer.parseInt(isRepeated) + 1;
+                    if(frequency==3){
+                        securityService.safetyMessage("用户ID："+uid+"，在激励视频奖励接口疑似存在攻击行为，请及时确认处理。","system");
+                        redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",apiconfig.getSilenceTime(),redisTemplate);
+                        return Result.getResultJson(0,"你的请求存在恶意行为，已暂时禁止操作！",null);
+                    }else{
+                        redisHelp.setRedis(this.dataprefix+"_"+uid+"_isRepeated",frequency.toString(),3,redisTemplate);
+                    }
+                    return Result.getResultJson(0,"你的操作太频繁了",null);
+                }
+            }
+            //攻击拦截结束
+            String regISsendCode = redisHelp.getRedis(this.dataprefix + "_" + "adsGift_"+uid, redisTemplate);
+            if(regISsendCode==null){
+                redisHelp.setRedis(this.dataprefix + "_" + "adsGift_"+uid, "data", 20, redisTemplate);
+            }else{
+                return Result.getResultJson(0, "不要恶意跳过激励视频哦！", null);
+            }
+            TypechoApp app = appService.selectByKey(appkey);
+            if(app==null){
+                return Result.getResultJson(0,"应用不存在或密钥错误",null);
+            }
+            //获取今日已发起广告
+            Integer adsNum = apiconfig.getAdsGiftNum();
+            Integer oldAdsNum = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM `"+prefix+"_userlog` WHERE type = 'adsGift' and uid = "+uid+" and DATE(FROM_UNIXTIME(created)) = CURDATE();", Integer.class);
+            if(oldAdsNum >=  adsNum){
+                return Result.getResultJson(0,"今日奖励获取次数已用完",null);
+            }
+            //增加广告日志
+            TypechoUserlog log = new TypechoUserlog();
+            log.setType("adsGift");
+            log.setUid(uid);
+            //cid用于状态，没有回调过就是0
+            log.setCid(0);
+            service.insert(log);
+            Integer logid = log.getId();
+
+            Map json = new HashMap<String, String>();
+            json.put("adpid", app.getAdpid());
+            json.put("logid", logid);
+            JSONObject response = new JSONObject();
+            response.put("code", 1);
+            response.put("msg", "");
+            response.put("data", json);
+            return response.toString();
+        }catch (Exception e){
+            e.printStackTrace();
+            return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
+        }
+
+
+    }
+    /***
+     * 广告回调
+     */
+    @RequestMapping(value = "/adsGiftNotify")
+    @ResponseBody
+    public String adsGiftNotify(@RequestParam(value = "token", required = false) String  token,
+                                @RequestParam(value = "logid", required = false) String  logid) {
+        try{
+            Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
+            if (uStatus == 0) {
+                return Result.getResultJson(0, "用户未登录或Token验证失败", null);
+            }
+            Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+            Integer uid =Integer.parseInt(map.get("uid").toString());
+            TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
+            if(apiconfig.getBanRobots().equals(1)) {
+                //登录情况下，刷数据攻击拦截
+                String isSilence = redisHelp.getRedis(this.dataprefix+"_"+uid+"_silence",redisTemplate);
+                if(isSilence!=null){
+                    return Result.getResultJson(0,"你已被禁言，请耐心等待",null);
+                }
+                String isRepeated = redisHelp.getRedis(this.dataprefix+"_"+uid+"_isRepeated",redisTemplate);
+                if(isRepeated==null){
+                    redisHelp.setRedis(this.dataprefix+"_"+uid+"_isRepeated","1",3,redisTemplate);
+                }else{
+                    Integer frequency = Integer.parseInt(isRepeated) + 1;
+                    if(frequency==3){
+                        securityService.safetyMessage("用户ID："+uid+"，在激励视频回调疑似存在攻击行为，请及时确认处理。","system");
+                        redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",apiconfig.getSilenceTime(),redisTemplate);
+                        return Result.getResultJson(0,"你的请求存在恶意行为，已暂时禁止操作！",null);
+                    }else{
+                        redisHelp.setRedis(this.dataprefix+"_"+uid+"_isRepeated",frequency.toString(),3,redisTemplate);
+                    }
+                    return Result.getResultJson(0,"你的操作太频繁了",null);
+                }
+            }
+            //攻击拦截结束
+            TypechoUserlog log = service.selectByKey(logid);
+            if(log==null){
+                return Result.getResultJson(0,"请先发起激励视频",null);
+            }
+            if(!log.getCid().equals(0)){
+                return Result.getResultJson(0,"不要重复请求回调",null);
+            }
+            //修改状态
+            TypechoUserlog newLog = new TypechoUserlog();
+            newLog.setId(log.getId());
+            newLog.setCid(1);
+            service.update(newLog);
+            //加积分
+            Random r = new Random();
+            Integer award = apiconfig.getAdsGiftAward();
+            TypechoUsers user = usersService.selectByKey(uid);
+            TypechoUsers newUser = new TypechoUsers();
+            newUser.setUid(uid);
+            if(award > 0){
+                Integer account = user.getAssets();
+                Integer Assets = account + award;
+                newUser.setAssets(Assets);
+            }
+            usersService.update(newUser);
+            Long date = System.currentTimeMillis();
+            String userTime = String.valueOf(date).substring(0,10);
+            TypechoPaylog paylog = new TypechoPaylog();
+            paylog.setStatus(1);
+            paylog.setCreated(Integer.parseInt(userTime));
+            paylog.setUid(uid);
+            paylog.setOutTradeNo(userTime+"adsGift");
+            paylog.setTotalAmount(award.toString());
+            paylog.setPaytype("adsGift");
+            paylog.setSubject("广告奖励");
+            paylogService.insert(paylog);
+            Map json = new HashMap<String, String>();
+            json.put("logid", logid);
+            json.put("award", award);
+            JSONObject response = new JSONObject();
+            response.put("code", 1);
+            response.put("msg", "");
+            response.put("data", json);
+            return response.toString();
+        }catch (Exception e){
+            e.printStackTrace();
+            return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
+        }
+    }
+    /***
      * 查询商品是否已经购买过
      */
     @RequestMapping(value = "/dataClean")
     @ResponseBody
-    public String dataClean(@RequestParam(value = "clean", required = false) Integer  clean,@RequestParam(value = "token", required = false) String  token) {
+    public String dataClean(@RequestParam(value = "clean", required = false) Integer  clean,
+                            @RequestParam(value = "token", required = false) String  token) {
         try {
             //1是清理用户签到，2是清理用户资产日志，3是清理用户订单数据，4是清理无效卡密
             Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
@@ -774,6 +943,10 @@ public class TypechoUserlogController {
             //未支付订单清理
             if(clean.equals(7)){
                 jdbcTemplate.execute("DELETE FROM "+this.prefix+"_paylog WHERE status=0;");
+            }
+            //广告发起日志清理
+            if(clean.equals(8)){
+                jdbcTemplate.execute("DELETE FROM "+this.prefix+"_userlog WHERE type='adsGift' and created < "+cleanTime+";");
             }
             JSONObject response = new JSONObject();
             response.put("code" , 1);

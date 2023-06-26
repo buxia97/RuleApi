@@ -994,6 +994,20 @@ public class InstallController {
         }else{
             text+="配置中心模块，字段banRobots已经存在，无需添加。";
         }
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'adsGiftNum';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `adsGiftNum` int(11) DEFAULT '10' COMMENT '每日广告奖励次数'");
+            text+="配置中心模块，字段adsGiftNum添加完成。";
+        }else{
+            text+="配置中心模块，字段adsGiftNum已经存在，无需添加。";
+        }
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'adsGiftAward';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `adsGiftAward` int(11) DEFAULT '5' COMMENT '每日广告奖励额'");
+            text+="配置中心模块，字段adsGiftAward添加完成。";
+        }else{
+            text+="配置中心模块，字段adsGiftAward已经存在，无需添加。";
+        }
         try {
             Thread.sleep(500);
         } catch (InterruptedException ie) {
@@ -1202,6 +1216,14 @@ public class InstallController {
             text += "应用模块创建完成。";
         }else{
             text+="应用模块已存在，无需安装。";
+        }
+        //查询应用表是否存在adpid字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_app' and column_name = 'adpid';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_app ADD `adpid` varchar(255) CHARACTER SET utf8 DEFAULT NULL COMMENT '广告联盟ID'");
+            text+="应用表，字段adpid添加完成。";
+        }else{
+            text+="应用表，字段adpid已经存在，无需添加。";
         }
         text+=" ------ 执行结束，安装执行完成";
 
