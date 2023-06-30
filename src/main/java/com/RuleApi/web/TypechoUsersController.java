@@ -311,7 +311,7 @@ public class TypechoUsersController {
                 Integer fanNum = fanService.total(fan);
                 //用户关注数量
                 TypechoFan follow = new TypechoFan();
-                fan.setUid(uid);
+                follow.setUid(uid);
                 Integer followNum = fanService.total(follow);
 
                 String isSilence = redisHelp.getRedis(this.dataprefix+"_"+uid+"_silence",redisTemplate);
