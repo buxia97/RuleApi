@@ -203,7 +203,8 @@ public class TypechoShopController {
     public String addShop(@RequestParam(value = "params", required = false) String  params,
                           @RequestParam(value = "token", required = false) String  token,
                           @RequestParam(value = "text", required = false) String  text,
-                          @RequestParam(value = "isSpace", required = false, defaultValue = "0") Integer isSpace) {
+                          @RequestParam(value = "isSpace", required = false, defaultValue = "0") Integer isSpace,
+                          @RequestParam(value = "isMd", required = false, defaultValue = "1") Integer  isMd) {
         Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
@@ -269,6 +270,7 @@ public class TypechoShopController {
             }
             text = text.replace("||rn||","\r\n");
             jsonToMap.put("text",text);
+            jsonToMap.put("isMd",isMd);
             jsonToMap.put("created",userTime);
 
             //如果用户不设置VIP折扣，则调用系统设置
@@ -328,7 +330,6 @@ public class TypechoShopController {
                 }
             }
             insert = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoShop.class);
-
             insert.setUid(uid);
         }
 
@@ -361,7 +362,8 @@ public class TypechoShopController {
     @ResponseBody
     public String editShop(@RequestParam(value = "params", required = false) String  params,
                            @RequestParam(value = "token", required = false) String  token,
-                           @RequestParam(value = "text", required = false) String  text) {
+                           @RequestParam(value = "text", required = false) String  text,
+                           @RequestParam(value = "isMd", required = false, defaultValue = "1") Integer  isMd) {
         Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
         if(uStatus==0){
             return Result.getResultJson(0,"用户未登录或Token验证失败",null);
@@ -447,6 +449,7 @@ public class TypechoShopController {
             text = text.replace("||rn||","\r\n");
             jsonToMap.put("text",text);
             jsonToMap.remove("created");
+            jsonToMap.put("isMd",isMd);
             update = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoShop.class);
         }
 

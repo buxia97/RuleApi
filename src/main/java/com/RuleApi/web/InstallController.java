@@ -507,6 +507,14 @@ public class InstallController {
         }else{
             text+="积分商城模块，字段sellNum已经存在，无需添加。";
         }
+        //查询聊天室模块是否存在isMd字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_shop' and column_name = 'isMd';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_shop ADD `isMd` int(2) unsigned DEFAULT '1' COMMENT '是否为Markdown编辑器发布'");
+            text+="积分商城模块，字段isMd添加完成。";
+        }else{
+            text+="积分商城模块，字段isMd已经存在，无需添加。";
+        }
         //判断充值记录表是否存在
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_paylog';", Integer.class);
         if (i == 0){

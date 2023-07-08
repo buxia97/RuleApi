@@ -870,7 +870,9 @@ public class TypechoContentsController {
 
                     }
                 }
-                text = text.replace("||rn||","\r\n");
+                if(isMd.equals(1)){
+                    text = text.replace("||rn||","\n");
+                }
                 jsonToMap.put("text",text);
                 //部分字段不允许定义
                 jsonToMap.remove("authorId");

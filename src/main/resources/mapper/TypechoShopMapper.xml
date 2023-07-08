@@ -17,6 +17,7 @@
         <result column="status" property="status" />
         <result column="vipDiscount" property="vipDiscount" />
         <result column="sellNum" property="sellNum" />
+        <result column="isMd" property="isMd" />
 
     </resultMap>
 
@@ -34,7 +35,8 @@
         `created`,
         `status`,
         `vipDiscount`,
-        `sellNum`
+        `sellNum`,
+        `isMd`
     </sql>
 
     <!-- 插入数据 -->
@@ -78,7 +80,10 @@
                 `status`,
             </if>
             <if test ='null != vipDiscount'>
-                `vipDiscount`
+                `vipDiscount`,
+            </if>
+            <if test ='null != isMd'>
+                `isMd`
             </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
@@ -119,7 +124,10 @@
                 #{status},
             </if>
             <if test ='null != vipDiscount'>
-                #{vipDiscount}
+                #{vipDiscount},
+            </if>
+            <if test ='null != isMd'>
+                #{isMd}
             </if>
         </trim>
     </insert>
@@ -140,7 +148,8 @@
             <if test ='null != created'>`created` = #{created},</if>
             <if test ='null != status'>`status` = #{status},</if>
             <if test ='null != vipDiscount'>`vipDiscount` = #{vipDiscount},</if>
-            <if test ='null != sellNum'>`sellNum` = #{sellNum}</if>
+            <if test ='null != sellNum'>`sellNum` = #{sellNum},</if>
+            <if test ='null != isMd'>`isMd` = #{isMd}</if>
         </set>
         WHERE `id` = #{id}
     </update>

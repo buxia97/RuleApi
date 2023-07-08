@@ -83,4 +83,9 @@ public class TypechoShop implements Serializable {
      */
     private Integer sellNum;
 
+    /**
+     * isMd  是否为markdown文本
+     */
+    private Integer isMd;
+
 }
