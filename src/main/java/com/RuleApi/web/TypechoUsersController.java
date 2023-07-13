@@ -3076,6 +3076,45 @@ public class TypechoUsersController {
 
 
     }
+    @RequestMapping(value = "/selfDelete")
+    @ResponseBody
+    public String selfDelete(@RequestParam(value = "token", required = false) String  token) {
+        try {
+            Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
+            if (uStatus == 0) {
+                return Result.getResultJson(0, "用户未登录或Token验证失败", null);
+            }
+            Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+            Integer uid =Integer.parseInt(map.get("uid").toString());
+            TypechoUsers user = service.selectByKey(uid);
+            if(user==null){
+                return Result.getResultJson(0, "用户不存在", null);
+            }
+            int rows = service.delete(uid);
+            //删除关联的绑定信息
+            TypechoUserapi userapi = new TypechoUserapi();
+            userapi.setUid(uid);
+            Integer isApi = userapiService.total(userapi);
+            if(isApi > 0){
+                userapiService.delete(uid);
+            }
+            //删除用户登录状态
+            String oldToken = redisHelp.getRedis(this.dataprefix + "_" + "userkey" + user.getName(), redisTemplate);
+            if (oldToken != null) {
+                redisHelp.delete(this.dataprefix + "_" + "userInfo" + oldToken, redisTemplate);
+                redisHelp.delete(this.dataprefix + "_" + "userkey" + user.getName(), redisTemplate);
+            }
+            editFile.setLog("用户"+uid+"申请注销账户");
+            JSONObject response = new JSONObject();
+            response.put("code" ,rows > 0 ? 1: 0 );
+            response.put("data" , rows);
+            response.put("msg"  , rows > 0 ? "注销成功！" : "操作失败");
+            return response.toString();
+        }catch (Exception e){
+            e.printStackTrace();
+            return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
+        }
+    }
 
 
 }

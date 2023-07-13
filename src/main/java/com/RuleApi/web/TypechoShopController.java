@@ -682,10 +682,9 @@ public class TypechoShopController {
             shopinfo.setNum(shopnum);
 
             //更新商品卖出数量
-            TypechoUserlog curlog = new TypechoUserlog();
-            curlog.setType("buy");
-            curlog.setCid(Integer.parseInt(sid));
-            Integer sellNum = userlogService.total(curlog);
+
+            Integer sellNum = shopinfo.getSellNum();
+            sellNum = sellNum + 1;
             shopinfo.setSellNum(sellNum);
             service.update(shopinfo);
 
