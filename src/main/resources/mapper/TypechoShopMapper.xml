@@ -18,6 +18,9 @@
         <result column="vipDiscount" property="vipDiscount" />
         <result column="sellNum" property="sellNum" />
         <result column="isMd" property="isMd" />
+        <result column="sort" property="sort" />
+        <result column="subtype" property="subtype" />
+        <result column="isView" property="isView" />
 
     </resultMap>
 
@@ -36,7 +39,10 @@
         `status`,
         `vipDiscount`,
         `sellNum`,
-        `isMd`
+        `isMd`,
+        `sort`,
+        `subtype`,
+        `isView`
     </sql>
 
     <!-- 插入数据 -->
@@ -83,7 +89,16 @@
                 `vipDiscount`,
             </if>
             <if test ='null != isMd'>
-                `isMd`
+                `isMd`,
+            </if>
+            <if test ='null != sort'>
+                `sort`,
+            </if>
+            <if test ='null != subtype'>
+                `subtype`,
+            </if>
+            <if test ='null != isView'>
+                `isView`
             </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
@@ -127,8 +142,18 @@
                 #{vipDiscount},
             </if>
             <if test ='null != isMd'>
-                #{isMd}
+                #{isMd},
             </if>
+            <if test ='null != sort'>
+                #{sort},
+            </if>
+            <if test ='null != subtype'>
+                #{subtype},
+            </if>
+            <if test ='null != isView'>
+                #{isView}
+            </if>
+
         </trim>
     </insert>
 
@@ -149,7 +174,10 @@
             <if test ='null != status'>`status` = #{status},</if>
             <if test ='null != vipDiscount'>`vipDiscount` = #{vipDiscount},</if>
             <if test ='null != sellNum'>`sellNum` = #{sellNum},</if>
-            <if test ='null != isMd'>`isMd` = #{isMd}</if>
+            <if test ='null != isMd'>`isMd` = #{isMd},</if>
+            <if test ='null != sort'>`sort` = #{sort},</if>
+            <if test ='null != subtype'>`subtype` = #{subtype},</if>
+            <if test ='null != isView'>`isView` = #{isView}</if>
         </set>
         WHERE `id` = #{id}
     </update>
@@ -213,6 +241,18 @@
             <if test ='null != status'>
                 and `status` = #{status}
             </if>
+            <if test ='null != isMd'>
+                and `isMd` = #{isMd}
+            </if>
+            <if test ='null != sort'>
+                and `sort` = #{sort}
+            </if>
+            <if test ='null != subtype'>
+                and `subtype` = #{subtype}
+            </if>
+            <if test ='null != isView'>
+                and `isView` = #{isView}
+            </if>
         </where>
         order by created desc
     </select>
@@ -254,6 +294,18 @@
             </if>
             <if test ='null != typechoShop.status'>
                 and `status` = #{typechoShop.status}
+            </if>
+            <if test ='null != typechoShop.isMd'>
+                and `isMd` = #{typechoShop.isMd}
+            </if>
+            <if test ='null != typechoShop.sort'>
+                and `sort` = #{typechoShop.sort}
+            </if>
+            <if test ='null != typechoShop.subtype'>
+                and `subtype` = #{typechoShop.subtype}
+            </if>
+            <if test ='null != typechoShop.isView'>
+                and `isView` = #{typechoShop.isView}
             </if>
             <if test ='"" != searchKey'>
                 and CONCAT(IFNULL(`title`,''),IFNULL(`text`,'')) LIKE '%${searchKey}%'
@@ -298,6 +350,18 @@
             </if>
             <if test ='null != uid'>
                 and `uid` = #{uid}
+            </if>
+            <if test ='null != status'>
+                and `status` = #{status}
+            </if>
+            <if test ='null != sort'>
+                and `sort` = #{sort}
+            </if>
+            <if test ='null != subtype'>
+                and `subtype` = #{subtype}
+            </if>
+            <if test ='null != status'>
+                and `isView` = #{isView}
             </if>
         </where>
     </select>

@@ -515,6 +515,46 @@ public class InstallController {
         }else{
             text+="积分商城模块，字段isMd已经存在，无需添加。";
         }
+        //查询聊天室模块是否存在sort字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_shop' and column_name = 'sort';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_shop ADD `sort` int(11) unsigned DEFAULT '0' COMMENT '商品大类'");
+            text+="积分商城模块，字段sort添加完成。";
+        }else{
+            text+="积分商城模块，字段sort已经存在，无需添加。";
+        }
+        //查询聊天室模块是否存在subtype字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_shop' and column_name = 'subtype';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_shop ADD `subtype` int(11) unsigned DEFAULT '0' COMMENT '子类型'");
+            text+="积分商城模块，字段subtype添加完成。";
+        }else{
+            text+="积分商城模块，字段subtype已经存在，无需添加。";
+        }
+        //查询聊天室模块是否存在isView字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_shop' and column_name = 'isView';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_shop ADD `isView` int(2) unsigned DEFAULT '1' COMMENT '是否可见'");
+            text+="积分商城模块，字段isView添加完成。";
+        }else{
+            text+="积分商城模块，字段isView已经存在，无需添加。";
+        }
+        //安装商品分类表
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_shoptype';", Integer.class);
+        if (i == 0) {
+            jdbcTemplate.execute("CREATE TABLE `" + prefix + "_shoptype` (" +
+                    "  `id` int(11) NOT NULL AUTO_INCREMENT," +
+                    "  `parent` int(11) DEFAULT '0' COMMENT '上级分类'," +
+                    "  `name` varchar(255) DEFAULT NULL COMMENT '分类名称'," +
+                    "  `pic` varchar(400) DEFAULT NULL COMMENT '分类缩略图'," +
+                    "  `intro` varchar(400) DEFAULT NULL COMMENT '分类简介'," +
+                    "  `orderKey` int(11) DEFAULT '0' COMMENT '分类排序'," +
+                    "  PRIMARY KEY (`id`)" +
+                    ") ENGINE=MyISAM AUTO_INCREMENT=7 DEFAULT CHARSET=utf8 COMMENT='商品分类表';");
+            text += "商品分类表创建完成。";
+        }else{
+            text+="商品分类表已存在，无需安装。";
+        }
         //判断充值记录表是否存在
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_paylog';", Integer.class);
         if (i == 0){

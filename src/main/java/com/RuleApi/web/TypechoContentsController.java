@@ -6,6 +6,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.RuleApi.entity.*;
 import com.RuleApi.service.*;
+import net.dreamlu.mica.core.result.R;
 import net.dreamlu.mica.xss.core.XssCleanIgnore;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
@@ -45,6 +47,9 @@ public class TypechoContentsController {
     TypechoContentsService service;
 
     @Autowired
+    private TypechoShopService shopService;
+
+    @Autowired
     private TypechoFieldsService fieldsService;
 
     @Autowired
@@ -66,9 +71,6 @@ public class TypechoContentsController {
     private TypechoCommentsService commentsService;
 
     @Autowired
-    private TypechoShopService shopService;
-
-    @Autowired
     private TypechoApiconfigService apiconfigService;
 
     @Autowired
@@ -79,6 +81,9 @@ public class TypechoContentsController {
 
     @Autowired
     private TypechoSpaceService spaceService;
+
+    @Autowired
+    private TypechoAdsService adsService;
 
 
     @Autowired
@@ -114,8 +119,7 @@ public class TypechoContentsController {
     @ResponseBody
     public String contentsInfo (@RequestParam(value = "key", required = false) String  key,@RequestParam(value = "isMd" , required = false, defaultValue = "0") Integer isMd,@RequestParam(value = "token", required = false) String  token,HttpServletRequest request) {
         TypechoContents typechoContents = null;
-        Map contensjson = new HashMap<String, String>();
-        Map cacheInfo = redisHelp.getMapValue(this.dataprefix+"_"+"contentsInfo_"+key+"_"+isMd,redisTemplate);
+
         //如果开启全局登录，则必须登录才能得到数据
         Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
         TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
@@ -125,6 +129,10 @@ public class TypechoContentsController {
             }
         }
         //验证结束
+
+        Map contensjson = new HashMap<String, String>();
+        Map cacheInfo = redisHelp.getMapValue(this.dataprefix+"_"+"contentsInfo_"+key+"_"+isMd,redisTemplate);
+
         try{
             Integer isLogin;
             if(uStatus==0){
@@ -180,14 +188,17 @@ public class TypechoContentsController {
                     if(json!=null){
                         String mid = json.get("mid").toString();
                         TypechoMetas metasList  = metasService.selectByKey(mid);
-                        Map metasInfo = JSONObject.parseObject(JSONObject.toJSONString(metasList), Map.class);
-                        String type = metasInfo.get("type").toString();
-                        if(type.equals("category")){
-                            metas.add(metasInfo);
+                        if(metasList!=null){
+                            Map metasInfo = JSONObject.parseObject(JSONObject.toJSONString(metasList), Map.class);
+                            String type = metasInfo.get("type").toString();
+                            if(type.equals("category")){
+                                metas.add(metasInfo);
+                            }
+                            if(type.equals("tag")){
+                                tags.add(metasInfo);
+                            }
                         }
-                        if(type.equals("tag")){
-                            tags.add(metasInfo);
-                        }
+
                     }
 
                 }
@@ -227,6 +238,7 @@ public class TypechoContentsController {
             }
 
         }catch (Exception e){
+            e.printStackTrace();
             if(cacheInfo.size()>0){
                 contensjson = cacheInfo;
             }
@@ -254,12 +266,10 @@ public class TypechoContentsController {
                                 @RequestParam(value = "random"        , required = false, defaultValue = "0") Integer random,
                                 @RequestParam(value = "token"        , required = false, defaultValue = "") String token){
         TypechoContents query = new TypechoContents();
-        String aid = "null";
-        String sqlParams = "null";
         if(limit>50){
             limit = 50;
         }
-
+        String sqlParams = "null";
         List cacheList = new ArrayList();
         String group = "";
         Integer total = 0;
@@ -272,9 +282,11 @@ public class TypechoContentsController {
             }
         }
         //验证结束
+
         if (StringUtils.isNotBlank(searchParams)) {
             JSONObject object = JSON.parseObject(searchParams);
             //如果不是登陆状态，那么只显示开放状态文章。如果是，则查询自己发布的文章
+
             if(token==""||uStatus==0){
 
                 object.put("status","publish");
@@ -283,13 +295,12 @@ public class TypechoContentsController {
                     object.put("status","publish");
                 }
                 //后面再优化
-//                aid = redisHelp.getValue(this.dataprefix+"_"+"userInfo"+token,"uid",redisTemplate).toString();
+                // aid = redisHelp.getValue(this.dataprefix+"_"+"userInfo"+token,"uid",redisTemplate).toString();
 //                Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
 //                group = map.get("group").toString();
 //                if(!group.equals("administrator")&&!group.equals("editor")){
-//                    object.put("status","publish");
+//                    object.put("authorId",aid);
 //                }
-
 
             }
 
@@ -302,7 +313,7 @@ public class TypechoContentsController {
         List jsonList = new ArrayList();
         //管理员和编辑以登录状态请求时，不调用缓存
         if(!group.equals("administrator")&&!group.equals("editor")) {
-            cacheList = redisHelp.getList(this.dataprefix + "_" + "contentsList_" + page + "_" + limit + "_" + sqlParams + "_" + order + "_" + searchKey + "_" + random + "_" + aid, redisTemplate);
+            cacheList = redisHelp.getList(this.dataprefix+"_"+"contentsList_"+page+"_"+limit+"_"+sqlParams+"_"+order+"_"+searchKey+"_"+random, redisTemplate);
         }
         //监听异常，如果有异常则调用redis缓存中的list，如果无异常也调用redis，但是会更新数据
         try{
@@ -343,14 +354,17 @@ public class TypechoContentsController {
                                 String mid = info.get("mid").toString();
 
                                 TypechoMetas metasList  = metasService.selectByKey(mid);
-                                Map metasInfo = JSONObject.parseObject(JSONObject.toJSONString(metasList), Map.class);
-                                String type = metasInfo.get("type").toString();
-                                if(type.equals("category")){
-                                    metas.add(metasInfo);
+                                if(metasList!=null){
+                                    Map metasInfo = JSONObject.parseObject(JSONObject.toJSONString(metasList), Map.class);
+                                    String type = metasInfo.get("type").toString();
+                                    if(type.equals("category")){
+                                        metas.add(metasInfo);
+                                    }
+                                    if(type.equals("tag")){
+                                        tags.add(metasInfo);
+                                    }
                                 }
-                                if(type.equals("tag")){
-                                    tags.add(metasInfo);
-                                }
+
                             }
 
                         }
@@ -424,14 +438,23 @@ public class TypechoContentsController {
                     json.put("text",text.length()>400 ? text.substring(0,400) : text);
                     json.put("category",metas);
                     json.put("tag",tags);
-
+                    //获取文章挂载的商品
+                    TypechoShop shop = new TypechoShop();
+                    shop.setCid(Integer.parseInt(cid));
+                    shop.setStatus(1);
+                    List<TypechoShop> shopList = shopService.selectList(shop);
+                    //去除付费内容显示
+                    for (int s = 0; s < shopList.size(); s++) {
+                        shopList.get(s).setValue(null);
+                    }
+                    json.put("shop",shopList);
                     json.remove("password");
 
                     jsonList.add(json);
 
                 }
-                redisHelp.delete(this.dataprefix+"_"+"contentsList_"+page+"_"+limit+"_"+sqlParams+"_"+order+"_"+searchKey+"_"+random+"_"+aid,redisTemplate);
-                redisHelp.setList(this.dataprefix+"_"+"contentsList_"+page+"_"+limit+"_"+sqlParams+"_"+order+"_"+searchKey+"_"+random+"_"+aid,jsonList,this.contentCache,redisTemplate);
+                redisHelp.delete(this.dataprefix+"_"+"contentsList_"+page+"_"+limit+"_"+sqlParams+"_"+order+"_"+searchKey+"_"+random,redisTemplate);
+                redisHelp.setList(this.dataprefix+"_"+"contentsList_"+page+"_"+limit+"_"+sqlParams+"_"+order+"_"+searchKey+"_"+random,jsonList,this.contentCache,redisTemplate);
             }
         }catch (Exception e){
             e.printStackTrace();
@@ -454,8 +477,8 @@ public class TypechoContentsController {
      * 发布文章
      * @param params Bean对象JSON字符串
      */
-    @XssCleanIgnore
     @RequestMapping(value = "/contentsAdd")
+    @XssCleanIgnore
     @ResponseBody
     public String contentsAdd(@RequestParam(value = "params", required = false) String  params,
                               @RequestParam(value = "token", required = false) String  token,
@@ -463,6 +486,9 @@ public class TypechoContentsController {
                               @RequestParam(value = "isMd", required = false, defaultValue = "1") Integer  isMd,
                               @RequestParam(value = "isSpace", required = false, defaultValue = "0") Integer  isSpace,
                               @RequestParam(value = "isDraft", required = false, defaultValue = "0") Integer  isDraft,
+                              @RequestParam(value = "isPaid", required = false, defaultValue = "0") Integer  isPaid,
+                              @RequestParam(value = "shopPice", required = false) Integer  shopPice,
+                              @RequestParam(value = "shopText", required = false) String  shopText,
                               HttpServletRequest request) {
         try {
             TypechoContents insert = null;
@@ -477,6 +503,8 @@ public class TypechoContentsController {
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer logUid =Integer.parseInt(map.get("uid").toString());
             TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
+
+
             if(apiconfig.getBanRobots().equals(1)) {
                 //登录情况下，刷数据攻击拦截
                 String isSilence = redisHelp.getRedis(this.dataprefix+"_"+logUid+"_silence",redisTemplate);
@@ -646,6 +674,7 @@ public class TypechoContentsController {
 
             }
 
+
             int rows = service.insert(insert);
 
             Integer cid = insert.getCid();
@@ -699,40 +728,45 @@ public class TypechoContentsController {
 
 
                 //处理完分类标签后，处理挂载的商品
-                if(sid>-1){
-                    Integer uid  = Integer.parseInt(map.get("uid").toString());
-                    //判断商品是不是自己的
-                    TypechoShop shop = new TypechoShop();
-                    shop.setUid(uid);
-                    shop.setId(sid);
-                    Integer num  = shopService.total(shop);
-                    if(num >= 1){
-                        shop.setCid(cid);
-                        shopService.update(shop);
+                if(isPaid.equals(0)){
+                    if(sid>-1){
+                        Integer uid  = Integer.parseInt(map.get("uid").toString());
+                        //判断商品是不是自己的
+                        TypechoShop shop = new TypechoShop();
+                        shop.setUid(uid);
+                        shop.setId(sid);
+                        Integer num  = shopService.total(shop);
+                        if(num >= 1){
+                            shop.setCid(cid);
+                            shopService.update(shop);
+                        }
                     }
                 }
+
 
 
             }
             Long date = System.currentTimeMillis();
             String created = String.valueOf(date).substring(0,10);
 
-            if(isSpace.equals(1)){
-                //判断用户经验值
-                Integer spaceMinExp = apiconfig.getSpaceMinExp();
-                TypechoUsers curUser = usersService.selectByKey(logUid);
-                Integer Exp = curUser.getExperience();
-                if(Exp < spaceMinExp){
-                    return Result.getResultJson(0,"发布动态最低要求经验值为"+spaceMinExp+",你当前经验值"+Exp,null);
+            if(isDraft.equals(0)){
+                if(isSpace.equals(1)){
+                    //判断用户经验值
+                    Integer spaceMinExp = apiconfig.getSpaceMinExp();
+                    TypechoUsers curUser = usersService.selectByKey(logUid);
+                    Integer Exp = curUser.getExperience();
+                    if(Exp < spaceMinExp){
+                        return Result.getResultJson(0,"发布动态最低要求经验值为"+spaceMinExp+",你当前经验值"+Exp,null);
+                    }
+                    TypechoSpace space = new TypechoSpace();
+                    space.setType(1);
+                    space.setText("发布了新文章");
+                    space.setCreated(Integer.parseInt(created));
+                    space.setModified(Integer.parseInt(created));
+                    space.setUid(logUid);
+                    space.setToid(cid);
+                    spaceService.insert(space);
                 }
-                TypechoSpace space = new TypechoSpace();
-                space.setType(1);
-                space.setText("发布了新文章");
-                space.setCreated(Integer.parseInt(created));
-                space.setModified(Integer.parseInt(created));
-                space.setUid(logUid);
-                space.setToid(cid);
-                spaceService.insert(space);
             }
             String resText = "发布成功";
             if(isWaiting>0){
@@ -772,7 +806,22 @@ public class TypechoContentsController {
                 usersService.update(updateUser);
 
             }
-
+            //添加付费阅读
+            if (isPaid.equals(1)) {
+                TypechoShop shop = new TypechoShop();
+                shop.setValue(shopText);
+                shop.setUid(logUid);
+                shop.setVipDiscount("1.0");
+                shop.setIsView(0);
+                shop.setCreated(Integer.parseInt(created));
+                shop.setNum(-1);
+                shop.setStatus(1);
+                shop.setPrice(shopPice);
+                shop.setType(4);
+                shop.setCid(cid);
+                shop.setIsMd(isMd);
+                shopService.insert(shop);
+            }
             editFile.setLog("用户"+logUid+"请求发布了新文章");
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );
@@ -789,13 +838,17 @@ public class TypechoContentsController {
      * 文章修改
      * @param params Bean对象JSON字符串
      */
-    @XssCleanIgnore
     @RequestMapping(value = "/contentsUpdate")
+    @XssCleanIgnore
     @ResponseBody
     public String contentsUpdate(@RequestParam(value = "params", required = false) String  params,
                                  @RequestParam(value = "token", required = false) String  token,
                                  @RequestParam(value = "text", required = false) String  text,
-                                 @RequestParam(value = "isMd", required = false, defaultValue = "1") Integer  isMd) {
+                                 @RequestParam(value = "isDraft", required = false, defaultValue = "0") Integer  isDraft,
+                                 @RequestParam(value = "isMd", required = false, defaultValue = "1") Integer  isMd,
+                                 @RequestParam(value = "isPaid", required = false, defaultValue = "0") Integer  isPaid,
+                                 @RequestParam(value = "shopPice", required = false) Integer  shopPice,
+                                 @RequestParam(value = "shopText", required = false) String  shopText) {
 
         try {
             TypechoContents update = null;
@@ -888,7 +941,7 @@ public class TypechoContentsController {
                 jsonToMap.remove("views");
                 jsonToMap.remove("likes");
                 jsonToMap.remove("sid");
-                jsonToMap.remove("type");
+
                 jsonToMap.remove("isrecommend");
                 jsonToMap.remove("istop");
                 jsonToMap.remove("isswiper");
@@ -904,31 +957,39 @@ public class TypechoContentsController {
                     return Result.getResultJson(0,"标题存在违禁词",null);
                 }
                 //根据后台的开关判断
-                Integer contentAuditlevel = apiconfig.getContentAuditlevel();
-                if(contentAuditlevel.equals(0)){
-                    jsonToMap.put("status","publish");
-                }
-                if(contentAuditlevel.equals(1)){
-                    if(!group.equals("administrator")&&!group.equals("editor")){
-                        Integer isForbidden = baseFull.getForbidden(forbidden,text);
-                        if(isForbidden.equals(0)){
-                            jsonToMap.put("status","publish");
-                        }else{
-                            jsonToMap.put("status","waiting");
-                        }
-                    }else{
+                if(isDraft.equals(0)){
+                    Integer contentAuditlevel = apiconfig.getContentAuditlevel();
+                    if(contentAuditlevel.equals(0)){
                         jsonToMap.put("status","publish");
                     }
+                    if(contentAuditlevel.equals(1)){
 
-                }
-                if(contentAuditlevel.equals(2)){
-                    //除管理员外，文章默认待审核
-                    if(!group.equals("administrator")&&!group.equals("editor")){
-                        jsonToMap.put("status","waiting");
-                    }else{
-                        jsonToMap.put("status","publish");
+                        if(!group.equals("administrator")&&!group.equals("editor")){
+                            Integer isForbidden = baseFull.getForbidden(forbidden,text);
+                            if(isForbidden.equals(0)){
+                                jsonToMap.put("status","publish");
+                            }else{
+                                jsonToMap.put("status","waiting");
+                            }
+                        }else{
+                            jsonToMap.put("status","publish");
+                        }
+
                     }
+                    if(contentAuditlevel.equals(2)){
+                        //除管理员外，文章默认待审核
+                        if(!group.equals("administrator")&&!group.equals("editor")){
+                            jsonToMap.put("status","waiting");
+                        }else{
+                            jsonToMap.put("status","publish");
+                        }
+                    }
+                    jsonToMap.put("type","post");
+                }else{
+                    jsonToMap.put("status","publish");
+                    jsonToMap.put("type","post_draft");
                 }
+
 
                 update = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoContents.class);
             }
@@ -978,28 +1039,45 @@ public class TypechoContentsController {
                 }
 
                 //处理完分类标签后，处理挂载的商品
-                if(sid>-1){
-                    Integer uid  = Integer.parseInt(map.get("uid").toString());
-                    //判断商品是不是自己的
-                    TypechoShop shop = new TypechoShop();
-                    shop.setUid(uid);
-                    shop.setId(sid);
-                    Integer num  = shopService.total(shop);
-                    if(num >= 1){
-                        //如果是，去数据库将其它商品的cid改为0
-                        TypechoShop rmshop = new TypechoShop();
-                        rmshop.setCid(cid);
-                        List<TypechoShop> list = shopService.selectList(rmshop);
-                        for (int i = 0; i < list.size(); i++) {
-                            list.get(i).setCid(-1);
-                            shopService.update(list.get(i));
+                if (isPaid.equals(0)) {
+                    if(sid>-1){
+                        Integer uid  = Integer.parseInt(map.get("uid").toString());
+                        //判断商品是不是自己的
+                        TypechoShop shop = new TypechoShop();
+                        shop.setUid(uid);
+                        shop.setId(sid);
+                        Integer num  = shopService.total(shop);
+                        if(num >= 1){
+                            //如果是，去数据库将其它商品的cid改为0
+                            TypechoShop rmshop = new TypechoShop();
+                            rmshop.setCid(cid);
+                            List<TypechoShop> list = shopService.selectList(rmshop);
+                            for (int i = 0; i < list.size(); i++) {
+                                list.get(i).setCid(-1);
+                                shopService.update(list.get(i));
+                            }
+                            //清除完之前的时候，修改新的
+                            shop.setCid(cid);
+                            shopService.update(shop);
                         }
-                        //清除完之前的时候，修改新的
-                        shop.setCid(cid);
-                        shopService.update(shop);
-                    }
 
+                    }
                 }
+
+            }
+            //编辑付费阅读
+            if (isPaid.equals(1)) {
+                TypechoShop shop = new TypechoShop();
+                shop.setId(sid);
+                shop.setValue(shopText);
+                shop.setVipDiscount("1.0");
+                shop.setIsView(0);
+                shop.setNum(-1);
+                shop.setStatus(1);
+                shop.setPrice(shopPice);
+                shop.setType(4);
+                shop.setIsMd(isMd);
+                shopService.update(shop);
             }
 
             editFile.setLog("用户"+logUid+"请求修改了文章"+cid);
@@ -1510,6 +1588,72 @@ public class TypechoContentsController {
         }
         return imgList;
     }
+
+    /***
+     * 文章打赏者列表
+     */
+    @RequestMapping(value = "/rewardList")
+    @ResponseBody
+    public String rewardList(@RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
+                             @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
+                             @RequestParam(value = "id", required = false) Integer  id) {
+        if(limit>50){
+            limit = 50;
+        }
+        Integer total = 0;
+
+        TypechoUserlog query = new TypechoUserlog();
+        query.setCid(id);
+        query.setType("reward");
+        total = userlogService.total(query);
+
+        List jsonList = new ArrayList();
+        List cacheList = redisHelp.getList(this.dataprefix+"_"+"rewardList_"+page+"_"+limit,redisTemplate);
+        try{
+            if(cacheList.size()>0){
+                jsonList = cacheList;
+            }else {
+                PageList<TypechoUserlog> pageList = userlogService.selectPage(query, page, limit);
+                List<TypechoUserlog> list = pageList.getList();
+                if(list.size() < 1){
+                    JSONObject noData = new JSONObject();
+                    noData.put("code" , 1);
+                    noData.put("msg"  , "");
+                    noData.put("data" , new ArrayList());
+                    noData.put("count", 0);
+                    noData.put("total", total);
+                    return noData.toString();
+                }
+                for (int i = 0; i < list.size(); i++) {
+                    Integer userid = list.get(i).getUid();
+                    Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
+                    //获取用户信息
+                    Map userJson = UserStatus.getUserInfo(userid,apiconfigService,usersService);
+                    //获取用户等级
+                    TypechoComments comments = new TypechoComments();
+                    comments.setAuthorId(userid);
+                    Integer lv = commentsService.total(comments);
+                    userJson.put("lv", baseFull.getLv(lv));
+                    json.put("userJson",userJson);
+                    jsonList.add(json);
+                }
+                redisHelp.delete(this.dataprefix+"_"+"rewardList_"+page+"_"+limit, redisTemplate);
+                redisHelp.setList(this.dataprefix+"_"+"rewardList_"+page+"_"+limit, jsonList, 5, redisTemplate);
+            }
+        }catch (Exception e){
+            if(cacheList.size()>0){
+                jsonList = cacheList;
+            }
+        }
+        JSONObject response = new JSONObject();
+        response.put("code" , 1);
+        response.put("msg"  , "");
+        response.put("data" , null != jsonList ? jsonList : new JSONArray());
+        response.put("count", jsonList.size());
+        response.put("total", total);
+        return response.toString();
+
+    }
     /**
      * 十年之约
      * https://www.foreverblog.cn/
@@ -1577,23 +1721,69 @@ public class TypechoContentsController {
             return Result.getResultJson(0,"你没有操作权限",null);
         }
         JSONObject data = new JSONObject();
+
         TypechoContents contents = new TypechoContents();
         contents.setType("post");
         contents.setStatus("publish");
         Integer allContents = service.total(contents);
+
         TypechoComments comments = new TypechoComments();
         Integer allComments = commentsService.total(comments);
+
         TypechoUsers users = new TypechoUsers();
         Integer allUsers = usersService.total(users);
-        JSONObject response = new JSONObject();
+
+
         TypechoShop shop = new TypechoShop();
         Integer allShop = shopService.total(shop);
+
+        TypechoSpace space = new TypechoSpace();
+        Integer allSpace = spaceService.total(space);
+
+        TypechoAds ads = new TypechoAds();
+        Integer allAds = adsService.total(ads);
+
+
+
+        contents.setType("post");
+        contents.setStatus("waiting");
+        Integer upcomingContents = service.total(contents);
+
+        comments.setStatus("waiting");
+        Integer upcomingComments = commentsService.total(comments);
+
+        shop.setStatus(0);
+        Integer upcomingShop = shopService.total(shop);
+
+        space.setStatus(0);
+        Integer upcomingSpace = spaceService.total(space);
+
+
+        ads.setStatus(0);
+        Integer upcomingAds = adsService.total(ads);
+
+        TypechoUserlog userlog = new TypechoUserlog();
+        userlog.setType("withdraw");
+        userlog.setCid(-1);
+        Integer upcomingWithdraw = userlogService.total(userlog);
+
+
 
         data.put("allContents",allContents);
         data.put("allComments",allComments);
         data.put("allUsers",allUsers);
         data.put("allShop",allShop);
+        data.put("allSpace",allSpace);
+        data.put("allAds",allAds);
 
+        data.put("upcomingContents",upcomingContents);
+        data.put("upcomingComments",upcomingComments);
+        data.put("upcomingShop",upcomingShop);
+        data.put("upcomingSpace",upcomingSpace);
+        data.put("upcomingAds",upcomingAds);
+        data.put("upcomingWithdraw",upcomingWithdraw);
+
+        JSONObject response = new JSONObject();
         response.put("code" , 1);
         response.put("msg"  , "");
         response.put("data" , data);

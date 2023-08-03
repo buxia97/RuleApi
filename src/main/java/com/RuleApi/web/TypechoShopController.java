@@ -18,10 +18,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import javax.servlet.http.HttpSession;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 /**
  * 控制层
@@ -35,6 +34,9 @@ public class TypechoShopController {
 
     @Autowired
     TypechoShopService service;
+
+    @Autowired
+    private TypechoShoptypeService shoptypeService;
 
     @Autowired
     private TypechoUsersService usersService;
@@ -63,6 +65,7 @@ public class TypechoShopController {
     @Autowired
     private TypechoSpaceService spaceService;
 
+
     @Autowired
     private PushService pushService;
 
@@ -84,8 +87,18 @@ public class TypechoShopController {
                             @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
                             @RequestParam(value = "searchKey"        , required = false, defaultValue = "") String searchKey,
                             @RequestParam(value = "order", required = false, defaultValue = "created") String  order,
-                            @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit) {
+                            @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
+                            @RequestParam(value = "token", required = false) String  token) {
         TypechoShop query = new TypechoShop();
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+        Map map = new HashMap();
+        Integer uid = 0;
+        String group = "";
+        if (uStatus != 0) {
+            map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+            uid =Integer.parseInt(map.get("uid").toString());
+            group = map.get("group").toString();
+        }
         String sqlParams = "null";
         if(limit>50){
             limit = 50;
@@ -100,7 +113,7 @@ public class TypechoShopController {
 
         }
         total = service.total(query);
-        List cacheList = redisHelp.getList(this.dataprefix+"_"+"shopList_"+page+"_"+limit+"_"+searchKey+"_"+sqlParams+"_"+order,redisTemplate);
+        List cacheList = redisHelp.getList(this.dataprefix+"_"+"shopList_"+page+"_"+limit+"_"+searchKey+"_"+sqlParams+"_"+order+"_"+uid,redisTemplate);
 
 
         try {
@@ -108,7 +121,7 @@ public class TypechoShopController {
                 jsonList = cacheList;
             } else {
                 PageList<TypechoShop> pageList = service.selectPage(query, page, limit,searchKey,order);
-                List list = pageList.getList();
+                List<TypechoShop> list = pageList.getList();
                 if(list.size() < 1){
                     JSONObject noData = new JSONObject();
                     noData.put("code" , 1);
@@ -120,11 +133,21 @@ public class TypechoShopController {
                 }
                 for (int i = 0; i < list.size(); i++) {
                     Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
-                    json.remove("value");
+                    TypechoShop shop = list.get(i);
+                    Integer userid = shop.getUid();
+                    //获取用户信息
+                    Map userJson = UserStatus.getUserInfo(userid,apiconfigService,usersService);
+                    json.put("userJson",userJson);
+                    if(!group.equals("administrator")&&!group.equals("editor")){
+                        if(!shop.getUid().equals(uid)){
+                            json.remove("value");
+                        }
+                    }
+
                     jsonList.add(json);
                 }
-                redisHelp.delete(this.dataprefix+"_"+"shopList_"+page+"_"+limit+"_"+searchKey+"_"+sqlParams+"_"+order,redisTemplate);
-                redisHelp.setList(this.dataprefix+"_"+"shopList_"+page+"_"+limit+"_"+searchKey+"_"+sqlParams+"_"+order,jsonList,10,redisTemplate);
+                redisHelp.delete(this.dataprefix+"_"+"shopList_"+page+"_"+limit+"_"+searchKey+"_"+sqlParams+"_"+order+"_"+uid,redisTemplate);
+                redisHelp.setList(this.dataprefix+"_"+"shopList_"+page+"_"+limit+"_"+searchKey+"_"+sqlParams+"_"+order+"_"+uid,jsonList,10,redisTemplate);
             }
         }catch (Exception e){
             e.printStackTrace();
@@ -148,7 +171,8 @@ public class TypechoShopController {
      */
     @RequestMapping(value = "/shopInfo")
     @ResponseBody
-    public String shopInfo(@RequestParam(value = "key", required = false) String  key,@RequestParam(value = "token", required = false) String  token) {
+    public String shopInfo(@RequestParam(value = "key", required = false) String  key,
+                           @RequestParam(value = "token", required = false) String  token) {
         Map shopInfoJson = new HashMap<String, String>();
         try{
             Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
@@ -167,6 +191,7 @@ public class TypechoShopController {
                     redisHelp.setKey(this.dataprefix+"_"+"spaceInfo_"+key,shopinfo,10,redisTemplate);
                 }else{
                     Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+                    String group = map.get("group").toString();
                     Integer uid  = Integer.parseInt(map.get("uid").toString());
                     //如果登陆，判断是否购买过
                     TypechoUserlog log = new TypechoUserlog();
@@ -176,9 +201,12 @@ public class TypechoShopController {
                     Integer isBuy = userlogService.total(log);
                     //判断自己是不是发布者
                     Integer aid = info.getUid();
-                    if(!uid.equals(aid)&&isBuy < 1){
-                        shopinfo.remove("value");
+                    if(!group.equals("administrator")&&!group.equals("editor")){
+                        if(!uid.equals(aid)&&isBuy < 1){
+                            shopinfo.remove("value");
+                        }
                     }
+
 
                 }
                 shopInfoJson = shopinfo;
@@ -214,30 +242,32 @@ public class TypechoShopController {
         //登录情况下，刷数据攻击拦截
         TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
         if(apiconfig.getBanRobots().equals(1)) {
-            String isSilence = redisHelp.getRedis(this.dataprefix + "_" + uid + "_silence", redisTemplate);
-            if (isSilence != null) {
-                return Result.getResultJson(0, "你的操作太频繁了，请稍后再试", null);
+            String isSilence = redisHelp.getRedis(this.dataprefix+"_"+uid+"_silence",redisTemplate);
+            if(isSilence!=null){
+                return Result.getResultJson(0,"你已被禁言，请耐心等待",null);
             }
-            String isRepeated = redisHelp.getRedis(this.dataprefix + "_" + uid + "_isRepeated", redisTemplate);
-            if (isRepeated == null) {
-                redisHelp.setRedis(this.dataprefix + "_" + uid + "_isRepeated", "1", 3, redisTemplate);
-            } else {
+            String isRepeated = redisHelp.getRedis(this.dataprefix+"_"+uid+"_isRepeated",redisTemplate);
+            if(isRepeated==null){
+                redisHelp.setRedis(this.dataprefix+"_"+uid+"_isRepeated","1",3,redisTemplate);
+            }else{
                 Integer frequency = Integer.parseInt(isRepeated) + 1;
-                if (frequency == 3) {
-                    securityService.safetyMessage("用户ID：" + uid + "，在商品发布接口疑似存在攻击行为，请及时确认处理。", "system");
-                    redisHelp.setRedis(this.dataprefix + "_" + uid + "_silence", "1", 600, redisTemplate);
-                    return Result.getResultJson(0, "你的请求存在恶意行为，10分钟内禁止操作！", null);
-                } else {
-                    redisHelp.setRedis(this.dataprefix + "_" + uid + "_isRepeated", frequency.toString(), 3, redisTemplate);
+                if(frequency==3){
+                    securityService.safetyMessage("用户ID："+uid+"，在商品发布接口疑似存在攻击行为，请及时确认处理。","system");
+                    redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",apiconfig.getSilenceTime(),redisTemplate);
+                    return Result.getResultJson(0,"你的请求存在恶意行为，10分钟内禁止操作！",null);
+                }else{
+                    redisHelp.setRedis(this.dataprefix+"_"+uid+"_isRepeated",frequency.toString(),3,redisTemplate);
                 }
-                return Result.getResultJson(0, "你的操作太频繁了", null);
+                return Result.getResultJson(0,"你的操作太频繁了",null);
             }
         }
+
         //攻击拦截结束
         Map jsonToMap =null;
         TypechoShop insert = null;
 
         if (StringUtils.isNotBlank(params)) {
+
             jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
             //支持两种模式提交商品内容
             if(text==null){
@@ -251,9 +281,6 @@ public class TypechoShopController {
                 }
             }
             jsonToMap.put("status","0");
-            //生成typecho数据库格式的创建时间戳
-            Long date = System.currentTimeMillis();
-            String userTime = String.valueOf(date).substring(0,10);
 
             if(text.length()<1){
                 return Result.getResultJson(0,"内容不能为空",null);
@@ -268,10 +295,11 @@ public class TypechoShopController {
                     return Result.getResultJson(0,"你的内容包含敏感代码，请修改后重试！",null);
                 }
             }
-            text = text.replace("||rn||","\r\n");
+            if(isMd.equals(1)){
+                text = text.replace("||rn||","\n");
+            }
             jsonToMap.put("text",text);
             jsonToMap.put("isMd",isMd);
-            jsonToMap.put("created",userTime);
 
             //如果用户不设置VIP折扣，则调用系统设置
 
@@ -330,6 +358,9 @@ public class TypechoShopController {
                 }
             }
             insert = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoShop.class);
+            Long date = System.currentTimeMillis();
+            String created = String.valueOf(date).substring(0,10);
+            insert.setCreated(Integer.parseInt(created));
             insert.setUid(uid);
         }
 
@@ -446,7 +477,9 @@ public class TypechoShopController {
                     return Result.getResultJson(0,"你的内容包含敏感代码，请修改后重试！",null);
                 }
             }
-            text = text.replace("||rn||","\r\n");
+            if(isMd.equals(1)){
+                text = text.replace("||rn||","\n");
+            }
             jsonToMap.put("text",text);
             jsonToMap.remove("created");
             jsonToMap.put("isMd",isMd);
@@ -626,9 +659,12 @@ public class TypechoShopController {
                 return Result.getResultJson(0,"该商品已下架",null);
             }
             Integer num = shopinfo.getNum();
-            if(num<1){
-                return Result.getResultJson(0,"该商品已售完",null);
+            if(!num.equals(-1)){
+                if(num<1){
+                    return Result.getResultJson(0,"该商品已售完",null);
+                }
             }
+
             if(price<0){
                 return Result.getResultJson(0,"该商品价格参数异常，无法交易",null);
             }
@@ -677,12 +713,14 @@ public class TypechoShopController {
             //修改用户账户
             usersService.update(usersinfo);
             //修改商品剩余数量
-            Integer shopnum = shopinfo.getNum();
-            shopnum = shopnum - 1;
-            shopinfo.setNum(shopnum);
+            if(!num.equals(-1)){
+                Integer shopnum = shopinfo.getNum();
+                shopnum = shopnum - 1;
+                shopinfo.setNum(shopnum);
+            }
+
 
             //更新商品卖出数量
-
             Integer sellNum = shopinfo.getSellNum();
             sellNum = sellNum + 1;
             shopinfo.setSellNum(sellNum);
@@ -729,7 +767,12 @@ public class TypechoShopController {
             inbox.setUid(uid);
             inbox.setTouid(shopinfo.getUid());
             inbox.setType("finance");
-            inbox.setText("你的商品【"+shopinfo.getTitle()+"】有新的订单。");
+            if(shopinfo.getTitle()==null){
+                inbox.setText("你的商品有新的订单。");
+            }else{
+                inbox.setText("你的商品【"+shopinfo.getTitle()+"】有新的订单。");
+            }
+
             inbox.setValue(shopinfo.getId());
             inbox.setCreated(Integer.parseInt(created));
             inboxService.insert(inbox);
@@ -829,9 +872,10 @@ public class TypechoShopController {
             response.put("msg"  , rows > 0 ? "开通VIP成功" : "操作失败");
             return response.toString();
         }catch (Exception e){
+            e.printStackTrace();
             JSONObject response = new JSONObject();
             response.put("code" , 0);
-            response.put("msg"  , "操作失败");
+            response.put("msg"  , "接口请求异常，请联系管理员");
             return response.toString();
         }
 
@@ -848,6 +892,7 @@ public class TypechoShopController {
         data.put("vipDiscount",apiconfig.getVipDiscount());
         data.put("vipPrice",apiconfig.getVipPrice());
         data.put("scale",apiconfig.getScale());
+        data.put("vipDay",apiconfig.getVipDay());
         JSONObject response = new JSONObject();
         response.put("code" , 1);
         response.put("data" , data);
@@ -905,5 +950,230 @@ public class TypechoShopController {
         response.put("code" , rows > 0 ? 1 : 0);
         response.put("msg"  , rows > 0 ? "已购买" : "未购买");
         return response.toString();
+    }
+    /***
+     * 添加商品分类
+     */
+    @RequestMapping(value = "/addShopType")
+    @ResponseBody
+    public String addShopType(@RequestParam(value = "params", required = false) String  params,@RequestParam(value = "token", required = false) String  token) {
+        try{
+            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+            if(uStatus==0){
+                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+            }
+            // 查询发布者是不是自己，如果是管理员则跳过
+            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            Integer uid  = Integer.parseInt(map.get("uid").toString());
+            String group = map.get("group").toString();
+            if(!group.equals("administrator")&&!group.equals("editor")){
+                return Result.getResultJson(0,"你无权进行此操作",null);
+            }
+            TypechoShoptype insert = null;
+            if (StringUtils.isNotBlank(params)) {
+                JSONObject object = JSON.parseObject(params);
+                insert = object.toJavaObject(TypechoShoptype.class);
+            }else{
+                return Result.getResultJson(0, "参数不正确", null);
+            }
+
+            int rows = shoptypeService.insert(insert);
+            editFile.setLog("管理员"+uid+"请求添加商品分类");
+            JSONObject response = new JSONObject();
+            response.put("code" , rows);
+            response.put("msg"  , rows > 0 ? "添加成功" : "添加失败");
+            return response.toString();
+        }catch (Exception e){
+            e.printStackTrace();
+            JSONObject response = new JSONObject();
+            response.put("code" , 0);
+            response.put("msg"  , "接口请求异常，请联系管理员");
+            return response.toString();
+        }
+
+    }
+    /***
+     * 修改商品分类
+     */
+    @RequestMapping(value = "/editShopType")
+    @ResponseBody
+    public String editShopType(@RequestParam(value = "params", required = false) String  params,@RequestParam(value = "token", required = false) String  token) {
+        try{
+            Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
+            if (uStatus == 0) {
+                return Result.getResultJson(0, "用户未登录或Token验证失败", null);
+            }
+            Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+            String group = map.get("group").toString();
+            if (!group.equals("administrator")) {
+                return Result.getResultJson(0, "你没有操作权限", null);
+            }
+            String logUid = map.get("uid").toString();
+            TypechoShoptype update = new TypechoShoptype();
+            Map jsonToMap = null;
+            if (StringUtils.isNotBlank(params)) {
+                jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
+                update = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoShoptype.class);
+            }else{
+                return Result.getResultJson(0, "参数不正确", null);
+            }
+
+            int rows = shoptypeService.update(update);
+            editFile.setLog("管理员"+logUid+"请求修改商品分类"+jsonToMap.get("mid").toString());
+            JSONObject response = new JSONObject();
+            response.put("code" , rows);
+            response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
+            return response.toString();
+        }catch (Exception e){
+            e.printStackTrace();
+            return Result.getResultJson(0, "接口请求异常，请联系管理员", null);
+        }
+
+    }
+    /***
+     * 删除分类
+     */
+    @RequestMapping(value = "/deleteShopType")
+    @ResponseBody
+    public String deleteShopType(@RequestParam(value = "id", required = false) String  id,
+                                 @RequestParam(value = "token", required = false) String  token) {
+        try {
+            Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
+            if (uStatus == 0) {
+                return Result.getResultJson(0, "用户未登录或Token验证失败", null);
+            }
+            Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+            String group = map.get("group").toString();
+            String logUid = map.get("uid").toString();
+            if (!group.equals("administrator")) {
+                return Result.getResultJson(0, "你没有操作权限", null);
+            }
+            TypechoShoptype typeInfo = shoptypeService.selectByKey(id);
+            if(typeInfo==null){
+                return Result.getResultJson(0, "商品分类不存在", null);
+            }
+            Integer typeId = typeInfo.getId();
+            //有下级分类的大类不能删除
+            TypechoShoptype shoptype = new TypechoShoptype();
+            shoptype.setParent(typeId);
+            Integer total = shoptypeService.total(shoptype);
+            if(total > 0){
+                return Result.getResultJson(0, "该分类存在下级分类，无法删除", null);
+            }
+
+            int rows = shoptypeService.delete(id);
+            editFile.setLog("管理员"+logUid+"请求删除商品分类"+id);
+            JSONObject response = new JSONObject();
+            response.put("code" , rows);
+            response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
+            return response.toString();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Result.getResultJson(0, "接口请求异常，请联系管理员", null);
+        }
+    }
+    /***
+     * 查询商品分类
+     */
+    @RequestMapping(value = "/shopTypeList")
+    @ResponseBody
+    public String shopTypeList (@RequestParam(value = "searchParams", required = false) String  searchParams,
+                                @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
+                                @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
+                                @RequestParam(value = "searchKey"        , required = false, defaultValue = "") String searchKey,
+                                @RequestParam(value = "order"        , required = false, defaultValue = "") String order) {
+        TypechoShoptype query = new TypechoShoptype();
+        String sqlParams = "null";
+        if(limit>50){
+            limit = 50;
+        }
+        Integer total = 0;
+        List jsonList = new ArrayList();
+
+        if (StringUtils.isNotBlank(searchParams)) {
+            JSONObject object = JSON.parseObject(searchParams);
+            query = object.toJavaObject(TypechoShoptype.class);
+            Map paramsJson = JSONObject.parseObject(JSONObject.toJSONString(query), Map.class);
+            sqlParams = paramsJson.toString();
+        }
+        List cacheList = redisHelp.getList(this.dataprefix+"_"+"shopTypeList_"+page+"_"+limit+"_"+searchKey+"_"+sqlParams,redisTemplate);
+
+        total = shoptypeService.total(query);
+        try {
+            if (cacheList.size() > 0) {
+                jsonList = cacheList;
+            } else {
+                PageList<TypechoShoptype> pageList = shoptypeService.selectPage(query, page, limit, searchKey, order);
+                jsonList = pageList.getList();
+                if(jsonList.size() < 1){
+                    JSONObject noData = new JSONObject();
+                    noData.put("code" , 1);
+                    noData.put("msg"  , "");
+                    noData.put("data" , new ArrayList());
+                    noData.put("count", 0);
+                    return noData.toString();
+                }
+                redisHelp.delete(this.dataprefix+"_"+"shopTypeList_"+page+"_"+limit+"_"+searchKey+"_"+sqlParams,redisTemplate);
+                redisHelp.setList(this.dataprefix+"_"+"shopTypeList_"+page+"_"+limit+"_"+searchKey+"_"+sqlParams,jsonList,10,redisTemplate);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+            if(cacheList.size()>0){
+                jsonList = cacheList;
+            }
+        }
+        JSONObject response = new JSONObject();
+        response.put("code" , 1);
+        response.put("msg"  , "");
+        response.put("data" , jsonList);
+        response.put("count", jsonList.size());
+        response.put("total", total);
+        return response.toString();
+    }
+    /***
+     * 商品分类信息
+     */
+    @RequestMapping(value = "/shopTypeInfo")
+    @ResponseBody
+    public String shopTypeInfo(@RequestParam(value = "id", required = false) Integer  id,
+                               @RequestParam(value = "token", required = false) String  token) {
+        try {
+            Integer uid = 0;
+            Integer cacheTime = 20;
+            Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
+            if (!uStatus.equals(0)) {
+                Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+                uid =Integer.parseInt(map.get("uid").toString());
+                cacheTime = 3;
+            }
+            Map shopTypeInfoJson = new HashMap<String, String>();
+            Map cacheInfo = redisHelp.getMapValue(this.dataprefix+"_"+"shopTypeInfoJson_"+id,redisTemplate);
+            if(cacheInfo.size()>0){
+                shopTypeInfoJson = cacheInfo;
+            }else{
+                TypechoShoptype shoptype = shoptypeService.selectByKey(id);
+                if(shoptype==null){
+                    return Result.getResultJson(0,"板块不存在",null);
+                }
+
+                shopTypeInfoJson = JSONObject.parseObject(JSONObject.toJSONString(shoptype), Map.class);
+
+                redisHelp.delete(this.dataprefix+"_"+"shopTypeInfoJson_"+id+'_'+uid,redisTemplate);
+                redisHelp.setKey(this.dataprefix+"_"+"shopTypeInfoJson_"+id+'_'+uid,shopTypeInfoJson,cacheTime,redisTemplate);
+            }
+            JSONObject response = new JSONObject();
+            response.put("code", 1);
+            response.put("msg", "");
+            response.put("data", shopTypeInfoJson);
+            return response.toString();
+        }catch (Exception e){
+            e.printStackTrace();
+            JSONObject response = new JSONObject();
+            response.put("code", 1);
+            response.put("msg", "");
+            response.put("data", null);
+
+            return response.toString();
+        }
     }
 }

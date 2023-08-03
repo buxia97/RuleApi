@@ -88,4 +88,19 @@ public class TypechoShop implements Serializable {
      */
     private Integer isMd;
 
+    /**
+     * sort  商品大类
+     */
+    private Integer sort;
+
+    /**
+     * subtype  子类型
+     */
+    private Integer subtype;
+
+    /**
+     * isView  是否可见
+     */
+    private Integer isView;
+
 }
