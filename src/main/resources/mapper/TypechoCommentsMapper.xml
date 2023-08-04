@@ -292,7 +292,7 @@
             <if test ='null != typechoComments.parent'>
                 and `parent` = #{typechoComments.parent}
             </if>
-            <if test ='"" != searchKey'>
+            <if test ='null != searchKey'>
                 and CONCAT(IFNULL(`text`, '')) LIKE CONCAT('%', #{searchKey}, '%')
             </if>
 

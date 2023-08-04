@@ -377,7 +377,7 @@
             <if test ='null != typechoContents.isswiper'>
                 and `isswiper` = #{typechoContents.isswiper}
             </if>
-            <if test ='"" != searchKey'>
+            <if test ='null != searchKey'>
                 and CONCAT(IFNULL(`title`, '')) LIKE CONCAT('%', #{searchKey}, '%')
             </if>
             <if test ='0 != random'>

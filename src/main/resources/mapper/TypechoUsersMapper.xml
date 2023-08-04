@@ -307,7 +307,7 @@
             <if test ='null != typechoUsers.bantime'>
                 and `bantime` > UNIX_TIMESTAMP() or `bantime` = 1
             </if>
-            <if test ='"" != searchKey'>
+            <if test ='null != searchKey'>
                 and CONCAT(IFNULL(`name`, ''), IFNULL(`screenName`, ''), IFNULL(`uid`, ''), IFNULL(`mail`, '')) LIKE CONCAT('%', #{searchKey}, '%')
             </if>
 

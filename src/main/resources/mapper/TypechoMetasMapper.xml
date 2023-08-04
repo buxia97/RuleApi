@@ -209,7 +209,7 @@
             <if test ='null != typechoMetas.isrecommend'>
                 and `isrecommend` = #{typechoMetas.isrecommend}
             </if>
-            <if test ='"" != searchKey'>
+            <if test ='null != searchKey'>
                 and CONCAT(IFNULL(`name`, ''), IFNULL(`description`, '')) LIKE CONCAT('%', #{searchKey}, '%')
             </if>
         </where>

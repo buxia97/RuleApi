@@ -234,7 +234,7 @@
             <if test ='1 == isReply'>
                 and `type` = 3
             </if>
-            <if test ='"" != searchKey'>
+            <if test ='null != searchKey'>
                 AND CONCAT(IFNULL(`text`, '')) LIKE CONCAT('%', #{searchKey}, '%')
             </if>
         </where>
@@ -274,6 +274,9 @@
             </if>
             <if test ='null != toid'>
                 and `toid` = #{toid}
+            </if>
+            <if test ='null != status'>
+                and `status` = #{status}
             </if>
         </where>
     </select>

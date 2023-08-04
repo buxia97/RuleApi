@@ -195,7 +195,7 @@
             <if test ='null != typechoChat.type'>
                 and `type` = #{typechoChat.type}
             </if>
-            <if test ='"" != searchKey'>
+            <if test ='null != searchKey'>
                 and CONCAT(IFNULL(`name`, '')) LIKE CONCAT('%', #{searchKey}, '%')
             </if>
         </where>
