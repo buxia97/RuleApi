@@ -293,7 +293,7 @@
                 and `parent` = #{typechoComments.parent}
             </if>
             <if test ='"" != searchKey'>
-                and CONCAT(IFNULL(`text`,'')) LIKE '%${searchKey}%'
+                and CONCAT(IFNULL(`text`, '')) LIKE CONCAT('%', #{searchKey}, '%')
             </if>
 
         </where>

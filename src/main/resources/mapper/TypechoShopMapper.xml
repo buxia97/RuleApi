@@ -308,7 +308,7 @@
                 and `isView` = #{typechoShop.isView}
             </if>
             <if test ='"" != searchKey'>
-                and CONCAT(IFNULL(`title`,''),IFNULL(`text`,'')) LIKE '%${searchKey}%'
+                and CONCAT(IFNULL(`title`, ''), IFNULL(`text`, '')) LIKE CONCAT('%', #{searchKey}, '%')
             </if>
         </where>
         <if test ='"" != order'>

@@ -308,7 +308,7 @@
                 and `bantime` > UNIX_TIMESTAMP() or `bantime` = 1
             </if>
             <if test ='"" != searchKey'>
-                and CONCAT(IFNULL(`name`,''),IFNULL(`screenName`,''),IFNULL(`uid`,''),IFNULL(`mail`,'')) LIKE '%${searchKey}%'
+                and CONCAT(IFNULL(`name`, ''), IFNULL(`screenName`, ''), IFNULL(`uid`, ''), IFNULL(`mail`, '')) LIKE CONCAT('%', #{searchKey}, '%')
             </if>
 
         </where>

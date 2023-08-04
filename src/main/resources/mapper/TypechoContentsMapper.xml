@@ -378,7 +378,7 @@
                 and `isswiper` = #{typechoContents.isswiper}
             </if>
             <if test ='"" != searchKey'>
-                and CONCAT(IFNULL(`title`,'')) LIKE '%${searchKey}%'
+                and CONCAT(IFNULL(`title`, '')) LIKE CONCAT('%', #{searchKey}, '%')
             </if>
             <if test ='0 != random'>
                 and cid >= (SELECT FLOOR( MAX(cid) * RAND()) FROM `${prefix}_contents` )

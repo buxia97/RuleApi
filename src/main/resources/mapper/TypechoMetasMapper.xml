@@ -210,7 +210,7 @@
                 and `isrecommend` = #{typechoMetas.isrecommend}
             </if>
             <if test ='"" != searchKey'>
-                and CONCAT(IFNULL(`name`,''),IFNULL(`description`,'')) LIKE '%${searchKey}%'
+                and CONCAT(IFNULL(`name`, ''), IFNULL(`description`, '')) LIKE CONCAT('%', #{searchKey}, '%')
             </if>
         </where>
         <if test ='"" != order'>

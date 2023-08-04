@@ -235,7 +235,7 @@
                 and `type` = 3
             </if>
             <if test ='"" != searchKey'>
-                and CONCAT(IFNULL(`text`,'')) LIKE '%${searchKey}%'
+                AND CONCAT(IFNULL(`text`, '')) LIKE CONCAT('%', #{searchKey}, '%')
             </if>
         </where>
         <if test ='"" != order'>
