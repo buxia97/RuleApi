@@ -213,10 +213,10 @@
                 and CONCAT(IFNULL(`name`, ''), IFNULL(`description`, '')) LIKE CONCAT('%', #{searchKey}, '%')
             </if>
         </where>
-        <if test ='"" != order'>
-            order by `${order}` desc
+        <if test="order != null and order != ''">
+            order by CONCAT('`', #{order}, '`') desc
         </if>
-        limit #{page,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
+        limit ${page}, ${pageSize}
     </select>
 
     <!-- 总量查询 -->
