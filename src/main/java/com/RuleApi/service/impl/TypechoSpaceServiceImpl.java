@@ -18,33 +18,33 @@ import java.util.List;
 @Service
 public class TypechoSpaceServiceImpl implements TypechoSpaceService {
 
-    @Autowired
+	@Autowired
 	TypechoSpaceDao dao;
 
-    @Override
-    public int insert(TypechoSpace typechoSpace) {
-        return dao.insert(typechoSpace);
-    }
+	@Override
+	public int insert(TypechoSpace typechoSpace) {
+		return dao.insert(typechoSpace);
+	}
 
-    @Override
-    public int batchInsert(List<TypechoSpace> list) {
-    	return dao.batchInsert(list);
-    }
+	@Override
+	public int batchInsert(List<TypechoSpace> list) {
+		return dao.batchInsert(list);
+	}
 
-    @Override
-    public int update(TypechoSpace typechoSpace) {
-    	return dao.update(typechoSpace);
-    }
+	@Override
+	public int update(TypechoSpace typechoSpace) {
+		return dao.update(typechoSpace);
+	}
 
-    @Override
-    public int delete(Object key) {
-    	return dao.delete(key);
-    }
+	@Override
+	public int delete(Object key) {
+		return dao.delete(key);
+	}
 
-    @Override
-    public int batchDelete(List<Object> keys) {
-        return dao.batchDelete(keys);
-    }
+	@Override
+	public int batchDelete(List<Object> keys) {
+		return dao.batchDelete(keys);
+	}
 
 	@Override
 	public TypechoSpace selectByKey(Object key) {
@@ -60,7 +60,7 @@ public class TypechoSpaceServiceImpl implements TypechoSpaceService {
 	public PageList<TypechoSpace> selectPage(TypechoSpace typechoSpace, Integer offset, Integer pageSize,String order,String searchKey,Integer isReply) {
 		PageList<TypechoSpace> pageList = new PageList<>();
 
-		int total = this.total(typechoSpace);
+		int total = this.total(typechoSpace,searchKey);
 
 		Integer totalPage;
 		if (total % pageSize != 0) {
@@ -82,7 +82,7 @@ public class TypechoSpaceServiceImpl implements TypechoSpaceService {
 	}
 
 	@Override
-	public int total(TypechoSpace typechoSpace) {
-		return dao.total(typechoSpace);
+	public int total(TypechoSpace typechoSpace,String searchKey) {
+		return dao.total(typechoSpace,searchKey);
 	}
 }

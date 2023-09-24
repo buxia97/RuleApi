@@ -58,5 +58,5 @@ public interface TypechoShopDao {
     /**
      * [总量查询]
      **/
-    int total(TypechoShop typechoShop);
+    int total(@Param("typechoShop") TypechoShop typechoShop, @Param("searchKey") String searchKey);
 }

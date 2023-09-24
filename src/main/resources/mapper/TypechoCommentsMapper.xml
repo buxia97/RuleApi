@@ -18,6 +18,7 @@
         <result column="type" property="type" />
         <result column="status" property="status" />
         <result column="parent" property="parent" />
+        <result column="likes" property="likes" />
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -34,7 +35,8 @@
         `text`,
         `type`,
         `status`,
-        `parent`
+        `parent`,
+        `likes`
     </sql>
 
     <!-- 插入数据 -->
@@ -81,7 +83,10 @@
                 `status`,
             </if>
             <if test ='null != parent'>
-                `parent`
+                `parent`,
+            </if>
+            <if test ='null != likes'>
+                `likes`
             </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
@@ -125,7 +130,10 @@
                 #{status},
             </if>
             <if test ='null != parent'>
-                #{parent}
+                #{parent},
+            </if>
+            <if test ='null != likes'>
+                #{likes}
             </if>
         </trim>
     </insert>
@@ -135,20 +143,20 @@
         INSERT INTO ${prefix}_comments ( <include refid="Base_Column_List" /> ) VALUES
         <foreach collection="list" item="curr" index="index" separator=",">
             (
-                #{curr.coid},
-                #{curr.cid},
-                #{curr.created},
-                #{curr.author},
-                #{curr.authorId},
-                #{curr.ownerId},
-                #{curr.mail},
-                #{curr.url},
-                #{curr.ip},
-                #{curr.agent},
-                #{curr.text},
-                #{curr.type},
-                #{curr.status},
-                #{curr.parent}
+            #{curr.coid},
+            #{curr.cid},
+            #{curr.created},
+            #{curr.author},
+            #{curr.authorId},
+            #{curr.ownerId},
+            #{curr.mail},
+            #{curr.url},
+            #{curr.ip},
+            #{curr.agent},
+            #{curr.text},
+            #{curr.type},
+            #{curr.status},
+            #{curr.parent}
             )
         </foreach>
     </insert>
@@ -169,7 +177,8 @@
             <if test ='null != text'>`text` = #{text},</if>
             <if test ='null != type'>`type` = #{type},</if>
             <if test ='null != status'>`status` = #{status},</if>
-            <if test ='null != parent'>`parent` = #{parent}</if>
+            <if test ='null != parent'>`parent` = #{parent},</if>
+            <if test ='null != likes'>`likes` = #{likes}</if>
         </set>
         WHERE `coid` = #{coid}
     </update>
@@ -307,47 +316,50 @@
     <select id="total" resultType="java.lang.Integer">
         SELECT count(*) FROM ${prefix}_comments
         <where>
-            <if test ='null != coid'>
-                and `coid` = #{coid}
+            <if test ='null != typechoComments.coid'>
+                and `coid` = #{typechoComments.coid}
             </if>
-            <if test ='null != cid'>
-                and `cid` = #{cid}
+            <if test ='null != typechoComments.cid'>
+                and `cid` = #{typechoComments.cid}
             </if>
-            <if test ='null != created'>
-                and `created` = #{created}
+            <if test ='null != typechoComments.created'>
+                and `created` = #{typechoComments.created}
             </if>
-            <if test ='null != author'>
-                and `author` = #{author}
+            <if test ='null != typechoComments.author'>
+                and `author` = #{typechoComments.author}
             </if>
-            <if test ='null != authorId'>
-                and `authorId` = #{authorId}
+            <if test ='null != typechoComments.authorId'>
+                and `authorId` = #{typechoComments.authorId}
             </if>
-            <if test ='null != ownerId'>
-                and `ownerId` = #{ownerId}
+            <if test ='null != typechoComments.ownerId'>
+                and `ownerId` = #{typechoComments.ownerId}
             </if>
-            <if test ='null != mail'>
-                and `mail` = #{mail}
+            <if test ='null != typechoComments.mail'>
+                and `mail` = #{typechoComments.mail}
             </if>
-            <if test ='null != url'>
-                and `url` = #{url}
+            <if test ='null != typechoComments.url'>
+                and `url` = #{typechoComments.url}
             </if>
-            <if test ='null != ip'>
-                and `ip` = #{ip}
+            <if test ='null != typechoComments.ip'>
+                and `ip` = #{typechoComments.ip}
             </if>
-            <if test ='null != agent'>
-                and `agent` = #{agent}
+            <if test ='null != typechoComments.agent'>
+                and `agent` = #{typechoComments.agent}
             </if>
-            <if test ='null != text'>
-                and `text` = #{text}
+            <if test ='null != typechoComments.text'>
+                and `text` = #{typechoComments.text}
             </if>
-            <if test ='null != type'>
-                and `type` = #{type}
+            <if test ='null != typechoComments.type'>
+                and `type` = #{typechoComments.type}
             </if>
-            <if test ='null != status'>
-                and `status` = #{status}
+            <if test ='null != typechoComments.status'>
+                and `status` = #{typechoComments.status}
             </if>
-            <if test ='null != parent'>
-                and `parent` = #{parent}
+            <if test ='null != typechoComments.parent'>
+                and `parent` = #{typechoComments.parent}
+            </if>
+            <if test ='null != searchKey'>
+                and CONCAT(IFNULL(`text`, '')) LIKE CONCAT('%', #{searchKey}, '%')
             </if>
         </where>
     </select>

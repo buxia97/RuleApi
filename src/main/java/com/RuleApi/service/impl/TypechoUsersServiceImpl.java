@@ -18,33 +18,33 @@ import java.util.List;
 @Service
 public class TypechoUsersServiceImpl implements TypechoUsersService {
 
-    @Autowired
+	@Autowired
 	TypechoUsersDao dao;
 
-    @Override
-    public int insert(TypechoUsers typechoUsers) {
-        return dao.insert(typechoUsers);
-    }
+	@Override
+	public int insert(TypechoUsers typechoUsers) {
+		return dao.insert(typechoUsers);
+	}
 
-    @Override
-    public int batchInsert(List<TypechoUsers> list) {
-    	return dao.batchInsert(list);
-    }
+	@Override
+	public int batchInsert(List<TypechoUsers> list) {
+		return dao.batchInsert(list);
+	}
 
-    @Override
-    public int update(TypechoUsers typechoUsers) {
-    	return dao.update(typechoUsers);
-    }
+	@Override
+	public int update(TypechoUsers typechoUsers) {
+		return dao.update(typechoUsers);
+	}
 
-    @Override
-    public int delete(Object key) {
-    	return dao.delete(key);
-    }
+	@Override
+	public int delete(Object key) {
+		return dao.delete(key);
+	}
 
-    @Override
-    public int batchDelete(List<Object> keys) {
-        return dao.batchDelete(keys);
-    }
+	@Override
+	public int batchDelete(List<Object> keys) {
+		return dao.batchDelete(keys);
+	}
 
 	@Override
 	public TypechoUsers selectByKey(Object key) {
@@ -61,7 +61,7 @@ public class TypechoUsersServiceImpl implements TypechoUsersService {
 	public PageList<TypechoUsers> selectPage(TypechoUsers typechoUsers, Integer offset, Integer pageSize ,String searchKey,String order) {
 		PageList<TypechoUsers> pageList = new PageList<>();
 
-		int total = this.total(typechoUsers);
+		int total = this.total(typechoUsers,searchKey);
 
 		Integer totalPage;
 		if (total % pageSize != 0) {
@@ -85,7 +85,7 @@ public class TypechoUsersServiceImpl implements TypechoUsersService {
 	}
 
 	@Override
-	public int total(TypechoUsers typechoUsers) {
-		return dao.total(typechoUsers);
+	public int total(TypechoUsers typechoUsers,String searchKey) {
+		return dao.total(typechoUsers,searchKey);
 	}
 }

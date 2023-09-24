@@ -18,33 +18,33 @@ import java.util.List;
 @Service
 public class TypechoContentsServiceImpl implements TypechoContentsService {
 
-    @Autowired
+	@Autowired
 	TypechoContentsDao dao;
 
-    @Override
-    public int insert(TypechoContents typechoContents) {
-        return dao.insert(typechoContents);
-    }
+	@Override
+	public int insert(TypechoContents typechoContents) {
+		return dao.insert(typechoContents);
+	}
 
-    @Override
-    public int batchInsert(List<TypechoContents> list) {
-    	return dao.batchInsert(list);
-    }
+	@Override
+	public int batchInsert(List<TypechoContents> list) {
+		return dao.batchInsert(list);
+	}
 
-    @Override
-    public int update(TypechoContents typechoContents) {
-    	return dao.update(typechoContents);
-    }
+	@Override
+	public int update(TypechoContents typechoContents) {
+		return dao.update(typechoContents);
+	}
 
-    @Override
-    public int delete(Object key) {
-    	return dao.delete(key);
-    }
+	@Override
+	public int delete(Object key) {
+		return dao.delete(key);
+	}
 
-    @Override
-    public int batchDelete(List<Object> keys) {
-        return dao.batchDelete(keys);
-    }
+	@Override
+	public int batchDelete(List<Object> keys) {
+		return dao.batchDelete(keys);
+	}
 
 	@Override
 	public TypechoContents selectByKey(Object key) {
@@ -60,7 +60,7 @@ public class TypechoContentsServiceImpl implements TypechoContentsService {
 	public PageList<TypechoContents> selectPage(TypechoContents typechoContents, Integer offset, Integer pageSize ,String searchKey,String order,Integer random) {
 		PageList<TypechoContents> pageList = new PageList<>();
 
-		int total = this.total(typechoContents);
+		int total = this.total(typechoContents,searchKey);
 
 		Integer totalPage;
 		if (total % pageSize != 0) {
@@ -82,7 +82,7 @@ public class TypechoContentsServiceImpl implements TypechoContentsService {
 	}
 
 	@Override
-	public int total(TypechoContents typechoContents) {
-		return dao.total(typechoContents);
+	public int total(TypechoContents typechoContents,String searchKey) {
+		return dao.total(typechoContents,searchKey);
 	}
 }

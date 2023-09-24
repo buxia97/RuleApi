@@ -56,5 +56,5 @@ public interface TypechoCommentsService {
     /**
      * [总量查询]
      **/
-    int total(TypechoComments typechoComments);
+    int total(TypechoComments typechoComments,String searchKey);
 }

@@ -112,7 +112,7 @@ public class TypechoShopController {
             sqlParams = paramsJson.toString();
 
         }
-        total = service.total(query);
+        total = service.total(query,searchKey);
         List cacheList = redisHelp.getList(this.dataprefix+"_"+"shopList_"+page+"_"+limit+"_"+searchKey+"_"+sqlParams+"_"+order+"_"+uid,redisTemplate);
 
 
@@ -916,7 +916,7 @@ public class TypechoShopController {
         TypechoShop shop = new TypechoShop();
         shop.setUid(uid);
         shop.setId(Integer.parseInt(sid));
-        Integer num  = service.total(shop);
+        Integer num  = service.total(shop,null);
         if(num < 1){
             return Result.getResultJson(0,"你无权限修改他人的商品",null);
         }

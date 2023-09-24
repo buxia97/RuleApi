@@ -58,5 +58,5 @@ public interface TypechoSpaceDao {
     /**
      * [总量查询]
      **/
-    int total(TypechoSpace typechoSpace);
+    int total(@Param("typechoSpace") TypechoSpace typechoSpace, @Param("searchKey") String searchKey);
 }

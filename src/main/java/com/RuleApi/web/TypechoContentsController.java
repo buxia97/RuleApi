@@ -12,6 +12,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.DigestUtils;
@@ -102,8 +103,12 @@ public class TypechoContentsController {
     @Value("${web.prefix}")
     private String dataprefix;
 
+    @Value("${mybatis.configuration.variables.prefix}")
+    private String prefix;
 
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
     RedisHelp redisHelp =new RedisHelp();
     ResultAll Result = new ResultAll();
     baseFull baseFull = new baseFull();
@@ -309,7 +314,7 @@ public class TypechoContentsController {
             sqlParams = paramsJson.toString();
 
         }
-        total = service.total(query);
+        total = service.total(query,searchKey);
         List jsonList = new ArrayList();
         //管理员和编辑以登录状态请求时，不调用缓存
         if(!group.equals("administrator")&&!group.equals("editor")) {
@@ -735,7 +740,7 @@ public class TypechoContentsController {
                         TypechoShop shop = new TypechoShop();
                         shop.setUid(uid);
                         shop.setId(sid);
-                        Integer num  = shopService.total(shop);
+                        Integer num  = shopService.total(shop,null);
                         if(num >= 1){
                             shop.setCid(cid);
                             shopService.update(shop);
@@ -1046,7 +1051,7 @@ public class TypechoContentsController {
                         TypechoShop shop = new TypechoShop();
                         shop.setUid(uid);
                         shop.setId(sid);
-                        Integer num  = shopService.total(shop);
+                        Integer num  = shopService.total(shop,null);
                         if(num >= 1){
                             //如果是，去数据库将其它商品的cid改为0
                             TypechoShop rmshop = new TypechoShop();
@@ -1512,14 +1517,14 @@ public class TypechoContentsController {
             TypechoContents contents = new TypechoContents();
             contents.setCid(Integer.parseInt(key));
             contents.setAuthorId(uid);
-            Integer isAuthor = service.total(contents);
+            Integer isAuthor = service.total(contents,null);
             if(isAuthor>0){
                 return Result.getResultJson(1,"",null);
             }
             TypechoComments comments = new TypechoComments();
             comments.setCid(Integer.parseInt(key));
             comments.setAuthorId(uid);
-            Integer isCommnet = commentsService.total(comments);
+            Integer isCommnet = commentsService.total(comments,null);
             if(isCommnet>0){
                 return Result.getResultJson(1,"",null);
             }else{
@@ -1632,7 +1637,7 @@ public class TypechoContentsController {
                     //获取用户等级
                     TypechoComments comments = new TypechoComments();
                     comments.setAuthorId(userid);
-                    Integer lv = commentsService.total(comments);
+                    Integer lv = commentsService.total(comments,null);
                     userJson.put("lv", baseFull.getLv(lv));
                     json.put("userJson",userJson);
                     jsonList.add(json);
@@ -1725,20 +1730,20 @@ public class TypechoContentsController {
         TypechoContents contents = new TypechoContents();
         contents.setType("post");
         contents.setStatus("publish");
-        Integer allContents = service.total(contents);
+        Integer allContents = service.total(contents,null);
 
         TypechoComments comments = new TypechoComments();
-        Integer allComments = commentsService.total(comments);
+        Integer allComments = commentsService.total(comments,null);
 
         TypechoUsers users = new TypechoUsers();
-        Integer allUsers = usersService.total(users);
+        Integer allUsers = usersService.total(users,null);
 
 
         TypechoShop shop = new TypechoShop();
-        Integer allShop = shopService.total(shop);
+        Integer allShop = shopService.total(shop,null);
 
         TypechoSpace space = new TypechoSpace();
-        Integer allSpace = spaceService.total(space);
+        Integer allSpace = spaceService.total(space,null);
 
         TypechoAds ads = new TypechoAds();
         Integer allAds = adsService.total(ads);
@@ -1747,16 +1752,16 @@ public class TypechoContentsController {
 
         contents.setType("post");
         contents.setStatus("waiting");
-        Integer upcomingContents = service.total(contents);
+        Integer upcomingContents = service.total(contents,null);
 
         comments.setStatus("waiting");
-        Integer upcomingComments = commentsService.total(comments);
+        Integer upcomingComments = commentsService.total(comments,null);
 
         shop.setStatus(0);
-        Integer upcomingShop = shopService.total(shop);
+        Integer upcomingShop = shopService.total(shop,null);
 
         space.setStatus(0);
-        Integer upcomingSpace = spaceService.total(space);
+        Integer upcomingSpace = spaceService.total(space,null);
 
 
         ads.setStatus(0);
@@ -1789,5 +1794,177 @@ public class TypechoContentsController {
         response.put("data" , data);
 
         return response.toString();
+    }
+
+    /***
+     * 我关注的人的文章
+     */
+    @RequestMapping(value = "/followContents")
+    @ResponseBody
+    public String followSpace(@RequestParam(value = "token", required = false) String  token,
+                              @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
+                              @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit){
+        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+        if(uStatus==0){
+            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+        }
+        page = page - 1;
+
+        Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+        Integer uid  = Integer.parseInt(map.get("uid").toString());
+        List jsonList = new ArrayList();
+        List cacheList = redisHelp.getList(this.dataprefix+"_"+"followContents_"+uid+"_"+page+"_"+limit,redisTemplate);
+        try {
+            if (cacheList.size() > 0) {
+                jsonList = cacheList;
+            } else {
+                TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
+                String sql = "SELECT content.* FROM "+prefix+"_contents AS content JOIN "+prefix+"_fan AS fan ON content.authorId = fan.touid WHERE fan.uid = ? AND content.status = 'publish' ORDER BY content.created DESC LIMIT ?, ?";
+                List<Map<String, Object>> list = jdbcTemplate.queryForList(sql, uid, page, limit);
+                if(list.size() < 1){
+                    JSONObject noData = new JSONObject();
+                    noData.put("code" , 1);
+                    noData.put("msg"  , "");
+                    noData.put("data" , new ArrayList());
+                    noData.put("count", 0);
+                    return noData.toString();
+                }
+                for (int i = 0; i < list.size(); i++) {
+                    Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
+                    //加入自定义字段信息，这里取消注释即可开启，但是数据库查询会消耗性能
+                    String cid = json.get("cid").toString();
+                    TypechoFields f = new TypechoFields();
+                    f.setCid(Integer.parseInt(cid));
+                    List<TypechoFields> fields = fieldsService.selectList(f);
+                    json.put("fields",fields);
+
+                    TypechoRelationships rs = new TypechoRelationships();
+                    rs.setCid(Integer.parseInt(cid));
+                    List<TypechoRelationships> relationships = relationshipsService.selectList(rs);
+
+                    List metas = new ArrayList();
+                    List tags = new ArrayList();
+                    if(relationships.size()>0){
+                        for (int j = 0; j < relationships.size(); j++) {
+                            Map info = JSONObject.parseObject(JSONObject.toJSONString(relationships.get(j)), Map.class);
+                            if(info!=null){
+                                String mid = info.get("mid").toString();
+
+                                TypechoMetas metasList  = metasService.selectByKey(mid);
+                                if(metasList!=null){
+                                    Map metasInfo = JSONObject.parseObject(JSONObject.toJSONString(metasList), Map.class);
+                                    String type = metasInfo.get("type").toString();
+                                    if(type.equals("category")){
+                                        metas.add(metasInfo);
+                                    }
+                                    if(type.equals("tag")){
+                                        tags.add(metasInfo);
+                                    }
+                                }
+
+                            }
+
+                        }
+                    }
+
+                    //写入作者详细信息
+                    Integer authorId = Integer.parseInt(json.get("authorId").toString());
+                    if(uid>0){
+                        TypechoUsers author = usersService.selectByKey(authorId);
+                        Map authorInfo = new HashMap();
+                        if(author!=null){
+                            String name = author.getName();
+                            if(author.getScreenName()!=null&&author.getScreenName()!=""){
+                                name = author.getScreenName();
+                            }
+                            String avatar = apiconfig.getWebinfoAvatar() + "null";
+                            if(author.getAvatar()!=null&&author.getAvatar()!=""){
+                                avatar = author.getAvatar();
+                            }else{
+                                if(author.getMail()!=null&&author.getMail()!=""){
+                                    String mail = author.getMail();
+
+                                    if(mail.indexOf("@qq.com") != -1){
+                                        String qq = mail.replace("@qq.com","");
+                                        avatar = "https://q1.qlogo.cn/g?b=qq&nk="+qq+"&s=640";
+                                    }else{
+                                        avatar = baseFull.getAvatar(apiconfig.getWebinfoAvatar(), author.getMail());
+                                    }
+                                    //avatar = baseFull.getAvatar(apiconfig.getWebinfoAvatar(), author.getMail());
+                                }
+                            }
+
+                            authorInfo.put("name",name);
+                            authorInfo.put("avatar",avatar);
+                            authorInfo.put("customize",author.getCustomize());
+                            authorInfo.put("experience",author.getExperience());
+                            //判断是否为VIP
+                            authorInfo.put("isvip", 0);
+                            Long date = System.currentTimeMillis();
+                            String curTime = String.valueOf(date).substring(0, 10);
+                            Integer viptime  = author.getVip();
+
+                            if(viptime>Integer.parseInt(curTime)||viptime.equals(1)){
+                                authorInfo.put("isvip", 1);
+                            }
+                            if(viptime.equals(1)){
+                                //永久VIP
+                                authorInfo.put("isvip", 2);
+                            }
+                        }else{
+                            authorInfo.put("name","用户已注销");
+                            authorInfo.put("avatar",apiconfig.getWebinfoAvatar() + "null");
+                        }
+
+
+                        json.put("authorInfo",authorInfo);
+                    }
+
+                    String text = json.get("text").toString();
+                    boolean status = text.contains("<!--markdown-->");
+                    if(status){
+                        json.put("markdown",1);
+                    }else{
+                        json.put("markdown",0);
+                    }
+                    List imgList = baseFull.getImageSrc(text);
+
+                    text = baseFull.toStrByChinese(text);
+
+                    json.put("images",imgList);
+                    json.put("text",text.length()>400 ? text.substring(0,400) : text);
+                    json.put("category",metas);
+                    json.put("tag",tags);
+                    //获取文章挂载的商品
+                    TypechoShop shop = new TypechoShop();
+                    shop.setCid(Integer.parseInt(cid));
+                    shop.setStatus(1);
+                    List<TypechoShop> shopList = shopService.selectList(shop);
+                    //去除付费内容显示
+                    for (int s = 0; s < shopList.size(); s++) {
+                        shopList.get(s).setValue(null);
+                    }
+                    json.put("shop",shopList);
+                    json.remove("password");
+
+                    jsonList.add(json);
+
+                }
+                redisHelp.delete(this.dataprefix+"_"+"followContents_"+uid+"_"+page+"_"+limit,redisTemplate);
+                redisHelp.setList(this.dataprefix+"_"+"followContents_"+uid+"_"+page+"_"+limit,jsonList,5,redisTemplate);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+            if(cacheList.size()>0){
+                jsonList = cacheList;
+            }
+        }
+        JSONObject response = new JSONObject();
+        response.put("code" , 1);
+        response.put("msg"  , "");
+        response.put("data" , jsonList);
+        response.put("count", jsonList.size());
+        return response.toString();
+
     }
 }

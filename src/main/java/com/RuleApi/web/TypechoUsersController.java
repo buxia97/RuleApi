@@ -139,7 +139,7 @@ public class TypechoUsersController {
             sqlParams = paramsJson.toString();
 
         }
-        total = service.total(query);
+        total = service.total(query,searchKey);
         List jsonList = new ArrayList();
         List cacheList = new ArrayList();
         //如果是管理员，则不缓存且显示用户资产
@@ -179,7 +179,7 @@ public class TypechoUsersController {
                     Integer uid = Integer.parseInt(json.get("uid").toString());
                     TypechoComments comments = new TypechoComments();
                     comments.setAuthorId(uid);
-                    Integer lv = commentsService.total(comments);
+                    Integer lv = commentsService.total(comments,null);
                     json.put("lv", baseFull.getLv(lv));
 
                     json.remove("password");
@@ -271,11 +271,11 @@ public class TypechoUsersController {
                 contents.setType("post");
                 contents.setStatus("publish");
                 contents.setAuthorId(uid);
-                Integer contentsNum = contentsService.total(contents);
+                Integer contentsNum = contentsService.total(contents,null);
                 //用户评论数量
                 TypechoComments comments = new TypechoComments();
                 comments.setAuthorId(uid);
-                Integer commentsNum = commentsService.total(comments);
+                Integer commentsNum = commentsService.total(comments,null);
                 //用户资产和创建时间
                 TypechoUsers user = service.selectByKey(uid);
                 if(user==null){
@@ -366,7 +366,7 @@ public class TypechoUsersController {
 
                 TypechoComments comments = new TypechoComments();
                 comments.setAuthorId(uid);
-                Integer lv = commentsService.total(comments);
+                Integer lv = commentsService.total(comments,null);
                 json.put("lv", baseFull.getLv(lv));
                 //判断是否为VIP
                 json.put("isvip", 0);
@@ -529,7 +529,7 @@ public class TypechoUsersController {
                 Integer uid = rows.get(0).getUid();
                 TypechoComments comments = new TypechoComments();
                 comments.setAuthorId(uid);
-                Integer lv = commentsService.total(comments);
+                Integer lv = commentsService.total(comments,null);
                 jsonToMap.put("lv", baseFull.getLv(lv));
                 if(rows.get(0).getAvatar()!=null){
                     jsonToMap.put("avatar",rows.get(0).getAvatar());
@@ -744,7 +744,7 @@ public class TypechoUsersController {
                 Integer uid = user.getUid();
                 TypechoComments comments = new TypechoComments();
                 comments.setAuthorId(uid);
-                Integer lv = commentsService.total(comments);
+                Integer lv = commentsService.total(comments,null);
                 jsonToMap.put("lv", baseFull.getLv(lv));
                 //更新用户登录时间和第一次登陆时间（满足typecho要求）
                 String userTime = String.valueOf(date).substring(0, 10);
@@ -1638,7 +1638,7 @@ public class TypechoUsersController {
             Map json = JSONObject.parseObject(JSONObject.toJSONString(users), Map.class);
             TypechoComments comments = new TypechoComments();
             comments.setAuthorId(uid);
-            Integer lv = commentsService.total(comments);
+            Integer lv = commentsService.total(comments,null);
             json.remove("password");
             json.remove("clientId");
             //判断是否为VIP
@@ -2024,7 +2024,7 @@ public class TypechoUsersController {
         Map json = JSONObject.parseObject(JSONObject.toJSONString(users), Map.class);
         TypechoComments comments = new TypechoComments();
         comments.setAuthorId(uid);
-        Integer lv = commentsService.total(comments);
+        Integer lv = commentsService.total(comments,null);
         json.remove("password");
         json.put("lv", baseFull.getLv(lv));
         json.put("token", token);
@@ -2289,7 +2289,7 @@ public class TypechoUsersController {
                     //获取用户等级
                     TypechoComments comments = new TypechoComments();
                     comments.setAuthorId(userid);
-                    Integer lv = commentsService.total(comments);
+                    Integer lv = commentsService.total(comments,null);
                     userJson.put("lv", baseFull.getLv(lv));
                     json.put("userJson",userJson);
                     if(inbox.getType().equals("comment")){
@@ -2607,7 +2607,7 @@ public class TypechoUsersController {
                     //获取用户等级
                     TypechoComments comments = new TypechoComments();
                     comments.setAuthorId(userid);
-                    Integer lv = commentsService.total(comments);
+                    Integer lv = commentsService.total(comments,null);
                     userJson.put("lv", baseFull.getLv(lv));
                     json.put("userJson",userJson);
                     jsonList.add(json);
@@ -2672,7 +2672,7 @@ public class TypechoUsersController {
                     //获取用户等级
                     TypechoComments comments = new TypechoComments();
                     comments.setAuthorId(userid);
-                    Integer lv = commentsService.total(comments);
+                    Integer lv = commentsService.total(comments,null);
                     userJson.put("lv", baseFull.getLv(lv));
                     json.put("userJson",userJson);
                     jsonList.add(json);
@@ -2872,7 +2872,7 @@ public class TypechoUsersController {
                     //获取用户等级
                     TypechoComments comments = new TypechoComments();
                     comments.setAuthorId(userid);
-                    Integer lv = commentsService.total(comments);
+                    Integer lv = commentsService.total(comments,null);
                     userJson.put("lv", baseFull.getLv(lv));
                     json.put("userJson",userJson);
                     jsonList.add(json);

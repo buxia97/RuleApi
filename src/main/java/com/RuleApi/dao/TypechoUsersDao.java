@@ -60,5 +60,5 @@ public interface TypechoUsersDao {
     /**
      * [总量查询]
      **/
-    int total(TypechoUsers typechoUsers);
+    int total(@Param("typechoUsers") TypechoUsers typechoUsers, @Param("searchKey") String searchKey);
 }

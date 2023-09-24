@@ -18,33 +18,33 @@ import java.util.List;
 @Service
 public class TypechoCommentsServiceImpl implements TypechoCommentsService {
 
-    @Autowired
+	@Autowired
 	TypechoCommentsDao dao;
 
-    @Override
-    public int insert(TypechoComments typechoComments) {
-        return dao.insert(typechoComments);
-    }
+	@Override
+	public int insert(TypechoComments typechoComments) {
+		return dao.insert(typechoComments);
+	}
 
-    @Override
-    public int batchInsert(List<TypechoComments> list) {
-    	return dao.batchInsert(list);
-    }
+	@Override
+	public int batchInsert(List<TypechoComments> list) {
+		return dao.batchInsert(list);
+	}
 
-    @Override
-    public int update(TypechoComments typechoComments) {
-    	return dao.update(typechoComments);
-    }
+	@Override
+	public int update(TypechoComments typechoComments) {
+		return dao.update(typechoComments);
+	}
 
-    @Override
-    public int delete(Object key) {
-    	return dao.delete(key);
-    }
+	@Override
+	public int delete(Object key) {
+		return dao.delete(key);
+	}
 
-    @Override
-    public int batchDelete(List<Object> keys) {
-        return dao.batchDelete(keys);
-    }
+	@Override
+	public int batchDelete(List<Object> keys) {
+		return dao.batchDelete(keys);
+	}
 
 	@Override
 	public TypechoComments selectByKey(Object key) {
@@ -60,7 +60,7 @@ public class TypechoCommentsServiceImpl implements TypechoCommentsService {
 	public PageList<TypechoComments> selectPage(TypechoComments typechoComments, Integer offset, Integer pageSize,String searchKey,String order) {
 		PageList<TypechoComments> pageList = new PageList<>();
 
-		int total = this.total(typechoComments);
+		int total = this.total(typechoComments,searchKey);
 
 		Integer totalPage;
 		if (total % pageSize != 0) {
@@ -82,7 +82,7 @@ public class TypechoCommentsServiceImpl implements TypechoCommentsService {
 	}
 
 	@Override
-	public int total(TypechoComments typechoComments) {
-		return dao.total(typechoComments);
+	public int total(TypechoComments typechoComments,String searchKey) {
+		return dao.total(typechoComments,searchKey);
 	}
 }

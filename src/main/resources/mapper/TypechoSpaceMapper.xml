@@ -238,8 +238,8 @@
                 AND CONCAT(IFNULL(`text`, '')) LIKE CONCAT('%', #{searchKey}, '%')
             </if>
         </where>
-        <if test ='"" != order'>
-            order by ${order} desc
+        <if test ='null != order'>
+            order by `${order}` desc
         </if>
         limit #{page,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
     </select>
@@ -248,35 +248,38 @@
     <select id="total" resultType="java.lang.Integer">
         SELECT count(*) FROM ${prefix}_space
         <where>
-            <if test ='null != id'>
-                and `id` = #{id}
+            <if test ='null != typechoSpace.id'>
+                and `id` = #{typechoSpace.id}
             </if>
-            <if test ='null != uid'>
-                and `uid` = #{uid}
+            <if test ='null != typechoSpace.uid'>
+                and `uid` = #{typechoSpace.uid}
             </if>
-            <if test ='null != created'>
-                and `created` = #{created}
+            <if test ='null != typechoSpace.created'>
+                and `created` = #{typechoSpace.created}
             </if>
-            <if test ='null != modified'>
-                and `modified` = #{modified}
+            <if test ='null != typechoSpace.modified'>
+                and `modified` = #{typechoSpace.modified}
             </if>
-            <if test ='null != text'>
-                and `text` = #{text}
+            <if test ='null != typechoSpace.text'>
+                and `text` = #{typechoSpace.text}
             </if>
-            <if test ='null != pic'>
-                and `pic` = #{pic}
+            <if test ='null != typechoSpace.pic'>
+                and `pic` = #{typechoSpace.pic}
             </if>
-            <if test ='null != type'>
-                and `type` = #{type}
+            <if test ='null != typechoSpace.type'>
+                and `type` = #{typechoSpace.type}
             </if>
-            <if test ='null != likes'>
-                and `likes` = #{likes}
+            <if test ='null != typechoSpace.likes'>
+                and `likes` = #{typechoSpace.likes}
             </if>
-            <if test ='null != toid'>
-                and `toid` = #{toid}
+            <if test ='null != typechoSpace.toid'>
+                and `toid` = #{typechoSpace.toid}
             </if>
-            <if test ='null != status'>
-                and `status` = #{status}
+            <if test ='null != typechoSpace.status'>
+                and `status` = #{typechoSpace.status}
+            </if>
+            <if test ='null != searchKey'>
+                AND CONCAT(IFNULL(`text`, '')) LIKE CONCAT('%', #{searchKey}, '%')
             </if>
         </where>
     </select>

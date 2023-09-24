@@ -58,6 +58,6 @@ public interface TypechoContentsDao {
     /**
      * [总量查询]
      **/
-    int total(TypechoContents typechoContents);
+    int total(@Param("typechoContents") TypechoContents typechoContents, @Param("searchKey") String searchKey);
 
 }

@@ -56,5 +56,5 @@ public interface TypechoSpaceService {
     /**
      * [总量查询]
      **/
-    int total(TypechoSpace typechoSpace);
+    int total(TypechoSpace typechoSpace,String searchKey);
 }

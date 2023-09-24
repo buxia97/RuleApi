@@ -56,5 +56,5 @@ public interface TypechoShopService {
     /**
      * [总量查询]
      **/
-    int total(TypechoShop typechoShop);
+    int total(TypechoShop typechoShop,String searchKey);
 }

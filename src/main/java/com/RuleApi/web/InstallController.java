@@ -297,6 +297,14 @@ public class InstallController {
         }else{
             text+="内容模块，字段isswiper已经存在，无需添加。";
         }
+        //查询文章评论表是否存在likes字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_comments' and column_name = 'likes';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_comments ADD likes integer(11) DEFAULT 0;");
+            text+="文章评论表，字段likes添加完成。";
+        }else{
+            text+="文章评论表，字段likes已经存在，无需添加。";
+        }
         //查询用户表是否存在introduce字段
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_users' and column_name = 'introduce';", Integer.class);
         if (i == 0){

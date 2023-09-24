@@ -58,5 +58,5 @@ public interface TypechoCommentsDao {
     /**
      * [总量查询]
      **/
-    int total(TypechoComments typechoComments);
+    int total(@Param("typechoComments") TypechoComments typechoComments, @Param("searchKey") String searchKey);
 }

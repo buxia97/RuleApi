@@ -56,5 +56,5 @@ public interface TypechoUsersService {
     /**
      * [总量查询]
      **/
-    int total(TypechoUsers typechoUsers);
+    int total(TypechoUsers typechoUsers,String searchKey);
 }

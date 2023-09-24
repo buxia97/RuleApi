@@ -169,23 +169,23 @@
         INSERT INTO ${prefix}_contents ( <include refid="Base_Column_List" /> ) VALUES
         <foreach collection="list" item="curr" index="index" separator=",">
             (
-                #{curr.cid},
-                #{curr.title},
-                #{curr.slug},
-                #{curr.created},
-                #{curr.modified},
-                #{curr.text},
-                #{curr.orderKey},
-                #{curr.authorId},
-                #{curr.template},
-                #{curr.type},
-                #{curr.status},
-                #{curr.password},
-                #{curr.commentsNum},
-                #{curr.allowComment},
-                #{curr.allowPing},
-                #{curr.allowFeed},
-                #{curr.parent}
+            #{curr.cid},
+            #{curr.title},
+            #{curr.slug},
+            #{curr.created},
+            #{curr.modified},
+            #{curr.text},
+            #{curr.orderKey},
+            #{curr.authorId},
+            #{curr.template},
+            #{curr.type},
+            #{curr.status},
+            #{curr.password},
+            #{curr.commentsNum},
+            #{curr.allowComment},
+            #{curr.allowPing},
+            #{curr.allowFeed},
+            #{curr.parent}
             )
         </foreach>
     </insert>
@@ -394,56 +394,56 @@
     <select id="total" resultType="java.lang.Integer">
         SELECT count(*) FROM ${prefix}_contents
         <where>
-            <if test ='null != cid'>
-                and `cid` = #{cid}
+            <if test ='null != typechoContents.title'>
+                and `title` = #{typechoContents.title}
             </if>
-            <if test ='null != title'>
-                and `title` = #{title}
+            <if test ='null != typechoContents.slug'>
+                and `slug` = #{typechoContents.slug}
             </if>
-            <if test ='null != slug'>
-                and `slug` = #{slug}
+            <if test ='null != typechoContents.created'>
+                and `created` = #{typechoContents.created}
             </if>
-            <if test ='null != created'>
-                and `created` = #{created}
+            <if test ='null != typechoContents.modified'>
+                and `modified` = #{typechoContents.modified}
             </if>
-            <if test ='null != modified'>
-                and `modified` = #{modified}
+            <if test ='null != typechoContents.text'>
+                and `text` = #{typechoContents.text}
             </if>
-            <if test ='null != text'>
-                and `text` = #{text}
+            <if test ='null != typechoContents.orderKey'>
+                and `order` = #{typechoContents.orderKey}
             </if>
-            <if test ='null != orderKey'>
-                and `order` = #{orderKey}
+            <if test ='null != typechoContents.authorId'>
+                and `authorId` = #{typechoContents.authorId}
             </if>
-            <if test ='null != authorId'>
-                and `authorId` = #{authorId}
+            <if test ='null != typechoContents.template'>
+                and `template` = #{typechoContents.template}
             </if>
-            <if test ='null != template'>
-                and `template` = #{template}
+            <if test ='null != typechoContents.type'>
+                and `type` = #{typechoContents.type}
             </if>
-            <if test ='null != type'>
-                and `type` = #{type}
+            <if test ='null != typechoContents.status'>
+                and `status` = #{typechoContents.status}
             </if>
-            <if test ='null != status'>
-                and `status` = #{status}
+            <if test ='null != typechoContents.password'>
+                and `password` = #{typechoContents.password}
             </if>
-            <if test ='null != password'>
-                and `password` = #{password}
+            <if test ='null != typechoContents.commentsNum'>
+                and `commentsNum` = #{typechoContents.commentsNum}
             </if>
-            <if test ='null != commentsNum'>
-                and `commentsNum` = #{commentsNum}
+            <if test ='null != typechoContents.allowComment'>
+                and `allowComment` = #{typechoContents.allowComment}
             </if>
-            <if test ='null != allowComment'>
-                and `allowComment` = #{allowComment}
+            <if test ='null != typechoContents.allowPing'>
+                and `allowPing` = #{typechoContents.allowPing}
             </if>
-            <if test ='null != allowPing'>
-                and `allowPing` = #{allowPing}
+            <if test ='null != typechoContents.allowFeed'>
+                and `allowFeed` = #{typechoContents.allowFeed}
             </if>
-            <if test ='null != allowFeed'>
-                and `allowFeed` = #{allowFeed}
+            <if test ='null != typechoContents.parent'>
+                and `parent` = #{typechoContents.parent}
             </if>
-            <if test ='null != parent'>
-                and `parent` = #{parent}
+            <if test ='null != searchKey'>
+                and CONCAT(IFNULL(`title`, '')) LIKE CONCAT('%', #{searchKey}, '%')
             </if>
         </where>
     </select>

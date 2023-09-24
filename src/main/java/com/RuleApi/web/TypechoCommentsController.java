@@ -122,7 +122,7 @@ public class TypechoCommentsController {
             sqlParams = paramsJson.toString();
 
         }
-        total = service.total(query);
+        total = service.total(query,searchKey);
         List jsonList = new ArrayList();
         List cacheList = redisHelp.getList(this.dataprefix+"_"+"searchParams_"+page+"_"+limit+"_"+searchKey+"_"+sqlParams+"_"+uid+"_"+order,redisTemplate);
         if(uStatus!=0){
@@ -191,7 +191,7 @@ public class TypechoCommentsController {
                     }else{
                         TypechoComments usercomments = new TypechoComments();
                         usercomments.setAuthorId(userid);
-                        Integer lv = service.total(usercomments);
+                        Integer lv = service.total(usercomments,null);
                         TypechoUsers userinfo = usersService.selectByKey(userid);
                         if(userinfo!=null){
                             String name = userinfo.getName();
@@ -567,7 +567,7 @@ public class TypechoCommentsController {
             //更新文章评论数量
             TypechoComments suminfo = new TypechoComments();
             suminfo.setCid(insert.getCid());
-            Integer cnum = service.total(suminfo);
+            Integer cnum = service.total(suminfo,null);
             TypechoContents c = new TypechoContents();
             c.setCid(insert.getCid());
             c.setCommentsNum(cnum);
@@ -972,7 +972,7 @@ public class TypechoCommentsController {
             TypechoContents contents = new TypechoContents();
             TypechoComments sum = new TypechoComments();
             sum.setCid(cid);
-            Integer total = service.total(sum);
+            Integer total = service.total(sum,null);
             contents.setCid(cid);
             contents.setCommentsNum(total);
             contentsService.update(contents);
@@ -987,5 +987,57 @@ public class TypechoCommentsController {
             return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
         }
     }
+
+    /***
+     * 评论点赞
+     */
+    @RequestMapping(value = "/commentLikes")
+    @ResponseBody
+    public String commentLikes(@RequestParam(value = "id", required = false) Integer  id,
+                               @RequestParam(value = "token", required = false) String  token) {
+        try{
+            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+            if(uStatus==0){
+                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+            }
+
+            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            Integer uid  = Integer.parseInt(map.get("uid").toString());
+            Long date = System.currentTimeMillis();
+            String userTime = String.valueOf(date).substring(0,10);
+
+            //生成操作日志
+            TypechoUserlog userlog = new TypechoUserlog();
+            userlog.setUid(uid);
+            userlog.setCid(id);
+            userlog.setType("commentLike");
+            Integer isLikes = userlogService.total(userlog);
+            if(isLikes>0){
+                return Result.getResultJson(0,"你已经点赞过了",null);
+            }
+            TypechoComments comments = service.selectByKey(id);
+            if(comments==null){
+                return Result.getResultJson(0,"该评论不存在",null);
+            }
+            userlog.setCreated(Integer.parseInt(userTime));
+            userlogService.insert(userlog);
+            Integer likes = comments.getLikes();
+            likes = likes + 1;
+            TypechoComments newComments = new TypechoComments();
+            newComments.setLikes(likes);
+            newComments.setCoid(id);
+            int rows = service.update(newComments);
+            JSONObject response = new JSONObject();
+            response.put("code" ,rows > 0 ? 1: 0 );
+            response.put("data" , rows);
+            response.put("msg"  , rows > 0 ? "点赞成功" : "点赞失败");
+            return response.toString();
+        }catch (Exception e){
+            e.printStackTrace();
+            return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
+        }
+
+    }
+
 
 }

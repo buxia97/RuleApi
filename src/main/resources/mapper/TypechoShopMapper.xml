@@ -321,47 +321,50 @@
     <select id="total" resultType="java.lang.Integer">
         SELECT count(*) FROM ${prefix}_shop
         <where>
-            <if test ='null != id'>
-                and `id` = #{id}
+            <if test ='null != typechoShop.id'>
+                and `id` = #{typechoShop.id}
             </if>
-            <if test ='null != title'>
-                and `title` = #{title}
+            <if test ='null != typechoShop.title'>
+                and `title` = #{typechoShop.title}
             </if>
-            <if test ='null != imgurl'>
-                and `imgurl` = #{imgurl}
+            <if test ='null != typechoShop.imgurl'>
+                and `imgurl` = #{typechoShop.imgurl}
             </if>
-            <if test ='null != text'>
-                and `text` = #{text}
+            <if test ='null != typechoShop.text'>
+                and `text` = #{typechoShop.text}
             </if>
-            <if test ='null != price'>
-                and `price` = #{price}
+            <if test ='null != typechoShop.price'>
+                and `price` = #{typechoShop.price}
             </if>
-            <if test ='null != num'>
-                and `num` = #{num}
+            <if test ='null != typechoShop.num'>
+                and `num` = #{typechoShop.num}
             </if>
-            <if test ='null != type'>
-                and `type` = #{type}
+            <if test ='null != typechoShop.type'>
+                and `type` = #{typechoShop.type}
             </if>
-            <if test ='null != value'>
-                and `value` = #{value}
+            <if test ='null != typechoShop.value'>
+                and `value` = #{typechoShop.value}
             </if>
-            <if test ='null != cid'>
-                and `cid` = #{cid}
+            <if test ='null != typechoShop.cid'>
+                and `cid` = #{typechoShop.cid}
             </if>
-            <if test ='null != uid'>
-                and `uid` = #{uid}
+            <if test ='null != typechoShop.uid'>
+                and `uid` = #{typechoShop.uid}
             </if>
-            <if test ='null != status'>
-                and `status` = #{status}
+            <if test ='null != typechoShop.status'>
+                and `status` = #{typechoShop.status}
             </if>
-            <if test ='null != sort'>
-                and `sort` = #{sort}
+            <if test ='null != typechoShop.sort'>
+                and `sort` = #{typechoShop.sort}
             </if>
-            <if test ='null != subtype'>
-                and `subtype` = #{subtype}
+            <if test ='null != typechoShop.subtype'>
+                and `subtype` = #{typechoShop.subtype}
             </if>
-            <if test ='null != status'>
-                and `isView` = #{isView}
+            <if test ='null != typechoShop.status'>
+                and `isView` = #{typechoShop.isView}
+            </if>
+            <if test ='null != searchKey'>
+                and CONCAT(IFNULL(`title`, ''), IFNULL(`text`, '')) LIKE CONCAT('%', #{searchKey}, '%')
             </if>
         </where>
     </select>
