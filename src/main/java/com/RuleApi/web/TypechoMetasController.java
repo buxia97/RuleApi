@@ -437,4 +437,42 @@ public class TypechoMetasController {
 
     }
 
+    /***
+     * 删除分类和标签
+     */
+    @RequestMapping(value = "/deleteMeta")
+    @ResponseBody
+    public String deleteMeta(@RequestParam(value = "id", required = false) String  id,
+                             @RequestParam(value = "token", required = false) String  token) {
+        try{
+            Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
+            if (uStatus == 0) {
+                return Result.getResultJson(0, "用户未登录或Token验证失败", null);
+            }
+            Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+            String group = map.get("group").toString();
+            String logUid = map.get("uid").toString();
+            if (!group.equals("administrator")) {
+                return Result.getResultJson(0, "你没有操作权限", null);
+            }
+            TypechoMetas meta = service.selectByKey(id);
+            if(meta==null){
+                return Result.getResultJson(0, "数据不存在", null);
+            }
+            int rows = service.delete(id);
+            editFile.setLog("管理员"+logUid+"请求删除分类"+id);
+            JSONObject response = new JSONObject();
+            response.put("code" , rows);
+            response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
+            return response.toString();
+        }catch (Exception e){
+            e.printStackTrace();
+            JSONObject response = new JSONObject();
+            response.put("code" , 0);
+            response.put("msg"  , "操作失败");
+            return response.toString();
+        }
+
+    }
+
 }
