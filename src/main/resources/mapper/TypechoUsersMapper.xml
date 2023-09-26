@@ -322,38 +322,38 @@
     <select id="total" resultType="java.lang.Integer">
         SELECT count(*) FROM ${prefix}_users
         <where>
-            <if test ='null != uid'>
-                and `uid` = #{uid}
+            <if test ='null != typechoUsers.uid'>
+                and `uid` = #{typechoUsers.uid}
             </if>
-            <if test ='null != name'>
-                and `name` = #{name}
+            <if test ='null != typechoUsers.name'>
+                and `name` = #{typechoUsers.name}
             </if>
-            <if test ='null != password'>
-                and `password` = #{password}
+            <if test ='null != typechoUsers.password'>
+                and `password` = #{typechoUsers.password}
             </if>
-            <if test ='null != mail'>
-                and `mail` = #{mail}
+            <if test ='null != typechoUsers.mail'>
+                and `mail` = #{typechoUsers.mail}
             </if>
-            <if test ='null != url'>
-                and `url` = #{url}
+            <if test ='null != typechoUsers.url'>
+                and `url` = #{typechoUsers.url}
             </if>
-            <if test ='null != screenName'>
-                and `screenName` = #{screenName}
+            <if test ='null != typechoUsers.screenName'>
+                and `screenName` = #{typechoUsers.screenName}
             </if>
-            <if test ='null != created'>
-                and `created` = #{created}
+            <if test ='null != typechoUsers.created'>
+                and `created` = #{typechoUsers.created}
             </if>
-            <if test ='null != activated'>
-                and `activated` = #{activated}
+            <if test ='null != typechoUsers.activated'>
+                and `activated` = #{typechoUsers.activated}
             </if>
-            <if test ='null != logged'>
-                and `logged` = #{logged}
+            <if test ='null != typechoUsers.logged'>
+                and `logged` = #{typechoUsers.logged}
             </if>
-            <if test ='null != groupKey'>
-                and `group` = #{groupKey}
+            <if test ='null != typechoUsers.groupKey'>
+                and `group` = #{typechoUsers.groupKey}
             </if>
-            <if test ='null != authCode'>
-                and `authCode` = #{authCode}
+            <if test ='null != typechoUsers.authCode'>
+                and `authCode` = #{typechoUsers.authCode}
             </if>
             <if test ='null != searchKey'>
                 and CONCAT(IFNULL(`name`, ''), IFNULL(`screenName`, ''), IFNULL(`uid`, ''), IFNULL(`mail`, '')) LIKE CONCAT('%', #{searchKey}, '%')
