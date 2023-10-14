@@ -256,10 +256,19 @@ public class baseFull {
         }
     }
     public static Integer isVideo(String type){
-        if(!type.equals(".mp4")&&!type.equals(".MP4")&&!type.equals(".AVI")&&!type.equals(".avi")&&!type.equals(".MKV")&&!type.equals(".mkv")){
-            return 0;
-        }else{
-            return 1;
+        String lowerCaseType = type.toLowerCase();
+        if (lowerCaseType.equals(".mp4") || lowerCaseType.equals(".avi") || lowerCaseType.equals(".mkv")) {
+            return 1; // 是视频
+        } else {
+            return 0; // 不是视频
+        }
+    }
+    public static Integer isMedia(String type){
+        String lowerCaseType = type.toLowerCase();
+        if (lowerCaseType.equals(".mp4") || lowerCaseType.equals(".avi") || lowerCaseType.equals(".mkv") || lowerCaseType.equals(".mp3") || lowerCaseType.equals(".wav")) {
+            return 1; // 是媒体文件
+        } else {
+            return 0; // 不是媒体文件
         }
     }
     //验证字符串是否违规

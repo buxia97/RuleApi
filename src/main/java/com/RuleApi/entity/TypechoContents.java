@@ -124,5 +124,10 @@ public class TypechoContents implements Serializable {
      */
     private Integer isswiper;
 
+    /**
+     * replyTime  回复时间
+     */
+    private Integer replyTime;
+
 
 }

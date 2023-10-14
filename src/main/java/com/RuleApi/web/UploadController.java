@@ -92,8 +92,65 @@ public class UploadController {
         if(file == null){
             return new UploadMsg(0,"文件为空",null);
         }
+
+
         String result = Result.getResultJson(0,"未开启任何上传通道，请检查配置",null);
         TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
+        //验证上传大小
+
+        Integer flieUploadType = 0;  //0为普通文件，1为图片，2为媒体
+        String oldFileName = file.getOriginalFilename();
+        String eName = "";
+        try{
+            eName = oldFileName.substring(oldFileName.lastIndexOf("."));
+        }catch (Exception e){
+            oldFileName = oldFileName +".png";
+            eName = oldFileName.substring(oldFileName.lastIndexOf("."));
+        }
+        BufferedImage bi = null;
+        try {
+            bi = ImageIO.read(file.getInputStream());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        if(bi != null||eName.equals(".WEBP")||eName.equals(".webp")){
+            flieUploadType = 1;
+        }
+
+        Integer isMedia = baseFull.isMedia(eName);
+        if(isMedia.equals(1)){
+            flieUploadType = 2;
+        }
+        Integer uploadPicMax = apiconfig.getUploadPicMax();
+        Integer uploadMediaMax = apiconfig.getUploadMediaMax();
+        Integer uploadFilesMax = apiconfig.getUploadFilesMax();
+        if(flieUploadType.equals(0)){
+            long filesMax = uploadFilesMax * 1024 * 1024;
+            if (file.getSize() > filesMax) {
+                // 文件大小超过限制，返回错误消息或进行其他处理
+                return Result.getResultJson(0,"文件大小不能超过"+filesMax+"M",null);
+            }
+        }
+        if(flieUploadType.equals(1)){
+            long picMax = uploadPicMax * 1024 * 1024;
+            if (file.getSize() > picMax) {
+                // 文件大小超过限制，返回错误消息或进行其他处理
+                return Result.getResultJson(0,"图片大小不能超过"+picMax+"M",null);
+            }
+        }
+
+        if(flieUploadType.equals(2)){
+            long mediaMax = uploadMediaMax * 1024 * 1024;
+            if (file.getSize() > mediaMax) {
+                // 文件大小超过限制，返回错误消息或进行其他处理
+                return Result.getResultJson(0,"媒体大小不能超过"+mediaMax+"M",null);
+            }
+        }
+
+        //验证上传大小结束
+
+
         if(apiconfig.getUploadType().equals("cos")){
             result = uploadService.cosUpload(file,this.dataprefix,apiconfig,uid);
         }
@@ -130,6 +187,59 @@ public class UploadController {
             return new UploadMsg(0,"文件为空",null);
         }
         TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
+        //验证上传大小
+
+        Integer flieUploadType = 0;  //0为普通文件，1为图片，2为媒体
+        String oldFileName = file.getOriginalFilename();
+        String eName = "";
+        try{
+            eName = oldFileName.substring(oldFileName.lastIndexOf("."));
+        }catch (Exception e){
+            oldFileName = oldFileName +".png";
+            eName = oldFileName.substring(oldFileName.lastIndexOf("."));
+        }
+        BufferedImage bi = null;
+        try {
+            bi = ImageIO.read(file.getInputStream());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        if(bi != null||eName.equals(".WEBP")||eName.equals(".webp")){
+            flieUploadType = 1;
+        }
+
+        Integer isMedia = baseFull.isMedia(eName);
+        if(isMedia.equals(1)){
+            flieUploadType = 2;
+        }
+        Integer uploadPicMax = apiconfig.getUploadPicMax();
+        Integer uploadMediaMax = apiconfig.getUploadMediaMax();
+        Integer uploadFilesMax = apiconfig.getUploadFilesMax();
+        if(flieUploadType.equals(0)){
+            long filesMax = uploadFilesMax * 1024 * 1024;
+            if (file.getSize() > filesMax) {
+                // 文件大小超过限制，返回错误消息或进行其他处理
+                return Result.getResultJson(0,"文件大小不能超过"+filesMax+"M",null);
+            }
+        }
+        if(flieUploadType.equals(1)){
+            long picMax = uploadPicMax * 1024 * 1024;
+            if (file.getSize() > picMax) {
+                // 文件大小超过限制，返回错误消息或进行其他处理
+                return Result.getResultJson(0,"图片大小不能超过"+picMax+"M",null);
+            }
+        }
+
+        if(flieUploadType.equals(2)){
+            long mediaMax = uploadMediaMax * 1024 * 1024;
+            if (file.getSize() > mediaMax) {
+                // 文件大小超过限制，返回错误消息或进行其他处理
+                return Result.getResultJson(0,"媒体大小不能超过"+mediaMax+"M",null);
+            }
+        }
+
+        //验证上传大小结束
         if(!apiconfig.getUploadType().equals("cos")){
             return Result.getResultJson(0,"该上传通道已关闭",null);
         }
@@ -165,6 +275,59 @@ public class UploadController {
         Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         Integer uid =Integer.parseInt(map.get("uid").toString());
         TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
+        //验证上传大小
+
+        Integer flieUploadType = 0;  //0为普通文件，1为图片，2为媒体
+        String oldFileName = file.getOriginalFilename();
+        String eName = "";
+        try{
+            eName = oldFileName.substring(oldFileName.lastIndexOf("."));
+        }catch (Exception e){
+            oldFileName = oldFileName +".png";
+            eName = oldFileName.substring(oldFileName.lastIndexOf("."));
+        }
+        BufferedImage bi = null;
+        try {
+            bi = ImageIO.read(file.getInputStream());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        if(bi != null||eName.equals(".WEBP")||eName.equals(".webp")){
+            flieUploadType = 1;
+        }
+
+        Integer isMedia = baseFull.isMedia(eName);
+        if(isMedia.equals(1)){
+            flieUploadType = 2;
+        }
+        Integer uploadPicMax = apiconfig.getUploadPicMax();
+        Integer uploadMediaMax = apiconfig.getUploadMediaMax();
+        Integer uploadFilesMax = apiconfig.getUploadFilesMax();
+        if(flieUploadType.equals(0)){
+            long filesMax = uploadFilesMax * 1024 * 1024;
+            if (file.getSize() > filesMax) {
+                // 文件大小超过限制，返回错误消息或进行其他处理
+                return Result.getResultJson(0,"文件大小不能超过"+filesMax+"M",null);
+            }
+        }
+        if(flieUploadType.equals(1)){
+            long picMax = uploadPicMax * 1024 * 1024;
+            if (file.getSize() > picMax) {
+                // 文件大小超过限制，返回错误消息或进行其他处理
+                return Result.getResultJson(0,"图片大小不能超过"+picMax+"M",null);
+            }
+        }
+
+        if(flieUploadType.equals(2)){
+            long mediaMax = uploadMediaMax * 1024 * 1024;
+            if (file.getSize() > mediaMax) {
+                // 文件大小超过限制，返回错误消息或进行其他处理
+                return Result.getResultJson(0,"媒体大小不能超过"+mediaMax+"M",null);
+            }
+        }
+
+        //验证上传大小结束
         if(!apiconfig.getUploadType().equals("local")){
             return Result.getResultJson(0,"该上传通道已关闭",null);
         }
@@ -186,6 +349,59 @@ public class UploadController {
         Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         Integer uid =Integer.parseInt(map.get("uid").toString());
         TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
+        //验证上传大小
+
+        Integer flieUploadType = 0;  //0为普通文件，1为图片，2为媒体
+        String oldFileName = file.getOriginalFilename();
+        String eName = "";
+        try{
+            eName = oldFileName.substring(oldFileName.lastIndexOf("."));
+        }catch (Exception e){
+            oldFileName = oldFileName +".png";
+            eName = oldFileName.substring(oldFileName.lastIndexOf("."));
+        }
+        BufferedImage bi = null;
+        try {
+            bi = ImageIO.read(file.getInputStream());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        if(bi != null||eName.equals(".WEBP")||eName.equals(".webp")){
+            flieUploadType = 1;
+        }
+
+        Integer isMedia = baseFull.isMedia(eName);
+        if(isMedia.equals(1)){
+            flieUploadType = 2;
+        }
+        Integer uploadPicMax = apiconfig.getUploadPicMax();
+        Integer uploadMediaMax = apiconfig.getUploadMediaMax();
+        Integer uploadFilesMax = apiconfig.getUploadFilesMax();
+        if(flieUploadType.equals(0)){
+            long filesMax = uploadFilesMax * 1024 * 1024;
+            if (file.getSize() > filesMax) {
+                // 文件大小超过限制，返回错误消息或进行其他处理
+                return Result.getResultJson(0,"文件大小不能超过"+filesMax+"M",null);
+            }
+        }
+        if(flieUploadType.equals(1)){
+            long picMax = uploadPicMax * 1024 * 1024;
+            if (file.getSize() > picMax) {
+                // 文件大小超过限制，返回错误消息或进行其他处理
+                return Result.getResultJson(0,"图片大小不能超过"+picMax+"M",null);
+            }
+        }
+
+        if(flieUploadType.equals(2)){
+            long mediaMax = uploadMediaMax * 1024 * 1024;
+            if (file.getSize() > mediaMax) {
+                // 文件大小超过限制，返回错误消息或进行其他处理
+                return Result.getResultJson(0,"媒体大小不能超过"+mediaMax+"M",null);
+            }
+        }
+
+        //验证上传大小结束
         if(!apiconfig.getUploadType().equals("oss")){
             return Result.getResultJson(0,"该上传通道已关闭",null);
         }
@@ -206,6 +422,59 @@ public class UploadController {
         Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         Integer uid =Integer.parseInt(map.get("uid").toString());
         TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
+        //验证上传大小
+
+        Integer flieUploadType = 0;  //0为普通文件，1为图片，2为媒体
+        String oldFileName = file.getOriginalFilename();
+        String eName = "";
+        try{
+            eName = oldFileName.substring(oldFileName.lastIndexOf("."));
+        }catch (Exception e){
+            oldFileName = oldFileName +".png";
+            eName = oldFileName.substring(oldFileName.lastIndexOf("."));
+        }
+        BufferedImage bi = null;
+        try {
+            bi = ImageIO.read(file.getInputStream());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        if(bi != null||eName.equals(".WEBP")||eName.equals(".webp")){
+            flieUploadType = 1;
+        }
+
+        Integer isMedia = baseFull.isMedia(eName);
+        if(isMedia.equals(1)){
+            flieUploadType = 2;
+        }
+        Integer uploadPicMax = apiconfig.getUploadPicMax();
+        Integer uploadMediaMax = apiconfig.getUploadMediaMax();
+        Integer uploadFilesMax = apiconfig.getUploadFilesMax();
+        if(flieUploadType.equals(0)){
+            long filesMax = uploadFilesMax * 1024 * 1024;
+            if (file.getSize() > filesMax) {
+                // 文件大小超过限制，返回错误消息或进行其他处理
+                return Result.getResultJson(0,"文件大小不能超过"+filesMax+"M",null);
+            }
+        }
+        if(flieUploadType.equals(1)){
+            long picMax = uploadPicMax * 1024 * 1024;
+            if (file.getSize() > picMax) {
+                // 文件大小超过限制，返回错误消息或进行其他处理
+                return Result.getResultJson(0,"图片大小不能超过"+picMax+"M",null);
+            }
+        }
+
+        if(flieUploadType.equals(2)){
+            long mediaMax = uploadMediaMax * 1024 * 1024;
+            if (file.getSize() > mediaMax) {
+                // 文件大小超过限制，返回错误消息或进行其他处理
+                return Result.getResultJson(0,"媒体大小不能超过"+mediaMax+"M",null);
+            }
+        }
+
+        //验证上传大小结束
         if(!apiconfig.getUploadType().equals("qiniu")){
             return Result.getResultJson(0,"该上传通道已关闭",null);
         }
@@ -226,6 +495,58 @@ public class UploadController {
         Integer uid =Integer.parseInt(map.get("uid").toString());
         String oldFileName = file.getOriginalFilename();
         TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
+        //验证上传大小
+
+        Integer flieUploadType = 0;  //0为普通文件，1为图片，2为媒体
+        String eName = "";
+        try{
+            eName = oldFileName.substring(oldFileName.lastIndexOf("."));
+        }catch (Exception e){
+            oldFileName = oldFileName +".png";
+            eName = oldFileName.substring(oldFileName.lastIndexOf("."));
+        }
+        BufferedImage bi = null;
+        try {
+            bi = ImageIO.read(file.getInputStream());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        if(bi != null||eName.equals(".WEBP")||eName.equals(".webp")){
+            flieUploadType = 1;
+        }
+
+        Integer isMedia = baseFull.isMedia(eName);
+        if(isMedia.equals(1)){
+            flieUploadType = 2;
+        }
+        Integer uploadPicMax = apiconfig.getUploadPicMax();
+        Integer uploadMediaMax = apiconfig.getUploadMediaMax();
+        Integer uploadFilesMax = apiconfig.getUploadFilesMax();
+        if(flieUploadType.equals(0)){
+            long filesMax = uploadFilesMax * 1024 * 1024;
+            if (file.getSize() > filesMax) {
+                // 文件大小超过限制，返回错误消息或进行其他处理
+                return Result.getResultJson(0,"文件大小不能超过"+filesMax+"M",null);
+            }
+        }
+        if(flieUploadType.equals(1)){
+            long picMax = uploadPicMax * 1024 * 1024;
+            if (file.getSize() > picMax) {
+                // 文件大小超过限制，返回错误消息或进行其他处理
+                return Result.getResultJson(0,"图片大小不能超过"+picMax+"M",null);
+            }
+        }
+
+        if(flieUploadType.equals(2)){
+            long mediaMax = uploadMediaMax * 1024 * 1024;
+            if (file.getSize() > mediaMax) {
+                // 文件大小超过限制，返回错误消息或进行其他处理
+                return Result.getResultJson(0,"媒体大小不能超过"+mediaMax+"M",null);
+            }
+        }
+
+        //验证上传大小结束
         if(!apiconfig.getUploadType().equals("ftp")){
             return Result.getResultJson(0,"该上传通道已关闭",null);
         }

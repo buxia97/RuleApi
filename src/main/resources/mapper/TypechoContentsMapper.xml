@@ -26,6 +26,7 @@
         <result column="isrecommend" property="isrecommend" />
         <result column="istop" property="istop" />
         <result column="isswiper" property="isswiper" />
+        <result column="replyTime" property="replyTime" />
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -50,7 +51,8 @@
         `likes`,
         `isrecommend`,
         `istop`,
-        `isswiper`
+        `isswiper`,
+        `replyTime`
     </sql>
 
     <!-- 插入数据 -->
@@ -106,7 +108,10 @@
                 `allowFeed`,
             </if>
             <if test ='null != parent'>
-                `parent`
+                `parent`,
+            </if>
+            <if test ='null != replyTime'>
+                `replyTime`
             </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
@@ -159,7 +164,10 @@
                 #{allowFeed},
             </if>
             <if test ='null != parent'>
-                #{parent}
+                #{parent},
+            </if>
+            <if test ='null != replyTime'>
+                #{replyTime}
             </if>
         </trim>
     </insert>
@@ -215,6 +223,7 @@
             <if test ='null != isrecommend'>`isrecommend` = #{isrecommend},</if>
             <if test ='null != istop'>`istop` = #{istop},</if>
             <if test ='null != isswiper'>`isswiper` = #{isswiper}</if>
+            <if test ='null != replyTime'>`replyTime` = #{replyTime}</if>
 
         </set>
         WHERE `cid` = #{cid}

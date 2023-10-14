@@ -100,6 +100,9 @@
         <result column="adsGiftNum" property="adsGiftNum" />
         <result column="adsGiftAward" property="adsGiftAward" />
 
+        <result column="uploadPicMax" property="uploadPicMax" />
+        <result column="uploadMediaMax" property="uploadMediaMax" />
+        <result column="uploadFilesMax" property="uploadFilesMax" />
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -198,7 +201,11 @@
         `uploadType`,
         `banRobots`,
         `adsGiftNum`,
-        `adsGiftAward`
+        `adsGiftAward`,
+
+        `uploadPicMax`,
+        `uploadMediaMax`,
+        `uploadFilesMax`
     </sql>
 
     <!-- 插入数据 -->
@@ -474,7 +481,16 @@
                 `adsGiftNum`,
             </if>
             <if test ='null != adsGiftAward'>
-                `adsGiftAward`
+                `adsGiftAward`,
+            </if>
+            <if test ='null != uploadPicMax'>
+                `uploadPicMax`,
+            </if>
+            <if test ='null != uploadMediaMax'>
+                `uploadMediaMax`,
+            </if>
+            <if test ='null != uploadFilesMax'>
+                `uploadFilesMax`
             </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
@@ -747,7 +763,16 @@
                 #{adsGiftNum},
             </if>
             <if test ='null != adsGiftAward'>
-                #{adsGiftAward}
+                #{adsGiftAward},
+            </if>
+            <if test ='null != uploadPicMax'>
+                #{uploadPicMax},
+            </if>
+            <if test ='null != uploadMediaMax'>
+                #{uploadMediaMax},
+            </if>
+            <if test ='null != uploadFilesMax'>
+                #{uploadFilesMax}
             </if>
         </trim>
     </insert>
@@ -849,7 +874,10 @@
             <if test ='null != uploadType'>`uploadType` = #{uploadType},</if>
             <if test ='null != banRobots'>`banRobots` = #{banRobots},</if>
             <if test ='null != adsGiftNum'>`adsGiftNum` = #{adsGiftNum},</if>
-            <if test ='null != adsGiftAward'>`adsGiftAward` = #{adsGiftAward}</if>
+            <if test ='null != adsGiftAward'>`adsGiftAward` = #{adsGiftAward},</if>
+            <if test ='null != uploadPicMax'>`uploadPicMax` = #{uploadPicMax},</if>
+            <if test ='null != uploadMediaMax'>`uploadMediaMax` = #{uploadMediaMax},</if>
+            <if test ='null != uploadFilesMax'>`uploadFilesMax` = #{uploadFilesMax}</if>
         </set>
         WHERE `id` = #{id}
     </update>

@@ -465,5 +465,19 @@ public class TypechoApiconfig implements Serializable {
      */
     private Integer adsGiftAward;
 
+    /**
+     * 图片最大上传大小
+     */
+    private Integer uploadPicMax;
+
+    /**
+     * 媒体最大上传大小
+     */
+    private Integer uploadMediaMax;
+
+    /**
+     * 其他文件最大上传大小
+     */
+    private Integer uploadFilesMax;
 
 }

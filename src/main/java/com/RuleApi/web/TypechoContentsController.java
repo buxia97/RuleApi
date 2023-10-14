@@ -599,6 +599,7 @@ public class TypechoContentsController {
                 }
                 //写入创建时间和作者
                 jsonToMap.put("created",userTime);
+                jsonToMap.put("replyTime",userTime);
                 jsonToMap.put("modified",userTime);
                 jsonToMap.put("authorId",uid);
 
@@ -950,6 +951,7 @@ public class TypechoContentsController {
                 jsonToMap.remove("isrecommend");
                 jsonToMap.remove("istop");
                 jsonToMap.remove("isswiper");
+                jsonToMap.remove("replyTime");
 //                //状态重新变成待审核
 //                if(!group.equals("administrator")){
 //                    jsonToMap.put("status","waiting");

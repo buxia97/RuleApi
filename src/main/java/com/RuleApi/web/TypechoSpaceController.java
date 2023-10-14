@@ -581,6 +581,7 @@ public class TypechoSpaceController {
             @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
             @RequestParam(value = "searchKey"        , required = false, defaultValue = "") String searchKey,
             @RequestParam(value = "order", required = false, defaultValue = "created") String  order,
+            @RequestParam(value = "isManage", required = false, defaultValue = "0") Integer  isManage,
             @RequestParam(value = "token", required = false) String  token) {
         if(limit>50){
             limit = 50;
@@ -593,10 +594,10 @@ public class TypechoSpaceController {
             Map paramsJson = JSONObject.parseObject(JSONObject.toJSONString(query), Map.class);
             sqlParams = paramsJson.toString();
 
-
         }
         Map map = new HashMap();
         Integer uid = 0;
+        //如果开启全局登录，则必须登录才能得到数据
         Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
         TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
         if(apiconfig.getIsLogin().equals(1)){
@@ -604,24 +605,30 @@ public class TypechoSpaceController {
                 return Result.getResultJson(0,"用户未登录或Token验证失败",null);
             }
         }
+        //验证结束
         if (uStatus != 0) {
             map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
             uid =Integer.parseInt(map.get("uid").toString());
         }
-        List cacheList =  redisHelp.getList(this.dataprefix+"_"+"spaceList_"+page+"_"+limit+"_"+searchKey+"_"+uid+"_"+sqlParams,redisTemplate);
+        List cacheList =  redisHelp.getList(this.dataprefix+"_"+"spaceList_"+page+"_"+limit+"_"+searchKey+"_"+uid+"_"+sqlParams+"_"+isManage,redisTemplate);
         List jsonList = new ArrayList();
 
-        Integer total = service.total(query,searchKey);
+        Integer total = service.total(query,null);
         try{
             if(cacheList.size()>0){
                 jsonList = cacheList;
             }else{
                 Integer isReply = 0;
-                if(query.getType()!=null){
-                    if(query.getType().equals(3)){
-                        isReply = 1;
+                if(isManage.equals(1)){
+                    isReply = -1;
+                }else{
+                    if(query.getType()!=null){
+                        if(query.getType().equals(3)){
+                            isReply = 1;
+                        }
                     }
                 }
+
                 PageList<TypechoSpace> pageList = service.selectPage(query, page, limit,order,searchKey,isReply);
                 List<TypechoSpace> list = pageList.getList();
                 if(list.size() < 1){
@@ -642,7 +649,7 @@ public class TypechoSpaceController {
                     //获取用户等级
                     TypechoComments comments = new TypechoComments();
                     comments.setAuthorId(userid);
-                    Integer lv = commentsService.total(comments,null);
+                    Integer lv = commentsService.total(comments,searchKey);
                     userJson.put("lv", baseFull.getLv(lv));
                     json.put("userJson",userJson);
                     if (uStatus != 0) {
@@ -772,8 +779,8 @@ public class TypechoSpaceController {
                     jsonList.add(json);
 
                 }
-                redisHelp.delete(this.dataprefix+"_"+"spaceList_"+page+"_"+limit+"_"+searchKey+"_"+uid+"_"+sqlParams,redisTemplate);
-                redisHelp.setList(this.dataprefix+"_"+"spaceList_"+page+"_"+limit+"_"+searchKey+"_"+uid+"_"+sqlParams,jsonList,5,redisTemplate);
+                redisHelp.delete(this.dataprefix+"_"+"spaceList_"+page+"_"+limit+"_"+searchKey+"_"+uid+"_"+sqlParams+"_"+isManage,redisTemplate);
+                redisHelp.setList(this.dataprefix+"_"+"spaceList_"+page+"_"+limit+"_"+searchKey+"_"+uid+"_"+sqlParams+"_"+isManage,jsonList,5,redisTemplate);
             }
         }catch (Exception e){
             e.printStackTrace();
@@ -789,7 +796,6 @@ public class TypechoSpaceController {
         response.put("total", total);
         return response.toString();
     }
-
     /***
      * 动态审核
      */

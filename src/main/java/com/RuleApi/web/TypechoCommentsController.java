@@ -571,6 +571,7 @@ public class TypechoCommentsController {
             TypechoContents c = new TypechoContents();
             c.setCid(insert.getCid());
             c.setCommentsNum(cnum);
+            c.setReplyTime(Integer.parseInt(created));
             contentsService.update(c);
             String addtext ="";
             if(cstatus.equals("waiting")){
@@ -591,7 +592,7 @@ public class TypechoCommentsController {
                     userlog.setCid(Integer.parseInt(curtime));
                     userlog.setType("reviewExp");
                     Integer size = userlogService.total(userlog);
-                    //只有前三次评论获得姜堰
+                    //只有前三次评论获得经验
                     if(size < 3){
                         userlog.setNum(reviewExp);
                         userlog.setCreated(Integer.parseInt(created));

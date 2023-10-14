@@ -297,6 +297,14 @@ public class InstallController {
         }else{
             text+="内容模块，字段isswiper已经存在，无需添加。";
         }
+        //查询文章表是否存在replyTime字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_contents' and column_name = 'replyTime';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_contents ADD replyTime integer(10) DEFAULT 0;");
+            text+="内容模块，字段replyTime添加完成。";
+        }else{
+            text+="内容模块，字段replyTime已经存在，无需添加。";
+        }
         //查询文章评论表是否存在likes字段
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_comments' and column_name = 'likes';", Integer.class);
         if (i == 0){
@@ -1064,6 +1072,30 @@ public class InstallController {
         }else{
             text+="配置中心模块，字段adsGiftAward已经存在，无需添加。";
         }
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'uploadPicMax';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `uploadPicMax` int(11) DEFAULT '5' COMMENT '图片最大上传大小'");
+            text+="配置中心模块，字段uploadPicMax添加完成。";
+        }else{
+            text+="配置中心模块，字段uploadPicMax已经存在，无需添加。";
+        }
+
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'uploadMediaMax';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `uploadMediaMax` int(11) DEFAULT '50' COMMENT '媒体最大上传大小'");
+            text+="配置中心模块，字段uploadMediaMax添加完成。";
+        }else{
+            text+="配置中心模块，字段uploadMediaMax已经存在，无需添加。";
+        }
+
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'uploadFilesMax';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `uploadFilesMax` int(11) DEFAULT '20' COMMENT '其他文件最大上传大小'");
+            text+="配置中心模块，字段uploadFilesMax添加完成。";
+        }else{
+            text+="配置中心模块，字段uploadFilesMax已经存在，无需添加。";
+        }
+
         try {
             Thread.sleep(500);
         } catch (InterruptedException ie) {
