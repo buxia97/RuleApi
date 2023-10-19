@@ -12,6 +12,8 @@
         <result column="count" property="count" />
         <result column="order" property="orderKey" />
         <result column="parent" property="parent" />
+        <result column="imgurl" property="imgurl" />
+        <result column="isrecommend" property="isrecommend" />
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -53,7 +55,10 @@
                 `order`,
             </if>
             <if test ='null != parent'>
-                `parent`
+                `parent`,
+            </if>
+            <if test ='null != imgurl'>
+                `imgurl`
             </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
@@ -79,7 +84,10 @@
                 #{orderKey},
             </if>
             <if test ='null != parent'>
-                #{parent}
+                #{parent},
+            </if>
+            <if test ='null != imgurl'>
+                #{imgurl}
             </if>
         </trim>
     </insert>
@@ -174,6 +182,9 @@
             <if test ='null != parent'>
                 and `parent` = #{parent}
             </if>
+            <if test ='null != parent'>
+                and `isrecommend` = #{isrecommend}
+            </if>
         </where>
     </select>
 
@@ -246,6 +257,9 @@
             </if>
             <if test ='null != parent'>
                 and `parent` = #{parent}
+            </if>
+            <if test ='null != isrecommend'>
+                and `isrecommend` = #{isrecommend}
             </if>
         </where>
     </select>
