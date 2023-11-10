@@ -14,6 +14,8 @@
         <result column="likes" property="likes" />
         <result column="toid" property="toid" />
         <result column="status" property="status" />
+        <result column="onlyMe" property="onlyMe" />
+
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -26,7 +28,8 @@
         `type`,
         `likes`,
         `toid`,
-        `status`
+        `status`,
+        `onlyMe`
     </sql>
 
     <!-- 插入数据 -->
@@ -61,7 +64,10 @@
                 `toid`,
             </if>
             <if test ='null != status'>
-                `status`
+                `status`,
+            </if>
+            <if test ='null != onlyMe'>
+                `onlyMe`
             </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
@@ -93,7 +99,10 @@
                 #{toid},
             </if>
             <if test ='null != status'>
-                #{status}
+                #{status},
+            </if>
+            <if test ='null != onlyMe'>
+                #{onlyMe}
             </if>
         </trim>
     </insert>
@@ -129,7 +138,9 @@
             <if test ='null != type'>`type` = #{type},</if>
             <if test ='null != likes'>`likes` = #{likes},</if>
             <if test ='null != toid'>`toid` = #{toid},</if>
-            <if test ='null != status'>`status` = #{status}</if>
+            <if test ='null != status'>`status` = #{status},</if>
+            <if test ='null != onlyMe'>`onlyMe` = #{onlyMe}</if>
+
         </set>
         WHERE `id` = #{id}
     </update>

@@ -1597,15 +1597,16 @@ public class TypechoUsersController {
             }
 
             int rows = service.update(update);
-            //修改后让用户强制重新登陆
-
-            String oldToken = null;
-            if (redisHelp.getRedis(this.dataprefix + "_" + "userkey" + name, redisTemplate) != null) {
-                oldToken = redisHelp.getRedis(this.dataprefix + "_" + "userkey" + name, redisTemplate);
-            }
-            if (oldToken != null) {
-                redisHelp.delete(this.dataprefix + "_" + "userInfo" + oldToken, redisTemplate);
-                redisHelp.delete(this.dataprefix + "_" + "userkey" + name, redisTemplate);
+            //如果修改了密码、权限、头衔，则让用户强制重新登陆
+            if(update.getGroupKey()!=null||update.getExperience()!=null||update.getScreenName()!=null||update.getMail()!=null||update.getPassword()!=null){
+                String oldToken = null;
+                if (redisHelp.getRedis(this.dataprefix + "_" + "userkey" + name, redisTemplate) != null) {
+                    oldToken = redisHelp.getRedis(this.dataprefix + "_" + "userkey" + name, redisTemplate);
+                }
+                if (oldToken != null) {
+                    redisHelp.delete(this.dataprefix + "_" + "userInfo" + oldToken, redisTemplate);
+                    redisHelp.delete(this.dataprefix + "_" + "userkey" + name, redisTemplate);
+                }
             }
             JSONObject response = new JSONObject();
             response.put("code", rows > 0 ? 1 : 0);

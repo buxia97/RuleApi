@@ -74,4 +74,18 @@ public  class RedisHelp {
     public <T> List<T> getList(final String key,RedisTemplate redisTemplate) {
         return redisTemplate.opsForList().range(key, 0, -1);
     }
+
+    /**
+     * 泛匹配删除
+     *
+     * deleteKeysWithPattern("*example*", redisTemplate);
+     */
+    public void deleteKeysWithPattern(String pattern, RedisTemplate<String, String> redisTemplate) {
+        Set<String> keysToDelete = redisTemplate.keys(pattern);
+
+        // 遍历匹配的键，并删除它们
+        for (String key : keysToDelete) {
+            redisTemplate.delete(key);
+        }
+    }
 }

@@ -63,4 +63,9 @@ public class TypechoSpace implements Serializable {
      * status  动态状态，0审核，1发布，2锁定
      */
     private Integer status;
+
+    /**
+     * onlyMe  仅自己可见
+     */
+    private Integer onlyMe;
 }

@@ -89,9 +89,11 @@ public class TypechoSpaceController {
                             @RequestParam(value = "type", required = false, defaultValue = "0") Integer  type,
                             @RequestParam(value = "toid", required = false, defaultValue = "0") Integer  toid,
                             @RequestParam(value = "pic", required = false) String  pic,
+                            @RequestParam(value = "onlyMe", required = false, defaultValue = "0") Integer  onlyMe,
                             @RequestParam(value = "token", required = false) String  token,
                             HttpServletRequest request) {
         try{
+            String  ip = baseFull.getIpAddr(request);
             if(!type.equals(0)&&!type.equals(1)&&!type.equals(2)&&!type.equals(3)&&!type.equals(4)&&!type.equals(5)&&!type.equals(6)){
                 return Result.getResultJson(0,"参数不正确",null);
             }
@@ -106,6 +108,9 @@ public class TypechoSpaceController {
             }
             if(text.length()<4){
                 return Result.getResultJson(0,"动态内容长度不能小于4",null);
+            }
+            if(text.length()>1500){
+                return Result.getResultJson(0,"最大动态内容为1500字符",null);
             }
             Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
             if(uStatus==0){
@@ -156,7 +161,7 @@ public class TypechoSpaceController {
                 }
             }
             //限制结束
-            String  ip = baseFull.getIpAddr(request);
+
 
 
             //判断用户经验值
@@ -193,6 +198,7 @@ public class TypechoSpaceController {
                 return Result.getResultJson(0,"内容存在违禁词",null);
             }
             //违禁词拦截结束
+
             Long date = System.currentTimeMillis();
             String created = String.valueOf(date).substring(0,10);
             if(type.equals(3)){
@@ -214,6 +220,7 @@ public class TypechoSpaceController {
             space.setType(type);
             space.setPic(pic);
             space.setToid(toid);
+            space.setOnlyMe(onlyMe);
             space.setCreated(Integer.parseInt(created));
             space.setModified(Integer.parseInt(created));
             if(apiconfig.getSpaceAudit().equals(1)){
@@ -255,15 +262,18 @@ public class TypechoSpaceController {
             }
             usersService.update(updateUser);
             editFile.setLog("用户"+uid+"发布了新动态。");
+            String addTips = "";
+            if(apiconfig.getSpaceAudit().equals(1)){
+                addTips = "请等待管理员审核";
+            }
             JSONObject response = new JSONObject();
             response.put("code" , rows);
-            response.put("msg"  , rows > 0 ? "发布成功" : "发布失败");
+            response.put("msg"  , rows > 0 ? "发布成功"+addTips : "发布失败");
             return response.toString();
         }catch (Exception e){
             e.printStackTrace();
             return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
         }
-
     }
 
     /**
@@ -277,6 +287,7 @@ public class TypechoSpaceController {
             @RequestParam(value = "type", required = false, defaultValue = "0") Integer  type,
             @RequestParam(value = "toid", required = false, defaultValue = "0") Integer  toid,
             @RequestParam(value = "pic", required = false) String  pic,
+            @RequestParam(value = "onlyMe", required = false, defaultValue = "0") Integer  onlyMe,
             @RequestParam(value = "token", required = false) String  token) {
         try{
             if(!type.equals(0)&&!type.equals(1)&&!type.equals(2)&&!type.equals(3)&&!type.equals(4)&&!type.equals(5)){
@@ -301,23 +312,21 @@ public class TypechoSpaceController {
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer uid =Integer.parseInt(map.get("uid").toString());
             String group = map.get("group").toString();
+            String isSilence = redisHelp.getRedis(this.dataprefix+"_"+uid+"_silence",redisTemplate);
+            if(isSilence!=null){
+                return Result.getResultJson(0,"你的操作太频繁了，请稍后再试",null);
+            }
             TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
+            //登录情况下，刷数据攻击拦截
             if(apiconfig.getBanRobots().equals(1)) {
-                String isSilence = redisHelp.getRedis(this.dataprefix+"_"+uid+"_silence",redisTemplate);
-                if(isSilence!=null){
-                    return Result.getResultJson(0,"你的操作太频繁了，请稍后再试",null);
-                }
-
-                //登录情况下，刷数据攻击拦截
-
                 String isRepeated = redisHelp.getRedis(this.dataprefix+"_"+uid+"_isAddSpace",redisTemplate);
                 if(isRepeated==null){
                     redisHelp.setRedis(this.dataprefix+"_"+uid+"_isAddSpace","1",4,redisTemplate);
                 }else{
                     Integer frequency = Integer.parseInt(isRepeated) + 1;
                     if(frequency==4){
-                        securityService.safetyMessage("用户ID："+uid+"，在动态编辑接口疑似存在攻击行为，请及时确认处理。","system");
-                        redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",600,redisTemplate);
+                        securityService.safetyMessage("用户ID："+uid+"，在动态编辑接口接口疑似存在攻击行为，请及时确认处理。","system");
+                        redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",apiconfig.getSilenceTime(),redisTemplate);
                         return Result.getResultJson(0,"你的操作过于频繁，已被禁言十分钟！",null);
                     }else{
                         redisHelp.setRedis(this.dataprefix+"_"+uid+"_isAddSpace",frequency.toString(),5,redisTemplate);
@@ -346,14 +355,14 @@ public class TypechoSpaceController {
                     Integer frequency = Integer.parseInt(isIntercept) + 1;
                     if(frequency==4){
                         securityService.safetyMessage("用户ID："+uid+"，在动态编辑接口接口多次触发违禁，请及时确认处理。","system");
-                        redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",3600,redisTemplate);
+                        redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",apiconfig.getInterceptTime(),redisTemplate);
                         return Result.getResultJson(0,"你已多次发送违禁词，被禁言一小时！",null);
                     }else{
                         redisHelp.setRedis(this.dataprefix+"_"+uid+"_isIntercept",frequency.toString(),600,redisTemplate);
                     }
 
                 }
-                return Result.getResultJson(0,"消息存在违禁词",null);
+                return Result.getResultJson(0,"动态存在违禁词",null);
             }
             //违禁词拦截结束
             Long date = System.currentTimeMillis();
@@ -374,6 +383,7 @@ public class TypechoSpaceController {
             space.setUid(uid);
             space.setPic(pic);
             space.setToid(toid);
+            space.setOnlyMe(onlyMe);
             space.setModified(Integer.parseInt(created));
             int rows = service.update(space);
             editFile.setLog("用户"+uid+"修改了动态"+id);
