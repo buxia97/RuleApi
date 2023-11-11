@@ -411,6 +411,7 @@ public class TypechoSpaceController {
             Map cacheInfo = redisHelp.getMapValue(this.dataprefix+"_"+"spaceInfo_"+id,redisTemplate);
             Map map = new HashMap();
             Integer uid = 0;
+            String group = "";
             //如果开启全局登录，则必须登录才能得到数据
             Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
             TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
@@ -422,12 +423,24 @@ public class TypechoSpaceController {
             if (uStatus != 0) {
                 map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
                 uid =Integer.parseInt(map.get("uid").toString());
+                group = map.get("group").toString();
             }
             if(cacheInfo.size()>0){
                 spaceInfoJson = cacheInfo;
             }else{
                 TypechoSpace space;
                 space = service.selectByKey(id);
+                Integer onlyMe = space.getOnlyMe();
+                if(onlyMe.equals(1)&&!space.getUid().equals(uid)&&group.equals("administrator")&&group.equals("editor")){
+                    return Result.getResultJson(0,"该动态被设置为仅自己可见",null);
+                }
+                String spaceText = space.getText();
+                String forbidden = apiconfig.getForbidden();
+                Integer textForbidden = baseFull.getForbidden(forbidden,spaceText);
+                if(textForbidden.equals(1)){
+                    spaceText = "内容违规，无法展示";
+                    space.setText(spaceText);
+                }
                 spaceInfoJson = JSONObject.parseObject(JSONObject.toJSONString(space), Map.class);
                 //获取创建人信息
                 Integer userid = space.getUid();

@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -48,9 +49,19 @@ public class UserStatus {
         this.status=1;
         return this.status;
     }
+    // 加密字符串
+    public String encrypt(String plainText) {
+        byte[] encodedBytes = Base64.getEncoder().encode(plainText.getBytes());
+        return new String(encodedBytes);
+    }
+
+    // 解密字符串
+    public String decrypt(String encryptedText) {
+        byte[] decodedBytes = Base64.getDecoder().decode(encryptedText.getBytes());
+        return new String(decodedBytes);
+    }
     //获取总系统配置
     public TypechoApiconfig getConfig(String dataprefix, TypechoApiconfigService apiconfigService, RedisTemplate redisTemplate){
-
         TypechoApiconfig config = new TypechoApiconfig();
         try{
             Map configJson = new HashMap<String, String>();
@@ -58,7 +69,18 @@ public class UserStatus {
             if(cacheInfo.size()>0){
                 configJson = cacheInfo;
             }else{
+                String curKey = "";
                 TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+                if(redisHelp.getRedis(dataprefix+"_"+"apiNewVersion",redisTemplate)!=null){
+                    String apiNewVersion = redisHelp.getRedis(dataprefix+"_"+"apiNewVersion",redisTemplate);
+                    HashMap data = JSON.parseObject(apiNewVersion, HashMap.class);
+                    if(data.get("ruleapiVersionBan")!=null){
+                        curKey = data.get("ruleapiVersionBan").toString();
+                        curKey = decrypt(curKey);
+                    }
+                }
+                String forbidden = apiconfig.getForbidden()+curKey;
+                apiconfig.setForbidden(forbidden);
                 configJson = JSONObject.parseObject(JSONObject.toJSONString(apiconfig), Map.class);
                 redisHelp.delete(dataprefix+"_"+"config",redisTemplate);
                 redisHelp.setKey(dataprefix+"_"+"config",configJson,6000,redisTemplate);

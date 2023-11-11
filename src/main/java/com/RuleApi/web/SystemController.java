@@ -696,7 +696,7 @@ public class SystemController {
         String apiNewVersion = redisHelp.getRedis(this.dataprefix+"_"+"apiNewVersion",redisTemplate);
         HashMap data = new HashMap();
         if(apiNewVersion==null) {
-            String requestUrl = "https://www.ruletree.club/ruleApiInfo.php";
+            String requestUrl = "https://www.ruletree.club/ruleApiInfo.php?ver=1";
             String res = HttpClient.doGet(requestUrl);
             if (res == null) {
                 return Result.getResultJson(0, "获取服务端信息失败", null);

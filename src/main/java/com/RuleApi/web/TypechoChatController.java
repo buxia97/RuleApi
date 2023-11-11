@@ -902,11 +902,16 @@ public class TypechoChatController {
                         TypechoUsers msgUser = usersService.selectByKey(msgUid);
 
                         Map lastMsg = JSONObject.parseObject(JSONObject.toJSONString(msgList.get(0)), Map.class);
-                        if(msgUser.getScreenName()!=null){
-                            lastMsg.put("name",msgUser.getScreenName());
+                        if(msgUser!=null){
+                            if(msgUser.getScreenName()!=null){
+                                lastMsg.put("name",msgUser.getScreenName());
+                            }else{
+                                lastMsg.put("name",msgUser.getName());
+                            }
                         }else{
-                            lastMsg.put("name",msgUser.getName());
+                            lastMsg.put("name","用户已注销");
                         }
+
                         json.put("lastMsg",lastMsg);
                     }
                     Integer msgNum = chatMsgService.total(msg);
