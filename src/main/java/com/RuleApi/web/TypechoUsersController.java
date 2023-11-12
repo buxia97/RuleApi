@@ -1434,6 +1434,15 @@ public class TypechoUsersController {
                     Integer isEmail = apiconfig.getIsEmail();
                     if(isEmail>0){
                         String email = jsonToMap.get("mail").toString();
+                        //判断邮箱是否已被其它用户绑定
+                        user.setMail(email);
+                        List<TypechoUsers> ulist = service.selectList(user);
+                        if(ulist.size() > 0){
+                            String oldEmail = ulist.get(0).getMail();
+                            if(oldEmail.equals(email)){
+                                return Result.getResultJson(0, "该邮箱已被绑定", null);
+                            }
+                        }
                         if (redisHelp.getRedis(this.dataprefix + "_" + "sendCode" + email, redisTemplate) != null) {
                             String sendCode = redisHelp.getRedis(this.dataprefix + "_" + "sendCode" + email, redisTemplate);
                             code = jsonToMap.get("code").toString();
@@ -1453,6 +1462,10 @@ public class TypechoUsersController {
                     String p = jsonToMap.get("password").toString();
                     String passwd = phpass.HashPassword(p);
                     jsonToMap.put("password", passwd);
+                }
+
+                if (jsonToMap.get("name") == null) {
+                    return Result.getResultJson(0, "用户不存在", null);
                 }
                 Map keyName = new HashMap<String, String>();
                 keyName.put("name", jsonToMap.get("name").toString());

@@ -25,6 +25,7 @@
         <result column="clientId" property="clientId" />
         <result column="bantime" property="bantime" />
         <result column="posttime" property="posttime" />
+        <result column="userBg" property="userBg" />
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -49,7 +50,8 @@
         `experience`,
         `clientId`,
         `bantime`,
-        `posttime`
+        `posttime`,
+        `userBg`
     </sql>
 
     <!-- 插入数据 -->
@@ -192,7 +194,8 @@
             <if test ='null != experience'>`experience` = #{experience},</if>
             <if test ='null != clientId'>`clientId` = #{clientId},</if>
             <if test ='null != bantime'>`bantime` = #{bantime},</if>
-            <if test ='null != posttime'>`posttime` = #{posttime}</if>
+            <if test ='null != posttime'>`posttime` = #{posttime},</if>
+            <if test ='null != userBg'>`userBg` = #{userBg}</if>
         </set>
         WHERE `uid` = #{uid}
     </update>

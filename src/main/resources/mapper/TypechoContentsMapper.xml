@@ -222,7 +222,7 @@
             <if test ='null != likes'>`likes` = #{likes},</if>
             <if test ='null != isrecommend'>`isrecommend` = #{isrecommend},</if>
             <if test ='null != istop'>`istop` = #{istop},</if>
-            <if test ='null != isswiper'>`isswiper` = #{isswiper}</if>
+            <if test ='null != isswiper'>`isswiper` = #{isswiper},</if>
             <if test ='null != replyTime'>`replyTime` = #{replyTime}</if>
 
         </set>

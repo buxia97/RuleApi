@@ -122,5 +122,11 @@ public class TypechoUsers implements Serializable {
      */
     private Integer posttime;
 
+    /**
+     * 用户主页背景图链接
+     */
+    private String userBg;
+
+
 
 }
