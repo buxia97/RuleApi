@@ -153,6 +153,9 @@ public class TypechoContentsController {
                 if(typechoContents==null){
                     return Result.getResultJson(0,"该文章不存在",null);
                 }
+                if(!typechoContents.getStatus().equals("publish")){
+                    return Result.getResultJson(0,"文章暂未公开访问",null);
+                }
                 String text = typechoContents.getText();
                 String forbidden = apiconfig.getForbidden();
                 Integer textForbidden = baseFull.getForbidden(forbidden,text);

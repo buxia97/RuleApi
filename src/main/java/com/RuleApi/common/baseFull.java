@@ -279,10 +279,11 @@ public class baseFull {
                 String[] strarray=forbidden.split(",");
                 for (int i = 0; i < strarray.length; i++){
                     String str = strarray[i];
-                    if(text.indexOf(str) != -1){
-                        isForbidden = 1;
+                    if(str!=null&&str!=""){
+                        if(text.indexOf(str) != -1){
+                            isForbidden = 1;
+                        }
                     }
-
                 }
             }else{
                 if(text.indexOf(forbidden) != -1){
