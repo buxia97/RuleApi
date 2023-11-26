@@ -474,5 +474,50 @@ public class TypechoMetasController {
         }
 
     }
+    /***
+     * 推荐分类和标签
+     */
+    @RequestMapping(value = "/toRecommend")
+    @ResponseBody
+    public String addRecommend(@RequestParam(value = "key", required = false) String  key,
+                               @RequestParam(value = "recommend", required = false,defaultValue = "1") Integer  recommend,
+                               @RequestParam(value = "token", required = false) String  token) {
+        try {
+            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+            if(uStatus==0){
+                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
+            }
+
+            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            String group = map.get("group").toString();
+            String logUid = map.get("uid").toString();
+            if(!group.equals("administrator")){
+                return Result.getResultJson(0,"你没有操作权限",null);
+            }
+            if(recommend!=0&&recommend!=1){
+                return Result.getResultJson(0,"参数错误",null);
+            }
+            TypechoMetas meta = service.selectByKey(key);
+            if(meta==null){
+                return Result.getResultJson(0,"数据不存在",null);
+            }
+            TypechoMetas update = new TypechoMetas();
+            update.setMid(Integer.parseInt(key));
+            update.setIsrecommend(recommend);
+            int rows = service.update(update);
+            editFile.setLog("管理员"+logUid+"请求修改分类"+key+"推荐状态");
+            JSONObject response = new JSONObject();
+            response.put("code" , rows);
+            response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
+            return response.toString();
+        }catch (Exception e){
+            e.printStackTrace();
+            JSONObject response = new JSONObject();
+            response.put("code" , 0);
+            response.put("msg"  , "操作失败");
+            return response.toString();
+        }
+
+    }
 
 }

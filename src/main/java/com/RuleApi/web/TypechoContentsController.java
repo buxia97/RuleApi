@@ -588,7 +588,6 @@ public class TypechoContentsController {
                     if(text.length()>60000){
                         return Result.getResultJson(0,"超出最大文章内容长度",null);
                     }
-
                     //是否开启代码拦截
                     if(apiconfig.getDisableCode().equals(1)){
                         if(baseFull.haveCode(text).equals(1)){

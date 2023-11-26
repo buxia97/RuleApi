@@ -1498,6 +1498,7 @@ public class TypechoUsersController {
                 jsonToMap.remove("assets");
                 jsonToMap.remove("experience");
                 jsonToMap.remove("vip");
+                jsonToMap.remove("points");
                 if(jsonToMap.get("screenName")!=null){
                     //验证用户名是否违禁
                     String screenName = jsonToMap.get("screenName").toString();
