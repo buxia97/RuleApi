@@ -159,17 +159,22 @@ public class TypechoContentsController {
                 String text = typechoContents.getText();
                 String forbidden = apiconfig.getForbidden();
                 Integer textForbidden = baseFull.getForbidden(forbidden,text);
-                if(textForbidden.equals(1)){
-                    text = "内容违规，无法展示";
-                }
+//                if(textForbidden.equals(1)){
+//                    text = "内容违规，无法展示";
+//                }
                 String oldText = typechoContents.getText();
                 //要做处理将typecho的图片插入格式变成markdown
                 List imgList = baseFull.getImageSrc(text);
                 List codeList = baseFull.getImageCode(text);
                 for(int c = 0; c < codeList.size(); c++){
                     String codeimg = codeList.get(c).toString();
-                    String urlimg = imgList.get(c).toString();
-                    text=text.replace(codeimg,"![image"+c+"]("+urlimg+")");
+                    try{
+                        String urlimg = imgList.get(c).toString();
+                        text=text.replace(codeimg,"![image"+c+"]("+urlimg+")");
+                    }catch (Exception e){
+                        System.err.println("图片Mardkdown代码异常");
+                    }
+
                 }
                 text=text.replace("<!--markdown-->","");
                 List codeImageMk = baseFull.getImageMk(text);
