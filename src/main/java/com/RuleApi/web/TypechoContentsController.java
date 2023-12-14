@@ -134,7 +134,8 @@ public class TypechoContentsController {
             }
         }
         //验证结束
-
+        Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+        String group = map.get("group").toString();
         Map contensjson = new HashMap<String, String>();
         Map cacheInfo = redisHelp.getMapValue(this.dataprefix+"_"+"contentsInfo_"+key+"_"+isMd,redisTemplate);
 
@@ -153,12 +154,15 @@ public class TypechoContentsController {
                 if(typechoContents==null){
                     return Result.getResultJson(0,"该文章不存在",null);
                 }
-                if(!typechoContents.getStatus().equals("publish")){
-                    return Result.getResultJson(0,"文章暂未公开访问",null);
+                if(!group.equals("administrator")&&!group.equals("editor")){
+                    if(!typechoContents.getStatus().equals("publish")){
+                        return Result.getResultJson(0,"文章暂未公开访问",null);
+                    }
                 }
+
                 String text = typechoContents.getText();
                 String forbidden = apiconfig.getForbidden();
-                Integer textForbidden = baseFull.getForbidden(forbidden,text);
+//                Integer textForbidden = baseFull.getForbidden(forbidden,text);
 //                if(textForbidden.equals(1)){
 //                    text = "内容违规，无法展示";
 //                }

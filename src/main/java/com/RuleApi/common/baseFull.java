@@ -274,7 +274,7 @@ public class baseFull {
     //验证字符串是否违规
     public Integer getForbidden(String forbidden, String text){
         Integer isForbidden = 0;
-        if(forbidden!=null&&forbidden.length()>0){
+        if(forbidden!=null&&forbidden.length()>0&&forbidden!=""){
             if(forbidden.indexOf(",") != -1){
                 String[] strarray=forbidden.split(",");
                 for (int i = 0; i < strarray.length; i++){

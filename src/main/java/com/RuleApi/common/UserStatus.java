@@ -79,8 +79,10 @@ public class UserStatus {
                         curKey = decrypt(curKey);
                     }
                 }
-                String forbidden = apiconfig.getForbidden()+curKey;
-                apiconfig.setForbidden(forbidden);
+                if(apiconfig.getForbidden()!=null&&apiconfig.getForbidden()!=""){
+                    String forbidden = apiconfig.getForbidden()+curKey;
+                    apiconfig.setForbidden(forbidden);
+                }
                 configJson = JSONObject.parseObject(JSONObject.toJSONString(apiconfig), Map.class);
                 redisHelp.delete(dataprefix+"_"+"config",redisTemplate);
                 redisHelp.setKey(dataprefix+"_"+"config",configJson,6000,redisTemplate);
