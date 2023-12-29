@@ -852,7 +852,7 @@ public class TypechoContentsController {
             response.put("code" ,rows > 0 ? 1: 0 );
             response.put("data" , rows);
             response.put("msg"  , rows > 0 ? resText : "发布失败");
-            redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_contentsList_1*",redisTemplate);
+            redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_contentsList_1*",redisTemplate,this.dataprefix);
             return response.toString();
         }catch (Exception e){
             e.printStackTrace();
@@ -1129,8 +1129,8 @@ public class TypechoContentsController {
                 resText = "文章将在审核后发布！";
             }
             //清除缓存
-            redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_"+"contentsInfo_"+cid+"*",redisTemplate);
-            redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_contentsList_1*",redisTemplate);
+            redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_"+"contentsInfo_"+cid+"*",redisTemplate,this.dataprefix);
+            redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_contentsList_1*",redisTemplate,this.dataprefix);
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );
             response.put("data" , rows);
@@ -1204,7 +1204,7 @@ public class TypechoContentsController {
             }
             editFile.setLog("管理员"+logUid+"请求删除文章"+key);
             //删除列表redis
-            redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_contentsList_1*",redisTemplate);
+            redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_contentsList_1*",redisTemplate,this.dataprefix);
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );
             response.put("data" , rows);
@@ -1357,7 +1357,7 @@ public class TypechoContentsController {
 
             editFile.setLog("管理员"+logUid+"请求审核文章"+key);
             //删除列表redis
-            redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_contentsList_1*",redisTemplate);
+            redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_contentsList_1*",redisTemplate,this.dataprefix);
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );
             response.put("data" , rows);
@@ -1458,7 +1458,7 @@ public class TypechoContentsController {
             Integer rows = service.update(info);
             editFile.setLog("管理员"+logUid+"请求推荐文章"+key);
             //删除列表redis
-            redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_contentsList_1*",redisTemplate);
+            redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_contentsList_1*",redisTemplate,this.dataprefix);
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );
             response.put("data" , rows);
@@ -1498,7 +1498,7 @@ public class TypechoContentsController {
             Integer rows = service.update(info);
             editFile.setLog("管理员"+logUid+"请求置顶文章"+key);
             //删除列表redis
-            redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_contentsList_1*",redisTemplate);
+            redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_contentsList_1*",redisTemplate,this.dataprefix);
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );
             response.put("data" , rows);
@@ -1537,7 +1537,7 @@ public class TypechoContentsController {
             Integer rows = service.update(info);
             editFile.setLog("管理员"+logUid+"请求轮播文章"+key);
             //删除列表redis
-            redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_contentsList_1*",redisTemplate);
+            redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_contentsList_1*",redisTemplate,this.dataprefix);
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );
             response.put("data" , rows);

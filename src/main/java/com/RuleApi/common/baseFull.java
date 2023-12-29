@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Random;
 import java.util.regex.Matcher;
@@ -271,30 +272,46 @@ public class baseFull {
             return 0; // 不是媒体文件
         }
     }
-    //验证字符串是否违规
-    public Integer getForbidden(String forbidden, String text){
+    public Integer getForbidden(String forbidden, String text) {
         Integer isForbidden = 0;
-        if(forbidden!=null&&forbidden.length()>0&&forbidden!=""){
-            if(forbidden.indexOf(",") != -1){
-                String[] strarray=forbidden.split(",");
-                for (int i = 0; i < strarray.length; i++){
-                    String str = strarray[i];
-                    if(str!=null&&str!=""){
-                        if(text.indexOf(str) != -1){
+
+        if (forbidden != null && !forbidden.isEmpty()) {
+            if (forbidden.contains(",")) {
+                String[] strArray = forbidden.split(",");
+                for (String str : strArray) {
+                    if (str != null && !str.isEmpty()) {
+                        if (text.contains(str)) {
                             isForbidden = 1;
+                            break; // 如果匹配到一个违禁词就立即停止循环
                         }
                     }
                 }
-            }else{
-                if(text.indexOf(forbidden) != -1){
-                    isForbidden = 1;
-                }
-                if(text.equals(forbidden)){
+            } else {
+                if (text.contains(forbidden) || text.equals(forbidden)) {
                     isForbidden = 1;
                 }
             }
         }
-        return  isForbidden;
+
+        return isForbidden;
+    }
+
+    // 加密字符串
+    public String encrypt(String plainText) {
+        byte[] encodedBytes = Base64.getEncoder().encode(plainText.getBytes());
+        return new String(encodedBytes);
+    }
+
+    // 解密字符串
+    public String decrypt(String encryptedText) {
+        byte[] decodedBytes = Base64.getDecoder().decode(encryptedText.getBytes());
+        return new String(decodedBytes);
+    }
+
+    //从富文本提取存文本
+    public String htmlToText(String text) {
+        text = text.replaceAll("\\<.*?\\>", "");
+        return text;
     }
 
 }

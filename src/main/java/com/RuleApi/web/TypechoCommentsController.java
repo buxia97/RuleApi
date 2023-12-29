@@ -612,7 +612,7 @@ public class TypechoCommentsController {
             }
             editFile.setLog("用户"+logUid+"提交发布评论，IP："+ip);
             //清理列表reids缓存
-            redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_commentsList_1*",redisTemplate);
+            redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_commentsList_1*",redisTemplate,this.dataprefix);
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );
             response.put("data" , rows);
@@ -683,7 +683,7 @@ public class TypechoCommentsController {
             Integer rows = service.update(comments);
             editFile.setLog("用户"+logUid+"修改了评论"+jsonToMap.get("coid"));
             //清理列表reids缓存
-            redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_commentsList_1*",redisTemplate);
+            redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_commentsList_1*",redisTemplate,this.dataprefix);
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );
             response.put("data" , rows);
@@ -902,7 +902,7 @@ public class TypechoCommentsController {
             }
             editFile.setLog("管理员"+logUid+"审核了评论"+key);
             //清理列表reids缓存
-            redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_commentsList_1*",redisTemplate);
+            redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_commentsList_1*",redisTemplate,this.dataprefix);
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );
             response.put("data" , rows);
@@ -985,7 +985,8 @@ public class TypechoCommentsController {
             contentsService.update(contents);
             editFile.setLog("用户"+uid+"删除了评论"+key);
             //清理列表reids缓存
-            redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_commentsList_1*",redisTemplate);
+            redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_commentsList_1*",redisTemplate,this.dataprefix);
+
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );
             response.put("data" , rows);

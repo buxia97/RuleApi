@@ -6,6 +6,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.JdkSerializationRedisSerializer;
 import org.springframework.util.CollectionUtils;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -80,12 +81,22 @@ public  class RedisHelp {
      *
      * deleteKeysWithPattern("*example*", redisTemplate);
      */
-    public void deleteKeysWithPattern(String pattern, RedisTemplate<String, String> redisTemplate) {
-        Set<String> keysToDelete = redisTemplate.keys(pattern);
+    public void deleteKeysWithPattern(String pattern, RedisTemplate<String, String> redisTemplate,String dataprefix) {
+        byte[] patternBytes = pattern.getBytes();
+        Set<byte[]> keysToDelete = redisTemplate.getConnectionFactory().getConnection().keys(patternBytes);
+        System.out.println(pattern);
 
-        // 遍历匹配的键，并删除它们
-        for (String key : keysToDelete) {
+        for (byte[] keyBytes : keysToDelete) {
+            String key = new String(keyBytes, StandardCharsets.UTF_8);
+            boolean contains = key.contains(dataprefix);
+            if (contains) {
+                String[] parts = key.split(dataprefix);
+                key = dataprefix+parts[1];
+            }
+            System.out.println(key);
             redisTemplate.delete(key);
         }
+
+
     }
 }
