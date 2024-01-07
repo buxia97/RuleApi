@@ -54,4 +54,9 @@ public class TypechoInbox implements Serializable {
      */
     private Integer created;
 
+    /**
+     * cid  次级内容ID
+     */
+    private Integer cid;
+
 }

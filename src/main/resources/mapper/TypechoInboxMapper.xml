@@ -12,6 +12,7 @@
         <result column="isread" property="isread" />
         <result column="value" property="value" />
         <result column="created" property="created" />
+        <result column="cid" property="cid" />
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -22,7 +23,8 @@
         `touid`,
         `isread`,
         `value`,
-        `created`
+        `created`,
+        `cid`
     </sql>
 
     <!-- 插入数据 -->
@@ -51,7 +53,10 @@
                 `value`,
             </if>
             <if test ='null != created'>
-                `created`
+                `created`,
+            </if>
+            <if test ='null != cid'>
+                `cid`
             </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
@@ -77,7 +82,10 @@
                 #{value},
             </if>
             <if test ='null != created'>
-                #{created}
+                #{created},
+            </if>
+            <if test ='null != cid'>
+                #{cid}
             </if>
         </trim>
     </insert>
@@ -92,7 +100,8 @@
             <if test ='null != touid'>`touid` = #{touid},</if>
             <if test ='null != isread'>`isread` = #{isread},</if>
             <if test ='null != value'>`value` = #{value},</if>
-            <if test ='null != created'>`value` = #{created}</if>
+            <if test ='null != created'>`created` = #{created},</if>
+            <if test ='null != cid'>`cid` = #{cid}</if>
         </set>
         WHERE `id` = #{id}
     </update>
@@ -140,6 +149,9 @@
             <if test ='null != created'>
                 and `created` = #{created}
             </if>
+            <if test ='null != cid'>
+                and `cid` = #{cid}
+            </if>
         </where>
     </select>
 
@@ -152,7 +164,13 @@
                 and `id` = #{typechoInbox.id}
             </if>
             <if test ='null != typechoInbox.type'>
-                and `type` = #{typechoInbox.type}
+                <if test ='"comment" == typechoInbox.type'>
+                    and `type` IN ('comment', 'postComment')
+                </if>
+                <if test ='"comment" != typechoInbox.type'>
+                    and `type` = #{typechoInbox.type}
+                </if>
+
             </if>
             <if test ='null != typechoInbox.uid'>
                 and `uid` = #{typechoInbox.uid}
@@ -185,7 +203,12 @@
                 and `id` = #{id}
             </if>
             <if test ='null != type'>
-                and `type` = #{type}
+                <if test ='"comment" == type'>
+                    and `type` IN ('comment', 'postComment')
+                </if>
+                <if test ='"comment" != type'>
+                    and `type` = #{type}
+                </if>
             </if>
             <if test ='null != uid'>
                 and `uid` = #{uid}

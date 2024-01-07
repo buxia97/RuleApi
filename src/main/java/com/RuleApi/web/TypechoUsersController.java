@@ -2357,13 +2357,43 @@ public class TypechoUsersController {
 
         Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
         Integer uid =Integer.parseInt(map.get("uid").toString());
-        query.setTouid(uid);
-        query.setIsread(0);
-        Integer total = inboxService.total(query);
+        Map data = new HashMap();
+        Map cacheInfo = redisHelp.getMapValue(this.dataprefix+"_"+"unreadNum_"+uid,redisTemplate);
+        if(cacheInfo.size()>0){
+            data = cacheInfo;
+        }else{
+            query.setTouid(uid);
+            query.setIsread(0);
+            //评论comment，财务finance，系统system，聊天chat，粉丝fan
+            Integer total = inboxService.total(query);
+            query.setType("comment");
+            Integer comment = inboxService.total(query);
+            query.setType("finance");
+            Integer finance = inboxService.total(query);
+            query.setType("system");
+            Integer system = inboxService.total(query);
+            query.setType("fan");
+            Integer fan = inboxService.total(query);
+
+            String unReadMsg = redisHelp.getRedis(this.dataprefix+"_unReadMsg_"+uid,redisTemplate);
+            Integer chat = 0;
+            if(unReadMsg!=null){
+                chat = Integer.parseInt(unReadMsg);
+            }
+            total = total + chat;
+            data.put("total",total);
+            data.put("comment",comment);
+            data.put("finance",finance);
+            data.put("system",system);
+            data.put("chat",chat);
+            data.put("fan",fan);
+            redisHelp.delete(this.dataprefix+"_"+"unreadNum_"+uid,redisTemplate);
+            redisHelp.setKey(this.dataprefix+"_"+"unreadNum_"+uid,data,30,redisTemplate);
+        }
         JSONObject response = new JSONObject();
         response.put("code" , 1);
         response.put("msg"  , "");
-        response.put("data" ,total);
+        response.put("data" ,data);
         return response.toString();
     }
     /***
@@ -2372,18 +2402,28 @@ public class TypechoUsersController {
      */
     @RequestMapping(value = "/setRead")
     @ResponseBody
-    public String setRead (@RequestParam(value = "token", required = false) String  token) {
+    public String setRead (@RequestParam(value = "token", required = false) String  token,
+                           @RequestParam(value = "type", required = false,defaultValue = "all") String  type) {
         TypechoInbox query = new TypechoInbox();
         try {
             Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
             if (uStatus == 0) {
                 return Result.getResultJson(0, "用户未登录或Token验证失败", null);
             }
-
+            //评论comment，财务finance，系统system，聊天chat，粉丝fan
             Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
             Integer uid =Integer.parseInt(map.get("uid").toString());
-
-            jdbcTemplate.execute("UPDATE "+this.prefix+"_inbox SET isread = 1 WHERE touid="+uid+";");
+            if(type.equals("all")){
+                redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_"+"myChat_"+uid+"*",redisTemplate,this.dataprefix);
+                jdbcTemplate.execute("UPDATE "+this.prefix+"_inbox SET isread = 1 WHERE touid="+uid+";");
+                //聊天消息归零
+                jdbcTemplate.execute("UPDATE "+this.prefix+"_chat SET otherUnRead = 0 WHERE toid="+uid+" and type = 0;");
+                jdbcTemplate.execute("UPDATE "+this.prefix+"_chat SET myUnRead = 0 WHERE uid="+uid+" and type = 0;");
+                redisHelp.setRedis(this.dataprefix+"_unReadMsg_"+uid,"0",600,redisTemplate);
+            }else{
+                jdbcTemplate.execute("UPDATE "+this.prefix+"_inbox SET isread = 1 WHERE touid ="+uid+" AND type = '"+type+"' ;");
+            }
+            redisHelp.delete(this.dataprefix+"_"+"unreadNum_"+uid,redisTemplate);
             return Result.getResultJson(1, "操作成功", null);
         }catch (Exception e){
             e.printStackTrace();

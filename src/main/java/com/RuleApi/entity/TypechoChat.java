@@ -58,4 +58,14 @@ public class TypechoChat implements Serializable {
      * 屏蔽和全体禁言，存操作人id
      */
     private Integer ban;
+
+    /**
+     * 我未读（只对私聊生效）
+     */
+    private Integer myUnRead;
+
+    /**
+     * 对方未读（只对私聊生效）
+     */
+    private Integer otherUnRead;
 }

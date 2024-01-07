@@ -13,6 +13,8 @@
         <result column="name" property="name" />
         <result column="pic" property="pic" />
         <result column="ban" property="ban" />
+        <result column="myUnRead" property="myUnRead" />
+        <result column="otherUnRead" property="otherUnRead" />
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -24,7 +26,9 @@
         `type`,
         `name`,
         `pic`,
-        `ban`
+        `ban`,
+        `myUnRead`,
+        `otherUnRead`
     </sql>
 
     <!-- 插入数据 -->
@@ -56,7 +60,13 @@
                 `pic`,
             </if>
             <if test ='null != ban'>
-                `ban`
+                `ban`,
+            </if>
+            <if test ='null != myUnRead'>
+                `myUnRead`,
+            </if>
+            <if test ='null != otherUnRead'>
+                `otherUnRead`
             </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
@@ -85,7 +95,13 @@
                 #{pic},
             </if>
             <if test ='null != ban'>
-                #{ban}
+                #{ban},
+            </if>
+            <if test ='null != myUnRead'>
+                #{myUnRead},
+            </if>
+            <if test ='null != otherUnRead'>
+                #{otherUnRead}
             </if>
         </trim>
     </insert>
@@ -95,15 +111,15 @@
         INSERT INTO ${prefix}_chat ( <include refid="Base_Column_List" /> ) VALUES
         <foreach collection="list" item="curr" index="index" separator=",">
             (
-                #{curr.id},
-                #{curr.uid},
-                #{curr.toid},
-                #{curr.created},
-                #{curr.lastTime},
-                #{curr.type},
-                #{curr.name},
-                #{curr.pic},
-                #{curr.ban}
+            #{curr.id},
+            #{curr.uid},
+            #{curr.toid},
+            #{curr.created},
+            #{curr.lastTime},
+            #{curr.type},
+            #{curr.name},
+            #{curr.pic},
+            #{curr.ban}
             )
         </foreach>
     </insert>
@@ -119,7 +135,9 @@
             <if test ='null != type'>`type` = #{type},</if>
             <if test ='null != name'>`name` = #{name},</if>
             <if test ='null != pic'>`pic` = #{pic},</if>
-            <if test ='null != ban'>`ban` = #{ban}</if>
+            <if test ='null != ban'>`ban` = #{ban},</if>
+            <if test ='null != myUnRead'>`myUnRead` = #{myUnRead},</if>
+            <if test ='null != otherUnRead'>`otherUnRead` = #{otherUnRead}</if>
         </set>
         WHERE `id` = #{id}
     </update>

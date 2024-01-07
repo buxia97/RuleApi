@@ -126,6 +126,7 @@ public class TypechoContentsController {
         TypechoContents typechoContents = null;
 
         //如果开启全局登录，则必须登录才能得到数据
+        String group = "";
         Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
         TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
         if(apiconfig.getIsLogin().equals(1)){
@@ -134,8 +135,10 @@ public class TypechoContentsController {
             }
         }
         //验证结束
-        Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
-        String group = map.get("group").toString();
+        if(uStatus.equals(1)) {
+            Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+            group = map.get("group").toString();
+        }
         Map contensjson = new HashMap<String, String>();
         Map cacheInfo = redisHelp.getMapValue(this.dataprefix+"_"+"contentsInfo_"+key+"_"+isMd,redisTemplate);
 
