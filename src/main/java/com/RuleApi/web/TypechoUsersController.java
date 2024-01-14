@@ -2259,6 +2259,7 @@ public class TypechoUsersController {
     @RequestMapping(value = "/inbox")
     @ResponseBody
     public String inbox (@RequestParam(value = "token", required = false) String  token,
+                         @RequestParam(value = "type", required = false , defaultValue = "comment") String  type,
                          @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
                          @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit) {
         if(limit>50){
@@ -2272,18 +2273,15 @@ public class TypechoUsersController {
         List jsonList = new ArrayList();
         Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
         Integer uid =Integer.parseInt(map.get("uid").toString());
-        List cacheList = redisHelp.getList(this.dataprefix+"_"+"inbox_"+page+"_"+limit+"_"+uid,redisTemplate);
-
+        List cacheList = redisHelp.getList(this.dataprefix+"_"+"inbox_"+page+"_"+limit+"_"+type+"_"+uid,redisTemplate);
+        query.setType(type);
         query.setTouid(uid);
         Integer total = inboxService.total(query);
+        TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
         try{
             if(cacheList.size()>0){
                 jsonList = cacheList;
             }else{
-
-
-                TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
-
                 PageList<TypechoInbox> pageList = inboxService.selectPage(query, page, limit);
                 List<TypechoInbox> list = pageList.getList();
                 if(list.size() < 1){
@@ -2299,8 +2297,37 @@ public class TypechoUsersController {
                     Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
                     TypechoInbox inbox = list.get(i);
                     Integer userid = inbox.getUid();
-                    //获取用户信息
-                    Map userJson = UserStatus.getUserInfo(userid,apiconfigService,service);
+                    Map userJson = new HashMap();
+                    //如果是未注册游客评论
+                    if(userid.equals(0)){
+                        if(inbox.getType().equals("comment")){
+                            //获取评论信息
+                            Integer coid = inbox.getCid();
+                            TypechoComments comments = commentsService.selectByKey(coid);
+                            if(comments==null){
+                                userJson = UserStatus.getUserInfo(userid,apiconfigService,service);
+                            }else{
+                                userJson.put("avatar","");
+                                userJson.put("uid",0);
+                                userJson.put("name",comments.getAuthor());
+                                String avatar = "";
+                                if(comments.getMail()!=null&&comments.getMail()!=""){
+                                    String mail = comments.getMail();
+                                    if(mail.indexOf("@qq.com") != -1){
+                                        String qq = mail.replace("@qq.com","");
+                                        avatar = "https://q1.qlogo.cn/g?b=qq&nk="+qq+"&s=640";
+                                    }else{
+                                        avatar = baseFull.getAvatar(apiconfig.getWebinfoAvatar(), comments.getMail());
+                                    }
+                                    //avatar = baseFull.getAvatar(apiconfig.getWebinfoAvatar(), author.getMail());
+                                }
+                                userJson.put("avatar",avatar);
+                            }
+                        }
+                    }else{
+                        //获取用户信息
+                        userJson = UserStatus.getUserInfo(userid,apiconfigService,service);
+                    }
                     //获取用户等级
                     TypechoComments comments = new TypechoComments();
                     comments.setAuthorId(userid);
@@ -2322,11 +2349,10 @@ public class TypechoUsersController {
                             json.put("contenTitle","文章已删除");
                         }
                     }
-
                     jsonList.add(json);
                 }
-                redisHelp.delete(this.dataprefix+"_"+"inbox_"+page+"_"+limit+"_"+uid,redisTemplate);
-                redisHelp.setList(this.dataprefix+"_"+"inbox_"+page+"_"+limit+"_"+uid,jsonList,3,redisTemplate);
+                redisHelp.delete(this.dataprefix+"_"+"inbox_"+page+"_"+limit+"_"+type+"_"+uid,redisTemplate);
+                redisHelp.setList(this.dataprefix+"_"+"inbox_"+page+"_"+limit+"_"+type+"_"+uid,jsonList,3,redisTemplate);
             }
         }catch (Exception e){
             e.printStackTrace();
