@@ -1243,6 +1243,22 @@ public class InstallController {
         }else{
             text+="聊天室模块，字段pic已经存在，无需添加。";
         }
+        //查询聊天室模块是否存在myUnRead字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_chat' and column_name = 'myUnRead';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_chat ADD `myUnRead` int(11) unsigned DEFAULT '0' COMMENT '我未读（只对私聊生效）'");
+            text+="聊天室模块，字段myUnRead添加完成。";
+        }else{
+            text+="聊天室模块，字段myUnRead已经存在，无需添加。";
+        }
+        //查询聊天室模块是否存在otherUnRead字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_chat' and column_name = 'otherUnRead';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_chat ADD `otherUnRead` int(11) unsigned DEFAULT '0' COMMENT '对方未读（只对私聊生效）'");
+            text+="聊天室模块，字段otherUnRead添加完成。";
+        }else{
+            text+="聊天室模块，字段otherUnRead已经存在，无需添加。";
+        }
         //聊天记录模块
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_chat_msg';", Integer.class);
         if (i == 0){
