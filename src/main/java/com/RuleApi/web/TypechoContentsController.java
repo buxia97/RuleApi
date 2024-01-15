@@ -1687,11 +1687,11 @@ public class TypechoContentsController {
                     Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
                     //获取用户信息
                     Map userJson = UserStatus.getUserInfo(userid,apiconfigService,usersService);
-                    //获取用户等级
-                    TypechoComments comments = new TypechoComments();
-                    comments.setAuthorId(userid);
-                    Integer lv = commentsService.total(comments,null);
-                    userJson.put("lv", baseFull.getLv(lv));
+//                    //获取用户等级
+//                    TypechoComments comments = new TypechoComments();
+//                    comments.setAuthorId(userid);
+//                    Integer lv = commentsService.total(comments,null);
+//                    userJson.put("lv", baseFull.getLv(lv));
                     json.put("userJson",userJson);
                     jsonList.add(json);
                 }

@@ -184,14 +184,14 @@ public class TypechoCommentsController {
                         }else{
                             avatar = baseFull.getAvatar(apiconfig.getWebinfoAvatar(), mail);
                         }
-                        json.put("lv",0);
+//                        json.put("lv",0);
                         json.put("customize","");
                         json.put("avatar",avatar);
                         json.put("author",comments.getAuthor());
                     }else{
-                        TypechoComments usercomments = new TypechoComments();
-                        usercomments.setAuthorId(userid);
-                        Integer lv = service.total(usercomments,null);
+//                        TypechoComments usercomments = new TypechoComments();
+//                        usercomments.setAuthorId(userid);
+//                        Integer lv = service.total(usercomments,null);
                         TypechoUsers userinfo = usersService.selectByKey(userid);
                         if(userinfo!=null){
                             String name = userinfo.getName();
@@ -217,7 +217,7 @@ public class TypechoCommentsController {
                             json.put("avatar",avatar);
                             json.put("author",name);
                             json.put("mail",userinfo.getMail());
-                            json.put("lv",baseFull.getLv(lv));
+//                            json.put("lv",baseFull.getLv(lv));
                             json.put("customize",userinfo.getCustomize());
                             json.put("experience",userinfo.getExperience());
                             //判断是否为VIP

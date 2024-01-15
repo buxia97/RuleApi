@@ -176,11 +176,11 @@ public class TypechoUsersController {
                     Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
                     TypechoUsers userInfo = list.get(i);
                     //获取用户等级
-                    Integer uid = Integer.parseInt(json.get("uid").toString());
-                    TypechoComments comments = new TypechoComments();
-                    comments.setAuthorId(uid);
-                    Integer lv = commentsService.total(comments,null);
-                    json.put("lv", baseFull.getLv(lv));
+//                    Integer uid = Integer.parseInt(json.get("uid").toString());
+//                    TypechoComments comments = new TypechoComments();
+//                    comments.setAuthorId(uid);
+//                    Integer lv = commentsService.total(comments,null);
+//                    json.put("lv", baseFull.getLv(lv));
 
                     json.remove("password");
                     json.remove("address");
@@ -362,12 +362,12 @@ public class TypechoUsersController {
                 json = JSONObject.parseObject(JSONObject.toJSONString(info), Map.class);
                 //获取用户等级
 
-                Integer uid = Integer.parseInt(key);
-
-                TypechoComments comments = new TypechoComments();
-                comments.setAuthorId(uid);
-                Integer lv = commentsService.total(comments,null);
-                json.put("lv", baseFull.getLv(lv));
+//                Integer uid = Integer.parseInt(key);
+//
+//                TypechoComments comments = new TypechoComments();
+//                comments.setAuthorId(uid);
+//                Integer lv = commentsService.total(comments,null);
+//                json.put("lv", baseFull.getLv(lv));
                 //判断是否为VIP
                 json.put("isvip", 0);
                 Long date = System.currentTimeMillis();
@@ -526,11 +526,11 @@ public class TypechoUsersController {
                     jsonToMap.put("isvip", 1);
                 }
                 //获取用户等级
-                Integer uid = rows.get(0).getUid();
-                TypechoComments comments = new TypechoComments();
-                comments.setAuthorId(uid);
-                Integer lv = commentsService.total(comments,null);
-                jsonToMap.put("lv", baseFull.getLv(lv));
+//                Integer uid = rows.get(0).getUid();
+//                TypechoComments comments = new TypechoComments();
+//                comments.setAuthorId(uid);
+//                Integer lv = commentsService.total(comments,null);
+//                jsonToMap.put("lv", baseFull.getLv(lv));
                 if(rows.get(0).getAvatar()!=null){
                     jsonToMap.put("avatar",rows.get(0).getAvatar());
                 }else{
@@ -741,11 +741,11 @@ public class TypechoUsersController {
                 }
 
                 //获取用户等级
-                Integer uid = user.getUid();
-                TypechoComments comments = new TypechoComments();
-                comments.setAuthorId(uid);
-                Integer lv = commentsService.total(comments,null);
-                jsonToMap.put("lv", baseFull.getLv(lv));
+//                Integer uid = user.getUid();
+//                TypechoComments comments = new TypechoComments();
+//                comments.setAuthorId(uid);
+//                Integer lv = commentsService.total(comments,null);
+//                jsonToMap.put("lv", baseFull.getLv(lv));
                 //更新用户登录时间和第一次登陆时间（满足typecho要求）
                 String userTime = String.valueOf(date).substring(0, 10);
                 TypechoUsers updateuser = new TypechoUsers();
@@ -815,7 +815,7 @@ public class TypechoUsersController {
                 jsonToMap.put("url", "");
                 jsonToMap.put("screenName", userapi.getNickName());
                 jsonToMap.put("avatar", apiconfig.getWebinfoAvatar() + "null");
-                jsonToMap.put("lv", 0);
+//                jsonToMap.put("lv", 0);
                 jsonToMap.put("customize", "");
                 jsonToMap.put("experience", 0);
                 //VIP
@@ -1651,9 +1651,9 @@ public class TypechoUsersController {
             Integer uid = Integer.parseInt(map.get("uid").toString());
             TypechoUsers users = service.selectByKey(uid);
             Map json = JSONObject.parseObject(JSONObject.toJSONString(users), Map.class);
-            TypechoComments comments = new TypechoComments();
-            comments.setAuthorId(uid);
-            Integer lv = commentsService.total(comments,null);
+//            TypechoComments comments = new TypechoComments();
+//            comments.setAuthorId(uid);
+//            Integer lv = commentsService.total(comments,null);
             json.remove("password");
             json.remove("clientId");
             //判断是否为VIP
@@ -1664,7 +1664,7 @@ public class TypechoUsersController {
             if(viptime>Integer.parseInt(curTime)||viptime.equals(1)){
                 json.put("isvip", 1);
             }
-            json.put("lv", baseFull.getLv(lv));
+//            json.put("lv", baseFull.getLv(lv));
             JSONObject response = new JSONObject();
 
             response.put("code", 1);
@@ -2037,11 +2037,11 @@ public class TypechoUsersController {
         Integer uid = Integer.parseInt(map.get("uid").toString());
         TypechoUsers users = service.selectByKey(uid);
         Map json = JSONObject.parseObject(JSONObject.toJSONString(users), Map.class);
-        TypechoComments comments = new TypechoComments();
-        comments.setAuthorId(uid);
-        Integer lv = commentsService.total(comments,null);
-        json.remove("password");
-        json.put("lv", baseFull.getLv(lv));
+//        TypechoComments comments = new TypechoComments();
+//        comments.setAuthorId(uid);
+//        Integer lv = commentsService.total(comments,null);
+//        json.remove("password");
+//        json.put("lv", baseFull.getLv(lv));
         json.put("token", token);
         TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
         if (json.get("mail") != null) {
@@ -2329,10 +2329,10 @@ public class TypechoUsersController {
                         userJson = UserStatus.getUserInfo(userid,apiconfigService,service);
                     }
                     //获取用户等级
-                    TypechoComments comments = new TypechoComments();
-                    comments.setAuthorId(userid);
-                    Integer lv = commentsService.total(comments,null);
-                    userJson.put("lv", baseFull.getLv(lv));
+//                    TypechoComments comments = new TypechoComments();
+//                    comments.setAuthorId(userid);
+//                    Integer lv = commentsService.total(comments,null);
+//                    userJson.put("lv", baseFull.getLv(lv));
                     json.put("userJson",userJson);
                     if(inbox.getType().equals("comment")){
                         TypechoContents contentsInfo = contentsService.selectByKey(inbox.getValue());
@@ -2686,10 +2686,10 @@ public class TypechoUsersController {
                     //获取用户信息
                     Map userJson = UserStatus.getUserInfo(userid,apiconfigService,service);
                     //获取用户等级
-                    TypechoComments comments = new TypechoComments();
-                    comments.setAuthorId(userid);
-                    Integer lv = commentsService.total(comments,null);
-                    userJson.put("lv", baseFull.getLv(lv));
+//                    TypechoComments comments = new TypechoComments();
+//                    comments.setAuthorId(userid);
+//                    Integer lv = commentsService.total(comments,null);
+//                    userJson.put("lv", baseFull.getLv(lv));
                     json.put("userJson",userJson);
                     jsonList.add(json);
                 }
@@ -2751,10 +2751,10 @@ public class TypechoUsersController {
                     //获取用户信息
                     Map userJson = UserStatus.getUserInfo(userid,apiconfigService,service);
                     //获取用户等级
-                    TypechoComments comments = new TypechoComments();
-                    comments.setAuthorId(userid);
-                    Integer lv = commentsService.total(comments,null);
-                    userJson.put("lv", baseFull.getLv(lv));
+//                    TypechoComments comments = new TypechoComments();
+//                    comments.setAuthorId(userid);
+//                    Integer lv = commentsService.total(comments,null);
+//                    userJson.put("lv", baseFull.getLv(lv));
                     json.put("userJson",userJson);
                     jsonList.add(json);
                 }
@@ -2951,10 +2951,10 @@ public class TypechoUsersController {
                     //获取用户信息
                     Map userJson = UserStatus.getUserInfo(userid,apiconfigService,service);
                     //获取用户等级
-                    TypechoComments comments = new TypechoComments();
-                    comments.setAuthorId(userid);
-                    Integer lv = commentsService.total(comments,null);
-                    userJson.put("lv", baseFull.getLv(lv));
+//                    TypechoComments comments = new TypechoComments();
+//                    comments.setAuthorId(userid);
+//                    Integer lv = commentsService.total(comments,null);
+//                    userJson.put("lv", baseFull.getLv(lv));
                     json.put("userJson",userJson);
                     jsonList.add(json);
                 }
