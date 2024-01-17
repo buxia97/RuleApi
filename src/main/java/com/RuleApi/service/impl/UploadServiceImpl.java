@@ -167,18 +167,25 @@ public class UploadServiceImpl implements UploadService {
             }
         }
 
-        /*解决文件路径中的空格问题*/
-        ApplicationHome h = new ApplicationHome(getClass());
-        File jarF = h.getSource();
-        /* 配置文件路径 */
-        String classespath = jarF.getParentFile().toString()+"/files";
+
 
         String decodeClassespath = null;
-        try {
-            decodeClassespath = URLDecoder.decode(classespath,"utf-8");
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+        //如果用户自定义了本地存储地址，则使用自定义地址，否则调用jar所在路径拼接地址
+        if(apiconfig.getLocalPath()!=null&&apiconfig.getLocalPath()!=""){
+            decodeClassespath = apiconfig.getLocalPath();
+        }else{
+            /*解决文件路径中的空格问题*/
+            ApplicationHome h = new ApplicationHome(getClass());
+            File jarF = h.getSource();
+            /* 配置文件路径 */
+            String classespath = jarF.getParentFile().toString()+"/files/static";
+            try {
+                decodeClassespath = URLDecoder.decode(classespath,"utf-8");
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
         }
+
         //System.out.println(decodeClassespath);
 
         Calendar cal = Calendar.getInstance();
@@ -187,7 +194,7 @@ public class UploadServiceImpl implements UploadService {
         int day=cal.get(Calendar.DATE);
 
         /**/
-        File file1 = new File(decodeClassespath+"/static/upload/"+"/"+year+"/"+month+"/"+day+"/"+newfile);
+        File file1 = new File(decodeClassespath+"/upload/"+"/"+year+"/"+month+"/"+day+"/"+newfile);
         if(!file1.exists()){
             file1.mkdirs();
         }

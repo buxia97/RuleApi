@@ -9,6 +9,7 @@ import com.RuleApi.service.TypechoApiconfigService;
 import com.RuleApi.service.TypechoAppService;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import net.dreamlu.mica.xss.core.XssCleanIgnore;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -788,6 +789,7 @@ public class SystemController {
      */
     @RequestMapping(value = "/addApp")
     @ResponseBody
+    @XssCleanIgnore
     public String addApp(@RequestParam(value = "webkey", required = false,defaultValue = "") String  webkey,
                          @RequestParam(value = "params", required = false) String  params) {
 
@@ -824,6 +826,7 @@ public class SystemController {
      */
     @RequestMapping(value = "/updateApp")
     @ResponseBody
+    @XssCleanIgnore
     public String updateApp(@RequestParam(value = "webkey", required = false,defaultValue = "") String  webkey,
                             @RequestParam(value = "params", required = false) String  params) {
 

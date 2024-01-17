@@ -103,6 +103,7 @@
         <result column="uploadPicMax" property="uploadPicMax" />
         <result column="uploadMediaMax" property="uploadMediaMax" />
         <result column="uploadFilesMax" property="uploadFilesMax" />
+        <result column="localPath" property="localPath" />
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -205,7 +206,8 @@
 
         `uploadPicMax`,
         `uploadMediaMax`,
-        `uploadFilesMax`
+        `uploadFilesMax`,
+        `localPath`
     </sql>
 
     <!-- 插入数据 -->
@@ -490,7 +492,10 @@
                 `uploadMediaMax`,
             </if>
             <if test ='null != uploadFilesMax'>
-                `uploadFilesMax`
+                `uploadFilesMax`,
+            </if>
+            <if test ='null != localPath'>
+                `localPath`
             </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
@@ -772,7 +777,10 @@
                 #{uploadMediaMax},
             </if>
             <if test ='null != uploadFilesMax'>
-                #{uploadFilesMax}
+                #{uploadFilesMax},
+            </if>
+            <if test ='null != localPath'>
+                #{localPath}
             </if>
         </trim>
     </insert>
@@ -877,7 +885,8 @@
             <if test ='null != adsGiftAward'>`adsGiftAward` = #{adsGiftAward},</if>
             <if test ='null != uploadPicMax'>`uploadPicMax` = #{uploadPicMax},</if>
             <if test ='null != uploadMediaMax'>`uploadMediaMax` = #{uploadMediaMax},</if>
-            <if test ='null != uploadFilesMax'>`uploadFilesMax` = #{uploadFilesMax}</if>
+            <if test ='null != uploadFilesMax'>`uploadFilesMax` = #{uploadFilesMax},</if>
+            <if test ='null != localPath'>`localPath` = #{localPath}</if>
         </set>
         WHERE `id` = #{id}
     </update>

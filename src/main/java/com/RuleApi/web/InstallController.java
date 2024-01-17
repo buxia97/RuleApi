@@ -1105,6 +1105,13 @@ public class InstallController {
         }else{
             text+="配置中心模块，字段uploadFilesMax已经存在，无需添加。";
         }
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'localPath';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `localPath` varchar(300) DEFAULT '' COMMENT '本地存储地址'");
+            text+="配置中心模块，字段localPath添加完成。";
+        }else{
+            text+="配置中心模块，字段localPath已经存在，无需添加。";
+        }
 
         try {
             Thread.sleep(500);
@@ -1166,7 +1173,14 @@ public class InstallController {
         }else{
             text+="消息通知模块已经存在，无需添加。";
         }
-
+        //查询消息通知模块是否存在cid字段
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_inbox' and column_name = 'cid';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_inbox ADD `cid` int(11) DEFAULT '0' COMMENT '次级消息内容ID'");
+            text+="消息通知模块，字段cid添加完成。";
+        }else{
+            text+="消息通知模块，字段cid已经存在，无需添加。";
+        }
         //关注模块
         i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_fan';", Integer.class);
         if (i == 0){

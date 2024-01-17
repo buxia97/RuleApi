@@ -480,4 +480,9 @@ public class TypechoApiconfig implements Serializable {
      */
     private Integer uploadFilesMax;
 
+    /**
+     * 本地存储路径
+     */
+    private String localPath;
+
 }
