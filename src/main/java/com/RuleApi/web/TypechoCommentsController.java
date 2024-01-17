@@ -485,26 +485,29 @@ public class TypechoCommentsController {
                             }
                         }
                         //发送消息通知
-                        TypechoInbox inbox = new TypechoInbox();
-                        inbox.setUid(logUid);
-                        inbox.setTouid(pComments.getAuthorId());
-                        inbox.setType("comment");
-                        inbox.setText(text);
-                        inbox.setValue(Integer.parseInt(cid));
-                        inbox.setCreated(Integer.parseInt(created));
-                        inboxService.insert(inbox);
-                        if(isPush.equals(1)) {
-                            TypechoUsers parentUser = usersService.selectByKey(pComments.getAuthorId());
-                            if(parentUser.getClientId()!=null){
-                                try {
-                                    pushService.sendPushMsg(parentUser.getClientId(),title,"你有新的回复消息！","payload","comment:"+Integer.parseInt(cid));
-                                }catch (Exception e){
-                                    System.err.println("通知发送失败");
-                                    e.printStackTrace();
-                                }
+                        if(!pComments.getAuthorId().equals(0)){
+                            TypechoInbox inbox = new TypechoInbox();
+                            inbox.setUid(logUid);
+                            inbox.setTouid(pComments.getAuthorId());
+                            inbox.setType("comment");
+                            inbox.setText(text);
+                            inbox.setValue(Integer.parseInt(cid));
+                            inbox.setCreated(Integer.parseInt(created));
+                            inboxService.insert(inbox);
+                            if(isPush.equals(1)) {
+                                TypechoUsers parentUser = usersService.selectByKey(pComments.getAuthorId());
+                                if(parentUser.getClientId()!=null){
+                                    try {
+                                        pushService.sendPushMsg(parentUser.getClientId(),title,"你有新的回复消息！","payload","comment:"+Integer.parseInt(cid));
+                                    }catch (Exception e){
+                                        System.err.println("通知发送失败");
+                                        e.printStackTrace();
+                                    }
 
+                                }
                             }
                         }
+
 
                     }else{
                         if(!contents.getAuthorId().equals(0)){
