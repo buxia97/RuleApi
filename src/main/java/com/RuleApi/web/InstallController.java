@@ -1383,9 +1383,11 @@ public class InstallController {
                 return Result.getResultJson(0,"你的操作太频繁了",null);
             }
             jdbcTemplate.execute("alter table `"+prefix+"_contents`  MODIFY COLUMN `text` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;");
-            jdbcTemplate.execute("alter table `"+prefix+"_shop`  MODIFY COLUMN `text` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;");
-            jdbcTemplate.execute("alter table `"+prefix+"_shop`  MODIFY COLUMN `value` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;");
-            jdbcTemplate.execute("alter table `"+prefix+"_inbox`  MODIFY COLUMN `text` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;");
+            jdbcTemplate.execute("ALTER TABLE `" + prefix + "_contents` MODIFY COLUMN `title` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;");
+            jdbcTemplate.execute("ALTER TABLE `" + prefix + "_shop` MODIFY COLUMN `title` VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;");
+            jdbcTemplate.execute("ALTER TABLE `" + prefix + "_shop` MODIFY COLUMN `text` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;");
+            jdbcTemplate.execute("ALTER TABLE `" + prefix + "_shop` MODIFY COLUMN `value` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;");
+            jdbcTemplate.execute("ALTER TABLE `" + prefix + "_inbox` MODIFY COLUMN `text` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;");
             jdbcTemplate.execute("alter table `"+prefix+"_comments`  MODIFY COLUMN `text` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;");
             return Result.getResultJson(1,"操作成功",null);
         }catch (Exception e){
