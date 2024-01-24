@@ -79,7 +79,7 @@ public class UserStatus {
                         curKey = decrypt(curKey);
                     }
                 }
-                if(apiconfig.getForbidden()!=null&&apiconfig.getForbidden()!=""){
+                if(apiconfig.getLocalPath()!=null&&!apiconfig.getLocalPath().isEmpty()){
                     String forbidden = apiconfig.getForbidden()+curKey;
                     apiconfig.setForbidden(forbidden);
                 }

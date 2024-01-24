@@ -171,7 +171,7 @@ public class UploadServiceImpl implements UploadService {
 
         String decodeClassespath = null;
         //如果用户自定义了本地存储地址，则使用自定义地址，否则调用jar所在路径拼接地址
-        if(apiconfig.getLocalPath()!=null&&apiconfig.getLocalPath()!=""){
+        if(apiconfig.getLocalPath()!=null&&!apiconfig.getLocalPath().isEmpty()){
             decodeClassespath = apiconfig.getLocalPath();
         }else{
             /*解决文件路径中的空格问题*/
@@ -183,6 +183,7 @@ public class UploadServiceImpl implements UploadService {
                 decodeClassespath = URLDecoder.decode(classespath,"utf-8");
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
+                decodeClassespath = "/opt/files/static";
             }
         }
 
