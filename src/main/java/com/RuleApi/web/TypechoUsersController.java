@@ -24,6 +24,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.Pattern;
 
 import org.springframework.stereotype.Component;
 
@@ -1331,43 +1332,55 @@ public class TypechoUsersController {
                 if(isEmail.equals(0)){
                     return Result.getResultJson(0, "邮箱验证已经关闭，请联系管理员找回密码", null);
                 }
+                if(jsonToMap.get("code")==null||jsonToMap.get("name")==null){
+                    return Result.getResultJson(0, "参数错误", null);
+                }
                 jsonToMap = JSONObject.parseObject(JSON.parseObject(params).toString());
                 String code = jsonToMap.get("code").toString();
                 String name = jsonToMap.get("name").toString();
-                //从redis获取验证码
-                String sendCode = null;
-                if (redisHelp.getRedis(this.dataprefix + "_" + "sendCode" + name, redisTemplate) != null) {
-                    sendCode = redisHelp.getRedis(this.dataprefix + "_" + "sendCode" + name, redisTemplate);
-                } else {
-                    return Result.getResultJson(0, "验证码已超时或未发送", null);
+                //先验证并获取用户
+                TypechoUsers curUser = new TypechoUsers();
+                //判断用户是否提交了邮箱，并验证是否注册
+                String EMAIL_REGEX = "^[\\w.-]+@([\\w-]+\\.)+[\\w-]{2,}$";
+                Pattern pattern = Pattern.compile(EMAIL_REGEX);
+                if (!pattern.matcher(name).matches()) {
+                    curUser.setName(name);
+                }else{
+                    curUser.setMail(name);
                 }
-                if (!sendCode.equals(code)) {
-                    return Result.getResultJson(0, "验证码不正确", null);
-                }
-                redisHelp.delete(this.dataprefix + "_" + "sendCode" + name, redisTemplate);
-                String p = jsonToMap.get("password").toString();
-                String passwd = phpass.HashPassword(p);
-                jsonToMap.put("password", passwd);
-                jsonToMap.remove("code");
+                List<TypechoUsers> isName = service.selectList(curUser);
+                if (isName.size() > 0) {
+                    String userName = isName.get(0).getName();
+                    //从redis获取验证码
+                    String sendCode = null;
+                    if (redisHelp.getRedis(this.dataprefix + "_" + "sendCode" + userName, redisTemplate) != null) {
+                        sendCode = redisHelp.getRedis(this.dataprefix + "_" + "sendCode" + userName, redisTemplate);
+                    } else {
+                        return Result.getResultJson(0, "验证码已超时或未发送", null);
+                    }
+                    if (!sendCode.equals(code)) {
+                        return Result.getResultJson(0, "验证码不正确", null);
+                    }
+                    redisHelp.delete(this.dataprefix + "_" + "sendCode" + name, redisTemplate);
+                    String p = jsonToMap.get("password").toString();
+                    String passwd = phpass.HashPassword(p);
+                    jsonToMap.put("password", passwd);
+                    jsonToMap.remove("code");
 
-                Map keyName = new HashMap<String, String>();
-                keyName.put("name", jsonToMap.get("name").toString());
-                TypechoUsers toKey1 = JSON.parseObject(JSON.toJSONString(keyName), TypechoUsers.class);
-                List<TypechoUsers> isName = service.selectList(toKey1);
-                if (isName.size() == 0) {
+                    Map updateMap = new HashMap<String, String>();
+                    updateMap.put("uid", isName.get(0).getUid().toString());
+                    updateMap.put("name", jsonToMap.get("name").toString());
+                    updateMap.put("password", jsonToMap.get("password").toString());
+
+                    update = JSON.parseObject(JSON.toJSONString(updateMap), TypechoUsers.class);
+                }else{
                     return Result.getResultJson(0, "用户不存在", null);
                 }
 
-                Map updateMap = new HashMap<String, String>();
-                updateMap.put("uid", isName.get(0).getUid().toString());
-                updateMap.put("name", jsonToMap.get("name").toString());
-                updateMap.put("password", jsonToMap.get("password").toString());
-
-                update = JSON.parseObject(JSON.toJSONString(updateMap), TypechoUsers.class);
+            }else{
+                return Result.getResultJson(0, "参数错误", null);
             }
-
             int rows = service.update(update);
-
             JSONObject response = new JSONObject();
             response.put("code", rows > 0 ? 1 : 0);
             response.put("data", rows);
