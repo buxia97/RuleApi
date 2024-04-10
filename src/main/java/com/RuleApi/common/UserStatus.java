@@ -65,7 +65,8 @@ public class UserStatus {
         TypechoApiconfig config = new TypechoApiconfig();
         try{
             Map configJson = new HashMap<String, String>();
-            Map cacheInfo = redisHelp.getMapValue(dataprefix+"_"+"config",redisTemplate);
+            Map cacheInfo =new HashMap<String, String>();
+            cacheInfo = redisHelp.getMapValue(dataprefix+"_"+"config",redisTemplate);
             if(cacheInfo.size()>0){
                 configJson = cacheInfo;
             }else{

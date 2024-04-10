@@ -164,7 +164,7 @@ public class TypechoContentsController {
                 }
 
                 String text = typechoContents.getText();
-                String forbidden = apiconfig.getForbidden();
+ //               String forbidden = apiconfig.getForbidden();
 //                Integer textForbidden = baseFull.getForbidden(forbidden,text);
 //                if(textForbidden.equals(1)){
 //                    text = "内容违规，无法展示";
