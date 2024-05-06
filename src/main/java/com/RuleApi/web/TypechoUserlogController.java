@@ -134,11 +134,6 @@ public class TypechoUserlogController {
                             @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
                             @RequestParam(value = "token", required = false) String  token) {
 
-
-        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-        if(uStatus==0){
-            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-        }
         if(limit>50){
             limit = 50;
         }
@@ -150,6 +145,7 @@ public class TypechoUserlogController {
         query.setUid(uid);
         query.setType("mark");
         total = service.total(query);
+        TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
 
         List jsonList = new ArrayList();
         List cacheList = redisHelp.getList(this.dataprefix+"_"+"markList_"+page+"_"+limit+"_"+uid,redisTemplate);
@@ -219,6 +215,57 @@ public class TypechoUserlogController {
                             }
 
                         }
+                        //写入作者详细信息
+                        Integer authorId = Integer.parseInt(contentsInfo.get("authorId").toString());
+                        if(authorId>0) {
+                            TypechoUsers author = usersService.selectByKey(authorId);
+                            Map authorInfo = new HashMap();
+                            if (author != null) {
+                                String name = author.getName();
+                                if (author.getScreenName() != null && author.getScreenName() != "") {
+                                    name = author.getScreenName();
+                                }
+                                String avatar = apiconfig.getWebinfoAvatar() + "null";
+                                if (author.getAvatar() != null && author.getAvatar() != "") {
+                                    avatar = author.getAvatar();
+                                } else {
+                                    if (author.getMail() != null && author.getMail() != "") {
+                                        String mail = author.getMail();
+
+                                        if (mail.indexOf("@qq.com") != -1) {
+                                            String qq = mail.replace("@qq.com", "");
+                                            avatar = "https://q1.qlogo.cn/g?b=qq&nk=" + qq + "&s=640";
+                                        } else {
+                                            avatar = baseFull.getAvatar(apiconfig.getWebinfoAvatar(), author.getMail());
+                                        }
+                                        //avatar = baseFull.getAvatar(apiconfig.getWebinfoAvatar(), author.getMail());
+                                    }
+                                }
+
+                                authorInfo.put("name", name);
+                                authorInfo.put("avatar", avatar);
+                                authorInfo.put("customize", author.getCustomize());
+                                authorInfo.put("experience", author.getExperience());
+                                //判断是否为VIP
+                                authorInfo.put("isvip", 0);
+                                Long date = System.currentTimeMillis();
+                                String curTime = String.valueOf(date).substring(0, 10);
+                                Integer viptime = author.getVip();
+
+                                if (viptime > Integer.parseInt(curTime) || viptime.equals(1)) {
+                                    authorInfo.put("isvip", 1);
+                                }
+                                if (viptime.equals(1)) {
+                                    //永久VIP
+                                    authorInfo.put("isvip", 2);
+                                }
+                            } else {
+                                authorInfo.put("name", "用户已注销");
+                                authorInfo.put("avatar", apiconfig.getWebinfoAvatar() + "null");
+                            }
+                            contentsInfo.put("authorInfo",authorInfo);
+                        }
+
 
                         contentsInfo.remove("password");
                         contentsInfo.put("category", metas);

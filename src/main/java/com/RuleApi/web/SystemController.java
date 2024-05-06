@@ -43,6 +43,7 @@ public class SystemController {
     HttpClient HttpClient = new HttpClient();
     RedisHelp redisHelp =new RedisHelp();
 
+    UserStatus UStatus = new UserStatus();
 
     @Autowired
     private TypechoApiconfigService apiconfigService;
@@ -945,6 +946,13 @@ public class SystemController {
                     return Result.getResultJson(0,"应用不存在或密钥错误",null);
                 }
                 appJson = JSONObject.parseObject(JSONObject.toJSONString(app), Map.class);
+                //获取补充性字段
+                TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
+                appJson.put("isInvite",apiconfig.getIsInvite());
+                appJson.put("isEmail",apiconfig.getIsEmail());
+                appJson.put("isPro",0);
+
+
                 redisHelp.delete(this.dataprefix+"_"+"appJson_"+key,redisTemplate);
                 redisHelp.setKey(this.dataprefix+"_"+"appJson_"+key,appJson,10,redisTemplate);
             }
@@ -959,7 +967,7 @@ public class SystemController {
         }catch (Exception e){
             e.printStackTrace();
             JSONObject response = new JSONObject();
-            response.put("code", 1);
+            response.put("code", 0);
             response.put("msg", "");
             response.put("data", null);
 
