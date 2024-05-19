@@ -1,5 +1,6 @@
 package com.RuleApi.web;
 
+import com.RuleApi.annotation.LoginRequired;
 import com.RuleApi.common.*;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
@@ -48,6 +49,9 @@ public class TypechoAdsController {
     private TypechoPaylogService paylogService;
 
     @Autowired
+    private TypechoInboxService inboxService;
+
+    @Autowired
     private RedisTemplate redisTemplate;
 
     RedisHelp redisHelp =new RedisHelp();
@@ -71,6 +75,7 @@ public class TypechoAdsController {
      */
     @RequestMapping(value = "/adsInfo")
     @ResponseBody
+    @LoginRequired(purview = "-1")
     public String adsInfo (@RequestParam(value = "id", required = false) String  id, @RequestParam(value = "token", required = false) String  token) {
         Map adsInfoJson = new HashMap<String, String>();
         Map cacheInfo = new HashMap<String, String>();
@@ -86,7 +91,7 @@ public class TypechoAdsController {
                 adsInfoJson = JSONObject.parseObject(JSONObject.toJSONString(typechoAds), Map.class);
                 //为了性能和用户体验，广告数据缓存10分钟
                 redisHelp.delete(this.dataprefix+"_"+"adsInfo_"+id,redisTemplate);
-                redisHelp.setKey(this.dataprefix+"_"+"adsInfo_"+id,adsInfoJson,600,redisTemplate);
+                redisHelp.setKey(this.dataprefix+"_"+"adsInfo_"+id,adsInfoJson,60,redisTemplate);
             }
 
         }catch (Exception e){
@@ -105,11 +110,12 @@ public class TypechoAdsController {
      */
     @RequestMapping(value = "/adsList")
     @ResponseBody
-    public String formPage (@RequestParam(value = "searchParams", required = false) String  searchParams,
-                            @RequestParam(value = "searchKey"        , required = false, defaultValue = "") String searchKey,
-                            @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
-                            @RequestParam(value = "limit"       , required = false, defaultValue = "100") Integer limit,
-                            @RequestParam(value = "token", required = false) String  token) {
+    @LoginRequired(purview = "-1")
+    public String adsList (@RequestParam(value = "searchParams", required = false) String  searchParams,
+                           @RequestParam(value = "searchKey"        , required = false, defaultValue = "") String searchKey,
+                           @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
+                           @RequestParam(value = "limit"       , required = false, defaultValue = "100") Integer limit,
+                           @RequestParam(value = "token", required = false) String  token) {
         TypechoAds query = new TypechoAds();
         if(limit>100){
             limit = 50;
@@ -119,19 +125,22 @@ public class TypechoAdsController {
         List jsonList = new ArrayList();
         List cacheList = new ArrayList();
         try{
+            if (StringUtils.isNotBlank(searchParams)) {
+                JSONObject object = JSON.parseObject(searchParams);
+                query = object.toJavaObject(TypechoAds.class);
+                Map paramsJson = JSONObject.parseObject(JSONObject.toJSONString(query), Map.class);
+                sqlParams = paramsJson.toString();
+            }
             Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
             if(uStatus==0){
-                cacheList = redisHelp.getList(this.dataprefix + "_" + "adsList_" + page + "_" + limit + "_" + searchParams+"_"+searchKey, redisTemplate);
+                cacheList = redisHelp.getList(this.dataprefix + "_" + "adsList_" + page + "_" + limit + "_" + sqlParams+"_"+searchKey, redisTemplate);
             }
 
 
             if(cacheList.size()>0){
                 jsonList = cacheList;
             }else{
-                if (StringUtils.isNotBlank(searchParams)) {
-                    JSONObject object = JSON.parseObject(searchParams);
-                    query = object.toJavaObject(TypechoAds.class);
-                }
+
                 //无token访问则传公开广告数据，已登录用户除管理员外只能查询自己的广告
                 if(uStatus==0){
                     query.setStatus(1);
@@ -143,11 +152,9 @@ public class TypechoAdsController {
                         query.setUid(Integer.parseInt(uid));
                     }
                 }
-                Map paramsJson = JSONObject.parseObject(JSONObject.toJSONString(query), Map.class);
-                sqlParams = paramsJson.toString();
                 total = service.total(query);
                 PageList<TypechoAds> pageList = service.selectPage(query, page, limit,searchKey);
-                List list = pageList.getList();
+                List<TypechoAds> list = pageList.getList();
                 if(list.size() < 1){
                     JSONObject noData = new JSONObject();
                     noData.put("code" , 1);
@@ -157,10 +164,18 @@ public class TypechoAdsController {
                     noData.put("total", total);
                     return noData.toString();
                 }
-                jsonList = pageList.getList();
+                for (int i = 0; i < list.size(); i++) {
+                    Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
+                    TypechoAds ads = list.get(i);
+                    Integer userid = ads.getUid();
+                    //获取用户信息
+                    Map userJson = UserStatus.getUserInfo(userid,apiconfigService,usersService);
+                    json.put("userJson",userJson);
+                    jsonList.add(json);
+                }
                 redisHelp.delete(this.dataprefix + "_" + "adsList_" + page + "_" + limit + "_" + sqlParams+"_"+searchKey,redisTemplate);
                 //为了性能和用户体验，广告数据缓存10分钟
-                redisHelp.setList(this.dataprefix + "_" + "adsList_" + page + "_" + limit + "_" + sqlParams+"_"+searchKey,jsonList,600,redisTemplate);
+                redisHelp.setList(this.dataprefix + "_" + "adsList_" + page + "_" + limit + "_" + sqlParams+"_"+searchKey,jsonList,20,redisTemplate);
             }
         }catch (Exception e){
             e.printStackTrace();
@@ -181,13 +196,10 @@ public class TypechoAdsController {
      */
     @RequestMapping(value = "/addAds")
     @ResponseBody
+    @LoginRequired(purview = "0")
     public String addAds(@RequestParam(value = "params", required = false) String  params,@RequestParam(value = "day", required = false, defaultValue = "0") Integer  day, @RequestParam(value = "token", required = false) String  token) {
         TypechoAds insert = null;
         try{
-            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-            if(uStatus==0){
-                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-            }
             if(day<=0){
                 return Result.getResultJson(0,"购买天数不正确",null);
             }
@@ -289,12 +301,9 @@ public class TypechoAdsController {
      */
     @RequestMapping(value = "/editAds")
     @ResponseBody
+    @LoginRequired(purview = "0")
     public String editAds(@RequestParam(value = "params", required = false) String  params, @RequestParam(value = "token", required = false) String  token) {
         TypechoAds update = null;
-        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-        if(uStatus==0){
-            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-        }
         Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         String uid = map.get("uid").toString();
         String group = map.get("group").toString();
@@ -341,6 +350,7 @@ public class TypechoAdsController {
      */
     @RequestMapping(value = "/deleteAds")
     @ResponseBody
+    @LoginRequired(purview = "0")
     public String deleteAds(@RequestParam(value = "id", required = false) String  id, @RequestParam(value = "token", required = false) String  token) {
         Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
         if(uStatus==0){
@@ -366,16 +376,9 @@ public class TypechoAdsController {
      */
     @RequestMapping(value = "/auditAds")
     @ResponseBody
+    @LoginRequired(purview = "2")
     public String auditAds(@RequestParam(value = "id", required = false) String  id, @RequestParam(value = "token", required = false) String  token) {
-        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-        if(uStatus==0){
-            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-        }
         Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
-        String group = map.get("group").toString();
-        if (!group.equals("administrator")) {
-            return Result.getResultJson(0, "你没有操作权限", null);
-        }
         String uid = map.get("uid").toString();
         TypechoAds ads = service.selectByKey(id);
         if(ads.getStatus().equals(1)){
@@ -383,6 +386,15 @@ public class TypechoAdsController {
         }
         ads.setStatus(1);
         Integer rows = service.update(ads);
+        Long date = System.currentTimeMillis();
+        String created = String.valueOf(date).substring(0,10);
+        TypechoInbox insert = new TypechoInbox();
+        insert.setUid(Integer.parseInt(uid));
+        insert.setTouid(ads.getUid());
+        insert.setType("system");
+        insert.setText("你的广告已审核通过");
+        insert.setCreated(Integer.parseInt(created));
+        inboxService.insert(insert);
         editFile.setLog("管理员"+uid+"请求审核广告"+id);
         JSONObject response = new JSONObject();
         response.put("code" ,rows > 0 ? 1: 0 );
@@ -396,11 +408,10 @@ public class TypechoAdsController {
      */
     @RequestMapping(value = "/renewalAds")
     @ResponseBody
-    public String renewalAds(@RequestParam(value = "id", required = false) String  id, @RequestParam(value = "token", required = false) String  token,@RequestParam(value = "day", required = false, defaultValue = "0") Integer  day) {
-        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-        if(uStatus==0){
-            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-        }
+    @LoginRequired(purview = "0")
+    public String renewalAds(@RequestParam(value = "id", required = false) String  id,
+                             @RequestParam(value = "token", required = false) String  token,
+                             @RequestParam(value = "day", required = false, defaultValue = "0") Integer  day) {
         Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
         String group = map.get("group").toString();
         if (!group.equals("administrator")) {
@@ -464,6 +475,7 @@ public class TypechoAdsController {
      */
     @RequestMapping(value = "/adsConfig")
     @ResponseBody
+    @LoginRequired(purview = "-1")
     public String adsConfig () {
         Map adsConfigJSon = new HashMap<String, String>();
         try{

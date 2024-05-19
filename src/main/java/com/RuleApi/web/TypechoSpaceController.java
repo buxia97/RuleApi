@@ -1,5 +1,6 @@
 package com.RuleApi.web;
 
+import com.RuleApi.annotation.LoginRequired;
 import com.RuleApi.common.*;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -85,6 +87,7 @@ public class TypechoSpaceController {
      */
     @RequestMapping(value = "/addSpace")
     @ResponseBody
+    @LoginRequired(purview = "0")
     public String addSpace (@RequestParam(value = "text", required = false, defaultValue = "") String  text,
                             @RequestParam(value = "type", required = false, defaultValue = "0") Integer  type,
                             @RequestParam(value = "toid", required = false, defaultValue = "0") Integer  toid,
@@ -111,10 +114,6 @@ public class TypechoSpaceController {
             }
             if(text.length()>1500){
                 return Result.getResultJson(0,"最大动态内容为1500字符",null);
-            }
-            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-            if(uStatus==0){
-                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
             }
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer uid =Integer.parseInt(map.get("uid").toString());
@@ -199,6 +198,7 @@ public class TypechoSpaceController {
             }
             //违禁词拦截结束
 
+
             Long date = System.currentTimeMillis();
             String created = String.valueOf(date).substring(0,10);
             if(type.equals(3)){
@@ -281,6 +281,7 @@ public class TypechoSpaceController {
      */
     @RequestMapping(value = "/editSpace")
     @ResponseBody
+    @LoginRequired(purview = "0")
     public String editSpace (
             @RequestParam(value = "id", required = false) Integer  id,
             @RequestParam(value = "text", required = false, defaultValue = "") String  text,
@@ -304,10 +305,6 @@ public class TypechoSpaceController {
             }
             if(text.length()<4){
                 return Result.getResultJson(0,"动态内容长度不能小于4",null);
-            }
-            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-            if(uStatus==0){
-                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
             }
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer uid =Integer.parseInt(map.get("uid").toString());
@@ -386,6 +383,7 @@ public class TypechoSpaceController {
             space.setOnlyMe(onlyMe);
             space.setModified(Integer.parseInt(created));
             int rows = service.update(space);
+
             editFile.setLog("用户"+uid+"修改了动态"+id);
             JSONObject response = new JSONObject();
             response.put("code" , rows);
@@ -397,13 +395,131 @@ public class TypechoSpaceController {
         }
 
     }
+    /***
+     * 动态审核
+     */
+    @RequestMapping(value = "/spaceReview")
+    @ResponseBody
+    @LoginRequired(purview = "1")
+    public String spaceReview(@RequestParam(value = "id", required = false) Integer  id,
+                              @RequestParam(value = "type", required = false, defaultValue = "1") Integer  type,
+                              @RequestParam(value = "token", required = false) String  token) {
+        try{
+            if(!type.equals(1)&&!type.equals(0)){
+                return Result.getResultJson(0,"参数错误",null);
+            }
+            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            Integer uid  = Integer.parseInt(map.get("uid").toString());
+            TypechoSpace space = service.selectByKey(id);
+            if(space==null){
+                return Result.getResultJson(0,"动态不存在",null);
+            }
+            if(space.getStatus().equals(type)){
+                return Result.getResultJson(0,"动态已被进行相同操作",null);
+            }
+            int rows = 0;
+            if(type.equals(1)){
+                TypechoSpace newPost = new TypechoSpace();
+                newPost.setId(id);
+                newPost.setStatus(type);
+                rows = service.update(newPost);
+            }else{
+                rows = service.delete(id);
+            }
+            Long date = System.currentTimeMillis();
+            String created = String.valueOf(date).substring(0,10);
+            TypechoInbox insert = new TypechoInbox();
+            insert.setUid(uid);
+            insert.setTouid(space.getUid());
+            insert.setType("system");
+            if(type.equals(1)){
+                insert.setText("你的动态已审核通过");
+            }
+            if(type.equals(0)){
+                insert.setText("你的动态未审核通过，已被删除");
+            }
+            insert.setCreated(Integer.parseInt(created));
+            inboxService.insert(insert);
+            if(rows > 0){
+                redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_spaceList_1*",redisTemplate,this.dataprefix);
+            }
+            JSONObject response = new JSONObject();
+            response.put("code" ,rows > 0 ? 1: 0 );
+            response.put("data" , rows);
+            response.put("msg"  , rows > 0 ? "操作成功，请等待缓存刷新" : "操作失败");
+            return response.toString();
+        }catch (Exception e){
+            e.printStackTrace();
+            return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
+        }
+    }
+    /***
+     * 动态锁定&解锁
+     */
+    @RequestMapping(value = "/spaceLock")
+    @ResponseBody
+    @LoginRequired(purview = "1")
+    public String postLock(@RequestParam(value = "id", required = false) Integer  id,
+                           @RequestParam(value = "type", required = false, defaultValue = "1") Integer  type,
+                           @RequestParam(value = "token", required = false) String  token) {
+        try{
+            if(!type.equals(1)&&!type.equals(2)){
+                return Result.getResultJson(0,"参数错误",null);
+            }
+            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            Integer uid  = Integer.parseInt(map.get("uid").toString());
+            String group = map.get("group").toString();
+            if(!group.equals("administrator")&&!group.equals("editor")){
+                return Result.getResultJson(0,"你没有操作权限",null);
+            }
+            TypechoSpace space = service.selectByKey(id);
+            if(space==null){
+                return Result.getResultJson(0,"动态不存在",null);
+            }
+            if(space.getStatus().equals(0)){
+                return Result.getResultJson(0,"动态未过审，暂无法操作",null);
+            }
+            if(space.getStatus().equals(type)){
+                return Result.getResultJson(0,"动态已被进行相同操作",null);
+            }
 
+            TypechoSpace newSpace = new TypechoSpace();
+            newSpace.setId(id);
+            newSpace.setStatus(type);
+            int rows = service.update(newSpace);
+
+            Long date = System.currentTimeMillis();
+            String created = String.valueOf(date).substring(0,10);
+            TypechoInbox insert = new TypechoInbox();
+            insert.setUid(uid);
+            insert.setTouid(space.getUid());
+            insert.setType("system");
+            if(type.equals(1)){
+                insert.setText("你的动态【ID:"+space.getId()+"】已被解锁");
+            }
+            if(type.equals(2)){
+                insert.setText("你的动态【ID:"+space.getId()+"】已被锁定");
+            }
+            insert.setCreated(Integer.parseInt(created));
+            inboxService.insert(insert);
+
+            JSONObject response = new JSONObject();
+            response.put("code" ,rows > 0 ? 1: 0 );
+            response.put("data" , rows);
+            response.put("msg"  , rows > 0 ? "操作成功，请等待缓存刷新" : "操作失败");
+            return response.toString();
+        }catch (Exception e){
+            e.printStackTrace();
+            return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
+        }
+    }
     /**
      * 获取动态详情
      *
      */
     @RequestMapping(value = "/spaceInfo")
     @ResponseBody
+    @LoginRequired(purview = "-1")
     public String spaceInfo (@RequestParam(value = "id", required = false) Integer  id,
                              @RequestParam(value = "token", required = false) String  token) {
         try{
@@ -420,6 +536,7 @@ public class TypechoSpaceController {
                     return Result.getResultJson(0,"用户未登录或Token验证失败",null);
                 }
             }
+            //验证结束
             if (uStatus != 0) {
                 map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
                 uid =Integer.parseInt(map.get("uid").toString());
@@ -428,8 +545,7 @@ public class TypechoSpaceController {
             if(cacheInfo.size()>0){
                 spaceInfoJson = cacheInfo;
             }else{
-                TypechoSpace space;
-                space = service.selectByKey(id);
+                TypechoSpace space = service.selectByKey(id);
                 Integer onlyMe = space.getOnlyMe();
                 if(onlyMe.equals(1)&&!space.getUid().equals(uid)&&group.equals("administrator")&&group.equals("editor")){
                     return Result.getResultJson(0,"该动态被设置为仅自己可见",null);
@@ -446,10 +562,10 @@ public class TypechoSpaceController {
                 Integer userid = space.getUid();
                 Map userJson = UserStatus.getUserInfo(userid,apiconfigService,usersService);
                 //获取用户等级
-                TypechoComments comments = new TypechoComments();
-                comments.setAuthorId(userid);
-                Integer lv = commentsService.total(comments,null);
-                userJson.put("lv", baseFull.getLv(lv));
+//                TypechoComments comments = new TypechoComments();
+//                comments.setAuthorId(userid);
+//                Integer lv = commentsService.total(comments,null);
+//                userJson.put("lv", baseFull.getLv(lv));
                 spaceInfoJson.put("userJson",userJson);
                 if (uStatus != 0) {
                     TypechoFan fan = new TypechoFan();
@@ -584,12 +700,7 @@ public class TypechoSpaceController {
             return response.toString();
         }catch (Exception e){
             e.printStackTrace();
-            JSONObject response = new JSONObject();
-            response.put("code", 1);
-            response.put("msg", "");
-            response.put("data", null);
-
-            return response.toString();
+            return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
         }
     }
 
@@ -598,6 +709,7 @@ public class TypechoSpaceController {
      */
     @RequestMapping(value = "/spaceList")
     @ResponseBody
+    @LoginRequired(purview = "-1")
     public String spaceList (
             @RequestParam(value = "searchParams", required = false) String  searchParams,
             @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
@@ -620,6 +732,7 @@ public class TypechoSpaceController {
         }
         Map map = new HashMap();
         Integer uid = 0;
+        String group = "";
         //如果开启全局登录，则必须登录才能得到数据
         Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
         TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
@@ -632,8 +745,9 @@ public class TypechoSpaceController {
         if (uStatus != 0) {
             map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
             uid =Integer.parseInt(map.get("uid").toString());
+            group = map.get("group").toString();
         }
-        List cacheList =  redisHelp.getList(this.dataprefix+"_"+"spaceList_"+page+"_"+limit+"_"+searchKey+"_"+uid+"_"+sqlParams+"_"+isManage,redisTemplate);
+        List cacheList =  redisHelp.getList(this.dataprefix+"_"+"spaceList_"+page+"_"+limit+"_"+searchKey+"_"+uid+"_"+order+"_"+sqlParams+"_"+isManage,redisTemplate);
         List jsonList = new ArrayList();
 
         Integer total = service.total(query,null);
@@ -666,144 +780,149 @@ public class TypechoSpaceController {
                 for (int i = 0; i < list.size(); i++) {
                     Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
                     TypechoSpace space = list.get(i);
-                    Integer userid = space.getUid();
-                    //获取用户信息
-                    Map userJson = UserStatus.getUserInfo(userid,apiconfigService,usersService);
-                    //获取用户等级
-                    TypechoComments comments = new TypechoComments();
-                    comments.setAuthorId(userid);
-                    Integer lv = commentsService.total(comments,searchKey);
-                    userJson.put("lv", baseFull.getLv(lv));
-                    json.put("userJson",userJson);
-                    if (uStatus != 0) {
-                        TypechoFan fan = new TypechoFan();
-                        fan.setUid(uid);
-                        fan.setTouid(space.getUid());
-                        Integer isFollow = fanService.total(fan);
-                        json.put("isFollow",isFollow);
+                    Integer onlyMe = space.getOnlyMe();
+                    //如果帖子没有开启仅自己可见，或帖子属于本人发布，则显示在列表
+                    if(onlyMe.equals(0)||space.getUid().equals(uid)||group.equals("administrator")||group.equals("editor")){
+                        Integer userid = space.getUid();
+                        //获取用户信息
+                        Map userJson = UserStatus.getUserInfo(userid,apiconfigService,usersService);
+                        //获取用户等级
+//                        TypechoComments comments = new TypechoComments();
+//                        comments.setAuthorId(userid);
+//                        Integer lv = commentsService.total(comments,searchKey);
+//                        userJson.put("lv", baseFull.getLv(lv));
+                        json.put("userJson",userJson);
+                        if (uStatus != 0) {
+                            TypechoFan fan = new TypechoFan();
+                            fan.setUid(uid);
+                            fan.setTouid(space.getUid());
+                            Integer isFollow = fanService.total(fan);
+                            json.put("isFollow",isFollow);
 
-                        TypechoUserlog userlog = new TypechoUserlog();
-                        userlog.setCid(space.getId());
-                        userlog.setType("spaceLike");
-                        userlog.setUid(uid);
-                        Integer isLikes = userlogService.total(userlog);
-                        if(isLikes > 0){
-                            json.put("isLikes",1);
+                            TypechoUserlog userlog = new TypechoUserlog();
+                            userlog.setCid(space.getId());
+                            userlog.setType("spaceLike");
+                            userlog.setUid(uid);
+                            Integer isLikes = userlogService.total(userlog);
+                            if(isLikes > 0){
+                                json.put("isLikes",1);
+                            }else{
+                                json.put("isLikes",0);
+                            }
+
                         }else{
+                            json.put("isFollow",0);
                             json.put("isLikes",0);
                         }
+                        //获取转发，评论
+                        TypechoSpace dataSpace = new TypechoSpace();
+                        dataSpace.setType(2);
+                        dataSpace.setToid(space.getId());
+                        Integer forward = service.total(dataSpace,null);
+                        dataSpace.setType(3);
+                        Integer reply = service.total(dataSpace,null);
+                        json.put("forward",forward);
+                        json.put("reply",reply);
 
-                    }else{
-                        json.put("isFollow",0);
-                        json.put("isLikes",0);
-                    }
-                    //获取转发，评论
-                    TypechoSpace dataSpace = new TypechoSpace();
-                    dataSpace.setType(2);
-                    dataSpace.setToid(space.getId());
-                    Integer forward = service.total(dataSpace,null);
-                    dataSpace.setType(3);
-                    Integer reply = service.total(dataSpace,null);
-                    json.put("forward",forward);
-                    json.put("reply",reply);
-
-                    //对于转发和发布文章
-                    if(space.getType().equals(1)){
-                        Integer cid = space.getToid();
-                        Map contentJson = new HashMap();
-                        TypechoContents contents = contentsService.selectByKey(cid);
-                        if(contents!=null){
-                            String text = contents.getText();
-                            List imgList = baseFull.getImageSrc(text);
-                            text = baseFull.toStrByChinese(text);
-                            contentJson.put("cid",contents.getCid());
-                            contentJson.put("title",contents.getTitle());
-                            contentJson.put("images",imgList);
-                            contentJson.put("status",contents.getStatus());
-                            contentJson.put("text",text.length()>300 ? text.substring(0,300) : text);
-                        }else{
-                            contentJson.put("cid",0);
-                            contentJson.put("title","该文章已被删除或屏蔽");
-                            contentJson.put("text","");
-                        }
-                        json.put("contentJson",contentJson);
-                    }
-                    //对于转发动态
-                    if(space.getType().equals(2)){
-                        Integer sid = space.getToid();
-                        Map forwardJson = new HashMap();
-                        TypechoSpace forwardSpace = service.selectByKey(sid);
-                        if(forwardSpace!=null){
-                            forwardJson = JSONObject.parseObject(JSONObject.toJSONString(forwardSpace), Map.class);
-                            Integer spaceUid = forwardSpace.getUid();
-                            TypechoUsers spaceUser = usersService.selectByKey(spaceUid);
-                            String name = spaceUser.getName();
-                            if(spaceUser.getScreenName()!=null){
-                                name = spaceUser.getScreenName();
+                        //对于转发和发布文章
+                        if(space.getType().equals(1)){
+                            Integer cid = space.getToid();
+                            Map contentJson = new HashMap();
+                            TypechoContents contents = contentsService.selectByKey(cid);
+                            if(contents!=null){
+                                String text = contents.getText();
+                                List imgList = baseFull.getImageSrc(text);
+                                text = baseFull.toStrByChinese(text);
+                                contentJson.put("cid",contents.getCid());
+                                contentJson.put("title",contents.getTitle());
+                                contentJson.put("images",imgList);
+                                contentJson.put("status",contents.getStatus());
+                                contentJson.put("text",text.length()>300 ? text.substring(0,300) : text);
+                            }else{
+                                contentJson.put("cid",0);
+                                contentJson.put("title","该文章已被删除或屏蔽");
+                                contentJson.put("text","");
                             }
-                            forwardJson.put("username",name);
-                        }else{
-                            forwardJson.put("id",0);
-                            forwardJson.put("username","");
-                            forwardJson.put("text","该动态已被删除或屏蔽");
+                            json.put("contentJson",contentJson);
                         }
-
-                        json.put("forwardJson",forwardJson);
-                    }
-                    //对于评论，获取上级动态
-                    if(space.getType().equals(3)){
-                        Integer sid = space.getToid();
-                        Map parentJson = new HashMap();
-                        TypechoSpace parentSpace = service.selectByKey(sid);
-                        if(parentSpace!=null){
-                            parentJson = JSONObject.parseObject(JSONObject.toJSONString(parentSpace), Map.class);
-                            Integer spaceUid = parentSpace.getUid();
-                            TypechoUsers spaceUser = usersService.selectByKey(spaceUid);
-                            String name = spaceUser.getName();
-                            if(spaceUser.getScreenName()!=null){
-                                name = spaceUser.getScreenName();
+                        //对于转发动态
+                        if(space.getType().equals(2)){
+                            Integer sid = space.getToid();
+                            Map forwardJson = new HashMap();
+                            TypechoSpace forwardSpace = service.selectByKey(sid);
+                            if(forwardSpace!=null){
+                                forwardJson = JSONObject.parseObject(JSONObject.toJSONString(forwardSpace), Map.class);
+                                Integer spaceUid = forwardSpace.getUid();
+                                TypechoUsers spaceUser = usersService.selectByKey(spaceUid);
+                                String name = spaceUser.getName();
+                                if(spaceUser.getScreenName()!=null){
+                                    name = spaceUser.getScreenName();
+                                }
+                                forwardJson.put("username",name);
+                            }else{
+                                forwardJson.put("id",0);
+                                forwardJson.put("username","");
+                                forwardJson.put("text","该动态已被删除或屏蔽");
                             }
-                            parentJson.put("username",name);
-                        }else{
-                            parentJson.put("id",0);
-                            parentJson.put("username","");
-                            parentJson.put("text","该动态已被删除或屏蔽");
-                        }
 
-                        json.put("parentJson",parentJson);
-                    }
-                    //对于商品
-                    if(space.getType().equals(5)){
-                        Integer sid = space.getToid();
-                        TypechoShop shop = shopService.selectByKey(sid);
-                        Map shopJson = new HashMap();
-                        if(shop!=null){
-                            shopJson = JSONObject.parseObject(JSONObject.toJSONString(shop), Map.class);
-                            Integer shopUid = shop.getUid();
-                            TypechoUsers shopUser = usersService.selectByKey(shopUid);
-                            String name = shopUser.getName();
-                            if(shopUser.getScreenName()!=null){
-                                name = shopUser.getScreenName();
+                            json.put("forwardJson",forwardJson);
+                        }
+                        //对于评论，获取上级动态
+                        if(space.getType().equals(3)){
+                            Integer sid = space.getToid();
+                            Map parentJson = new HashMap();
+                            TypechoSpace parentSpace = service.selectByKey(sid);
+                            if(parentSpace!=null){
+                                parentJson = JSONObject.parseObject(JSONObject.toJSONString(parentSpace), Map.class);
+                                Integer spaceUid = parentSpace.getUid();
+                                TypechoUsers spaceUser = usersService.selectByKey(spaceUid);
+                                String name = spaceUser.getName();
+                                if(spaceUser.getScreenName()!=null){
+                                    name = spaceUser.getScreenName();
+                                }
+                                parentJson.put("username",name);
+                            }else{
+                                parentJson.put("id",0);
+                                parentJson.put("username","");
+                                parentJson.put("text","该动态已被删除或屏蔽");
                             }
-                            shopJson.put("username",name);
-                            //获取用户等级
-                            TypechoComments shopUserComments = new TypechoComments();
-                            comments.setAuthorId(shopUser.getUid());
-                            Integer userlv = commentsService.total(shopUserComments,null);
-                            shopJson.put("lv", baseFull.getLv(userlv));
 
-                        }else{
-                            shopJson.put("id",0);
-                            shopJson.put("username","");
-                            shopJson.put("title","该商品已被删除或屏蔽");
+                            json.put("parentJson",parentJson);
                         }
-                        json.put("shopJson",shopJson);
+                        //对于商品
+                        if(space.getType().equals(5)){
+                            Integer sid = space.getToid();
+                            TypechoShop shop = shopService.selectByKey(sid);
+                            Map shopJson = new HashMap();
+                            if(shop!=null){
+                                shopJson = JSONObject.parseObject(JSONObject.toJSONString(shop), Map.class);
+                                Integer shopUid = shop.getUid();
+                                TypechoUsers shopUser = usersService.selectByKey(shopUid);
+                                String name = shopUser.getName();
+                                if(shopUser.getScreenName()!=null){
+                                    name = shopUser.getScreenName();
+                                }
+                                shopJson.put("username",name);
+                                //获取用户等级
+//                                TypechoComments shopUserComments = new TypechoComments();
+//                                comments.setAuthorId(shopUser.getUid());
+//                                Integer userlv = commentsService.total(shopUserComments,null);
+//                                shopJson.put("lv", baseFull.getLv(userlv));
+
+                            }else{
+                                shopJson.put("id",0);
+                                shopJson.put("username","");
+                                shopJson.put("title","该商品已被删除或屏蔽");
+                            }
+                            json.put("shopJson",shopJson);
+                        }
+                        jsonList.add(json);
                     }
-                    jsonList.add(json);
+
 
                 }
-                redisHelp.delete(this.dataprefix+"_"+"spaceList_"+page+"_"+limit+"_"+searchKey+"_"+uid+"_"+sqlParams+"_"+isManage,redisTemplate);
-                redisHelp.setList(this.dataprefix+"_"+"spaceList_"+page+"_"+limit+"_"+searchKey+"_"+uid+"_"+sqlParams+"_"+isManage,jsonList,5,redisTemplate);
+                redisHelp.delete(this.dataprefix+"_"+"spaceList_"+page+"_"+limit+"_"+searchKey+"_"+uid+"_"+order+"_"+sqlParams+"_"+isManage,redisTemplate);
+                redisHelp.setList(this.dataprefix+"_"+"spaceList_"+page+"_"+limit+"_"+searchKey+"_"+uid+"_"+order+"_"+sqlParams+"_"+isManage,jsonList,5,redisTemplate);
             }
         }catch (Exception e){
             e.printStackTrace();
@@ -819,153 +938,21 @@ public class TypechoSpaceController {
         response.put("total", total);
         return response.toString();
     }
-    /***
-     * 动态审核
-     */
-    @RequestMapping(value = "/spaceReview")
-    @ResponseBody
-    public String spaceReview(@RequestParam(value = "id", required = false) Integer  id,
-                              @RequestParam(value = "type", required = false, defaultValue = "1") Integer  type,
-                              @RequestParam(value = "token", required = false) String  token) {
-        try{
-            if(!type.equals(1)&&!type.equals(0)){
-                return Result.getResultJson(0,"参数错误",null);
-            }
-            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-            if(uStatus==0){
-                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-            }
-            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
-            Integer uid  = Integer.parseInt(map.get("uid").toString());
-            String group = map.get("group").toString();
-            if(!group.equals("administrator")&&!group.equals("editor")){
-                return Result.getResultJson(0,"你没有操作权限",null);
-            }
-            TypechoSpace space = service.selectByKey(id);
-            if(space==null){
-                return Result.getResultJson(0,"动态不存在",null);
-            }
-            if(space.getStatus().equals(type)){
-                return Result.getResultJson(0,"动态已被进行相同操作",null);
-            }
-            int rows = 0;
-            if(type.equals(1)){
-                TypechoSpace newPost = new TypechoSpace();
-                newPost.setId(id);
-                newPost.setStatus(type);
-                rows = service.update(newPost);
-            }else{
-                rows = service.delete(id);
-            }
-            Long date = System.currentTimeMillis();
-            String created = String.valueOf(date).substring(0,10);
-            TypechoInbox insert = new TypechoInbox();
-            insert.setUid(uid);
-            insert.setTouid(space.getUid());
-            insert.setType("system");
-            if(type.equals(1)){
-                insert.setText("你的动态已审核通过");
-            }
-            if(type.equals(0)){
-                insert.setText("你的动态未审核通过，已被删除");
-            }
-            insert.setCreated(Integer.parseInt(created));
-            inboxService.insert(insert);
-
-            JSONObject response = new JSONObject();
-            response.put("code" ,rows > 0 ? 1: 0 );
-            response.put("data" , rows);
-            response.put("msg"  , rows > 0 ? "操作成功，请等待缓存刷新" : "操作失败");
-            return response.toString();
-        }catch (Exception e){
-            e.printStackTrace();
-            return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
-        }
-    }
-    /***
-     * 动态锁定&解锁
-     */
-    @RequestMapping(value = "/spaceLock")
-    @ResponseBody
-    public String postLock(@RequestParam(value = "id", required = false) Integer  id,
-                           @RequestParam(value = "type", required = false, defaultValue = "1") Integer  type,
-                           @RequestParam(value = "token", required = false) String  token) {
-        try{
-            if(!type.equals(1)&&!type.equals(2)){
-                return Result.getResultJson(0,"参数错误",null);
-            }
-            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-            if(uStatus==0){
-                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-            }
-            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
-            Integer uid  = Integer.parseInt(map.get("uid").toString());
-            String group = map.get("group").toString();
-            if(!group.equals("administrator")&&!group.equals("editor")){
-                return Result.getResultJson(0,"你没有操作权限",null);
-            }
-            TypechoSpace space = service.selectByKey(id);
-            if(space==null){
-                return Result.getResultJson(0,"动态不存在",null);
-            }
-            if(space.getStatus().equals(0)){
-                return Result.getResultJson(0,"动态未过审，暂无法操作",null);
-            }
-            if(space.getStatus().equals(type)){
-                return Result.getResultJson(0,"动态已被进行相同操作",null);
-            }
-
-            TypechoSpace newSpace = new TypechoSpace();
-            newSpace.setId(id);
-            newSpace.setStatus(type);
-            int rows = service.update(newSpace);
-
-            Long date = System.currentTimeMillis();
-            String created = String.valueOf(date).substring(0,10);
-            TypechoInbox insert = new TypechoInbox();
-            insert.setUid(uid);
-            insert.setTouid(space.getUid());
-            insert.setType("system");
-            if(type.equals(1)){
-                insert.setText("你的动态【ID:"+space.getId()+"】已被解锁");
-            }
-            if(type.equals(2)){
-                insert.setText("你的动态【ID:"+space.getId()+"】已被锁定");
-            }
-            insert.setCreated(Integer.parseInt(created));
-            inboxService.insert(insert);
-
-            JSONObject response = new JSONObject();
-            response.put("code" ,rows > 0 ? 1: 0 );
-            response.put("data" , rows);
-            response.put("msg"  , rows > 0 ? "操作成功，请等待缓存刷新" : "操作失败");
-            return response.toString();
-        }catch (Exception e){
-            e.printStackTrace();
-            return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
-        }
-    }
 
     /***
      * 动态删除
      */
     @RequestMapping(value = "/spaceDelete")
     @ResponseBody
+    @LoginRequired(purview = "1")
     public String spaceDelete(@RequestParam(value = "id", required = false) String  id, @RequestParam(value = "token", required = false) String  token) {
         try {
-            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-            if(uStatus==0){
-                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-            }
 
             //String group = (String) redisHelp.getValue("userInfo"+token,"group",redisTemplate);
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer uid  = Integer.parseInt(map.get("uid").toString());
             // 查询发布者是不是自己，如果是管理员则跳过
             TypechoSpace space = service.selectByKey(id);
-            if(space==null){
-                return Result.getResultJson(0,"帖子不存在",null);
-            }
             String group = map.get("group").toString();
             if(!group.equals("administrator")&&!group.equals("editor")){
                 if(!space.getUid().equals(uid)){
@@ -992,7 +979,7 @@ public class TypechoSpaceController {
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );
             response.put("data" , rows);
-            response.put("msg"  , rows > 0 ? "操作成功，请等待缓存刷新" : "操作失败");
+            response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
             return response.toString();
         }catch (Exception e){
             e.printStackTrace();
@@ -1004,12 +991,9 @@ public class TypechoSpaceController {
      */
     @RequestMapping(value = "/spaceLikes")
     @ResponseBody
+    @LoginRequired(purview = "0")
     public String spaceLikes(@RequestParam(value = "id", required = false) Integer  id, @RequestParam(value = "token", required = false) String  token) {
         try{
-            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-            if(uStatus==0){
-                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-            }
 
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer uid  = Integer.parseInt(map.get("uid").toString());
@@ -1020,6 +1004,7 @@ public class TypechoSpaceController {
             TypechoUserlog userlog = new TypechoUserlog();
             userlog.setUid(uid);
             userlog.setCid(id);
+            userlog.setType("spaceLike");
             Integer isLikes = userlogService.total(userlog);
             if(isLikes>0){
                 return Result.getResultJson(0,"你已经点赞过了",null);
@@ -1028,7 +1013,7 @@ public class TypechoSpaceController {
             if(space==null){
                 return Result.getResultJson(0,"该动态不存在",null);
             }
-            userlog.setType("spaceLike");
+
             userlog.setCreated(Integer.parseInt(userTime));
             userlogService.insert(userlog);
             Integer likes = space.getLikes();
@@ -1048,19 +1033,16 @@ public class TypechoSpaceController {
         }
 
     }
-
     /***
      * 我关注的人的动态
      */
     @RequestMapping(value = "/followSpace")
     @ResponseBody
+    @LoginRequired(purview = "0")
     public String followSpace(@RequestParam(value = "token", required = false) String  token,
                               @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
                               @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit){
         Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-        if(uStatus==0){
-            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-        }
         page = page - 1;
 
         Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
@@ -1071,6 +1053,11 @@ public class TypechoSpaceController {
             if (cacheList.size() > 0) {
                 jsonList = cacheList;
             } else {
+                //获取今日签到列表
+                System.out.println("SELECT space.* FROM "+prefix+"_space AS space JOIN "+prefix+"_fan AS fan ON space.uid = fan.touid WHERE fan.uid = "+uid+" AND space.status = 1 ORDER BY space.created  DESC limit "+page+", "+limit+";");
+
+//                List list = jdbcTemplate.queryForObject("SELECT space.* FROM "+prefix+"_space AS space JOIN "+prefix+"_fan AS fan ON space.uid = fan.touid WHERE fan.uid = "+uid+" AND space.status = 1 ORDER BY space.created  DESC limit "+page+", "+limit+";", List.class);
+//                System.out.println("SELECT space.* FROM "+prefix+"_space AS space JOIN "+prefix+"_fan AS fan ON space.uid = fan.touid WHERE fan.uid = "+uid+" AND space.status = 1 ORDER BY space.created  DESC limit "+page+", "+limit+";");
                 String sql = "SELECT space.* FROM "+prefix+"_space AS space JOIN "+prefix+"_fan AS fan ON space.uid = fan.touid WHERE fan.uid = ? AND space.status = 1 ORDER BY space.created DESC LIMIT ?, ?";
                 List<Map<String, Object>> list = jdbcTemplate.queryForList(sql, uid, page, limit);
                 if(list.size() < 1){
@@ -1088,10 +1075,10 @@ public class TypechoSpaceController {
                     //获取用户信息
                     Map userJson = UserStatus.getUserInfo(userid,apiconfigService,usersService);
                     //获取用户等级
-                    TypechoComments comments = new TypechoComments();
-                    comments.setAuthorId(userid);
-                    Integer lv = commentsService.total(comments,null);
-                    userJson.put("lv", baseFull.getLv(lv));
+//                    TypechoComments comments = new TypechoComments();
+//                    comments.setAuthorId(userid);
+//                    Integer lv = commentsService.total(comments,null);
+//                    userJson.put("lv", baseFull.getLv(lv));
                     json.put("userJson",userJson);
                     if (uStatus != 0) {
                         TypechoFan fan = new TypechoFan();
@@ -1205,10 +1192,10 @@ public class TypechoSpaceController {
                             }
                             shopJson.put("username",name);
                             //获取用户等级
-                            TypechoComments shopUserComments = new TypechoComments();
-                            comments.setAuthorId(shopUser.getUid());
-                            Integer userlv = commentsService.total(shopUserComments,null);
-                            shopJson.put("lv", baseFull.getLv(userlv));
+//                            TypechoComments shopUserComments = new TypechoComments();
+//                            comments.setAuthorId(shopUser.getUid());
+//                            Integer userlv = commentsService.total(shopUserComments,null);
+//                            shopJson.put("lv", baseFull.getLv(userlv));
 
                         }else{
                             shopJson.put("id",0);

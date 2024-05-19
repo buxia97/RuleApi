@@ -104,6 +104,9 @@
         <result column="uploadMediaMax" property="uploadMediaMax" />
         <result column="uploadFilesMax" property="uploadFilesMax" />
         <result column="localPath" property="localPath" />
+        <result column="banIP" property="banIP" />
+        <result column="adsVideoType" property="adsVideoType" />
+        <result column="adsSecuritykey" property="adsSecuritykey" />
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -207,7 +210,11 @@
         `uploadPicMax`,
         `uploadMediaMax`,
         `uploadFilesMax`,
-        `localPath`
+        `localPath`,
+
+        `banIP`,
+        `adsVideoType`,
+        `adsSecuritykey`
     </sql>
 
     <!-- 插入数据 -->
@@ -495,7 +502,16 @@
                 `uploadFilesMax`,
             </if>
             <if test ='null != localPath'>
-                `localPath`
+                `localPath`,
+            </if>
+            <if test ='null != banIP'>
+                `banIP`,
+            </if>
+            <if test ='null != adsVideoType'>
+                `adsVideoType`,
+            </if>
+            <if test ='null != adsSecuritykey'>
+                `adsSecuritykey`
             </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
@@ -780,7 +796,16 @@
                 #{uploadFilesMax},
             </if>
             <if test ='null != localPath'>
-                #{localPath}
+                #{localPath},
+            </if>
+            <if test ='null != banIP'>
+                #{banIP},
+            </if>
+            <if test ='null != adsVideoType'>
+                #{adsVideoType},
+            </if>
+            <if test ='null != adsSecuritykey'>
+                #{adsSecuritykey}
             </if>
         </trim>
     </insert>
@@ -886,7 +911,10 @@
             <if test ='null != uploadPicMax'>`uploadPicMax` = #{uploadPicMax},</if>
             <if test ='null != uploadMediaMax'>`uploadMediaMax` = #{uploadMediaMax},</if>
             <if test ='null != uploadFilesMax'>`uploadFilesMax` = #{uploadFilesMax},</if>
-            <if test ='null != localPath'>`localPath` = #{localPath}</if>
+            <if test ='null != localPath'>`localPath` = #{localPath},</if>
+            <if test ='null != banIP'>`banIP` = #{banIP},</if>
+            <if test ='null != adsVideoType'>`adsVideoType` = #{adsVideoType},</if>
+            <if test ='null != adsSecuritykey'>`adsSecuritykey` = #{adsSecuritykey}</if>
         </set>
         WHERE `id` = #{id}
     </update>

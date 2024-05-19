@@ -1,12 +1,8 @@
 package com.RuleApi.web;
+import com.RuleApi.annotation.LoginRequired;
 import com.RuleApi.common.*;
-import com.RuleApi.entity.TypechoAds;
-import com.RuleApi.entity.TypechoApiconfig;
-import com.RuleApi.entity.TypechoApp;
-import com.RuleApi.service.PushService;
-import com.RuleApi.service.TypechoAdsService;
-import com.RuleApi.service.TypechoApiconfigService;
-import com.RuleApi.service.TypechoAppService;
+import com.RuleApi.entity.*;
+import com.RuleApi.service.*;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import net.dreamlu.mica.xss.core.XssCleanIgnore;
@@ -15,8 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.system.ApplicationHome;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -43,7 +39,6 @@ public class SystemController {
     HttpClient HttpClient = new HttpClient();
     RedisHelp redisHelp =new RedisHelp();
 
-    UserStatus UStatus = new UserStatus();
 
     @Autowired
     private TypechoApiconfigService apiconfigService;
@@ -54,11 +49,18 @@ public class SystemController {
     @Autowired
     private PushService pushService;
 
+
     @Autowired
     private TypechoAppService appService;
 
     @Autowired
     private RedisTemplate redisTemplate;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+
+    UserStatus UStatus = new UserStatus();
 
 
     @Value("${webinfo.key}")
@@ -66,6 +68,9 @@ public class SystemController {
 
     @Value("${web.prefix}")
     private String dataprefix;
+
+    @Value("${mybatis.configuration.variables.prefix}")
+    private String prefix;
     /**
      * 密钥配置
      * */
@@ -106,7 +111,8 @@ public class SystemController {
      * */
     @RequestMapping(value = "/isKey")
     @ResponseBody
-    public String isKey(@RequestParam(value = "webkey", required = false) String  webkey) {
+    @LoginRequired(purview = "-2")
+    public String isKey(@RequestParam(value = "webkey", required = false,defaultValue = "") String  webkey) {
         try{
             if(!webkey.equals(this.key)){
                 return Result.getResultJson(0,"请输入正确的访问key",null);
@@ -124,7 +130,8 @@ public class SystemController {
      * */
     @RequestMapping(value = "/getConfig")
     @ResponseBody
-    public String getConfig(@RequestParam(value = "webkey", required = false) String  webkey) {
+    @LoginRequired(purview = "-2")
+    public String getConfig(@RequestParam(value = "webkey", required = false,defaultValue = "") String  webkey) {
         if(webkey.length()<1){
             return Result.getResultJson(0,"请输入正确的访问key",null);
         }
@@ -159,7 +166,8 @@ public class SystemController {
      */
     @RequestMapping(value = "/setupWebKey")
     @ResponseBody
-    public String setupWebKey(@RequestParam(value = "webkey", required = false) String  webkey,@RequestParam(value = "params", required = false) String  params) {
+    @LoginRequired(purview = "-2")
+    public String setupWebKey(@RequestParam(value = "webkey", required = false,defaultValue = "") String  webkey,@RequestParam(value = "params", required = false) String  params) {
         if(webkey.length()<1){
             return Result.getResultJson(0,"请输入正确的访问key",null);
         }
@@ -168,7 +176,7 @@ public class SystemController {
         }
         Map jsonToMap = new HashMap();
         try {
-        //读取参数，开始写入
+            //读取参数，开始写入
             if (StringUtils.isNotBlank(params)) {
                 jsonToMap = JSONObject.parseObject(JSON.parseObject(params).toString());
                 //新的配置
@@ -198,7 +206,8 @@ public class SystemController {
      */
     @RequestMapping(value = "/setupCache")
     @ResponseBody
-    public String setupCache(@RequestParam(value = "webkey", required = false) String  webkey,@RequestParam(value = "params", required = false) String  params) {
+    @LoginRequired(purview = "-2")
+    public String setupCache(@RequestParam(value = "webkey", required = false,defaultValue = "") String  webkey,@RequestParam(value = "params", required = false) String  params) {
         if(webkey.length()<1){
             return Result.getResultJson(0,"请输入正确的访问key",null);
         }
@@ -274,7 +283,8 @@ public class SystemController {
      */
     @RequestMapping(value = "/setupMysql")
     @ResponseBody
-    public String setupMysql(@RequestParam(value = "webkey", required = false) String  webkey,@RequestParam(value = "params", required = false) String  params) {
+    @LoginRequired(purview = "-2")
+    public String setupMysql(@RequestParam(value = "webkey", required = false,defaultValue = "") String  webkey,@RequestParam(value = "params", required = false) String  params) {
         if(webkey.length()<1){
             return Result.getResultJson(0,"请输入正确的访问key",null);
         }
@@ -340,7 +350,8 @@ public class SystemController {
      */
     @RequestMapping(value = "/setupRedis")
     @ResponseBody
-    public String setupRedis(@RequestParam(value = "webkey", required = false) String  webkey,@RequestParam(value = "params", required = false) String  params) {
+    @LoginRequired(purview = "-2")
+    public String setupRedis(@RequestParam(value = "webkey", required = false,defaultValue = "") String  webkey,@RequestParam(value = "params", required = false) String  params) {
         if(webkey.length()<1){
             return Result.getResultJson(0,"请输入正确的访问key",null);
         }
@@ -412,7 +423,8 @@ public class SystemController {
      */
     @RequestMapping(value = "/setupEmail")
     @ResponseBody
-    public String setupEmail(@RequestParam(value = "webkey", required = false) String  webkey,@RequestParam(value = "params", required = false) String  params) {
+    @LoginRequired(purview = "-2")
+    public String setupEmail(@RequestParam(value = "webkey", required = false,defaultValue = "") String  webkey,@RequestParam(value = "params", required = false) String  params) {
         if(webkey.length()<1){
             return Result.getResultJson(0,"请输入正确的访问key",null);
         }
@@ -471,7 +483,14 @@ public class SystemController {
      */
     @RequestMapping(value = "/setupConfig")
     @ResponseBody
-    public String setupConfig(@RequestParam(value = "webkey", required = false) String  webkey,@RequestParam(value = "params", required = false) String  params) {
+    @LoginRequired(purview = "-2")
+    public String setupConfig(@RequestParam(value = "webkey", required = false,defaultValue = "") String  webkey,@RequestParam(value = "params", required = false) String  params) {
+        if(webkey.length()<1){
+            return Result.getResultJson(0,"请输入正确的访问key",null);
+        }
+        if(!webkey.equals(this.key)){
+            return Result.getResultJson(0,"请输入正确的访问key",null);
+        }
         try{
             ApplicationHome h = new ApplicationHome(getClass());
             File jarF = h.getSource();
@@ -492,7 +511,8 @@ public class SystemController {
      */
     @RequestMapping(value = "/allConfig")
     @ResponseBody
-    public String allConfig(@RequestParam(value = "webkey", required = false) String  webkey) {
+    @LoginRequired(purview = "-2")
+    public String allConfig(@RequestParam(value = "webkey", required = false,defaultValue = "") String  webkey) {
         if(webkey.length()<1){
             return Result.getResultJson(0,"请输入正确的访问key",null);
         }
@@ -645,7 +665,8 @@ public class SystemController {
      */
     @RequestMapping(value = "/getApiConfig")
     @ResponseBody
-    public String getApiConfig(@RequestParam(value = "webkey", required = false) String  webkey) {
+    @LoginRequired(purview = "-2")
+    public String getApiConfig(@RequestParam(value = "webkey", required = false,defaultValue = "") String  webkey) {
         if(webkey.length()<1){
             return Result.getResultJson(0,"请输入正确的访问key",null);
         }
@@ -665,7 +686,8 @@ public class SystemController {
      */
     @RequestMapping(value = "/apiConfigUpdate")
     @ResponseBody
-    public String apiConfigUpdate(@RequestParam(value = "params", required = false) String  params,@RequestParam(value = "webkey", required = false) String  webkey) {
+    @LoginRequired(purview = "-2")
+    public String apiConfigUpdate(@RequestParam(value = "params", required = false,defaultValue = "") String  params,@RequestParam(value = "webkey", required = false) String  webkey) {
         TypechoApiconfig update = null;
         if(webkey.length()<1){
             return Result.getResultJson(0,"请输入正确的访问key",null);
@@ -673,32 +695,40 @@ public class SystemController {
         if(!webkey.equals(this.key)){
             return Result.getResultJson(0,"请输入正确的访问key",null);
         }
-        if (StringUtils.isNotBlank(params)) {
-            JSONObject object = JSON.parseObject(params);
-            update = object.toJavaObject(TypechoApiconfig.class);
+        try{
+            if (StringUtils.isNotBlank(params)) {
+                JSONObject object = JSON.parseObject(params);
+                update = object.toJavaObject(TypechoApiconfig.class);
+            }
+            update.setId(1);
+            int rows = apiconfigService.update(update);
+
+            //更新Redis缓存
+            TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+            Map configJson = JSONObject.parseObject(JSONObject.toJSONString(apiconfig), Map.class);
+            redisHelp.delete(dataprefix+"_"+"config",redisTemplate);
+            redisHelp.setKey(dataprefix+"_"+"config",configJson,6000,redisTemplate);
+            JSONObject response = new JSONObject();
+            response.put("code" , rows);
+            response.put("msg"  , rows > 0 ? "修改成功，当前配置已生效！" : "修改失败");
+            return response.toString();
+        }catch (Exception e){
+            e.printStackTrace();
+            return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
         }
-        update.setId(1);
-        int rows = apiconfigService.update(update);
-        //更新Redis缓存
-        TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
-        Map configJson = JSONObject.parseObject(JSONObject.toJSONString(apiconfig), Map.class);
-        redisHelp.delete(dataprefix+"_"+"config",redisTemplate);
-        redisHelp.setKey(dataprefix+"_"+"config",configJson,6000,redisTemplate);
-        JSONObject response = new JSONObject();
-        response.put("code" , rows);
-        response.put("msg"  , rows > 0 ? "修改成功，当前配置已生效！" : "修改失败");
-        return response.toString();
+
     }
     /***
      * 获取新版本
      */
     @RequestMapping(value = "/apiNewVersion")
     @ResponseBody
+    @LoginRequired(purview = "-2")
     public String apiNewVersion() {
         String apiNewVersion = redisHelp.getRedis(this.dataprefix+"_"+"apiNewVersion",redisTemplate);
         HashMap data = new HashMap();
         if(apiNewVersion==null) {
-            String requestUrl = "https://www.ruletree.club/ruleApiInfo.php?ver=1";
+            String requestUrl = "https://www.ruletree.club/ruleApiInfo.php";
             String res = HttpClient.doGet(requestUrl);
             if (res == null) {
                 return Result.getResultJson(0, "获取服务端信息失败", null);
@@ -720,7 +750,8 @@ public class SystemController {
      */
     @RequestMapping(value = "/taskAds")
     @ResponseBody
-    public String taskAds(@RequestParam(value = "webkey", required = false) String  webkey) {
+    @LoginRequired(purview = "-2")
+    public String taskAds(@RequestParam(value = "webkey", required = false,defaultValue = "") String  webkey) {
         if(webkey.length()<1){
             return Result.getResultJson(0,"请输入正确的访问key",null);
         }
@@ -751,11 +782,42 @@ public class SystemController {
         }
 
     }
+
+    /***
+     * 外部任务(定时清理订单)
+     */
+    @RequestMapping(value = "/taskRemoveOrder")
+    @ResponseBody
+    @LoginRequired(purview = "-2")
+    public String taskRemoveOrder(@RequestParam(value = "webkey", required = false,defaultValue = "") String  webkey) {
+        if(webkey.length()<1){
+            return Result.getResultJson(0,"请输入正确的访问key",null);
+        }
+        if(!webkey.equals(this.key)){
+            return Result.getResultJson(0,"请输入正确的访问key",null);
+        }
+
+        try {
+            Long date = System.currentTimeMillis();
+            String curTime = String.valueOf(date).substring(0,10);
+            Integer cleanTime = Integer.parseInt(curTime) - 2592000;
+
+            //用户签到清理
+            jdbcTemplate.execute("DELETE FROM "+this.prefix+"_userlog WHERE type='buy' and  created < "+cleanTime+";");
+
+            return Result.getResultJson(1, "执行成功", null);
+        }catch (Exception e){
+            e.printStackTrace();
+            return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
+        }
+
+    }
     /***
      * CR云控信息
      */
     @RequestMapping(value = "/getCRCloud")
     @ResponseBody
+    @LoginRequired(purview = "-2")
     public String getCRCloud() {
         TypechoApiconfig typechoApiconfig = apiconfigService.selectByKey(1);
         JSONObject json = new JSONObject();
@@ -772,7 +834,8 @@ public class SystemController {
      */
     @RequestMapping(value = "/sendPushMsg")
     @ResponseBody
-    public String sendPushMsg(@RequestParam(value = "webkey", required = false) String  webkey,
+    @LoginRequired(purview = "-2")
+    public String sendPushMsg(@RequestParam(value = "webkey", required = false,defaultValue = "") String  webkey,
                               @RequestParam(value = "cid", required = false) String  cid,
                               @RequestParam(value = "title", required = false) String  title,
                               @RequestParam(value = "content", required = false) String  content) {
@@ -785,12 +848,13 @@ public class SystemController {
         pushService.sendPushMsg(cid,title,content,"payload","打开评论区");
         return Result.getResultJson(1, "发送成功", null);
     }
+
     /***
      * 添加应用
      */
     @RequestMapping(value = "/addApp")
     @ResponseBody
-    @XssCleanIgnore
+    @LoginRequired(purview = "-2")
     public String addApp(@RequestParam(value = "webkey", required = false,defaultValue = "") String  webkey,
                          @RequestParam(value = "params", required = false) String  params) {
 
@@ -827,7 +891,7 @@ public class SystemController {
      */
     @RequestMapping(value = "/updateApp")
     @ResponseBody
-    @XssCleanIgnore
+    @LoginRequired(purview = "-2")
     public String updateApp(@RequestParam(value = "webkey", required = false,defaultValue = "") String  webkey,
                             @RequestParam(value = "params", required = false) String  params) {
 
@@ -866,6 +930,7 @@ public class SystemController {
      */
     @RequestMapping(value = "/deleteApp")
     @ResponseBody
+    @LoginRequired(purview = "-2")
     public String deleteApp(@RequestParam(value = "webkey", required = false,defaultValue = "") String  webkey,
                             @RequestParam(value = "id", required = false) String  id) {
 
@@ -895,6 +960,7 @@ public class SystemController {
      */
     @RequestMapping(value = "/appList")
     @ResponseBody
+    @LoginRequired(purview = "-2")
     public String appList(){
         List jsonList = new ArrayList();
         List cacheList = redisHelp.getList(this.dataprefix+"_"+"appList",redisTemplate);
@@ -933,6 +999,7 @@ public class SystemController {
      */
     @RequestMapping(value = "/app")
     @ResponseBody
+    @LoginRequired(purview = "-2")
     public String app(@RequestParam(value = "key", required = false) String  key){
         try{
             Map appJson = new HashMap<String, String>();
@@ -948,9 +1015,10 @@ public class SystemController {
                 appJson = JSONObject.parseObject(JSONObject.toJSONString(app), Map.class);
                 //获取补充性字段
                 TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
+                appJson.put("adsVideoType",apiconfig.getAdsVideoType());
                 appJson.put("isInvite",apiconfig.getIsInvite());
                 appJson.put("isEmail",apiconfig.getIsEmail());
-                appJson.put("isPro",0);
+                appJson.put("isPro",1);
 
 
                 redisHelp.delete(this.dataprefix+"_"+"appJson_"+key,redisTemplate);
@@ -975,5 +1043,6 @@ public class SystemController {
         }
 
     }
+
 
 }

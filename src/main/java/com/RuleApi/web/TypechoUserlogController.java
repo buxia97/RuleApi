@@ -1,5 +1,6 @@
 package com.RuleApi.web;
 
+import com.RuleApi.annotation.LoginRequired;
 import com.RuleApi.common.*;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
@@ -44,12 +45,6 @@ public class TypechoUserlogController {
     private TypechoMetasService metasService;
 
     @Autowired
-    private SecurityService securityService;
-
-    @Autowired
-    private TypechoAppService appService;
-
-    @Autowired
     private TypechoContentsService contentsService;
 
     @Autowired
@@ -57,6 +52,12 @@ public class TypechoUserlogController {
 
     @Autowired
     private TypechoFieldsService fieldsService;
+
+    @Autowired
+    private SecurityService securityService;
+
+    @Autowired
+    private TypechoAppService appService;
 
     @Autowired
     private TypechoUsersService usersService;
@@ -93,12 +94,9 @@ public class TypechoUserlogController {
      */
     @RequestMapping(value = "/isMark")
     @ResponseBody
+    @LoginRequired(purview = "0")
     public String isMark (@RequestParam(value = "cid", required = false) String  cid,
-                            @RequestParam(value = "token", required = false) String  token) {
-        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-        if(uStatus==0){
-            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-        }
+                          @RequestParam(value = "token", required = false) String  token) {
         if(cid==""||cid==null){
             return Result.getResultJson(0,"参数不正确",null);
         }
@@ -130,6 +128,7 @@ public class TypechoUserlogController {
      */
     @RequestMapping(value = "/markList")
     @ResponseBody
+    @LoginRequired(purview = "0")
     public String markList (@RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
                             @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
                             @RequestParam(value = "token", required = false) String  token) {
@@ -299,13 +298,10 @@ public class TypechoUserlogController {
      */
     @RequestMapping(value = "/rewardList")
     @ResponseBody
+    @LoginRequired(purview = "0")
     public String rewardList (@RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
-                            @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
-                            @RequestParam(value = "token", required = false) String  token) {
-        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-        if(uStatus==0){
-            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-        }
+                              @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
+                              @RequestParam(value = "token", required = false) String  token) {
         Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         Integer uid =Integer.parseInt(map.get("uid").toString());
         if(limit>50){
@@ -317,8 +313,6 @@ public class TypechoUserlogController {
         query.setType("reward");
         total = service.total(query);
         PageList<TypechoUserlog> pageList = service.selectPage(query, page, limit);
-
-
         JSONObject response = new JSONObject();
         response.put("code" , 1);
         response.put("msg"  , "");
@@ -403,6 +397,7 @@ public class TypechoUserlogController {
                 if(type.equals("clock")){
                     TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
                     Integer clockMax = apiconfig.getClock();
+
                     int award = 0;
                     if (clockMax > 0){
                         award = r.nextInt(clockMax) + 1;
@@ -440,8 +435,12 @@ public class TypechoUserlogController {
                         Integer Assets = account + award;
                         newUser.setAssets(Assets);
                     }
-                    Integer oldExperience = user.getExperience();
+                    Integer oldExperience = 0;
+                    if(user.getExperience()!=null){
+                        oldExperience = user.getExperience();
+                    }
                     Integer newExperience = oldExperience + addExp;
+
                     newUser.setExperience(newExperience);
                     usersService.update(newUser);
                     jsonToMap.put("num",award);
@@ -462,6 +461,8 @@ public class TypechoUserlogController {
                     paylogService.insert(paylog);
 
                     jsonToMap.put("toid",uid);
+
+                    redisHelp.delete(this.dataprefix+"_"+"userData_"+uid,redisTemplate);
                 }
                 //收藏，只能一次
                 if(type.equals("mark")){
@@ -578,11 +579,8 @@ public class TypechoUserlogController {
      */
     @RequestMapping(value = "/removeLog")
     @ResponseBody
+    @LoginRequired(purview = "0")
     public String removeLog(@RequestParam(value = "key", required = false) String  key,@RequestParam(value = "token", required = false) String  token) {
-        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-        if(uStatus==0){
-            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-        }
         //验证用户权限
         Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         Integer uid =Integer.parseInt(map.get("uid").toString());
@@ -614,14 +612,11 @@ public class TypechoUserlogController {
      */
     @RequestMapping(value = "/orderList")
     @ResponseBody
+    @LoginRequired(purview = "0")
     public String orderList (@RequestParam(value = "token", required = false) String  token) {
 
         String page = "1";
         String limit = "60";
-        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-        if(uStatus==0){
-            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-        }
         Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         Integer uid =Integer.parseInt(map.get("uid").toString());
         Integer total = 0;
@@ -694,14 +689,10 @@ public class TypechoUserlogController {
      */
     @RequestMapping(value = "/orderSellList")
     @ResponseBody
+    @LoginRequired(purview = "0")
     public String orderSellList (@RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
                                  @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
                                  @RequestParam(value = "token", required = false) String  token) {
-
-        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-        if(uStatus==0){
-            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-        }
         if(limit>50){
             limit = 50;
         }
@@ -777,19 +768,15 @@ public class TypechoUserlogController {
         response.put("total", total);
         return response.toString();
     }
-
     /***
      * 发起广告
      */
     @RequestMapping(value = "/adsGift")
     @ResponseBody
+    @LoginRequired(purview = "0")
     public String adsGift(@RequestParam(value = "token", required = false) String  token,
                           @RequestParam(value = "appkey", required = false) String  appkey) {
         try{
-            Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
-            if (uStatus == 0) {
-                return Result.getResultJson(0, "用户未登录或Token验证失败", null);
-            }
             Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
             Integer uid =Integer.parseInt(map.get("uid").toString());
             TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
@@ -827,14 +814,18 @@ public class TypechoUserlogController {
             }
             //获取今日已发起广告
             Integer adsNum = apiconfig.getAdsGiftNum();
+            System.out.println("SELECT COUNT(*) FROM `"+prefix+"_userlog` WHERE type = 'adsGift' and uid = "+uid+" and DATE(FROM_UNIXTIME(created)) = CURDATE();");
             Integer oldAdsNum = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM `"+prefix+"_userlog` WHERE type = 'adsGift' and uid = "+uid+" and DATE(FROM_UNIXTIME(created)) = CURDATE();", Integer.class);
             if(oldAdsNum >=  adsNum){
                 return Result.getResultJson(0,"今日奖励获取次数已用完",null);
             }
             //增加广告日志
+            Long date = System.currentTimeMillis();
+            String userTime = String.valueOf(date).substring(0,10);
             TypechoUserlog log = new TypechoUserlog();
             log.setType("adsGift");
             log.setUid(uid);
+            log.setCreated(Integer.parseInt(userTime));
             //cid用于状态，没有回调过就是0
             log.setCid(0);
             service.insert(log);
@@ -856,20 +847,22 @@ public class TypechoUserlogController {
 
     }
     /***
-     * 广告回调
+     * 广告回调(旧前端回调)
      */
     @RequestMapping(value = "/adsGiftNotify")
     @ResponseBody
+    @LoginRequired(purview = "0")
     public String adsGiftNotify(@RequestParam(value = "token", required = false) String  token,
                                 @RequestParam(value = "logid", required = false) String  logid) {
         try{
-            Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
-            if (uStatus == 0) {
-                return Result.getResultJson(0, "用户未登录或Token验证失败", null);
-            }
             Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
             Integer uid =Integer.parseInt(map.get("uid").toString());
             TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
+            Integer adsVideoType = apiconfig.getAdsVideoType();
+            if(!adsVideoType.equals(0)){
+                System.out.println("未开启该回调渠道！");
+                return Result.getResultJson(0,"未开启该回调渠道！",null);
+            }
             if(apiconfig.getBanRobots().equals(1)) {
                 //登录情况下，刷数据攻击拦截
                 String isSilence = redisHelp.getRedis(this.dataprefix+"_"+uid+"_silence",redisTemplate);
@@ -940,19 +933,87 @@ public class TypechoUserlogController {
             return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
         }
     }
+
+    /***
+     * 广告回调（服务端模式）
+     */
+    @RequestMapping(value = "/adsServerNotify")
+    @ResponseBody
+    @LoginRequired(purview = "-1")
+    public String adsServerNotify(@RequestParam(value = "adpid", required = false) String  adpid,
+                                  @RequestParam(value = "provider", required = false) String  provider,
+                                  @RequestParam(value = "sign", required = false) String  sign,
+                                  @RequestParam(value = "trans_id", required = false) String  trans_id,
+                                  @RequestParam(value = "user_id", required = false) String  user_id,
+                                  @RequestParam(value = "extra", required = false) String  extra) {
+        try{
+
+            TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
+            Integer adsVideoType = apiconfig.getAdsVideoType();
+            if(!adsVideoType.equals(1)){
+                System.out.println("未开启该回调渠道！");
+                JSONObject response = new JSONObject();
+                response.put("isValid", false);
+                return response.toString();
+            }
+            String adsSecuritykey = apiconfig.getAdsSecuritykey();
+            String curSign = baseFull.getSHA256StrJava(adsSecuritykey+":"+trans_id);
+            if(!curSign.equals(sign)){
+                System.out.println("ads签名校验失败，无法发放奖励！");
+                JSONObject response = new JSONObject();
+                response.put("isValid", false);
+                return response.toString();
+            }
+            //获取今日已发起广告
+            Integer adsNum = apiconfig.getAdsGiftNum();
+            System.out.println("SELECT COUNT(*) FROM `"+prefix+"_userlog` WHERE type = 'adsGift' and uid = "+user_id+" and DATE(FROM_UNIXTIME(created)) = CURDATE();");
+            Integer oldAdsNum = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM `"+prefix+"_userlog` WHERE type = 'adsGift' and uid = "+user_id+" and DATE(FROM_UNIXTIME(created)) = CURDATE();", Integer.class);
+            if(oldAdsNum >=  adsNum){
+                return Result.getResultJson(0,"今日奖励获取次数已用完",null);
+            }
+            //加积分
+            Random r = new Random();
+            Integer award = apiconfig.getAdsGiftAward();
+            TypechoUsers user = usersService.selectByKey(user_id);
+            TypechoUsers newUser = new TypechoUsers();
+            newUser.setUid(Integer.parseInt(user_id));
+            if(award > 0){
+                Integer account = user.getAssets();
+                Integer Assets = account + award;
+                newUser.setAssets(Assets);
+            }
+            usersService.update(newUser);
+            Long date = System.currentTimeMillis();
+            String userTime = String.valueOf(date).substring(0,10);
+            TypechoPaylog paylog = new TypechoPaylog();
+            paylog.setStatus(1);
+            paylog.setCreated(Integer.parseInt(userTime));
+            paylog.setUid(Integer.parseInt(user_id));
+            paylog.setOutTradeNo(userTime+"adsGift");
+            paylog.setTotalAmount(award.toString());
+            paylog.setPaytype("adsGift");
+            paylog.setSubject("广告奖励");
+            paylogService.insert(paylog);
+            JSONObject response = new JSONObject();
+            response.put("isValid", true);
+            return response.toString();
+        }catch (Exception e){
+            e.printStackTrace();
+            JSONObject response = new JSONObject();
+            response.put("isValid", false);
+            return response.toString();
+        }
+    }
     /***
      * 查询商品是否已经购买过
      */
     @RequestMapping(value = "/dataClean")
     @ResponseBody
+    @LoginRequired(purview = "2")
     public String dataClean(@RequestParam(value = "clean", required = false) Integer  clean,
                             @RequestParam(value = "token", required = false) String  token) {
         try {
             //1是清理用户签到，2是清理用户资产日志，3是清理用户订单数据，4是清理无效卡密
-            Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
-            if (uStatus == 0) {
-                return Result.getResultJson(0, "用户未登录或Token验证失败", null);
-            }
             Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
             String group = map.get("group").toString();
             if (!group.equals("administrator")) {

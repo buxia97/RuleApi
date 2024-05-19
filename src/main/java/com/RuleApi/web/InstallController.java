@@ -1,5 +1,6 @@
 package com.RuleApi.web;
 
+import com.RuleApi.annotation.LoginRequired;
 import com.RuleApi.common.PHPass;
 import com.RuleApi.common.RedisHelp;
 import com.RuleApi.common.ResultAll;
@@ -52,6 +53,7 @@ public class InstallController {
      */
     @RequestMapping(value = "/isInstall")
     @ResponseBody
+    @LoginRequired(purview = "-2")
     public String isInstall(){
         Integer code = 1;
         String msg = "安装正常";
@@ -82,6 +84,7 @@ public class InstallController {
      */
     @RequestMapping(value = "/typechoInstall")
     @ResponseBody
+    @LoginRequired(purview = "-2")
     public String typechoInstall(@RequestParam(value = "webkey", required = false,defaultValue = "") String  webkey,@RequestParam(value = "name", required = false) String  name,@RequestParam(value = "password", required = false) String  password) {
         if(!webkey.equals(this.key)){
             return Result.getResultJson(0,"请输入正确的访问KEY。如果忘记，可在服务器/opt/application.properties中查看",null);
@@ -229,6 +232,7 @@ public class InstallController {
      */
     @RequestMapping(value = "/newInstall")
     @ResponseBody
+    @LoginRequired(purview = "-2")
     public String newInstall(@RequestParam(value = "webkey", required = false,defaultValue = "") String  webkey) {
         if(!webkey.equals(this.key)){
             return "请输入正确的访问KEY。如果忘记，可在服务器/opt/application.properties中查看";
@@ -1112,6 +1116,32 @@ public class InstallController {
         }else{
             text+="配置中心模块，字段localPath已经存在，无需添加。";
         }
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'banIP';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `banIP` text COMMENT '封禁IP列表'");
+            text+="配置中心模块，字段banIP添加完成。";
+        }else{
+            text+="配置中心模块，字段banIP已经存在，无需添加。";
+        }
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'adsVideoType';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `adsVideoType` int(2) DEFAULT '1' COMMENT '激励广告模式（0前端回调，1服务端回调）'");
+            text+="配置中心模块，字段adsVideoType添加完成。";
+        }else{
+            text+="配置中心模块，字段adsVideoType已经存在，无需添加。";
+        }
+        i = jdbcTemplate.queryForObject("select count(*) from information_schema.columns where table_name = '"+prefix+"_apiconfig' and column_name = 'adsSecuritykey';", Integer.class);
+        if (i == 0){
+            jdbcTemplate.execute("alter table "+prefix+"_apiconfig ADD `adsSecuritykey` varchar(255) DEFAULT '' COMMENT '激励广告安全码'");
+            text+="配置中心模块，字段adsSecuritykey添加完成。";
+        }else{
+            text+="配置中心模块，字段adsSecuritykey已经存在，无需添加。";
+        }
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+        }
 
         try {
             Thread.sleep(500);
@@ -1371,6 +1401,7 @@ public class InstallController {
      */
     @RequestMapping(value = "/toUtf8mb4")
     @ResponseBody
+    @LoginRequired(purview = "-2")
     public String toUtf8mb4(@RequestParam(value = "webkey", required = false,defaultValue = "") String  webkey) {
         if(!webkey.equals(this.key)){
             return Result.getResultJson(0,"请输入正确的访问KEY。如果忘记，可在服务器/opt/application.properties中查看",null);

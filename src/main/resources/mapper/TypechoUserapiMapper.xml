@@ -71,12 +71,12 @@
         INSERT INTO ${prefix}_userapi ( <include refid="Base_Column_List" /> ) VALUES
         <foreach collection="list" item="curr" index="index" separator=",">
             (
-                #{curr.id},
-                #{curr.headImgUrl},
-                #{curr.openId},
-                #{curr.accessToken},
-                #{curr.appLoginType},
-                #{curr.uid}
+            #{curr.id},
+            #{curr.headImgUrl},
+            #{curr.openId},
+            #{curr.accessToken},
+            #{curr.appLoginType},
+            #{curr.uid}
             )
         </foreach>
     </insert>
@@ -96,6 +96,11 @@
 
     <!-- 删除 -->
     <delete id="delete">
+        DELETE FROM typecho_userapi
+        WHERE `id` = #{key}
+    </delete>
+
+    <delete id="deleteUserAll">
         DELETE FROM typecho_userapi
         WHERE `uid` = #{key}
     </delete>

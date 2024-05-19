@@ -1,5 +1,5 @@
 package com.RuleApi.web;
-
+import com.RuleApi.annotation.LoginRequired;
 import com.RuleApi.common.*;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
@@ -9,6 +9,7 @@ import com.RuleApi.service.*;
 import net.dreamlu.mica.core.result.R;
 import net.dreamlu.mica.xss.core.XssCleanIgnore;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -20,14 +21,19 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.commonmark.node.*;
 import org.commonmark.parser.Parser;
@@ -78,6 +84,9 @@ public class TypechoContentsController {
     private PushService pushService;
 
     @Autowired
+    private UploadService uploadService;
+
+    @Autowired
     private TypechoInboxService inboxService;
 
     @Autowired
@@ -99,16 +108,15 @@ public class TypechoContentsController {
     @Value("${webinfo.contentInfoCache}")
     private Integer contentInfoCache;
 
-
     @Value("${web.prefix}")
     private String dataprefix;
 
     @Value("${mybatis.configuration.variables.prefix}")
     private String prefix;
 
-
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
     RedisHelp redisHelp =new RedisHelp();
     ResultAll Result = new ResultAll();
     baseFull baseFull = new baseFull();
@@ -122,7 +130,10 @@ public class TypechoContentsController {
      */
     @RequestMapping(value = "/contentsInfo")
     @ResponseBody
-    public String contentsInfo (@RequestParam(value = "key", required = false) String  key,@RequestParam(value = "isMd" , required = false, defaultValue = "0") Integer isMd,@RequestParam(value = "token", required = false) String  token,HttpServletRequest request) {
+    @LoginRequired(purview = "-1")
+    public String contentsInfo (@RequestParam(value = "key", required = false) String  key,
+                                @RequestParam(value = "isMd" , required = false, defaultValue = "0") Integer isMd,
+                                @RequestParam(value = "token", required = false) String  token,HttpServletRequest request) {
         TypechoContents typechoContents = null;
 
         //如果开启全局登录，则必须登录才能得到数据
@@ -162,10 +173,9 @@ public class TypechoContentsController {
                         return Result.getResultJson(0,"文章暂未公开访问",null);
                     }
                 }
-
                 String text = typechoContents.getText();
- //               String forbidden = apiconfig.getForbidden();
-//                Integer textForbidden = baseFull.getForbidden(forbidden,text);
+                String forbidden = apiconfig.getForbidden();
+//               Integer textForbidden = baseFull.getForbidden(forbidden,text);
 //                if(textForbidden.equals(1)){
 //                    text = "内容违规，无法展示";
 //                }
@@ -175,15 +185,12 @@ public class TypechoContentsController {
                 List codeList = baseFull.getImageCode(text);
                 for(int c = 0; c < codeList.size(); c++){
                     String codeimg = codeList.get(c).toString();
-                    try{
-                        String urlimg = imgList.get(c).toString();
-                        text=text.replace(codeimg,"![image"+c+"]("+urlimg+")");
-                    }catch (Exception e){
-                        System.err.println("图片Mardkdown代码异常");
-                    }
-
+                    String urlimg = imgList.get(c).toString();
+                    text=text.replace(codeimg,"![image"+c+"]("+urlimg+")");
                 }
                 text=text.replace("<!--markdown-->","");
+                boolean markdownStatus = oldText.contains("<!--markdown-->");
+
                 List codeImageMk = baseFull.getImageMk(text);
                 for(int d = 0; d < codeImageMk.size(); d++){
                     String mk = codeImageMk.get(d).toString();
@@ -191,10 +198,13 @@ public class TypechoContentsController {
                 }
                 if(isMd==1){
                     //如果isMd等于1，则输出解析后的md代码
-                    Parser parser = Parser.builder().build();
-                    Node document = parser.parse(text);
-                    HtmlRenderer renderer = HtmlRenderer.builder().build();
-                    text = renderer.render(document);
+                    if(markdownStatus){
+                        Parser parser = Parser.builder().build();
+                        Node document = parser.parse(text);
+                        HtmlRenderer renderer = HtmlRenderer.builder().build();
+                        text = renderer.render(document);
+                    }
+
 
                 }
                 //获取文章id，从而获取自定义字段，和分类标签
@@ -228,7 +238,11 @@ public class TypechoContentsController {
 
                 }
                 contensjson = JSONObject.parseObject(JSONObject.toJSONString(typechoContents), Map.class);
-
+                if(markdownStatus){
+                    contensjson.put("markdown",1);
+                }else{
+                    contensjson.put("markdown",0);
+                }
                 //转为map，再加入字段
                 contensjson.remove("password");
                 contensjson.put("images",imgList);
@@ -236,12 +250,7 @@ public class TypechoContentsController {
                 contensjson.put("category",metas);
                 contensjson.put("tag",tags);
                 contensjson.put("text",text);
-                boolean status = oldText.contains("<!--markdown-->");
-                if(status){
-                    contensjson.put("markdown",1);
-                }else{
-                    contensjson.put("markdown",0);
-                }
+
 
                 //文章阅读量增加
                 String  agent =  request.getHeader("User-Agent");
@@ -283,6 +292,7 @@ public class TypechoContentsController {
      */
     @RequestMapping(value = "/contentsList")
     @ResponseBody
+    @LoginRequired(purview = "-1")
     public String contentsList (@RequestParam(value = "searchParams", required = false) String  searchParams,
                                 @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
                                 @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
@@ -505,6 +515,7 @@ public class TypechoContentsController {
     @RequestMapping(value = "/contentsAdd")
     @XssCleanIgnore
     @ResponseBody
+    @LoginRequired(purview = "0")
     public String contentsAdd(@RequestParam(value = "params", required = false) String  params,
                               @RequestParam(value = "token", required = false) String  token,
                               @RequestParam(value = "text", required = false) String  text,
@@ -519,14 +530,10 @@ public class TypechoContentsController {
         try {
             TypechoContents insert = null;
             String  ip = baseFull.getIpAddr(request);
-            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
             Map jsonToMap = new HashMap();
             String category = "";
             String tag = "";
             Integer sid = -1;
-            if(uStatus==0){
-                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-            }
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer logUid =Integer.parseInt(map.get("uid").toString());
             TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
@@ -565,6 +572,31 @@ public class TypechoContentsController {
                 if(text==null){
                     text = jsonToMap.get("text").toString();
                 }
+
+                //将内容里的base64图片变为链接
+                List<String> oldImgBase64List = baseFull.getImageBase64(text);
+                if(oldImgBase64List.size()>0){
+                    for (int i = 0; i < oldImgBase64List.size(); i++) {
+                        try{
+                            String imageBase64 = oldImgBase64List.get(i);
+                            String imgUrl =  uploadService.base64Upload(imageBase64, this.dataprefix,apiconfig,logUid);
+                            // 使用Pattern.quote对Base64字符串进行转义，以便安全用作正则表达式
+                            String safeImageBase64 = Pattern.quote(imageBase64);
+                            // 使用Matcher.quoteReplacement对URL进行转义，以便安全用作替换字符串
+                            String safeImgUrl = Matcher.quoteReplacement(imgUrl);
+
+                            // 安全地替换Base64数据为图片链接
+                            text = text.replaceAll(safeImageBase64, safeImgUrl);
+                        }catch (Exception e){
+                            e.printStackTrace();
+                            System.out.println("图片转换失败");
+                        }
+
+                    }
+
+                }
+
+
                 //获取发布者信息
                 String uid = map.get("uid").toString();
                 //判断是否开启邮箱验证
@@ -600,6 +632,7 @@ public class TypechoContentsController {
                     if(text.length()>60000){
                         return Result.getResultJson(0,"超出最大文章内容长度",null);
                     }
+
                     //是否开启代码拦截
                     if(apiconfig.getDisableCode().equals(1)){
                         if(baseFull.haveCode(text).equals(1)){
@@ -684,6 +717,7 @@ public class TypechoContentsController {
                     jsonToMap.put("status","publish");
                     jsonToMap.put("type","post_draft");
                 }
+
 
                 jsonToMap.put("text",text);
                 //部分字段不允许定义
@@ -870,6 +904,7 @@ public class TypechoContentsController {
     @RequestMapping(value = "/contentsUpdate")
     @XssCleanIgnore
     @ResponseBody
+    @LoginRequired(purview = "0")
     public String contentsUpdate(@RequestParam(value = "params", required = false) String  params,
                                  @RequestParam(value = "token", required = false) String  token,
                                  @RequestParam(value = "text", required = false) String  text,
@@ -887,10 +922,6 @@ public class TypechoContentsController {
             String category = "";
             String tag = "";
             Integer sid = -1;
-            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-            if(uStatus==0){
-                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-            }
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer isWaiting = 0;
             Integer logUid =Integer.parseInt(map.get("uid").toString());
@@ -1020,6 +1051,7 @@ public class TypechoContentsController {
                         }
                     }
                     jsonToMap.put("type","post");
+
                 }else{
                     jsonToMap.put("status","publish");
                     jsonToMap.put("type","post_draft");
@@ -1132,8 +1164,11 @@ public class TypechoContentsController {
                 resText = "文章将在审核后发布！";
             }
             //清除缓存
-            redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_"+"contentsInfo_"+cid+"*",redisTemplate,this.dataprefix);
-            redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_contentsList_1*",redisTemplate,this.dataprefix);
+            if(rows > 0){
+                redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_"+"contentsInfo_"+cid+"*",redisTemplate,this.dataprefix);
+                redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_contentsList_1*",redisTemplate,this.dataprefix);
+            }
+
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );
             response.put("data" , rows);
@@ -1150,12 +1185,9 @@ public class TypechoContentsController {
      */
     @RequestMapping(value = "/contentsDelete")
     @ResponseBody
+    @LoginRequired(purview = "0")
     public String formDelete(@RequestParam(value = "key", required = false) String  key, @RequestParam(value = "token", required = false) String  token) {
         try {
-            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-            if(uStatus==0){
-                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-            }
             //String group = (String) redisHelp.getValue("userInfo"+token,"group",redisTemplate);
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer uid  = Integer.parseInt(map.get("uid").toString());
@@ -1206,12 +1238,14 @@ public class TypechoContentsController {
 
             }
             editFile.setLog("管理员"+logUid+"请求删除文章"+key);
-            //删除列表redis
-            redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_contentsList_1*",redisTemplate,this.dataprefix);
+            if(rows > 0){
+                redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_contentsList_1*",redisTemplate,this.dataprefix);
+            }
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );
             response.put("data" , rows);
             response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
+            //删除列表redis
             return response.toString();
         }catch (Exception e){
             return Result.getResultJson(0,"操作失败",null);
@@ -1376,12 +1410,9 @@ public class TypechoContentsController {
      */
     @RequestMapping(value = "/setFields")
     @ResponseBody
+    @LoginRequired(purview = "0")
     public String setFields(@RequestParam(value = "cid", required = false) Integer  cid,@RequestParam(value = "name", required = false) String  name,@RequestParam(value = "strvalue", required = false) String  strvalue,  @RequestParam(value = "token", required = false) String  token) {
         try {
-            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-            if(uStatus==0){
-                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-            }
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer logUid =Integer.parseInt(map.get("uid").toString());
             TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
@@ -1438,18 +1469,11 @@ public class TypechoContentsController {
      */
     @RequestMapping(value = "/toRecommend")
     @ResponseBody
+    @LoginRequired(purview = "1")
     public String addRecommend(@RequestParam(value = "key", required = false) String  key,@RequestParam(value = "recommend", required = false) Integer  recommend, @RequestParam(value = "token", required = false) String  token) {
         try {
-            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-            if(uStatus==0){
-                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-            }
-
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             String group = map.get("group").toString();
-            if(!group.equals("administrator")&&!group.equals("editor")){
-                return Result.getResultJson(0,"你没有操作权限",null);
-            };
             Integer logUid =Integer.parseInt(map.get("uid").toString());
             TypechoContents info = service.selectByKey(key);
             Long date = System.currentTimeMillis();
@@ -1459,9 +1483,10 @@ public class TypechoContentsController {
             info.setCid(Integer.parseInt(key));
             info.setIsrecommend(recommend);
             Integer rows = service.update(info);
+            if(rows > 0){
+                redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_contentsList_1*",redisTemplate,this.dataprefix);
+            }
             editFile.setLog("管理员"+logUid+"请求推荐文章"+key);
-            //删除列表redis
-            redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_contentsList_1*",redisTemplate,this.dataprefix);
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );
             response.put("data" , rows);
@@ -1477,18 +1502,11 @@ public class TypechoContentsController {
      */
     @RequestMapping(value = "/addTop")
     @ResponseBody
+    @LoginRequired(purview = "1")
     public String addTop(@RequestParam(value = "key", required = false) String  key,@RequestParam(value = "istop", required = false) Integer  istop, @RequestParam(value = "token", required = false) String  token) {
         try {
-            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-            if(uStatus==0){
-                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-            }
 
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
-            String group = map.get("group").toString();
-            if(!group.equals("administrator")&&!group.equals("editor")){
-                return Result.getResultJson(0,"你没有操作权限",null);
-            }
             Integer logUid =Integer.parseInt(map.get("uid").toString());
             TypechoContents info = service.selectByKey(key);
             //生成typecho数据库格式的修改时间戳
@@ -1499,9 +1517,10 @@ public class TypechoContentsController {
             info.setCid(Integer.parseInt(key));
             info.setIstop(istop);
             Integer rows = service.update(info);
+            if(rows > 0){
+                redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_contentsList_1*",redisTemplate,this.dataprefix);
+            }
             editFile.setLog("管理员"+logUid+"请求置顶文章"+key);
-            //删除列表redis
-            redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_contentsList_1*",redisTemplate,this.dataprefix);
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );
             response.put("data" , rows);
@@ -1516,18 +1535,11 @@ public class TypechoContentsController {
      */
     @RequestMapping(value = "/addSwiper")
     @ResponseBody
+    @LoginRequired(purview = "1")
     public String addSwiper(@RequestParam(value = "key", required = false) String  key,@RequestParam(value = "isswiper", required = false) Integer  isswiper, @RequestParam(value = "token", required = false) String  token) {
         try {
-            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-            if(uStatus==0){
-                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-            }
 
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
-            String group = map.get("group").toString();
-            if(!group.equals("administrator")&&!group.equals("editor")){
-                return Result.getResultJson(0,"你没有操作权限",null);
-            }
             Integer logUid =Integer.parseInt(map.get("uid").toString());
             TypechoContents info = service.selectByKey(key);
             //生成typecho数据库格式的修改时间戳
@@ -1538,9 +1550,10 @@ public class TypechoContentsController {
             info.setCid(Integer.parseInt(key));
             info.setIsswiper(isswiper);
             Integer rows = service.update(info);
+            if(rows > 0){
+                redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_contentsList_1*",redisTemplate,this.dataprefix);
+            }
             editFile.setLog("管理员"+logUid+"请求轮播文章"+key);
-            //删除列表redis
-            redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_contentsList_1*",redisTemplate,this.dataprefix);
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );
             response.put("data" , rows);
@@ -1555,14 +1568,11 @@ public class TypechoContentsController {
      * */
     @RequestMapping(value = "/isCommnet")
     @ResponseBody
+    @LoginRequired(purview = "0")
     public String isCommnet(@RequestParam(value = "key", required = false) String  key, @RequestParam(value = "token", required = false) String  token) {
         try {
             if(key.length()<1){
                 return Result.getResultJson(0,"参数错误",null);
-            }
-            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-            if(uStatus==0){
-                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
             }
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer uid  = Integer.parseInt(map.get("uid").toString());
@@ -1594,6 +1604,7 @@ public class TypechoContentsController {
      * */
     @RequestMapping(value = "/ImagePexels")
     @ResponseBody
+    @LoginRequired(purview = "-1")
     public String ImagePexels(@RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
                               @RequestParam(value = "searchKey"        , required = false) String searchKey,HttpServletRequest request) {
         String  ip = baseFull.getIpAddr(request);
@@ -1652,6 +1663,7 @@ public class TypechoContentsController {
      */
     @RequestMapping(value = "/rewardList")
     @ResponseBody
+    @LoginRequired(purview = "-1")
     public String rewardList(@RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
                              @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
                              @RequestParam(value = "id", required = false) Integer  id) {
@@ -1687,7 +1699,7 @@ public class TypechoContentsController {
                     Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
                     //获取用户信息
                     Map userJson = UserStatus.getUserInfo(userid,apiconfigService,usersService);
-//                    //获取用户等级
+                    //获取用户等级
 //                    TypechoComments comments = new TypechoComments();
 //                    comments.setAuthorId(userid);
 //                    Integer lv = commentsService.total(comments,null);
@@ -1718,6 +1730,7 @@ public class TypechoContentsController {
      * */
     @RequestMapping(value = "/foreverblog")
     @ResponseBody
+    @LoginRequired(purview = "-1")
     public String foreverblog(@RequestParam(value = "page", required = false) String  page) {
         String cacheForeverblog = redisHelp.getRedis(this.dataprefix+"_"+"foreverblog_"+page,redisTemplate);
         String res = "";
@@ -1740,6 +1753,7 @@ public class TypechoContentsController {
      */
     @RequestMapping(value = "/contentConfig")
     @ResponseBody
+    @LoginRequired(purview = "-1")
     public String contentConfig() {
         Map contentConfig = new HashMap<String, String>();
         try{
@@ -1767,17 +1781,10 @@ public class TypechoContentsController {
      */
     @RequestMapping(value = "/allData")
     @ResponseBody
+    @LoginRequired(purview = "1")
     public String allData( @RequestParam(value = "token", required = false) String  token) {
-        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-        if(uStatus==0){
-            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-        }
         //String group = (String) redisHelp.getValue("userInfo"+token,"group",redisTemplate);
         Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
-        String group = map.get("group").toString();
-        if(!group.equals("administrator")&&!group.equals("editor")){
-            return Result.getResultJson(0,"你没有操作权限",null);
-        }
         JSONObject data = new JSONObject();
 
         TypechoContents contents = new TypechoContents();
@@ -1802,6 +1809,11 @@ public class TypechoContentsController {
         Integer allAds = adsService.total(ads);
 
 
+        TypechoInbox inbox = new TypechoInbox();
+        inbox.setType("selfDelete");
+        Integer selfDelete = inboxService.total(inbox);
+
+
 
         contents.setType("post");
         contents.setStatus("waiting");
@@ -1816,7 +1828,6 @@ public class TypechoContentsController {
         space.setStatus(0);
         Integer upcomingSpace = spaceService.total(space,null);
 
-
         ads.setStatus(0);
         Integer upcomingAds = adsService.total(ads);
 
@@ -1825,8 +1836,8 @@ public class TypechoContentsController {
         userlog.setCid(-1);
         Integer upcomingWithdraw = userlogService.total(userlog);
 
-
-
+        Integer upcomingIdentifyConsumer = jdbcTemplate.queryForObject("select count(*) from `" + prefix + "_consumer` where identifyStatus = '0';", Integer.class);
+        Integer upcomingIdentifyCompany = jdbcTemplate.queryForObject("select count(*) from `" + prefix + "_company` where identifyStatus = '0';", Integer.class);
         data.put("allContents",allContents);
         data.put("allComments",allComments);
         data.put("allUsers",allUsers);
@@ -1835,11 +1846,15 @@ public class TypechoContentsController {
         data.put("allAds",allAds);
 
         data.put("upcomingContents",upcomingContents);
+        data.put("selfDelete",selfDelete);
+
         data.put("upcomingComments",upcomingComments);
         data.put("upcomingShop",upcomingShop);
         data.put("upcomingSpace",upcomingSpace);
         data.put("upcomingAds",upcomingAds);
         data.put("upcomingWithdraw",upcomingWithdraw);
+        data.put("upcomingIdentifyConsumer",upcomingIdentifyConsumer);
+        data.put("upcomingIdentifyCompany",upcomingIdentifyCompany);
 
         JSONObject response = new JSONObject();
         response.put("code" , 1);
@@ -1854,13 +1869,10 @@ public class TypechoContentsController {
      */
     @RequestMapping(value = "/followContents")
     @ResponseBody
+    @LoginRequired(purview = "0")
     public String followSpace(@RequestParam(value = "token", required = false) String  token,
                               @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
                               @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit){
-        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-        if(uStatus==0){
-            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-        }
         page = page - 1;
 
         Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
@@ -2019,5 +2031,107 @@ public class TypechoContentsController {
         response.put("count", jsonList.size());
         return response.toString();
 
+    }
+
+    @RequestMapping(value = "/getDocx")
+    @ResponseBody
+    @LoginRequired(purview = "2")
+    public void getDocx(HttpServletResponse response,
+                        HttpServletRequest request,
+                        @RequestParam(value = "token", required = false) String  token,
+                        @RequestParam(value = "cid", required = false) String  cid) throws IOException {
+
+        String htmlContent = "";
+        Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
+        if (uStatus == 0) {
+            InputStream docxInputStream = null;
+            try {
+                docxInputStream = baseFull.convertHtmlToDocx("");
+            } catch (InvalidFormatException e) {
+                throw new RuntimeException(e);
+            }
+            response.setContentType("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+            response.setHeader("Content-Disposition", "attachment; filename=\"converted.docx\"");
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = docxInputStream.read(buffer)) != -1) {
+                response.getOutputStream().write(buffer, 0, bytesRead);
+            }
+            docxInputStream.close();
+        }
+        Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+        Integer logUid =Integer.parseInt(map.get("uid").toString());
+        String group = map.get("group").toString();
+        if (!group.equals("administrator")) {
+            InputStream docxInputStream = null;
+            try {
+                docxInputStream = baseFull.convertHtmlToDocx("");
+            } catch (InvalidFormatException e) {
+                throw new RuntimeException(e);
+            }
+            response.setContentType("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+            response.setHeader("Content-Disposition", "attachment; filename=\"converted.docx\"");
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = docxInputStream.read(buffer)) != -1) {
+                response.getOutputStream().write(buffer, 0, bytesRead);
+            }
+            docxInputStream.close();
+        }
+
+        TypechoContents contents = service.selectByKey(cid);
+        if(contents==null){
+            InputStream docxInputStream = null;
+            try {
+                docxInputStream = baseFull.convertHtmlToDocx("");
+            } catch (InvalidFormatException e) {
+                throw new RuntimeException(e);
+            }
+            response.setContentType("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+            response.setHeader("Content-Disposition", "attachment; filename=\"converted.docx\"");
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = docxInputStream.read(buffer)) != -1) {
+                response.getOutputStream().write(buffer, 0, bytesRead);
+            }
+            docxInputStream.close();
+        }
+        htmlContent = contents.getText();
+        boolean markdownStatus = htmlContent.contains("<!--markdown-->");
+        if(markdownStatus){
+            Parser parser = Parser.builder().build();
+            Node document = parser.parse(htmlContent);
+            HtmlRenderer renderer = HtmlRenderer.builder().build();
+            htmlContent = renderer.render(document);
+        }
+
+        String fileName = contents.getTitle() + ".docx"; // 你的原始文件名
+        String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8.toString()); // 使用UTF-8进行编码
+
+        String contentDispositionValue;
+
+// 对于大多数现代浏览器，使用RFC 5987编码机制
+        if (request.getHeader("User-Agent").toLowerCase().contains("firefox") ||
+                request.getHeader("User-Agent").toLowerCase().contains("chrome") ||
+                request.getHeader("User-Agent").toLowerCase().contains("safari")) {
+            contentDispositionValue = "attachment; filename*=UTF-8''" + encodedFileName;
+        } else {
+            // 对于其他浏览器，如IE，使用较为传统的方式，可能需要根据实际情况调整
+            contentDispositionValue = "attachment; filename=\"" + encodedFileName + "\"";
+        }
+        InputStream docxInputStream = null;
+        try {
+            docxInputStream = baseFull.convertHtmlToDocx(htmlContent);
+        } catch (InvalidFormatException e) {
+            throw new RuntimeException(e);
+        }
+        response.setContentType("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+        response.setHeader("Content-Disposition", contentDispositionValue);
+        byte[] buffer = new byte[1024];
+        int bytesRead;
+        while ((bytesRead = docxInputStream.read(buffer)) != -1) {
+            response.getOutputStream().write(buffer, 0, bytesRead);
+        }
+        docxInputStream.close();
     }
 }

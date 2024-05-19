@@ -1,5 +1,6 @@
 package com.RuleApi.web;
 
+import com.RuleApi.annotation.LoginRequired;
 import com.RuleApi.common.*;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
@@ -64,16 +65,12 @@ public class TypechoChatController {
      */
     @RequestMapping(value = "/getPrivateChat")
     @ResponseBody
+    @LoginRequired(purview = "0")
     public String getPrivateChat(@RequestParam(value = "token", required = false) String  token,
                                  @RequestParam(value = "touid", required = false) Integer  touid) {
         try{
             if(touid==null||touid<1){
                 return Result.getResultJson(0,"参数不正确",null);
-            }
-            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-
-            if(uStatus==0){
-                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
             }
             Integer chatid = null;
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
@@ -155,6 +152,7 @@ public class TypechoChatController {
      */
     @RequestMapping(value = "/sendMsg")
     @ResponseBody
+    @LoginRequired(purview = "0")
     public String sendMsg(@RequestParam(value = "token", required = false) String  token,
                           @RequestParam(value = "chatid", required = false) Integer  chatid,
                           @RequestParam(value = "msg", required = false) String  msg,
@@ -174,10 +172,6 @@ public class TypechoChatController {
                 if(msg.length()>1500){
                     return Result.getResultJson(0,"最大消息内容为1000字符",null);
                 }
-            }
-            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-            if(uStatus==0){
-                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
             }
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer uid =Integer.parseInt(map.get("uid").toString());
@@ -268,7 +262,6 @@ public class TypechoChatController {
                 //违禁词拦截结束
             }
 
-
             Long date = System.currentTimeMillis();
             String created = String.valueOf(date).substring(0,10);
             TypechoChatMsg msgbox = new TypechoChatMsg();
@@ -347,6 +340,7 @@ public class TypechoChatController {
      */
     @RequestMapping(value = "/myChat")
     @ResponseBody
+    @LoginRequired(purview = "0")
     public String myCaht (@RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
                           @RequestParam(value = "token", required = false) String  token,
                           @RequestParam(value = "order", required = false) String  order,
@@ -356,10 +350,6 @@ public class TypechoChatController {
         }
         if(order==null){
             order = "lastTime";
-        }
-        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-        if(uStatus==0){
-            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
         }
         Map map = redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
 
@@ -484,14 +474,11 @@ public class TypechoChatController {
      */
     @RequestMapping(value = "/msgSetRead")
     @ResponseBody
+    @LoginRequired(purview = "0")
     public String msgSetRead ( @RequestParam(value = "chatid", required = false) Integer  chatid,
                                @RequestParam(value = "token", required = false) String  token) {
         if(chatid==null){
             return Result.getResultJson(0,"参数不正确",null);
-        }
-        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-        if(uStatus==0){
-            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
         }
         Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
         Integer loguid =Integer.parseInt(map.get("uid").toString());
@@ -557,16 +544,13 @@ public class TypechoChatController {
      */
     @RequestMapping(value = "/msgList")
     @ResponseBody
+    @LoginRequired(purview = "0")
     public String msgList ( @RequestParam(value = "chatid", required = false) Integer  chatid,
                             @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
                             @RequestParam(value = "token", required = false) String  token,
                             @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit) {
         if(chatid==null){
             return Result.getResultJson(0,"参数不正确",null);
-        }
-        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-        if(uStatus==0){
-            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
         }
         Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
         Integer loguid =Integer.parseInt(map.get("uid").toString());
@@ -674,21 +658,14 @@ public class TypechoChatController {
      */
     @RequestMapping(value = "/deleteChat")
     @ResponseBody
+    @LoginRequired(purview = "1")
     public String deleteChat (@RequestParam(value = "chatid", required = false) Integer  chatid,
                               @RequestParam(value = "token", required = false) String  token) {
         if(chatid==null){
             return Result.getResultJson(0,"参数不正确",null);
         }
         try {
-            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-            if(uStatus==0){
-                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-            }
             Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
-            String group = map.get("group").toString();
-            if(!group.equals("administrator")&&!group.equals("editor")){
-                return Result.getResultJson(0,"你没有操作权限",null);
-            }
             Integer logUid =Integer.parseInt(map.get("uid").toString());
             TypechoChat chat = service.selectByKey(chatid);
             if(chat==null){
@@ -716,21 +693,14 @@ public class TypechoChatController {
      */
     @RequestMapping(value = "/deleteMsg")
     @ResponseBody
+    @LoginRequired(purview = "1")
     public String deleteMsg (@RequestParam(value = "msgid", required = false) Integer  msgid,
                              @RequestParam(value = "token", required = false) String  token) {
         if(msgid==null){
             return Result.getResultJson(0,"参数不正确",null);
         }
         try {
-            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-            if(uStatus==0){
-                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-            }
             Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
-            String group = map.get("group").toString();
-            if(!group.equals("administrator")&&!group.equals("editor")){
-                return Result.getResultJson(0,"你没有操作权限",null);
-            }
             Integer logUid =Integer.parseInt(map.get("uid").toString());
             TypechoChatMsg msg = chatMsgService.selectByKey(msgid);
             if(msg==null){
@@ -757,6 +727,7 @@ public class TypechoChatController {
      */
     @RequestMapping(value = "/createGroup")
     @ResponseBody
+    @LoginRequired(purview = "1")
     public String createChat(@RequestParam(value = "name", required = false) String  name,
                              @RequestParam(value = "pic", required = false) String  pic,
                              @RequestParam(value = "token", required = false) String  token) {
@@ -765,15 +736,7 @@ public class TypechoChatController {
             return Result.getResultJson(0,"必须设置群聊图片和名称",null);
         }
         try{
-            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-            if(uStatus==0){
-                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-            }
             Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
-            String group = map.get("group").toString();
-            if(!group.equals("administrator")&&!group.equals("editor")){
-                return Result.getResultJson(0,"你没有操作权限",null);
-            }
             Long date = System.currentTimeMillis();
             String created = String.valueOf(date).substring(0,10);
             Integer uid =Integer.parseInt(map.get("uid").toString());
@@ -801,21 +764,14 @@ public class TypechoChatController {
      */
     @RequestMapping(value = "/editGroup")
     @ResponseBody
+    @LoginRequired(purview = "1")
     public String editGroup(@RequestParam(value = "name", required = false) String  name,
                             @RequestParam(value = "id", required = false) Integer  id,
                             @RequestParam(value = "pic", required = false) String  pic,
                             @RequestParam(value = "token", required = false) String  token) {
 
         try{
-            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-            if(uStatus==0){
-                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-            }
             Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
-            String group = map.get("group").toString();
-            if(!group.equals("administrator")&&!group.equals("editor")){
-                return Result.getResultJson(0,"你没有操作权限",null);
-            }
             TypechoChat oldChat = service.selectByKey(id);
             if(oldChat == null){
                 return Result.getResultJson(0,"群聊不存在",null);
@@ -843,14 +799,11 @@ public class TypechoChatController {
      */
     @RequestMapping(value = "/banChat")
     @ResponseBody
+    @LoginRequired(purview = "0")
     public String banChat(@RequestParam(value = "id", required = false) Integer  id,
                           @RequestParam(value = "token", required = false) String  token,
                           @RequestParam(value = "type", required = false, defaultValue = "1") Integer  type) {
         try {
-            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-            if(uStatus==0){
-                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-            }
 
             Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
             String group = map.get("group").toString();
@@ -920,6 +873,7 @@ public class TypechoChatController {
      */
     @RequestMapping(value = "/groupInfo")
     @ResponseBody
+    @LoginRequired(purview = "-1")
     public String groupInfo(@RequestParam(value = "id", required = false) Integer  id) {
 
         try{
@@ -966,6 +920,7 @@ public class TypechoChatController {
      */
     @RequestMapping(value = "/allChat")
     @ResponseBody
+    @LoginRequired(purview = "0")
     public String allGroup (@RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
                             @RequestParam(value = "order", required = false, defaultValue = "created") String  order,
                             @RequestParam(value = "type", required = false, defaultValue = "1") Integer  type,
@@ -1125,4 +1080,3 @@ public class TypechoChatController {
 
 
 }
-

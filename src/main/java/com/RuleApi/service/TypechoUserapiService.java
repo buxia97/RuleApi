@@ -34,6 +34,11 @@ public interface TypechoUserapiService {
     int delete(Object key);
 
     /**
+     * [删除]
+     **/
+    int deleteUserAll(Object key);
+
+    /**
      * [批量删除]
      **/
     int batchDelete(List<Object> keys);

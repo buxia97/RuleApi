@@ -10,10 +10,10 @@
     </parent>
 
     <groupId>com.RuleApi</groupId>
-    <artifactId>RuleApi</artifactId>
+    <artifactId>RuleApiPro</artifactId>
     <version>1.3.6</version>
-    <name>RuleApi</name>
-    <description>RuleApi is a Typecho-based API program developed by buxia97.</description>
+    <name>RuleApiPro</name>
+    <description>RuleApiPro is a Typecho-based API program developed by buxia97.</description>
     <packaging>jar</packaging>
 
     <properties>
@@ -55,11 +55,27 @@
             </exclusions>
         </dependency>
         <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+            <version>2.17.0</version> <!-- 使用与你的Spring Boot版本兼容的版本 -->
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>2.17.0</version> <!-- 使用与你的Spring Boot版本兼容的版本 -->
+        </dependency>
+        <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
             <version>2.14.3</version>
         </dependency>
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
+
+        <dependency>
+
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
             <version>2.12.7</version>
@@ -74,6 +90,17 @@
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
             <version>2.12.6</version>
+        </dependency>
+        <!--腾讯云内容检测-->
+        <dependency>
+            <groupId>com.tencentcloudapi</groupId>
+            <artifactId>tencentcloud-sdk-java-tms</artifactId>
+            <version>3.1.917</version>
+        </dependency>
+        <dependency>
+            <groupId>com.tencentcloudapi</groupId>
+            <artifactId>tencentcloud-sdk-java-ims</artifactId>
+            <version>3.1.880</version>
         </dependency>
         <!--阿里云存储依赖-->
         <dependency>
@@ -195,7 +222,13 @@
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi</artifactId>
-            <version>3.17</version>
+            <version>5.2.3</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>5.2.3</version> <!-- 使用最新的版本 -->
         </dependency>
         <!--微信-->
         <dependency>
@@ -254,6 +287,12 @@
             <groupId>net.dreamlu</groupId>
             <artifactId>mica-xss</artifactId>
             <version>2.7.14</version>
+        </dependency>
+        <!-- Google Kaptcha -->
+        <dependency>
+            <groupId>com.github.penggle</groupId>
+            <artifactId>kaptcha</artifactId>
+            <version>2.3.2</version>
         </dependency>
         <!-- Lombok -->
         <dependency>

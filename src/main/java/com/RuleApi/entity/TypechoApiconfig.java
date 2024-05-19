@@ -485,4 +485,19 @@ public class TypechoApiconfig implements Serializable {
      */
     private String localPath;
 
+    /**
+     * 封禁的IP地址
+     */
+    private String banIP;
+
+    /**
+     * 激励广告模式（0前端回调，1服务端回调）
+     */
+    private Integer adsVideoType;
+
+    /**
+     * 激励广告安全码
+     */
+    private String adsSecuritykey;
+
 }

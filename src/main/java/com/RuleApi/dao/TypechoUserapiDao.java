@@ -36,6 +36,11 @@ public interface TypechoUserapiDao {
     int delete(Object key);
 
     /**
+     * [删除指定用户全部]
+     **/
+    int deleteUserAll(Object key);
+
+    /**
      * [批量删除]
      **/
     int batchDelete(List<Object> list);

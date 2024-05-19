@@ -1,5 +1,6 @@
 package com.RuleApi.web;
 
+import com.RuleApi.annotation.LoginRequired;
 import com.RuleApi.common.*;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -89,6 +91,7 @@ public class TypechoCommentsController {
      */
     @RequestMapping(value = "/commentsList")
     @ResponseBody
+    @LoginRequired(purview = "-1")
     public String commentsList (@RequestParam(value = "searchParams", required = false) String  searchParams,
                                 @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
                                 @RequestParam(value = "searchKey"        , required = false, defaultValue = "") String searchKey,
@@ -96,44 +99,45 @@ public class TypechoCommentsController {
                                 @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
                                 @RequestParam(value = "token"       , required = false, defaultValue = "") String token) {
         TypechoComments query = new TypechoComments();
+        String sqlParams = "null";
+        //如果开启全局登录，则必须登录才能得到数据
         Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
+        TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
+        //验证结束
         if(limit>50){
             limit = 50;
         }
-        String sqlParams = "null";
         Integer uid = 0;
+        String group = "";
         Integer total = 0;
+        if(!uStatus.equals(0)){
+            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            String aid = redisHelp.getValue(this.dataprefix+"_"+"userInfo"+token,"uid",redisTemplate).toString();
+            uid = Integer.parseInt(aid);
+            group = map.get("group").toString();
+        }
         if (StringUtils.isNotBlank(searchParams)) {
             JSONObject object = JSON.parseObject(searchParams);
-            //如果不是管理员，则只查询开放状态评论
-            if(uStatus!=0&&token!=""){
-                Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
-                String group = map.get("group").toString();
-                if(!group.equals("administrator")){
-                    object.put("status","approved");
-                    //如果是登陆状态，那么查询回复我的评论
-                    String aid = redisHelp.getValue(this.dataprefix+"_"+"userInfo"+token,"uid",redisTemplate).toString();
-                    uid = Integer.parseInt(aid);
-                    object.put("ownerId",uid);
-                }
+            //如果不是管理员或者编辑，则只查询开放状态评论
+            if(!group.equals("administrator")&&!group.equals("editor")){
+                object.put("status","approved");
             }
+
             query = object.toJavaObject(TypechoComments.class);
             Map paramsJson = JSONObject.parseObject(JSONObject.toJSONString(query), Map.class);
             sqlParams = paramsJson.toString();
-
         }
         total = service.total(query,searchKey);
         List jsonList = new ArrayList();
-        List cacheList = redisHelp.getList(this.dataprefix+"_"+"searchParams_"+page+"_"+limit+"_"+searchKey+"_"+sqlParams+"_"+uid+"_"+order,redisTemplate);
+        List cacheList = redisHelp.getList(this.dataprefix+"_"+"commentsList_"+page+"_"+limit+"_"+searchKey+"_"+sqlParams+"_"+uid+"_"+order,redisTemplate);
         if(uStatus!=0){
-            cacheList = redisHelp.getList(this.dataprefix+"_"+"searchParams_"+page+"_"+limit+"_"+searchKey+"_"+sqlParams+"_"+order,redisTemplate);
+            cacheList = redisHelp.getList(this.dataprefix+"_"+"commentsList_"+page+"_"+limit+"_"+searchKey+"_"+sqlParams+"_"+order,redisTemplate);
         }
 
         try{
             if(cacheList.size()>0){
                 jsonList = cacheList;
             }else{
-                TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
                 PageList<TypechoComments> pageList = service.selectPage(query, page, limit,searchKey,order);
                 List<TypechoComments> list = pageList.getList();
                 if(list.size() < 1){
@@ -149,8 +153,13 @@ public class TypechoCommentsController {
 
                     TypechoComments comments = list.get(i);
                     Integer cid = comments.getCid();
-
-
+                    Integer id = comments.getCoid();
+                    //如果存在下级评论，获取总数
+                    TypechoComments sub = new TypechoComments();
+                    sub.setCid(cid);
+                    sub.setParent(id);
+                    Integer subNum = service.total(sub,null);
+                    json.put("subNum",subNum);
                     //如果存在上级评论
                     Map<String, String> parentComments = new HashMap<String, String>();
                     if(Integer.parseInt(json.get("parent").toString())>0){
@@ -176,14 +185,17 @@ public class TypechoCommentsController {
                     Integer userid = comments.getAuthorId();
                     String avatar = apiconfig.getWebinfoAvatar() + "null";
                     if(userid.equals(0)){
-                        String mail = json.get("mail").toString();
+                        if(json.get("mail")!=null){
+                            String mail = json.get("mail").toString();
 
-                        if(mail.indexOf("@qq.com") != -1){
-                            String qq = mail.replace("@qq.com","");
-                            avatar = "https://q1.qlogo.cn/g?b=qq&nk="+qq+"&s=640";
-                        }else{
-                            avatar = baseFull.getAvatar(apiconfig.getWebinfoAvatar(), mail);
+                            if(mail.indexOf("@qq.com") != -1){
+                                String qq = mail.replace("@qq.com","");
+                                avatar = "https://q1.qlogo.cn/g?b=qq&nk="+qq+"&s=640";
+                            }else{
+                                avatar = baseFull.getAvatar(apiconfig.getWebinfoAvatar(), mail);
+                            }
                         }
+
 //                        json.put("lv",0);
                         json.put("customize","");
                         json.put("avatar",avatar);
@@ -265,13 +277,28 @@ public class TypechoCommentsController {
                     }else{
                         json.put("contenTitle","文章已删除");
                     }
+                    //登录状态则获取点赞状态
+                    if(!uStatus.equals(0)){
+                        TypechoUserlog userlog = new TypechoUserlog();
+                        userlog.setUid(uid);
+                        userlog.setCid(id);
+                        userlog.setType("commentLike");
+                        Integer isLikes = userlogService.total(userlog);
+                        if(isLikes>0){
+                            json.put("isLike",1);
+                        }else{
+                            json.put("isLike",0);
+                        }
+                    }else{
+                        json.put("isLike",0);
+                    }
 
 
                     jsonList.add(json);
 
 
                 }
-                if(uStatus!=0){
+                if(!uStatus.equals(0)){
                     redisHelp.delete(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchKey+"_"+sqlParams+"_"+uid+"_"+order,redisTemplate);
                     redisHelp.setList(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchKey+"_"+sqlParams+"_"+uid+"_"+order,jsonList,this.CommentCache,redisTemplate);
                 }else{
@@ -303,6 +330,7 @@ public class TypechoCommentsController {
      */
     @RequestMapping(value = "/commentsAdd")
     @ResponseBody
+    @LoginRequired(purview = "0")
     public String commentsAdd(@RequestParam(value = "params", required = false) String  params,
                               @RequestParam(value = "token", required = false) String  token,
                               @RequestParam(value = "text", required = false) String  text,
@@ -310,10 +338,7 @@ public class TypechoCommentsController {
         try {
             Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
             Map jsonToMap =null;
-
-            if(uStatus==0){
-                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-            }
+            String  ip = baseFull.getIpAddr(request);
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer logUid =Integer.parseInt(map.get("uid").toString());
             //登录情况下，刷数据攻击拦截
@@ -354,7 +379,7 @@ public class TypechoCommentsController {
                 String[] arr = agent.split("uni-app");
                 agent = arr[0];
             }
-            String  ip = baseFull.getIpAddr(request);
+            int rows = 0;
             if (StringUtils.isNotBlank(params)) {
                 jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
                 Integer isEmail = apiconfig.getIsEmail();
@@ -456,7 +481,12 @@ public class TypechoCommentsController {
                 }else{
                     cstatus = "waiting";
                 }
+                //先新增评论
+                insert = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoComments.class);
+                insert.setStatus(cstatus);
+                rows = service.insert(insert);
 
+                //在发送通知
                 if(cstatus.equals("approved")){
                     //如果评论是发布状态，就给文章作者发送消息
                     //给回复者发送信息
@@ -485,34 +515,36 @@ public class TypechoCommentsController {
                             }
                         }
                         //发送消息通知
-                        if(!pComments.getAuthorId().equals(0)){
-                            TypechoInbox inbox = new TypechoInbox();
-                            inbox.setUid(logUid);
-                            inbox.setTouid(pComments.getAuthorId());
-                            inbox.setType("comment");
-                            inbox.setText(text);
-                            inbox.setValue(Integer.parseInt(cid));
-                            inbox.setCreated(Integer.parseInt(created));
-                            inboxService.insert(inbox);
-                            if(isPush.equals(1)) {
-                                TypechoUsers parentUser = usersService.selectByKey(pComments.getAuthorId());
-                                if(parentUser.getClientId()!=null){
-                                    try {
-                                        pushService.sendPushMsg(parentUser.getClientId(),title,"你有新的回复消息！","payload","comment:"+Integer.parseInt(cid));
-                                    }catch (Exception e){
-                                        System.err.println("通知发送失败");
-                                        e.printStackTrace();
-                                    }
-
+                        TypechoInbox inbox = new TypechoInbox();
+                        inbox.setUid(logUid);
+                        inbox.setTouid(pComments.getAuthorId());
+                        inbox.setType("comment");
+                        inbox.setText(text);
+                        inbox.setValue(Integer.parseInt(cid));
+                        inbox.setCreated(Integer.parseInt(created));
+                        inbox.setCid(insert.getCoid());
+                        inboxService.insert(inbox);
+                        if(isPush.equals(1)) {
+                            TypechoUsers parentUser = usersService.selectByKey(pComments.getAuthorId());
+                            if(parentUser.getClientId()!=null){
+                                try {
+                                    pushService.sendPushMsg(parentUser.getClientId(),title,"你有新的回复消息！","payload","comment:"+Integer.parseInt(cid));
+                                }catch (Exception e){
+                                    System.err.println("通知发送失败");
+                                    e.printStackTrace();
                                 }
+
                             }
                         }
-
 
                     }else{
                         if(!contents.getAuthorId().equals(0)){
                             TypechoUsers author = usersService.selectByKey(contents.getAuthorId());
                             Integer uid = author.getUid();
+                            String name = author.getName();
+                            if(author.getScreenName()!=null){
+                                name =  author.getScreenName();
+                            }
                             if(!cuid.equals(contents.getAuthorId())){
                                 if(apiconfig.getIsEmail().equals(2)) {
                                     if (author.getMail() != null) {
@@ -540,6 +572,7 @@ public class TypechoCommentsController {
                                 inbox.setValue(Integer.parseInt(cid));
                                 inbox.setText(text);
                                 inbox.setCreated(Integer.parseInt(created));
+                                inbox.setCid(insert.getCoid());
                                 inboxService.insert(inbox);
                                 if(isPush.equals(1)) {
                                     if(author.getClientId()!=null){
@@ -560,13 +593,12 @@ public class TypechoCommentsController {
 
                 }
 
-                insert = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoComments.class);
+
 
             }else{
                 return Result.getResultJson(0,"参数不正确",null);
             }
-            insert.setStatus(cstatus);
-            int rows = service.insert(insert);
+
             //更新文章评论数量
             TypechoComments suminfo = new TypechoComments();
             suminfo.setCid(insert.getCid());
@@ -595,7 +627,7 @@ public class TypechoCommentsController {
                     userlog.setCid(Integer.parseInt(curtime));
                     userlog.setType("reviewExp");
                     Integer size = userlogService.total(userlog);
-                    //只有前三次评论获得经验
+                    //只有前三次评论获得姜堰
                     if(size < 3){
                         userlog.setNum(reviewExp);
                         userlog.setCreated(Integer.parseInt(created));
@@ -614,12 +646,12 @@ public class TypechoCommentsController {
 
             }
             editFile.setLog("用户"+logUid+"提交发布评论，IP："+ip);
-            //清理列表reids缓存
-            redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_commentsList_1*",redisTemplate,this.dataprefix);
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );
             response.put("data" , rows);
             response.put("msg"  , rows > 0 ? "发布成功"+addtext : "发布失败");
+            //清理列表reids缓存
+            redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_commentsList_1*",redisTemplate,this.dataprefix);
             return response.toString();
         }catch (Exception e){
             e.printStackTrace();
@@ -632,15 +664,13 @@ public class TypechoCommentsController {
      */
     @RequestMapping(value = "/commentsEdit")
     @ResponseBody
+    @LoginRequired(purview = "0")
     public String commentsEdit(@RequestParam(value = "params", required = false) String  params,
                                @RequestParam(value = "token", required = false) String  token,
                                @RequestParam(value = "text", required = false) String  text) {
         try {
-            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-            if(uStatus==0){
-                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-            }
-
+            String cstatus = "approved";
+            String addtext ="";
             //只有管理员允许修改
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             String group = map.get("group").toString();
@@ -655,6 +685,10 @@ public class TypechoCommentsController {
                 jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
                 if(jsonToMap.get("coid")==null){
                     return Result.getResultJson(0,"请传入评论id",null);
+                }
+                TypechoComments comments  = service.selectByKey(jsonToMap.get("coid").toString());
+                if (comments == null){
+                    return Result.getResultJson(0,"评论不存在",null);
                 }
                 //支持两种模式提交评论内容
                 if(text==null){
@@ -673,6 +707,10 @@ public class TypechoCommentsController {
                         return Result.getResultJson(0,"你的内容包含敏感代码，请修改后重试！",null);
                     }
                 }
+
+                if(cstatus.equals("waiting")){
+                    addtext = "，将在审核通过后显示！";
+                }
                 jsonToMap.put("text",text);
                 jsonToMap.remove("parent");
                 jsonToMap.remove("ownerId");
@@ -685,12 +723,10 @@ public class TypechoCommentsController {
             TypechoComments comments = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoComments.class);
             Integer rows = service.update(comments);
             editFile.setLog("用户"+logUid+"修改了评论"+jsonToMap.get("coid"));
-            //清理列表reids缓存
-            redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_commentsList_1*",redisTemplate,this.dataprefix);
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );
             response.put("data" , rows);
-            response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
+            response.put("msg"  , rows > 0 ? "操作成功"+addtext : "操作失败");
             return response.toString();
         }catch (Exception e){
             e.printStackTrace();
@@ -921,12 +957,9 @@ public class TypechoCommentsController {
      */
     @RequestMapping(value = "/commentsDelete")
     @ResponseBody
+    @LoginRequired(purview = "0")
     public String commentsDelete(@RequestParam(value = "key", required = false) String  key, @RequestParam(value = "token", required = false) String  token) {
         try {
-            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-            if(uStatus==0){
-                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-            }
 
             //String group = (String) redisHelp.getValue("userInfo"+token,"group",redisTemplate);
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
@@ -987,9 +1020,10 @@ public class TypechoCommentsController {
             contents.setCommentsNum(total);
             contentsService.update(contents);
             editFile.setLog("用户"+uid+"删除了评论"+key);
-            //清理列表reids缓存
-            redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_commentsList_1*",redisTemplate,this.dataprefix);
-
+            if(rows > 0){
+                redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_"+"contentsInfo_"+cid+"*",redisTemplate,this.dataprefix);
+                redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_contentsList_1*",redisTemplate,this.dataprefix);
+            }
             JSONObject response = new JSONObject();
             response.put("code" ,rows > 0 ? 1: 0 );
             response.put("data" , rows);
@@ -1006,14 +1040,10 @@ public class TypechoCommentsController {
      */
     @RequestMapping(value = "/commentLikes")
     @ResponseBody
+    @LoginRequired(purview = "0")
     public String commentLikes(@RequestParam(value = "id", required = false) Integer  id,
                                @RequestParam(value = "token", required = false) String  token) {
         try{
-            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-            if(uStatus==0){
-                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-            }
-
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer uid  = Integer.parseInt(map.get("uid").toString());
             Long date = System.currentTimeMillis();
@@ -1051,6 +1081,5 @@ public class TypechoCommentsController {
         }
 
     }
-
 
 }

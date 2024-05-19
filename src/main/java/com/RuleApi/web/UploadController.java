@@ -1,7 +1,9 @@
 package com.RuleApi.web;
 
+import com.RuleApi.annotation.LoginRequired;
 import com.RuleApi.common.*;
 import com.RuleApi.entity.TypechoApiconfig;
+import com.RuleApi.service.SecurityService;
 import com.RuleApi.service.TypechoApiconfigService;
 import com.RuleApi.service.UploadService;
 import com.aliyun.oss.OSS;
@@ -44,6 +46,7 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.Base64;
 
 /**
  * 文件上传控制器
@@ -64,6 +67,9 @@ public class UploadController {
     private TypechoApiconfigService apiconfigService;
 
     @Autowired
+    private SecurityService securityService;
+
+    @Autowired
     private UploadService uploadService;
 
     @Autowired
@@ -81,11 +87,8 @@ public class UploadController {
      */
     @RequestMapping(value = "/full",method = RequestMethod.POST)
     @ResponseBody
+    @LoginRequired(purview = "0")
     public Object full(@RequestParam(value = "file") MultipartFile file, @RequestParam(value = "token", required = false) String  token) throws IOException {
-        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-        if(uStatus==0){
-            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-        }
 
         Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         Integer uid =Integer.parseInt(map.get("uid").toString());
@@ -147,7 +150,6 @@ public class UploadController {
                 return Result.getResultJson(0,"媒体大小不能超过"+mediaMax+"M",null);
             }
         }
-
         //验证上传大小结束
 
 
@@ -175,12 +177,8 @@ public class UploadController {
      */
     @RequestMapping(value = "/cosUpload",method = RequestMethod.POST)
     @ResponseBody
+    @LoginRequired(purview = "0")
     public Object cosUpload(@RequestParam(value = "file") MultipartFile file, @RequestParam(value = "token", required = false) String  token) throws IOException {
-        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-        if(uStatus==0){
-            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-        }
-
         Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         Integer uid =Integer.parseInt(map.get("uid").toString());
         if(file == null){
@@ -243,6 +241,8 @@ public class UploadController {
         if(!apiconfig.getUploadType().equals("cos")){
             return Result.getResultJson(0,"该上传通道已关闭",null);
         }
+
+
         String result = uploadService.cosUpload(file,this.dataprefix,apiconfig,uid);
         return result;
     }
@@ -267,11 +267,8 @@ public class UploadController {
      * */
     @RequestMapping(value = "/localUpload",method = RequestMethod.POST)
     @ResponseBody
+    @LoginRequired(purview = "0")
     public String localUpload(@RequestParam("file") MultipartFile file, @RequestParam(value = "token", required = false) String  token) throws IOException {
-        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-        if(uStatus==0){
-            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-        }
         Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         Integer uid =Integer.parseInt(map.get("uid").toString());
         TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
@@ -331,6 +328,7 @@ public class UploadController {
         if(!apiconfig.getUploadType().equals("local")){
             return Result.getResultJson(0,"该上传通道已关闭",null);
         }
+
         String result = uploadService.localUpload(file,this.dataprefix,apiconfig,uid);
         return result;
 
@@ -341,11 +339,8 @@ public class UploadController {
      * */
     @RequestMapping(value = "/ossUpload",method = RequestMethod.POST)
     @ResponseBody
+    @LoginRequired(purview = "0")
     public String ossUpload(@RequestParam("file") MultipartFile file, @RequestParam(value = "token", required = false) String  token) throws IOException {
-        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-        if(uStatus==0){
-            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-        }
         Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         Integer uid =Integer.parseInt(map.get("uid").toString());
         TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
@@ -405,6 +400,8 @@ public class UploadController {
         if(!apiconfig.getUploadType().equals("oss")){
             return Result.getResultJson(0,"该上传通道已关闭",null);
         }
+
+
         String result = uploadService.ossUpload(file,this.dataprefix,apiconfig,uid);
         return result;
 
@@ -414,11 +411,8 @@ public class UploadController {
      * */
     @RequestMapping(value = "/qiniuUpload",method = RequestMethod.POST)
     @ResponseBody
+    @LoginRequired(purview = "0")
     public String qiniuUpload(@RequestParam("file") MultipartFile file, @RequestParam(value = "token", required = false) String  token) throws IOException {
-        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-        if(uStatus==0){
-            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-        }
         Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         Integer uid =Integer.parseInt(map.get("uid").toString());
         TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
@@ -478,6 +472,7 @@ public class UploadController {
         if(!apiconfig.getUploadType().equals("qiniu")){
             return Result.getResultJson(0,"该上传通道已关闭",null);
         }
+
         String result = uploadService.qiniuUpload(file,this.dataprefix,apiconfig,uid);
         return result;
     }
@@ -486,11 +481,8 @@ public class UploadController {
      * */
     @RequestMapping(value = "ftpUpload",method = RequestMethod.POST)
     @ResponseBody
+    @LoginRequired(purview = "0")
     public String ftpUpload(@RequestParam(value = "file") MultipartFile file, @RequestParam(value = "token", required = false) String  token) {
-        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-        if(uStatus==0){
-            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-        }
         Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         Integer uid =Integer.parseInt(map.get("uid").toString());
         String oldFileName = file.getOriginalFilename();
@@ -550,9 +542,24 @@ public class UploadController {
         if(!apiconfig.getUploadType().equals("ftp")){
             return Result.getResultJson(0,"该上传通道已关闭",null);
         }
+
         String result = uploadService.ftpUpload(file,this.dataprefix,apiconfig,uid);
         return result;
 
 
+    }
+    //文件转base64
+    public static String convertToBase64(MultipartFile file) {
+        try {
+            // 读取文件内容为字节数组
+            byte[] fileContent = file.getBytes();
+
+            // 将字节数组进行Base64编码
+            return Base64.getEncoder().encodeToString(fileContent);
+        } catch (IOException e) {
+            // 处理异常
+            e.printStackTrace();
+            return null;
+        }
     }
 }

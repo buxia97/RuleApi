@@ -1,5 +1,6 @@
 package com.RuleApi.web;
 
+import com.RuleApi.annotation.LoginRequired;
 import com.RuleApi.common.*;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
@@ -73,6 +74,7 @@ public class TypechoMetasController {
      */
     @RequestMapping(value = "/selectContents")
     @ResponseBody
+    @LoginRequired(purview = "-1")
     public String selectContents (@RequestParam(value = "searchParams", required = false) String  searchParams,
                                   @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
                                   @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit) {
@@ -251,6 +253,7 @@ public class TypechoMetasController {
      */
     @RequestMapping(value = "/metasList")
     @ResponseBody
+    @LoginRequired(purview = "-1")
     public String metasList (@RequestParam(value = "searchParams", required = false) String  searchParams,
                              @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
                              @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
@@ -258,8 +261,8 @@ public class TypechoMetasController {
                              @RequestParam(value = "order"        , required = false, defaultValue = "") String order) {
         TypechoMetas query = new TypechoMetas();
         String sqlParams = "null";
-        if(limit>50){
-            limit = 50;
+        if(limit>100){
+            limit = 100;
         }
         Integer total = 0;
         List jsonList = new ArrayList();
@@ -309,7 +312,9 @@ public class TypechoMetasController {
      */
     @RequestMapping(value = "/metaInfo")
     @ResponseBody
-    public String metaInfo(@RequestParam(value = "key", required = false) String key,@RequestParam(value = "slug", required = false) String slug) {
+    @LoginRequired(purview = "-1")
+    public String metaInfo(@RequestParam(value = "key", required = false) String key,
+                           @RequestParam(value = "slug", required = false) String slug) {
         try{
             Map metaInfoJson = new HashMap<String, String>();
             Map cacheInfo = redisHelp.getMapValue(this.dataprefix+"_"+"metaInfo_"+key+"_"+slug,redisTemplate);
@@ -320,7 +325,15 @@ public class TypechoMetasController {
                 TypechoMetas metas;
                 //优先处理slug
                 if(slug!=null){
-                    metas = service.selectBySlug(slug);
+                    TypechoMetas query = new TypechoMetas();
+                    query.setSlug(slug);
+                    List<TypechoMetas> list = service.selectList(query);
+                    if(list.size()>0){
+                        metas = list.get(0);
+                    }else{
+                        return Result.getResultJson(0, "数据不存在", null);
+                    }
+
                 }else{
                     metas = service.selectByKey(key);
                 }
@@ -337,8 +350,9 @@ public class TypechoMetasController {
 
             return response.toString();
         }catch (Exception e){
+            e.printStackTrace();
             JSONObject response = new JSONObject();
-            response.put("code", 1);
+            response.put("code", 0);
             response.put("msg", "");
             response.put("data", null);
 
@@ -350,28 +364,51 @@ public class TypechoMetasController {
      */
     @RequestMapping(value = "/editMeta")
     @ResponseBody
-    public String editMeta(@RequestParam(value = "params", required = false) String  params,@RequestParam(value = "token", required = false) String  token) {
+    @LoginRequired(purview = "2")
+    public String editMeta(@RequestParam(value = "params", required = false) String  params,
+                           @RequestParam(value = "token", required = false) String  token) {
         try{
-            Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
-            if (uStatus == 0) {
-                return Result.getResultJson(0, "用户未登录或Token验证失败", null);
-            }
             Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
-            String group = map.get("group").toString();
-            if (!group.equals("administrator")) {
-                return Result.getResultJson(0, "你没有操作权限", null);
-            }
             String logUid = map.get("uid").toString();
             TypechoMetas update = new TypechoMetas();
             Map jsonToMap =null;
             if (StringUtils.isNotBlank(params)) {
                 jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
+                if(jsonToMap.get("name")==null){
+                    return Result.getResultJson(0, "名称为必填字段", null);
+                }
+                if(jsonToMap.get("slug")==null){
+                    return Result.getResultJson(0, "slug为必填字段", null);
+                }
                 //为了数据稳定性考虑，禁止修改类型
                 jsonToMap.remove("type");
                 update = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoMetas.class);
             }
+            //判断是否存在相同的分类或标签名称
+            TypechoMetas oldMeta = new TypechoMetas();
+            oldMeta.setName(update.getName());
+            oldMeta.setType(update.getType());
+            List<TypechoMetas> metaList = service.selectList(oldMeta);
+            if(metaList.size()>0){
+                if(!metaList.get(0).getMid().equals(update.getMid())){
+                    return Result.getResultJson(0, "已存在同名数据", null);
+                }
 
+            }
+            //判断是否存在相同的slug
+            oldMeta.setName(null);
+            oldMeta.setSlug(update.getSlug());
+            oldMeta.setType(update.getType());
+            metaList = service.selectList(oldMeta);
+            if(metaList.size()>0){
+                if(!metaList.get(0).getMid().equals(update.getMid())){
+                    return Result.getResultJson(0, "已存在同Slug数据", null);
+                }
+            }
             int rows = service.update(update);
+            if(rows > 0){
+                redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_metasList_*",redisTemplate,this.dataprefix);
+            }
             editFile.setLog("管理员"+logUid+"请求修改分类"+jsonToMap.get("mid").toString());
             JSONObject response = new JSONObject();
             response.put("code" , rows);
@@ -390,23 +427,22 @@ public class TypechoMetasController {
      */
     @RequestMapping(value = "/addMeta")
     @ResponseBody
+    @LoginRequired(purview = "2")
     public String addMeta(@RequestParam(value = "params", required = false) String  params,@RequestParam(value = "token", required = false) String  token) {
         try{
-            Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
-            if (uStatus == 0) {
-                return Result.getResultJson(0, "用户未登录或Token验证失败", null);
-            }
             Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
-            String group = map.get("group").toString();
-            if (!group.equals("administrator")) {
-                return Result.getResultJson(0, "你没有操作权限", null);
-            }
             String logUid = map.get("uid").toString();
             TypechoMetas insert = new TypechoMetas();
             Map jsonToMap =null;
             if (StringUtils.isNotBlank(params)) {
                 jsonToMap =  JSONObject.parseObject(JSON.parseObject(params).toString());
                 String type = jsonToMap.get("type").toString();
+                if(jsonToMap.get("name")==null){
+                    return Result.getResultJson(0, "名称为必填字段", null);
+                }
+                if(jsonToMap.get("slug")==null){
+                    return Result.getResultJson(0, "slug为必填字段", null);
+                }
                 if(!type.equals("category")&&!type.equals("tag")){
                     return Result.getResultJson(0, "类型参数不正确", null);
                 }
@@ -421,14 +457,25 @@ public class TypechoMetasController {
             if(isHave>0){
                 return Result.getResultJson(0, "已存在同名数据", null);
             }
-
+            //判断是否存在相同的slug
+            oldMeta.setName(null);
+            oldMeta.setSlug(insert.getSlug());
+            oldMeta.setType(insert.getType());
+            isHave = service.total(oldMeta);
+            if(isHave>0){
+                return Result.getResultJson(0, "已存在同Slug数据", null);
+            }
             int rows = service.insert(insert);
+            if(rows > 0){
+                redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_metasList_*",redisTemplate,this.dataprefix);
+            }
             editFile.setLog("管理员"+logUid+"请求添加分类");
             JSONObject response = new JSONObject();
             response.put("code" , rows);
             response.put("msg"  , rows > 0 ? "操作成功" : "操作失败");
             return response.toString();
         }catch (Exception e){
+            e.printStackTrace();
             JSONObject response = new JSONObject();
             response.put("code" , 0);
             response.put("msg"  , "操作失败");
@@ -442,24 +489,20 @@ public class TypechoMetasController {
      */
     @RequestMapping(value = "/deleteMeta")
     @ResponseBody
+    @LoginRequired(purview = "2")
     public String deleteMeta(@RequestParam(value = "id", required = false) String  id,
                              @RequestParam(value = "token", required = false) String  token) {
         try{
-            Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
-            if (uStatus == 0) {
-                return Result.getResultJson(0, "用户未登录或Token验证失败", null);
-            }
             Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
-            String group = map.get("group").toString();
             String logUid = map.get("uid").toString();
-            if (!group.equals("administrator")) {
-                return Result.getResultJson(0, "你没有操作权限", null);
-            }
             TypechoMetas meta = service.selectByKey(id);
             if(meta==null){
                 return Result.getResultJson(0, "数据不存在", null);
             }
             int rows = service.delete(id);
+            if(rows > 0){
+                redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_metasList_*",redisTemplate,this.dataprefix);
+            }
             editFile.setLog("管理员"+logUid+"请求删除分类"+id);
             JSONObject response = new JSONObject();
             response.put("code" , rows);
@@ -474,26 +517,16 @@ public class TypechoMetasController {
         }
 
     }
-    /***
-     * 推荐分类和标签
-     */
     @RequestMapping(value = "/toRecommend")
     @ResponseBody
+    @LoginRequired(purview = "2")
     public String addRecommend(@RequestParam(value = "key", required = false) String  key,
                                @RequestParam(value = "recommend", required = false,defaultValue = "1") Integer  recommend,
                                @RequestParam(value = "token", required = false) String  token) {
         try {
-            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-            if(uStatus==0){
-                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-            }
 
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
-            String group = map.get("group").toString();
             String logUid = map.get("uid").toString();
-            if(!group.equals("administrator")){
-                return Result.getResultJson(0,"你没有操作权限",null);
-            }
             if(recommend!=0&&recommend!=1){
                 return Result.getResultJson(0,"参数错误",null);
             }
@@ -505,6 +538,9 @@ public class TypechoMetasController {
             update.setMid(Integer.parseInt(key));
             update.setIsrecommend(recommend);
             int rows = service.update(update);
+            if(rows > 0){
+                redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_metasList_*",redisTemplate,this.dataprefix);
+            }
             editFile.setLog("管理员"+logUid+"请求修改分类"+key+"推荐状态");
             JSONObject response = new JSONObject();
             response.put("code" , rows);

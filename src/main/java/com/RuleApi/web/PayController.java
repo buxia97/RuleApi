@@ -1,5 +1,6 @@
 package com.RuleApi.web;
 
+import com.RuleApi.annotation.LoginRequired;
 import com.RuleApi.common.*;
 import com.RuleApi.entity.*;
 import com.RuleApi.service.*;
@@ -85,12 +86,9 @@ public class PayController {
      */
     @RequestMapping(value = "/scancodePay")
     @ResponseBody
+    @LoginRequired(purview = "0")
     public String scancodepay(@RequestParam(value = "num", required = false) String num, @RequestParam(value = "token", required = false) String  token) throws AlipayApiException {
 
-        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-        if(uStatus==0){
-            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-        }
 
         Pattern pattern = Pattern.compile("[0-9]*");
         if(!pattern.matcher(num).matches()){
@@ -103,27 +101,28 @@ public class PayController {
         Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         Integer uid =Integer.parseInt(map.get("uid").toString());
         //登录情况下，恶意充值攻击拦截
-        String isSilence = redisHelp.getRedis(this.dataprefix+"_"+uid+"_silence",redisTemplate);
-        if(isSilence!=null){
-            return Result.getResultJson(0,"你的操作太频繁了，请稍后再试",null);
-        }
-        String isRepeated = redisHelp.getRedis(this.dataprefix+"_"+uid+"_isRepeated",redisTemplate);
-        if(isRepeated==null){
-            redisHelp.setRedis(this.dataprefix+"_"+uid+"_isRepeated","1",2,redisTemplate);
-        }else{
-            Integer frequency = Integer.parseInt(isRepeated) + 1;
-            if(frequency==3){
-                securityService.safetyMessage("用户ID："+uid+"，在微信充值接口疑似存在攻击行为，请及时确认处理。","system");
-                redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",900,redisTemplate);
-                return Result.getResultJson(0,"你的请求存在恶意行为，15分钟内禁止操作！",null);
-            }else{
-                redisHelp.setRedis(this.dataprefix+"_"+uid+"_isRepeated",frequency.toString(),3,redisTemplate);
+        TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
+        if(apiconfig.getBanRobots().equals(1)) {
+            String isSilence = redisHelp.getRedis(this.dataprefix + "_" + uid + "_silence", redisTemplate);
+            if (isSilence != null) {
+                return Result.getResultJson(0, "你的操作太频繁了，请稍后再试", null);
             }
-            return Result.getResultJson(0,"你的操作太频繁了",null);
+            String isRepeated = redisHelp.getRedis(this.dataprefix + "_" + uid + "_isRepeated", redisTemplate);
+            if (isRepeated == null) {
+                redisHelp.setRedis(this.dataprefix + "_" + uid + "_isRepeated", "1", 2, redisTemplate);
+            } else {
+                Integer frequency = Integer.parseInt(isRepeated) + 1;
+                if (frequency == 3) {
+                    securityService.safetyMessage("用户ID：" + uid + "，在微信充值接口疑似存在攻击行为，请及时确认处理。", "system");
+                    redisHelp.setRedis(this.dataprefix + "_" + uid + "_silence", "1", 900, redisTemplate);
+                    return Result.getResultJson(0, "你的请求存在恶意行为，15分钟内禁止操作！", null);
+                } else {
+                    redisHelp.setRedis(this.dataprefix + "_" + uid + "_isRepeated", frequency.toString(), 3, redisTemplate);
+                }
+                return Result.getResultJson(0, "你的操作太频繁了", null);
+            }
         }
         //攻击拦截结束
-
-        TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
 
         final String APPID = apiconfig.getAlipayAppId();
         String RSA2_PRIVATE = apiconfig.getAlipayPrivateKey();
@@ -274,14 +273,11 @@ public class PayController {
      * */
     @RequestMapping(value = "/payLogList")
     @ResponseBody
+    @LoginRequired(purview = "0")
     public String payLogList (@RequestParam(value = "token", required = false) String  token) {
 
         String page = "1";
         String limit = "30";
-        Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-        if(uStatus==0){
-            return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-        }
         Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         Integer uid =Integer.parseInt(map.get("uid").toString());
         Integer total = 0;
@@ -317,20 +313,13 @@ public class PayController {
      * */
     @RequestMapping(value = "/financeList")
     @ResponseBody
+    @LoginRequired(purview = "2")
     public String financeList (@RequestParam(value = "searchParams", required = false) String  searchParams,
                                @RequestParam(value = "token", required = false) String  token,
                                @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
                                @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit) {
 
-        Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
-        if (uStatus == 0) {
-            return Result.getResultJson(0, "用户未登录或Token验证失败", null);
-        }
         Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
-        String group = map.get("group").toString();
-        if (!group.equals("administrator")) {
-            return Result.getResultJson(0, "你没有操作权限", null);
-        }
         Integer total = 0;
         TypechoPaylog query = new TypechoPaylog();
         if (StringUtils.isNotBlank(searchParams)) {
@@ -353,16 +342,9 @@ public class PayController {
      * */
     @RequestMapping(value = "/financeTotal")
     @ResponseBody
+    @LoginRequired(purview = "2")
     public String financeTotal (@RequestParam(value = "token", required = false) String  token){
-        Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
-        if (uStatus == 0) {
-            return Result.getResultJson(0, "用户未登录或Token验证失败", null);
-        }
         Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
-        String group = map.get("group").toString();
-        if (!group.equals("administrator")) {
-            return Result.getResultJson(0, "你没有操作权限", null);
-        }
         Map financeData = new HashMap<String, Integer>();
         Integer recharge = jdbcTemplate.queryForObject("SELECT SUM(total_amount) FROM `"+prefix+"_paylog` where `status` = 1 and (`subject` = '扫码支付' or `subject` = '微信APP支付' or `subject` = '卡密充值' or `subject` = '系统充值');", Integer.class);
         Integer trade = jdbcTemplate.queryForObject("SELECT SUM(total_amount) FROM `"+prefix+"_paylog` where `status` = 1 and (`paytype` = 'buyshop' or `paytype` = 'buyvip' or `paytype` = 'toReward' or `paytype` = 'buyAds');", Integer.class);
@@ -390,34 +372,34 @@ public class PayController {
      * */
     @RequestMapping(value = "/WxPay")
     @ResponseBody
+    @LoginRequired(purview = "0")
     public String wxAdd(HttpServletRequest request,@RequestParam(value = "price", required = false) Integer price,@RequestParam(value = "token", required = false) String  token) throws Exception {
-        Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
-        if (uStatus == 0) {
-            return Result.getResultJson(0, "用户未登录或Token验证失败", null);
-        }
         Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         Integer uid =Integer.parseInt(map.get("uid").toString());
         //登录情况下，恶意充值攻击拦截
-        String isSilence = redisHelp.getRedis(this.dataprefix+"_"+uid+"_silence",redisTemplate);
-        if(isSilence!=null){
-            return Result.getResultJson(0,"你的操作太频繁了，请稍后再试",null);
-        }
-        String isRepeated = redisHelp.getRedis(this.dataprefix+"_"+uid+"_isRepeated",redisTemplate);
-        if(isRepeated==null){
-            redisHelp.setRedis(this.dataprefix+"_"+uid+"_isRepeated","1",2,redisTemplate);
-        }else{
-            Integer frequency = Integer.parseInt(isRepeated) + 1;
-            if(frequency==3){
-                securityService.safetyMessage("用户ID："+uid+"，在微信充值接口疑似存在攻击行为，请及时确认处理。","system");
-                redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",900,redisTemplate);
-                return Result.getResultJson(0,"你的请求存在恶意行为，15分钟内禁止操作！",null);
-            }else{
-                redisHelp.setRedis(this.dataprefix+"_"+uid+"_isRepeated",frequency.toString(),3,redisTemplate);
-            }
-            return Result.getResultJson(0,"你的操作太频繁了",null);
-        }
-        //攻击拦截结束
         TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
+        if(apiconfig.getBanRobots().equals(1)) {
+            String isSilence = redisHelp.getRedis(this.dataprefix+"_"+uid+"_silence",redisTemplate);
+            if(isSilence!=null){
+                return Result.getResultJson(0,"你的操作太频繁了，请稍后再试",null);
+            }
+            String isRepeated = redisHelp.getRedis(this.dataprefix+"_"+uid+"_isRepeated",redisTemplate);
+            if(isRepeated==null){
+                redisHelp.setRedis(this.dataprefix+"_"+uid+"_isRepeated","1",2,redisTemplate);
+            }else{
+                Integer frequency = Integer.parseInt(isRepeated) + 1;
+                if(frequency==3){
+                    securityService.safetyMessage("用户ID："+uid+"，在微信充值接口疑似存在攻击行为，请及时确认处理。","system");
+                    redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",900,redisTemplate);
+                    return Result.getResultJson(0,"你的请求存在恶意行为，15分钟内禁止操作！",null);
+                }else{
+                    redisHelp.setRedis(this.dataprefix+"_"+uid+"_isRepeated",frequency.toString(),3,redisTemplate);
+                }
+                return Result.getResultJson(0,"你的操作太频繁了",null);
+            }
+        }
+
+        //攻击拦截结束
         Integer scale = apiconfig.getScale();
         //商户订单号
         Date now = new Date();
@@ -540,17 +522,10 @@ public class PayController {
      * **/
     @RequestMapping(value = "/madetoken")
     @ResponseBody
+    @LoginRequired(purview = "2")
     public String madetoken(@RequestParam(value = "price", required = false) Integer  price,@RequestParam(value = "num", required = false) Integer  num,@RequestParam(value = "token", required = false) String  token) {
         try{
-            Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
-            if (uStatus == 0) {
-                return Result.getResultJson(0, "用户未登录或Token验证失败", null);
-            }
             Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
-            String group = map.get("group").toString();
-            if (!group.equals("administrator")) {
-                return Result.getResultJson(0, "你没有操作权限", null);
-            }
             if(num>100){
                 num = 100;
             }
@@ -587,21 +562,14 @@ public class PayController {
      */
     @RequestMapping(value = "/tokenPayList")
     @ResponseBody
+    @LoginRequired(purview = "2")
     public String tokenPayList (@RequestParam(value = "searchParams", required = false) String  searchParams,
-                            @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
-                            @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
+                                @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
+                                @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
                                 @RequestParam(value = "searchKey"        , required = false, defaultValue = "") String searchKey,
-                            @RequestParam(value = "token", required = false) String  token) {
-        Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
-        if (uStatus == 0) {
-            return Result.getResultJson(0, "用户未登录或Token验证失败", null);
-        }
+                                @RequestParam(value = "token", required = false) String  token) {
         Integer total = 0;
         Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
-        String group = map.get("group").toString();
-        if (!group.equals("administrator")) {
-            return Result.getResultJson(0, "你没有操作权限", null);
-        }
         TypechoPaykey query = new TypechoPaykey();
         if (StringUtils.isNotBlank(searchParams)) {
             JSONObject object = JSON.parseObject(searchParams);
@@ -621,6 +589,7 @@ public class PayController {
 
     @RequestMapping(value = "/tokenPayExcel")
     @ResponseBody
+    @LoginRequired(purview = "2")
     public void tokenPayExcel(@RequestParam(value = "limit" , required = false, defaultValue = "15") Integer limit,@RequestParam(value = "token", required = false) String  token,HttpServletResponse response) throws IOException {
         HSSFWorkbook workbook = new HSSFWorkbook();
         HSSFSheet sheet = workbook.createSheet("充值码列表");
@@ -641,7 +610,7 @@ public class PayController {
             workbook.write(response.getOutputStream());
         }
         TypechoPaykey query = new TypechoPaykey();
-        PageList<TypechoPaykey> pageList = paykeyService.selectPage(query, 1, limit,"");
+        PageList<TypechoPaykey> pageList = paykeyService.selectPage(query, 1, limit,null);
         List<TypechoPaykey> list = pageList.getList();
 
 
@@ -681,33 +650,36 @@ public class PayController {
      * **/
     @RequestMapping(value = "/tokenPay")
     @ResponseBody
+    @LoginRequired(purview = "0")
     public String tokenPay(@RequestParam(value = "key", required = false) String key,@RequestParam(value = "token", required = false) String  token) {
         try {
-            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-            if(uStatus==0){
-                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-            }
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer uid =Integer.parseInt(map.get("uid").toString());
             //登录情况下，恶意充值攻击拦截
-            String isSilence = redisHelp.getRedis(this.dataprefix+"_"+uid+"_silence",redisTemplate);
-            if(isSilence!=null){
-                return Result.getResultJson(0,"你的操作太频繁了，请稍后再试",null);
-            }
-            String isRepeated = redisHelp.getRedis(this.dataprefix+"_"+uid+"_isRepeated",redisTemplate);
-            if(isRepeated==null){
-                redisHelp.setRedis(this.dataprefix+"_"+uid+"_isRepeated","1",2,redisTemplate);
-            }else{
-                Integer frequency = Integer.parseInt(isRepeated) + 1;
-                if(frequency==3){
-                    securityService.safetyMessage("用户ID："+uid+"，在卡密充值接口疑似存在攻击行为，请及时确认处理。","system");
-                    redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",900,redisTemplate);
-                    return Result.getResultJson(0,"你的请求存在恶意行为，15分钟内禁止操作！",null);
-                }else{
-                    redisHelp.setRedis(this.dataprefix+"_"+uid+"_isRepeated",frequency.toString(),3,redisTemplate);
+            //登录情况下，恶意充值攻击拦截
+            TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
+            if(apiconfig.getBanRobots().equals(1)) {
+                String isSilence = redisHelp.getRedis(this.dataprefix+"_"+uid+"_silence",redisTemplate);
+                if(isSilence!=null){
+                    return Result.getResultJson(0,"你的操作太频繁了，请稍后再试",null);
                 }
-                return Result.getResultJson(0,"你的操作太频繁了",null);
+
+                String isRepeated = redisHelp.getRedis(this.dataprefix+"_"+uid+"_isRepeated",redisTemplate);
+                if(isRepeated==null){
+                    redisHelp.setRedis(this.dataprefix+"_"+uid+"_isRepeated","1",2,redisTemplate);
+                }else{
+                    Integer frequency = Integer.parseInt(isRepeated) + 1;
+                    if(frequency==3){
+                        securityService.safetyMessage("用户ID："+uid+"，在卡密充值接口疑似存在攻击行为，请及时确认处理。","system");
+                        redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",900,redisTemplate);
+                        return Result.getResultJson(0,"你的请求存在恶意行为，15分钟内禁止操作！",null);
+                    }else{
+                        redisHelp.setRedis(this.dataprefix+"_"+uid+"_isRepeated",frequency.toString(),3,redisTemplate);
+                    }
+                    return Result.getResultJson(0,"你的操作太频繁了",null);
+                }
             }
+
             //攻击拦截结束
 
             TypechoPaykey paykey = paykeyService.selectByKey(key);
@@ -769,40 +741,39 @@ public class PayController {
      * **/
     @RequestMapping(value = "/EPay")
     @ResponseBody
+    @LoginRequired(purview = "0")
     public String EPay(@RequestParam(value = "type", required = false) String type,@RequestParam(value = "money", required = false) Integer money,@RequestParam(value = "device", required = false) String device,@RequestParam(value = "token", required = false) String  token,HttpServletRequest request) {
         if(type==null&&money==null&&money==null&&device==null){
             return Result.getResultJson(0,"参数不正确",null);
         }
         try{
-            Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
-            if(uStatus==0){
-                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-            }
 
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer uid =Integer.parseInt(map.get("uid").toString());
             //登录情况下，恶意充值攻击拦截
-            String isSilence = redisHelp.getRedis(this.dataprefix+"_"+uid+"_silence",redisTemplate);
-            if(isSilence!=null){
-                return Result.getResultJson(0,"你的操作太频繁了，请稍后再试",null);
-            }
-            String isRepeated = redisHelp.getRedis(this.dataprefix+"_"+uid+"_isRepeated",redisTemplate);
-            if(isRepeated==null){
-                redisHelp.setRedis(this.dataprefix+"_"+uid+"_isRepeated","1",2,redisTemplate);
-            }else{
-                Integer frequency = Integer.parseInt(isRepeated) + 1;
-                if(frequency==3){
-                    securityService.safetyMessage("用户ID："+uid+"，在微信充值接口疑似存在攻击行为，请及时确认处理。","system");
-                    redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",900,redisTemplate);
-                    return Result.getResultJson(0,"你的请求存在恶意行为，15分钟内禁止操作！",null);
-                }else{
-                    redisHelp.setRedis(this.dataprefix+"_"+uid+"_isRepeated",frequency.toString(),3,redisTemplate);
-                }
-                return Result.getResultJson(0,"你的操作太频繁了",null);
-            }
-            //攻击拦截结束
-
             TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
+            if(apiconfig.getBanRobots().equals(1)) {
+                String isSilence = redisHelp.getRedis(this.dataprefix+"_"+uid+"_silence",redisTemplate);
+                if(isSilence!=null){
+                    return Result.getResultJson(0,"你的操作太频繁了，请稍后再试",null);
+                }
+                String isRepeated = redisHelp.getRedis(this.dataprefix+"_"+uid+"_isRepeated",redisTemplate);
+                if(isRepeated==null){
+                    redisHelp.setRedis(this.dataprefix+"_"+uid+"_isRepeated","1",2,redisTemplate);
+                }else{
+                    Integer frequency = Integer.parseInt(isRepeated) + 1;
+                    if(frequency==3){
+                        securityService.safetyMessage("用户ID："+uid+"，在微信充值接口疑似存在攻击行为，请及时确认处理。","system");
+                        redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",900,redisTemplate);
+                        return Result.getResultJson(0,"你的请求存在恶意行为，15分钟内禁止操作！",null);
+                    }else{
+                        redisHelp.setRedis(this.dataprefix+"_"+uid+"_isRepeated",frequency.toString(),3,redisTemplate);
+                    }
+                    return Result.getResultJson(0,"你的操作太频繁了",null);
+                }
+            }
+
+            //攻击拦截结束
             String url = apiconfig.getEpayUrl();
             Date now = new Date();
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss");//可以方便地修改日期格式
@@ -814,6 +785,7 @@ public class PayController {
             sign.put("type",type.toString());
             sign.put("out_trade_no",outTradeNo);
             sign.put("notify_url",apiconfig.getEpayNotifyUrl());
+            sign.put("return_url",apiconfig.getEpayNotifyUrl());
             sign.put("clientip",clientip);
             sign.put("name","在线充值金额");
             sign.put("money",money.toString());
@@ -879,7 +851,7 @@ public class PayController {
     @RequestMapping(value = "/EPayNotify")
     @ResponseBody
     public String EPayNotify(HttpServletRequest request,
-                         HttpServletResponse response) throws AlipayApiException {
+                             HttpServletResponse response) throws AlipayApiException {
         Map<String, String> params = new HashMap<String, String>();
         Map requestParams = request.getParameterMap();
         for (Iterator iter = requestParams.keySet().iterator(); iter.hasNext(); ) {

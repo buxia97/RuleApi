@@ -2,15 +2,31 @@ package com.RuleApi.common;
 
 //常用数据处理类
 
+import com.RuleApi.entity.TypechoUsers;
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.poi.sl.usermodel.PictureData;
+import org.apache.poi.util.Units;
+import org.apache.poi.xwpf.usermodel.UnderlinePatterns;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.apache.poi.xwpf.usermodel.XWPFParagraph;
+import org.apache.poi.xwpf.usermodel.XWPFRun;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.nodes.Node;
+import org.springframework.boot.system.ApplicationHome;
 import org.springframework.util.DigestUtils;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.*;
 import java.net.InetAddress;
+import java.net.URL;
+import java.net.URLConnection;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-import java.util.Random;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -272,6 +288,8 @@ public class baseFull {
             return 0; // 不是媒体文件
         }
     }
+
+
     public Integer getForbidden(String forbidden, String text) {
         Integer isForbidden = 0;
 
@@ -314,4 +332,147 @@ public class baseFull {
         return text;
     }
 
+    /**
+     * 利用java原生的摘要实现SHA256加密
+     * @param str 加密后的报文
+     * @return
+     */
+    public String getSHA256StrJava(String str){
+        MessageDigest messageDigest;
+        String encodeStr = "";
+        try {
+            messageDigest = MessageDigest.getInstance("SHA-256");
+            messageDigest.update(str.getBytes("UTF-8"));
+            encodeStr = byte2Hex(messageDigest.digest());
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        return encodeStr;
+    }
+    /**
+     * 将byte转为16进制
+     * @param bytes
+     * @return
+     */
+    private String byte2Hex(byte[] bytes){
+        StringBuffer stringBuffer = new StringBuffer();
+        String temp = null;
+        for (int i=0;i<bytes.length;i++){
+            temp = Integer.toHexString(bytes[i] & 0xFF);
+            if (temp.length()==1){
+                //1得到一位的进行补0操作
+                stringBuffer.append("0");
+            }
+            stringBuffer.append(temp);
+        }
+        return stringBuffer.toString();
+    }
+
+    public int getTextLength(String text) {
+        // 使用正则表达式去除HTML标签
+        String noHtml = text.replaceAll("<[^>]*>", "");
+        // 计算并返回去除HTML标签后的字符串长度
+        int length = noHtml.length();
+        return length;
+    }
+
+    public List<String> getImageBase64(java.lang.String htmlCode) {
+        List<java.lang.String> srcList = new ArrayList<>();
+        // 定义正则表达式来匹配<img>标签的src属性
+        Pattern imgPattern = Pattern.compile("<img[^>]+src\\s*=\\s*['\"]([^'\"]+)['\"][^>]*>");
+        Matcher matcher = imgPattern.matcher(htmlCode);
+
+        // 查找匹配项
+        while (matcher.find()) {
+            java.lang.String src = matcher.group(1); // 提取src值
+            // 判断src值是否为Base64数据
+            if (src.startsWith("data:image/")) {
+                srcList.add(src); // 如果是Base64数据，才加入列表
+            }
+        }
+        return srcList;
+    }
+
+    public static InputStream convertHtmlToDocx(String html) throws IOException, InvalidFormatException {
+        XWPFDocument doc = new XWPFDocument();
+        Document document = Jsoup.parse(html);
+
+        // 遍历所有元素
+        for (Element element : document.body().children()) {
+            parseElement(element, doc, doc.createParagraph());
+        }
+
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        doc.write(out);
+        return new ByteArrayInputStream(out.toByteArray());
+    }
+
+    private static void parseElement(Element element, XWPFDocument doc, XWPFParagraph paragraph) throws IOException, InvalidFormatException {
+        XWPFRun run = paragraph.createRun();
+
+        // 处理文本和样式
+        switch (element.tagName()) {
+            case "p":
+                for (Node node : element.childNodes()) {
+                    if (node instanceof Element) {
+                        Element childElement = (Element) node;
+                        handleStyledText(childElement, run);
+                    } else {
+                        run.setText(node.toString(), 0); // 处理普通文本
+                    }
+                }
+                break;
+            case "h1":
+            case "h2":
+            case "h3":
+                run.setBold(true);
+                run.setText(element.text());
+                break;
+            case "img":
+                String imgUrl = element.attr("src");
+                addImageToDocument(doc, paragraph, imgUrl);
+                break;
+            // 其他标签...
+        }
+
+        // 添加新的段落
+        if (!element.tagName().equals("img")) { // 避免图片后立即跟一个新段落
+            paragraph = doc.createParagraph();
+        }
+    }
+
+    private static void handleStyledText(Element element, XWPFRun run) {
+        switch (element.tagName()) {
+            case "strong":
+                run.setBold(true);
+                break;
+            case "em":
+                run.setItalic(true);
+                break;
+            case "u":
+                run.setUnderline(UnderlinePatterns.SINGLE);
+                break;
+        }
+        run.setText(element.text());
+    }
+
+
+
+    private static void addImageToDocument(XWPFDocument doc, XWPFParagraph paragraph, String imgUrl) throws IOException, InvalidFormatException {
+        URL url = new URL(imgUrl);
+        URLConnection urlConnection = url.openConnection();
+        try (InputStream imgStream = urlConnection.getInputStream()) {
+            XWPFRun imgRun = paragraph.createRun();
+
+            // 确定图片格式。这里假设图片是JPEG格式。
+            // 注意：你可能需要根据实际图片类型来动态确定这个值。
+            PictureData.PictureType pictureType = PictureData.PictureType.JPEG;
+
+            // 添加图片到文档。注意：枚举PictureType的ordinal方法返回枚举常量的顺序，但这不是添加图片的推荐方法。
+            // 相反，应该直接使用pictureType的值。
+            imgRun.addPicture(imgStream, pictureType.ordinal(), imgUrl, Units.toEMU(300), Units.toEMU(300));
+        }
+    }
 }

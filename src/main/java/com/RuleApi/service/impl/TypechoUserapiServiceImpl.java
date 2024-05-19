@@ -18,33 +18,38 @@ import java.util.List;
 @Service
 public class TypechoUserapiServiceImpl implements TypechoUserapiService {
 
-    @Autowired
+	@Autowired
 	TypechoUserapiDao dao;
 
-    @Override
-    public int insert(TypechoUserapi typechoUserapi) {
-        return dao.insert(typechoUserapi);
-    }
+	@Override
+	public int insert(TypechoUserapi typechoUserapi) {
+		return dao.insert(typechoUserapi);
+	}
 
-    @Override
-    public int batchInsert(List<TypechoUserapi> list) {
-    	return dao.batchInsert(list);
-    }
+	@Override
+	public int batchInsert(List<TypechoUserapi> list) {
+		return dao.batchInsert(list);
+	}
 
-    @Override
-    public int update(TypechoUserapi typechoUserapi) {
-    	return dao.update(typechoUserapi);
-    }
+	@Override
+	public int update(TypechoUserapi typechoUserapi) {
+		return dao.update(typechoUserapi);
+	}
 
-    @Override
-    public int delete(Object key) {
-    	return dao.delete(key);
-    }
+	@Override
+	public int delete(Object key) {
+		return dao.delete(key);
+	}
 
-    @Override
-    public int batchDelete(List<Object> keys) {
-        return dao.batchDelete(keys);
-    }
+	@Override
+	public int deleteUserAll(Object key) {
+		return dao.deleteUserAll(key);
+	}
+
+	@Override
+	public int batchDelete(List<Object> keys) {
+		return dao.batchDelete(keys);
+	}
 
 	@Override
 	public TypechoUserapi selectByKey(Object key) {
