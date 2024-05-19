@@ -53,7 +53,6 @@ public class InstallController {
      */
     @RequestMapping(value = "/isInstall")
     @ResponseBody
-    @LoginRequired(purview = "-3")
     public String isInstall(){
         Integer code = 1;
         String msg = "安装正常";
