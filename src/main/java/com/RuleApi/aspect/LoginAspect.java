@@ -52,41 +52,53 @@ public class LoginAspect {
         HttpServletResponse response = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getResponse();
 
         try {
-            TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix, apiconfigService, redisTemplate);
-            String purview = loginRequired.purview();
-            if (apiconfig.getIsLogin().equals(1)) {
-                if (purview.equals("-1")) {
-                    purview = "0";
-                }
-            }
-            if (!purview.equals("-1") && !purview.equals("-2")) {
-                String token = request.getParameter("token");
-                if (token == null || token.isEmpty()) {
-                    returnErrorJson(response, "用户未登录或Token验证失败");
-                    return null;
-                }
-                Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
-                if (uStatus.equals(0)) {
-                    returnErrorJson(response, "用户未登录或Token验证失败");
-                    return null;
-                }
-                Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
-                String group = map.get("group").toString();
-                if (purview.equals("2")) {
-                    if (!group.equals("administrator")) {
-                        returnErrorJson(response, "你没有操作权限");
-                        return null;
-                    }
-                }
-                if (purview.equals("1")) {
-                    if (!group.equals("administrator") && !group.equals("editor")) {
-                        returnErrorJson(response, "你没有操作权限");
-                        return null;
-                    }
-                }
-            }
             String requestUrl = request.getRequestURL().toString();
             String ip = baseFull.getIpAddr(request);
+            String purview = loginRequired.purview();
+            if (!purview.equals("-3")) {
+                TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix, apiconfigService, redisTemplate);
+                if (apiconfig.getIsLogin().equals(1)) {
+                    if (purview.equals("-1")) {
+                        purview = "0";
+                    }
+                }
+                if (!purview.equals("-1") && !purview.equals("-2")) {
+                    String token = request.getParameter("token");
+                    if (token == null || token.isEmpty()) {
+                        returnErrorJson(response, "用户未登录或Token验证失败");
+                        return null;
+                    }
+                    Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
+                    if (uStatus.equals(0)) {
+                        returnErrorJson(response, "用户未登录或Token验证失败");
+                        return null;
+                    }
+                    Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+                    String group = map.get("group").toString();
+                    if (purview.equals("2")) {
+                        if (!group.equals("administrator")) {
+                            returnErrorJson(response, "你没有操作权限");
+                            return null;
+                        }
+                    }
+                    if (purview.equals("1")) {
+                        if (!group.equals("administrator") && !group.equals("editor")) {
+                            returnErrorJson(response, "你没有操作权限");
+                            return null;
+                        }
+                    }
+                }
+
+                String banIp = apiconfig.getBanIP();
+                if (banIp != null && !banIp.isEmpty()) {
+                    Integer isBanIp = baseFull.getForbidden(banIp, ip);
+                    if (isBanIp.equals(1)) {
+                        returnErrorJson(response, "您的IP已被禁止请求，请联系管理员");
+                        return null;
+                    }
+                }
+            }
+
 
             String ruleapiDBan = "";
             if (redisHelp.getRedis(dataprefix + "_" + "apiNewVersion", redisTemplate) != null) {
@@ -104,14 +116,7 @@ public class LoginAspect {
                     return null;
                 }
             }
-            String banIp = apiconfig.getBanIP();
-            if (banIp != null && !banIp.isEmpty()) {
-                Integer isBanIp = baseFull.getForbidden(banIp, ip);
-                if (isBanIp.equals(1)) {
-                    returnErrorJson(response, "您的IP已被禁止请求，请联系管理员");
-                    return null;
-                }
-            }
+
         } catch (Exception e) {
             e.printStackTrace();
             returnErrorJson(response, "校验接口异常，请联系管理员");

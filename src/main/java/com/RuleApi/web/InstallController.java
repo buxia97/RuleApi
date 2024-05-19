@@ -53,7 +53,7 @@ public class InstallController {
      */
     @RequestMapping(value = "/isInstall")
     @ResponseBody
-    @LoginRequired(purview = "-2")
+    @LoginRequired(purview = "-3")
     public String isInstall(){
         Integer code = 1;
         String msg = "安装正常";
@@ -84,7 +84,7 @@ public class InstallController {
      */
     @RequestMapping(value = "/typechoInstall")
     @ResponseBody
-    @LoginRequired(purview = "-2")
+    @LoginRequired(purview = "-3")
     public String typechoInstall(@RequestParam(value = "webkey", required = false,defaultValue = "") String  webkey,@RequestParam(value = "name", required = false) String  name,@RequestParam(value = "password", required = false) String  password) {
         if(!webkey.equals(this.key)){
             return Result.getResultJson(0,"请输入正确的访问KEY。如果忘记，可在服务器/opt/application.properties中查看",null);
@@ -232,7 +232,7 @@ public class InstallController {
      */
     @RequestMapping(value = "/newInstall")
     @ResponseBody
-    @LoginRequired(purview = "-2")
+    @LoginRequired(purview = "-3")
     public String newInstall(@RequestParam(value = "webkey", required = false,defaultValue = "") String  webkey) {
         if(!webkey.equals(this.key)){
             return "请输入正确的访问KEY。如果忘记，可在服务器/opt/application.properties中查看";
@@ -1401,7 +1401,7 @@ public class InstallController {
      */
     @RequestMapping(value = "/toUtf8mb4")
     @ResponseBody
-    @LoginRequired(purview = "-2")
+    @LoginRequired(purview = "-3")
     public String toUtf8mb4(@RequestParam(value = "webkey", required = false,defaultValue = "") String  webkey) {
         if(!webkey.equals(this.key)){
             return Result.getResultJson(0,"请输入正确的访问KEY。如果忘记，可在服务器/opt/application.properties中查看",null);
