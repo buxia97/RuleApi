@@ -10,10 +10,10 @@
     </parent>
 
     <groupId>com.RuleApi</groupId>
-    <artifactId>RuleApiPro</artifactId>
+    <artifactId>RuleApi</artifactId>
     <version>1.3.6</version>
-    <name>RuleApiPro</name>
-    <description>RuleApiPro is a Typecho-based API program developed by buxia97.</description>
+    <name>RuleApi</name>
+    <description>RuleApi is a Typecho-based API program developed by buxia97.</description>
     <packaging>jar</packaging>
 
     <properties>
