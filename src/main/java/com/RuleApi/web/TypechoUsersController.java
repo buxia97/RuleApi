@@ -277,7 +277,7 @@ public class TypechoUsersController {
      */
     @RequestMapping(value = "/userData")
     @ResponseBody
-    @LoginRequired(purview = "0")
+    @LoginRequired(purview = "-1")
     public String userData(@RequestParam(value = "token", required = false) String token,
                            @RequestParam(value = "uid", required = false) Integer uid) {
         Map json = new HashMap();
