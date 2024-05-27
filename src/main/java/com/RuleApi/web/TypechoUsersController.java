@@ -485,7 +485,7 @@ public class TypechoUsersController {
      */
     @RequestMapping(value = "/userLogin")
     @ResponseBody
-    @LoginRequired(purview = "-1")
+    @LoginRequired(purview = "-2")
     public String userLogin(@RequestParam(value = "params", required = false) String params,HttpServletRequest request) {
         Map jsonToMap = null;
         String oldpw = null;
@@ -638,7 +638,7 @@ public class TypechoUsersController {
      */
     @RequestMapping(value = "/apiLogin")
     @ResponseBody
-    @LoginRequired(purview = "-1")
+    @LoginRequired(purview = "-2")
     public String apiLogin(@RequestParam(value = "params", required = false) String params,HttpServletRequest request) {
 
 
@@ -1102,7 +1102,7 @@ public class TypechoUsersController {
      */
     @RequestMapping(value = "/userRegister")
     @ResponseBody
-    @LoginRequired(purview = "-1")
+    @LoginRequired(purview = "-2")
     public String userRegister(@RequestParam(value = "params", required = false) String params,HttpServletRequest request) {
         TypechoUsers insert = null;
         Map jsonToMap = null;
@@ -1337,6 +1337,7 @@ public class TypechoUsersController {
      */
     @RequestMapping(value = "/RegSendCode")
     @ResponseBody
+    @LoginRequired(purview = "-2")
     public String RegSendCode(@RequestParam(value = "params", required = false) String params, HttpServletRequest request) throws MessagingException {
         try{
             Map jsonToMap = null;
@@ -1417,7 +1418,7 @@ public class TypechoUsersController {
      */
     @RequestMapping(value = "/userFoget")
     @ResponseBody
-    @LoginRequired(purview = "-1")
+    @LoginRequired(purview = "-2")
     public String userFoget(@RequestParam(value = "params", required = false) String params) {
         try {
             TypechoUsers update = null;
