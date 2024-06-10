@@ -176,7 +176,7 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-web</artifactId>
-            <version>5.2.20.RELEASE</version>
+            <version>5.2.23.RELEASE</version>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
