@@ -77,7 +77,8 @@ public class TypechoMetasController {
     @LoginRequired(purview = "-1")
     public String selectContents (@RequestParam(value = "searchParams", required = false) String  searchParams,
                                   @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
-                                  @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit) {
+                                  @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
+                                  @RequestParam(value = "order"        , required = false, defaultValue = "created") String order) {
 
         TypechoRelationships query = new TypechoRelationships();
         if(limit>50){
@@ -108,7 +109,7 @@ public class TypechoMetasController {
             }else{
                 TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
                 //首先查询typechoRelationships获取映射关系
-                PageList<TypechoRelationships> pageList = relationshipsService.selectPage(query, page, limit);
+                PageList<TypechoRelationships> pageList = relationshipsService.selectPage(query, page, limit,order);
                 List<TypechoRelationships> list = pageList.getList();
                 if(list.size() < 1){
                     JSONObject noData = new JSONObject();
@@ -312,7 +313,7 @@ public class TypechoMetasController {
      */
     @RequestMapping(value = "/metaInfo")
     @ResponseBody
-    @LoginRequired(purview = "-1")
+    @LoginRequired(purview = "-2")
     public String metaInfo(@RequestParam(value = "key", required = false) String key,
                            @RequestParam(value = "slug", required = false) String slug) {
         try{

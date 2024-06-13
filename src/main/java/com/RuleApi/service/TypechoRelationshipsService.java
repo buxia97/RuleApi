@@ -51,7 +51,7 @@ public interface TypechoRelationshipsService {
     /**
      * [分页条件查询]
      **/
-    PageList<TypechoRelationships> selectPage (TypechoRelationships typechoRelationships, Integer page, Integer pageSize);
+    PageList<TypechoRelationships> selectPage (TypechoRelationships typechoRelationships, Integer page, Integer pageSize,String order);
 
     /**
      * [总量查询]

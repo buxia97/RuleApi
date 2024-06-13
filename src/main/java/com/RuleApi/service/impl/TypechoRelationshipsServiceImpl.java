@@ -18,33 +18,33 @@ import java.util.List;
 @Service
 public class TypechoRelationshipsServiceImpl implements TypechoRelationshipsService {
 
-    @Autowired
+	@Autowired
 	TypechoRelationshipsDao dao;
 
-    @Override
-    public int insert(TypechoRelationships typechoRelationships) {
-        return dao.insert(typechoRelationships);
-    }
+	@Override
+	public int insert(TypechoRelationships typechoRelationships) {
+		return dao.insert(typechoRelationships);
+	}
 
-    @Override
-    public int batchInsert(List<TypechoRelationships> list) {
-    	return dao.batchInsert(list);
-    }
+	@Override
+	public int batchInsert(List<TypechoRelationships> list) {
+		return dao.batchInsert(list);
+	}
 
-    @Override
-    public int update(TypechoRelationships typechoRelationships) {
-    	return dao.update(typechoRelationships);
-    }
+	@Override
+	public int update(TypechoRelationships typechoRelationships) {
+		return dao.update(typechoRelationships);
+	}
 
-    @Override
-    public int delete(Object key) {
-    	return dao.delete(key);
-    }
+	@Override
+	public int delete(Object key) {
+		return dao.delete(key);
+	}
 
-    @Override
-    public int batchDelete(List<Object> keys) {
-        return dao.batchDelete(keys);
-    }
+	@Override
+	public int batchDelete(List<Object> keys) {
+		return dao.batchDelete(keys);
+	}
 
 	@Override
 	public List<TypechoRelationships> selectByKey(Object key) {
@@ -57,7 +57,7 @@ public class TypechoRelationshipsServiceImpl implements TypechoRelationshipsServ
 	}
 
 	@Override
-	public PageList<TypechoRelationships> selectPage(TypechoRelationships typechoRelationships, Integer offset, Integer pageSize) {
+	public PageList<TypechoRelationships> selectPage(TypechoRelationships typechoRelationships, Integer offset, Integer pageSize,String order) {
 		PageList<TypechoRelationships> pageList = new PageList<>();
 
 		int total = this.total(typechoRelationships);
@@ -71,7 +71,7 @@ public class TypechoRelationshipsServiceImpl implements TypechoRelationshipsServ
 
 		int page = (offset - 1) * pageSize;
 
-		List<TypechoRelationships> list = dao.selectPage(typechoRelationships, page, pageSize);
+		List<TypechoRelationships> list = dao.selectPage(typechoRelationships, page, pageSize,order);
 
 		pageList.setList(list);
 		pageList.setStartPageNo(offset);

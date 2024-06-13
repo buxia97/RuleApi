@@ -26,6 +26,9 @@
             <result column="parent" property="parent" />
             <result column="views" property="views" />
             <result column="likes" property="likes" />
+            <result column="istop" property="istop" />
+            <result column="isrecommend" property="isrecommend" />
+            <result column="replyTime" property="replyTime" />
         </collection>
     </resultMap>
 
@@ -54,7 +57,10 @@
         c.allowFeed,
         c.parent,
         c.views,
-        c.likes
+        c.likes,
+        c.istop,
+        c.isrecommend,
+        c.replyTime
     </sql>
 
     <!-- 插入数据 -->
@@ -149,8 +155,28 @@
             <if test ='null != typechoRelationships.contents.status'>
                 and c.status = #{typechoRelationships.contents.status}
             </if>
+            <if test ='null != typechoRelationships.contents.istop'>
+                and c.istop = #{typechoRelationships.contents.istop}
+            </if>
+            <if test ='null != typechoRelationships.contents.isrecommend'>
+                and c.isrecommend = #{typechoRelationships.contents.isrecommend}
+            </if>
             and c.status = "publish"
-            order by r.cid desc
+            <if test ='"created" == order'>
+                order by c.created desc
+            </if>
+            <if test ='"modified" == order'>
+                order by c.modified desc
+            </if>
+            <if test ='"views" == order'>
+                order by c.views desc
+            </if>
+            <if test ='"likes" == order'>
+                order by c.likes desc
+            </if>
+            <if test ='"replyTime" == order'>
+                order by c.replyTime desc
+            </if>
         </where>
         limit #{page,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
     </select>

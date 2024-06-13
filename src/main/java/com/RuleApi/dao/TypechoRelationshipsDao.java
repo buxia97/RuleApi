@@ -53,7 +53,7 @@ public interface TypechoRelationshipsDao {
     /**
      * [分页条件查询]
      **/
-    List<TypechoRelationships> selectPage (@Param("typechoRelationships") TypechoRelationships typechoRelationships, @Param("page") Integer page, @Param("pageSize") Integer pageSize);
+    List<TypechoRelationships> selectPage (@Param("typechoRelationships") TypechoRelationships typechoRelationships, @Param("page") Integer page, @Param("pageSize") Integer pageSize, @Param("order") String order);
 
     /**
      * [总量查询]

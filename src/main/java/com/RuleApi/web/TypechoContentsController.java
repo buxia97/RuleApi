@@ -130,7 +130,7 @@ public class TypechoContentsController {
      */
     @RequestMapping(value = "/contentsInfo")
     @ResponseBody
-    @LoginRequired(purview = "-1")
+    @LoginRequired(purview = "-2")
     public String contentsInfo (@RequestParam(value = "key", required = false) String  key,
                                 @RequestParam(value = "isMd" , required = false, defaultValue = "0") Integer isMd,
                                 @RequestParam(value = "token", required = false) String  token,HttpServletRequest request) {
@@ -140,11 +140,7 @@ public class TypechoContentsController {
         String group = "";
         Integer uStatus = UStatus.getStatus(token,this.dataprefix,redisTemplate);
         TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
-        if(apiconfig.getIsLogin().equals(1)){
-            if(uStatus==0){
-                return Result.getResultJson(0,"用户未登录或Token验证失败",null);
-            }
-        }
+
         //验证结束
         if(uStatus.equals(1)) {
             Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
@@ -250,7 +246,11 @@ public class TypechoContentsController {
                 contensjson.put("category",metas);
                 contensjson.put("tag",tags);
                 contensjson.put("text",text);
-
+                if(apiconfig.getIsLogin().equals(1)){
+                    if(uStatus==0){
+                        contensjson.put("text","该内容登录可见");
+                    }
+                }
 
                 //文章阅读量增加
                 String  agent =  request.getHeader("User-Agent");

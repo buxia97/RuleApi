@@ -173,9 +173,12 @@ public class TypechoUsersController {
         List cacheList = new ArrayList();
         //如果是管理员，则不缓存且显示用户资产
         Integer isAdmin = 0;
+        Map map = new HashMap();
+        Integer logUid = 0;
         String group = "";
-        Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
-        if(map.size()>0){
+        if (!uStatus.equals(0)) {
+            map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+            logUid =Integer.parseInt(map.get("uid").toString());
             group = map.get("group").toString();
             if (group.equals("administrator")||group.equals("editor")) {
                 isAdmin = 1;
@@ -248,6 +251,15 @@ public class TypechoUsersController {
 
                     json.remove("mail");
                     json.remove("phone");
+                    if (uStatus != 0) {
+                        TypechoFan fan = new TypechoFan();
+                        fan.setUid(logUid);
+                        fan.setTouid(uid);
+                        Integer isFollow = fanService.total(fan);
+                        json.put("isFollow",isFollow);
+                    }else{
+                        json.put("isFollow",0);
+                    }
                     jsonList.add(json);
 
                 }
@@ -386,17 +398,19 @@ public class TypechoUsersController {
      */
     @RequestMapping(value = "/userInfo")
     @ResponseBody
-    @LoginRequired(purview = "-1")
+    @LoginRequired(purview = "-2")
     public String userInfo(@RequestParam(value = "key", required = false) String key,@RequestParam(value = "token", required = false, defaultValue = "") String token) {
         try {
             Map json = new HashMap();
 
             String group = "";
+            Integer logUid = 0;
             Map map  = new HashMap();
             Integer uStatus = UStatus.getStatus(token, this.dataprefix, redisTemplate);
             if (!uStatus.equals(0)) {
                 map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
                 group =map.get("group").toString();
+                logUid =Integer.parseInt(map.get("uid").toString());
             }
             Map cacheInfo = redisHelp.getMapValue(this.dataprefix+"_"+"userInfo_"+key,redisTemplate);
             if(cacheInfo.size()>0){
@@ -456,6 +470,15 @@ public class TypechoUsersController {
                 if (!group.equals("administrator")) {
                     json.remove("mail");
                     json.remove("phone");
+                }
+                if (uStatus != 0) {
+                    TypechoFan fan = new TypechoFan();
+                    fan.setUid(logUid);
+                    fan.setTouid(uid);
+                    Integer isFollow = fanService.total(fan);
+                    json.put("isFollow",isFollow);
+                }else{
+                    json.put("isFollow",0);
                 }
 
                 redisHelp.delete(this.dataprefix+"_"+"userInfo_"+key,redisTemplate);
