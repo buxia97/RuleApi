@@ -610,11 +610,9 @@ public class PayController {
             workbook.write(response.getOutputStream());
         }
         TypechoPaykey query = new TypechoPaykey();
+        query.setStatus(0);
         PageList<TypechoPaykey> pageList = paykeyService.selectPage(query, 1, limit,null);
         List<TypechoPaykey> list = pageList.getList();
-
-
-
 
         String fileName = "tokenPayExcel"  + ".xls";//设置要导出的文件的名字
         //新增数据行，并且设置单元格数据
