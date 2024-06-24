@@ -723,7 +723,6 @@ public class SystemController {
      */
     @RequestMapping(value = "/apiNewVersion")
     @ResponseBody
-    @LoginRequired(purview = "-2")
     public String apiNewVersion() {
         String apiNewVersion = redisHelp.getRedis(this.dataprefix+"_"+"apiNewVersion",redisTemplate);
         HashMap data = new HashMap();
