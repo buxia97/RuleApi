@@ -317,7 +317,6 @@ public class TypechoContentsController {
             }
         }
         //验证结束
-
         if (StringUtils.isNotBlank(searchParams)) {
             JSONObject object = JSON.parseObject(searchParams);
             //如果不是登陆状态，那么只显示开放状态文章。如果是，则查询自己发布的文章
@@ -329,13 +328,6 @@ public class TypechoContentsController {
                 if(object.get("status")==null){
                     object.put("status","publish");
                 }
-                //后面再优化
-                // aid = redisHelp.getValue(this.dataprefix+"_"+"userInfo"+token,"uid",redisTemplate).toString();
-//                Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
-//                group = map.get("group").toString();
-//                if(!group.equals("administrator")&&!group.equals("editor")){
-//                    object.put("authorId",aid);
-//                }
 
             }
 
@@ -764,6 +756,15 @@ public class TypechoContentsController {
                                 }
                             }
                         }
+                    }else{
+                        TypechoRelationships toCategory = new TypechoRelationships();
+                        Integer mid = Integer.parseInt(category);
+                        toCategory.setCid(cid);
+                        toCategory.setMid(mid);
+                        List<TypechoRelationships> cList = relationshipsService.selectList(toCategory);
+                        if (cList.size() == 0) {
+                            relationshipsService.insert(toCategory);
+                        }
                     }
                 }
                 if (tag.length()>0) {
@@ -783,6 +784,15 @@ public class TypechoContentsController {
                                     relationshipsService.insert(toTag);
                                 }
                             }
+                        }
+                    }else{
+                        TypechoRelationships toTag = new TypechoRelationships();
+                        Integer mid = Integer.parseInt(tag);
+                        toTag.setCid(cid);
+                        toTag.setMid(mid);
+                        List<TypechoRelationships> mList = relationshipsService.selectList(toTag);
+                        if (mList.size() == 0) {
+                            relationshipsService.insert(toTag);
                         }
                     }
                 }

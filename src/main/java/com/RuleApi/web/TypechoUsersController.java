@@ -2146,7 +2146,6 @@ public class TypechoUsersController {
      **/
     @RequestMapping(value = "/getScanStatus")
     @ResponseBody
-    @LoginRequired(purview = "-1")
     public String getScanStatus(@RequestParam(value = "codeContent", required = false) String codeContent) {
         String value = redisHelp.getRedis(codeContent, redisTemplate);
         if (value == null) {
@@ -2168,7 +2167,7 @@ public class TypechoUsersController {
         json.put("token", token);
         TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
 
-        if(json.get("avatar")==null){
+        if(users.getAvatar()==null){
             if (json.get("mail") != null) {
                 String mail = json.get("mail").toString();
 
@@ -2183,6 +2182,8 @@ public class TypechoUsersController {
             } else {
                 json.put("avatar", apiconfig.getWebinfoAvatar() + "null");
             }
+        }else{
+            json.put("avatar", users.getAvatar());
         }
 
         //判断是否为VIP
@@ -2207,7 +2208,6 @@ public class TypechoUsersController {
      **/
     @RequestMapping(value = "/setScan")
     @ResponseBody
-    @LoginRequired(purview = "-1")
     public String setScan(@RequestParam(value = "codeContent", required = false) String codeContent, @RequestParam(value = "token", required = false) String token) {
         try {
             String value = redisHelp.getRedis(codeContent, redisTemplate);
@@ -2217,6 +2217,7 @@ public class TypechoUsersController {
             redisHelp.setRedis(codeContent, token, 90, redisTemplate);
             return Result.getResultJson(1, "操作成功！", null);
         }catch (Exception e){
+            e.printStackTrace();
             return Result.getResultJson(0, "请求异常", null);
         }
 
@@ -2544,6 +2545,9 @@ public class TypechoUsersController {
                            @RequestParam(value = "type", required = false,defaultValue = "all") String  type) {
         TypechoInbox query = new TypechoInbox();
         try {
+            if(!type.equals("all")&&!type.equals("comment")&&!type.equals("finance")&&!type.equals("chat")&&!type.equals("fan")){
+                return Result.getResultJson(0, "参数错误", null);
+            }
             //评论comment，财务finance，系统system，聊天chat，粉丝fan
             Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
             Integer uid =Integer.parseInt(map.get("uid").toString());
