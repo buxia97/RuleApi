@@ -291,7 +291,7 @@ public class TypechoUsersController {
     @ResponseBody
     @LoginRequired(purview = "-1")
     public String userData(@RequestParam(value = "token", required = false) String token,
-                           @RequestParam(value = "uid", required = false) Integer uid) {
+                           @RequestParam(value = "uid", required = false,defaultValue = "0") Integer uid) {
         Map json = new HashMap();
         try {
 
@@ -302,7 +302,9 @@ public class TypechoUsersController {
                 }
             }else{
                 Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
-                uid = Integer.parseInt(map.get("uid").toString());
+                if(uid.equals(0)){
+                    uid = Integer.parseInt(map.get("uid").toString());
+                }
             }
 
             Map cacheInfo = redisHelp.getMapValue(this.dataprefix+"_"+"userData_"+uid,redisTemplate);
@@ -1441,7 +1443,6 @@ public class TypechoUsersController {
      */
     @RequestMapping(value = "/userFoget")
     @ResponseBody
-    @LoginRequired(purview = "-2")
     public String userFoget(@RequestParam(value = "params", required = false) String params) {
         try {
             TypechoUsers update = null;
@@ -2545,7 +2546,7 @@ public class TypechoUsersController {
                            @RequestParam(value = "type", required = false,defaultValue = "all") String  type) {
         TypechoInbox query = new TypechoInbox();
         try {
-            if(!type.equals("all")&&!type.equals("comment")&&!type.equals("finance")&&!type.equals("chat")&&!type.equals("fan")){
+            if(!type.equals("all")&&!type.equals("comment")&&!type.equals("finance")&&!type.equals("chat")&&!type.equals("fan")&&!type.equals("system")){
                 return Result.getResultJson(0, "参数错误", null);
             }
             //评论comment，财务finance，系统system，聊天chat，粉丝fan
