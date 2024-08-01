@@ -130,9 +130,7 @@ public class TypechoCommentsController {
         total = service.total(query,searchKey);
         List jsonList = new ArrayList();
         List cacheList = redisHelp.getList(this.dataprefix+"_"+"commentsList_"+page+"_"+limit+"_"+searchKey+"_"+sqlParams+"_"+uid+"_"+order,redisTemplate);
-        if(uStatus!=0){
-            cacheList = redisHelp.getList(this.dataprefix+"_"+"commentsList_"+page+"_"+limit+"_"+searchKey+"_"+sqlParams+"_"+order,redisTemplate);
-        }
+
 
         try{
             if(cacheList.size()>0){
@@ -298,13 +296,9 @@ public class TypechoCommentsController {
 
 
                 }
-                if(!uStatus.equals(0)){
-                    redisHelp.delete(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchKey+"_"+sqlParams+"_"+uid+"_"+order,redisTemplate);
-                    redisHelp.setList(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchKey+"_"+sqlParams+"_"+uid+"_"+order,jsonList,this.CommentCache,redisTemplate);
-                }else{
-                    redisHelp.delete(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchKey+"_"+sqlParams+"_"+order,redisTemplate);
-                    redisHelp.setList(this.dataprefix+"_"+"contensList_"+page+"_"+limit+"_"+searchKey+"_"+sqlParams+"_"+order,jsonList,this.CommentCache,redisTemplate);
-                }
+                redisHelp.delete(this.dataprefix+"_"+"commentsList_"+page+"_"+limit+"_"+searchKey+"_"+sqlParams+"_"+uid+"_"+order,redisTemplate);
+                redisHelp.setList(this.dataprefix+"_"+"commentsList_"+page+"_"+limit+"_"+searchKey+"_"+sqlParams+"_"+uid+"_"+order,jsonList,this.CommentCache,redisTemplate);
+
             }
         }catch (Exception e){
             e.printStackTrace();
