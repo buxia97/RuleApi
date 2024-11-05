@@ -28,7 +28,7 @@
     </sql>
 
     <!-- 插入数据 -->
-    <insert id="insert" parameterType="com.RuleApi.entity.TypechoPaylog">
+    <insert id="insert" parameterType="com.RuleApi.entity.TypechoPaylog"  keyProperty="pid" useGeneratedKeys="true">
         INSERT INTO ${prefix}_paylog
         <trim prefix="(" suffix=")" suffixOverrides=",">
             <if test ='null != pid'>

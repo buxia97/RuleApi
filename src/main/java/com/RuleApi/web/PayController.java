@@ -169,6 +169,7 @@ public class PayController {
             String qrcode = response.getQrCode();
             JSONObject toResponse = new JSONObject();
             toResponse.put("code" ,1);
+            toResponse.put("logid" ,paylog.getPid());
             toResponse.put("data" , qrcode);
             toResponse.put("msg"  , "获取成功");
             return toResponse.toString();
@@ -374,70 +375,82 @@ public class PayController {
     @ResponseBody
     @LoginRequired(purview = "0")
     public String wxAdd(HttpServletRequest request,@RequestParam(value = "price", required = false) Integer price,@RequestParam(value = "token", required = false) String  token) throws Exception {
-        Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
-        Integer uid =Integer.parseInt(map.get("uid").toString());
-        //登录情况下，恶意充值攻击拦截
-        TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
-        if(apiconfig.getBanRobots().equals(1)) {
-            String isSilence = redisHelp.getRedis(this.dataprefix+"_"+uid+"_silence",redisTemplate);
-            if(isSilence!=null){
-                return Result.getResultJson(0,"你的操作太频繁了，请稍后再试",null);
-            }
-            String isRepeated = redisHelp.getRedis(this.dataprefix+"_"+uid+"_isRepeated",redisTemplate);
-            if(isRepeated==null){
-                redisHelp.setRedis(this.dataprefix+"_"+uid+"_isRepeated","1",2,redisTemplate);
-            }else{
-                Integer frequency = Integer.parseInt(isRepeated) + 1;
-                if(frequency==3){
-                    securityService.safetyMessage("用户ID："+uid+"，在微信充值接口疑似存在攻击行为，请及时确认处理。","system");
-                    redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",900,redisTemplate);
-                    return Result.getResultJson(0,"你的请求存在恶意行为，15分钟内禁止操作！",null);
-                }else{
-                    redisHelp.setRedis(this.dataprefix+"_"+uid+"_isRepeated",frequency.toString(),3,redisTemplate);
+        try{
+            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            Integer uid =Integer.parseInt(map.get("uid").toString());
+            //登录情况下，恶意充值攻击拦截
+            TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
+            if(apiconfig.getBanRobots().equals(1)) {
+                String isSilence = redisHelp.getRedis(this.dataprefix+"_"+uid+"_silence",redisTemplate);
+                if(isSilence!=null){
+                    return Result.getResultJson(0,"你的操作太频繁了，请稍后再试",null);
                 }
-                return Result.getResultJson(0,"你的操作太频繁了",null);
+                String isRepeated = redisHelp.getRedis(this.dataprefix+"_"+uid+"_isRepeated",redisTemplate);
+                if(isRepeated==null){
+                    redisHelp.setRedis(this.dataprefix+"_"+uid+"_isRepeated","1",2,redisTemplate);
+                }else{
+                    Integer frequency = Integer.parseInt(isRepeated) + 1;
+                    if(frequency==3){
+                        securityService.safetyMessage("用户ID："+uid+"，在微信充值接口疑似存在攻击行为，请及时确认处理。","system");
+                        redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",900,redisTemplate);
+                        return Result.getResultJson(0,"你的请求存在恶意行为，15分钟内禁止操作！",null);
+                    }else{
+                        redisHelp.setRedis(this.dataprefix+"_"+uid+"_isRepeated",frequency.toString(),3,redisTemplate);
+                    }
+                    return Result.getResultJson(0,"你的操作太频繁了",null);
+                }
             }
-        }
 
-        //攻击拦截结束
-        Integer scale = apiconfig.getScale();
-        //商户订单号
-        Date now = new Date();
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss");//可以方便地修改日期格式
-        String timeID = dateFormat.format(now);
-        String outTradeNo = timeID+"WxPay";
-        Map<String, String> data = WeChatPayUtils.native_payment_order(price.toString(), "微信商品下单", outTradeNo,apiconfig);
-        if("200".equals(data.get("code"))){
-            //先生成订单
-            Long date = System.currentTimeMillis();
-            String created = String.valueOf(date).substring(0,10);
-            TypechoPaylog paylog = new TypechoPaylog();
+            //攻击拦截结束
+            Integer scale = apiconfig.getScale();
+            //商户订单号
+            Date now = new Date();
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss");//可以方便地修改日期格式
+            String timeID = dateFormat.format(now);
+            String outTradeNo = timeID+"WxPay";
+            Map<String, String> data = WeChatPayUtils.native_payment_order(price.toString(), "微信商品下单", outTradeNo,apiconfig);
+            System.out.println(data.toString());
+            if("200".equals(data.get("code"))){
+                //先生成订单
+                Long date = System.currentTimeMillis();
+                String created = String.valueOf(date).substring(0,10);
+                TypechoPaylog paylog = new TypechoPaylog();
 
-            Integer TotalAmount = price * scale;
-            paylog.setStatus(0);
-            paylog.setCreated(Integer.parseInt(created));
-            paylog.setUid(uid);
-            paylog.setOutTradeNo(outTradeNo);
-            paylog.setTotalAmount(TotalAmount.toString());
-            paylog.setPaytype("WxPay");
-            paylog.setSubject("扫码支付");
-            paylogService.insert(paylog);
-            //再返回二维码
-            data.put("outTradeNo", outTradeNo);
-            data.put("totalAmount", price.toString());
+                Integer TotalAmount = price * scale;
+                paylog.setStatus(0);
+                paylog.setCreated(Integer.parseInt(created));
+                paylog.setUid(uid);
+                paylog.setOutTradeNo(outTradeNo);
+                paylog.setTotalAmount(TotalAmount.toString());
+                paylog.setPaytype("WxPay");
+                paylog.setSubject("扫码支付");
+                paylogService.insert(paylog);
+                //再返回二维码
+                data.put("outTradeNo", outTradeNo);
+                data.put("totalAmount", price.toString());
 
-            JSONObject toResponse = new JSONObject();
-            toResponse.put("code" ,1);
-            toResponse.put("data" , data);
-            toResponse.put("msg"  , "获取成功");
-            return toResponse.toString();
-        } else {
+                JSONObject toResponse = new JSONObject();
+                toResponse.put("code" ,1);
+                toResponse.put("logid" ,paylog.getPid());
+                toResponse.put("data" , data);
+                toResponse.put("msg"  , "获取成功");
+                return toResponse.toString();
+            } else {
+                JSONObject toResponse = new JSONObject();
+                toResponse.put("code", 0);
+                toResponse.put("data", "");
+                toResponse.put("msg", "请求失败");
+                return toResponse.toString();
+            }
+        }catch (Exception e){
+            e.printStackTrace();
             JSONObject toResponse = new JSONObject();
             toResponse.put("code", 0);
             toResponse.put("data", "");
-            toResponse.put("msg", "请求失败");
+            toResponse.put("msg", "请求失败，请求存在异常");
             return toResponse.toString();
         }
+
 
     }
     /**
@@ -826,6 +839,7 @@ public class PayController {
                 JSONObject toResponse = new JSONObject();
                 toResponse.put("code" ,1);
                 toResponse.put("payapi" ,apiconfig.getEpayUrl());
+                toResponse.put("logid" ,paylog.getPid());
                 toResponse.put("data" , jsonMap);
                 toResponse.put("msg"  , "获取成功");
                 return toResponse.toString();
@@ -907,6 +921,34 @@ public class PayController {
             return "fail";
         }
 
+    }
+
+    /***
+     * 支付状态查询，用于支付完成后立即查询支付状态
+     *
+     */
+    @RequestMapping(value = "/payStatus")
+    @ResponseBody
+    @LoginRequired(purview = "0")
+    public String payStatus (@RequestParam(value = "pid", required = false) Integer  pid,
+                                @RequestParam(value = "token", required = false) String  token) {
+        try {
+            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            Integer uid  = Integer.parseInt(map.get("uid").toString());
+            TypechoPaylog paylog = paylogService.selectByKey(pid);
+            if(paylog.getUid().equals(uid)){
+                if(paylog.getStatus().equals(1)){
+                    return Result.getResultJson(1,"充值成功",null);
+                }else{
+                    return Result.getResultJson(0,"充值失败，请等待或再次尝试",null);
+                }
+            }else{
+                return Result.getResultJson(1,"你没有操作权限",null);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+            return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
+        }
     }
 
 }
