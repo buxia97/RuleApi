@@ -945,7 +945,8 @@ public class TypechoSpaceController {
     @RequestMapping(value = "/spaceDelete")
     @ResponseBody
     @LoginRequired(purview = "1")
-    public String spaceDelete(@RequestParam(value = "id", required = false) String  id, @RequestParam(value = "token", required = false) String  token) {
+    public String spaceDelete(@RequestParam(value = "id", required = false) String  id,
+                              @RequestParam(value = "token", required = false) String  token) {
         try {
 
             //String group = (String) redisHelp.getValue("userInfo"+token,"group",redisTemplate);
