@@ -581,7 +581,8 @@ public class TypechoUsersController {
                 }
                 //内置验证结束
                 Long date = System.currentTimeMillis();
-                String Token = date + jsonToMap.get("name").toString();
+                String randStr = baseFull.createRandomStr(6);
+                String Token = date + jsonToMap.get("name").toString()+randStr;
                 jsonToMap.put("uid", rows.get(0).getUid());
                 //生成唯一性token用于验证
                 jsonToMap.put("token", jsonToMap.get("name").toString() + DigestUtils.md5DigestAsHex(Token.getBytes()));
@@ -782,7 +783,8 @@ public class TypechoUsersController {
                     }
                 }
                 Long date = System.currentTimeMillis();
-                String Token = date + user.getName();
+                String randStr = baseFull.createRandomStr(6);
+                String Token = date + user.getName()+randStr;
                 jsonToMap.put("uid", user.getUid());
 
                 //生成唯一性token用于验证

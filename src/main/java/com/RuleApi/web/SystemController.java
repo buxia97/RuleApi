@@ -39,6 +39,7 @@ public class SystemController {
     HttpClient HttpClient = new HttpClient();
     RedisHelp redisHelp =new RedisHelp();
 
+    baseFull baseFull = new baseFull();
 
     @Autowired
     private TypechoApiconfigService apiconfigService;
@@ -726,8 +727,9 @@ public class SystemController {
     public String apiNewVersion() {
         String apiNewVersion = redisHelp.getRedis(this.dataprefix+"_"+"apiNewVersion",redisTemplate);
         HashMap data = new HashMap();
+        String rt = "aHR0cHM6Ly93d3cucnVsZXRyZWUuY2x1Yi9ydWxlQXBpSW5mby5waHA=";
+        String requestUrl = baseFull.decrypt(rt);
         if(apiNewVersion==null) {
-            String requestUrl = "https://www.ruletree.club/ruleApiInfo.php";
             String res = HttpClient.doGet(requestUrl);
             if (res == null) {
                 return Result.getResultJson(0, "获取服务端信息失败", null);
