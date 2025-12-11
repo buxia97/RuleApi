@@ -1,23 +1,16 @@
 package com.RuleApi.common;
-import com.RuleApi.entity.TypechoApiconfig;
-import com.RuleApi.service.TypechoApiconfigService;
+
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.github.wxpay.sdk.WXPayUtil;
 import com.wechat.pay.contrib.apache.httpclient.WechatPayHttpClientBuilder;
-import com.wechat.pay.contrib.apache.httpclient.auth.PrivateKeySigner;
-import com.wechat.pay.contrib.apache.httpclient.auth.Verifier;
-import com.wechat.pay.contrib.apache.httpclient.auth.WechatPay2Credentials;
-import com.wechat.pay.contrib.apache.httpclient.auth.WechatPay2Validator;
-import com.wechat.pay.contrib.apache.httpclient.cert.CertificatesManager;
 import com.wechat.pay.contrib.apache.httpclient.util.AesUtil;
 import com.wechat.pay.contrib.apache.httpclient.util.PemUtil;
 import org.apache.commons.collections4.map.HashedMap;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -25,8 +18,9 @@ import org.apache.http.util.EntityUtils;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
@@ -40,152 +34,170 @@ import java.io.StringWriter;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.security.GeneralSecurityException;
-import java.security.MessageDigest;
-import java.security.PrivateKey;
-import java.security.SecureRandom;
+import java.security.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
- * 微信支付工具类
- * @date 2022/6/16
+ * 微信支付工具类（支持 App、JSAPI小程序、Native扫码、H5支付）
  * @author gxw
  */
 public class WeChatPayUtils {
 
-    /*支付信息*/
-    //native 统一下单API
-    public static final String NATIVE_PAY_API = "https://api.mch.weixin.qq.com/v3/pay/transactions/native";
-    //native 商户订单号查单API
-    public static final String NATIVE_PAY_OUT_TRADE_NO_QUERY_ORDER_API ="https://api.mch.weixin.qq.com/v3/pay/transactions/id/";
+    // 支付方式对应的统一下单 URL
+    private static final String NATIVE_PAY_API = "https://api.mch.weixin.qq.com/v3/pay/transactions/native";
+    private static final String APP_PAY_API = "https://api.mch.weixin.qq.com/v3/pay/transactions/app";
+    private static final String JSAPI_PAY_API = "https://api.mch.weixin.qq.com/v3/pay/transactions/jsapi";
+    private static final String H5_PAY_API = "https://api.mch.weixin.qq.com/v3/pay/transactions/h5";
 
-    //货币类型
-    public static final String CURRENCY_CNY = "CNY";
-
+    // 货币类型
+    private static final String CURRENCY_CNY = "CNY";
 
     /**
-     * NATIVE获取CloseableHttpClient
+     * 初始化 HttpClient（字符串私钥+公钥方式）
      */
-    private static CloseableHttpClient initHttpClient(TypechoApiconfig apiconfig){
-        PrivateKey merchantPrivateKey = null;
-        String MCH_ID = apiconfig.getWxpayMchId();
-        String MCH_KEY = apiconfig.getWxpayKey();
-        String MCH_SERIAL_NO = apiconfig.getMchSerialNo();
-        String MCH_API_V3_KEY = apiconfig.getMchApiV3Key();
+    private static CloseableHttpClient initHttpClient(Map<String, Object> apiconfig) {
         try {
-            merchantPrivateKey = PemUtil.loadPrivateKey(new ByteArrayInputStream(MCH_KEY.getBytes("utf-8")));
-//            //*加载证书管理器实例*//*
-//            // 加载平台证书（mchId：商户号,mchSerialNo：商户证书序列号,apiV3Key：V3密钥）
-//            AutoUpdateCertificatesVerifier verifier = new AutoUpdateCertificatesVerifier(
-//                    new WechatPay2Credentials(MCH_ID, new PrivateKeySigner(MCH_SERIAL_NO, merchantPrivateKey)),MCH_API_V3_KEY.getBytes("utf-8"));
-//            //获取单例实例
-            CertificatesManager certificatesManager = CertificatesManager.getInstance();
-//            //向证书管理器增加商户信息，并开启自动更新
-            certificatesManager.putMerchant(
-                    MCH_ID,
-                    new WechatPay2Credentials(
-                            MCH_ID, new PrivateKeySigner(MCH_SERIAL_NO, merchantPrivateKey)),
-                    MCH_API_V3_KEY.getBytes("utf-8")
+            String mchId = apiconfig.get("wxpayMchId").toString();
+            String mchSerialNo = apiconfig.get("mchSerialNo").toString();
+            String privateKeyContent = apiconfig.get("wxpayKey").toString();
+            String publicKeyContent = apiconfig.get("wxpayPublicKey").toString();
+
+            PrivateKey merchantPrivateKey = PemUtil.loadPrivateKey(
+                    new ByteArrayInputStream(privateKeyContent.getBytes(StandardCharsets.UTF_8))
             );
-            //从证书管理器获得验签器
-            Verifier verifier = certificatesManager.getVerifier(MCH_ID);
-            CloseableHttpClient httpClient = WechatPayHttpClientBuilder.create()
-                    .withMerchant(MCH_ID, MCH_SERIAL_NO, merchantPrivateKey)
-                    .withValidator(new WechatPay2Validator(verifier)).build();
-            return httpClient;
-        } catch (Exception e){
+
+            PublicKey wechatpayPublicKey = PemUtil.loadPublicKey(
+                    new ByteArrayInputStream(publicKeyContent.getBytes(StandardCharsets.UTF_8))
+            );
+
+            return WechatPayHttpClientBuilder.create()
+                    .withMerchant(mchId, mchSerialNo, merchantPrivateKey)
+                    .withWechatPay(mchSerialNo, wechatpayPublicKey)
+                    .build();
+
+        } catch (Exception e) {
             e.printStackTrace();
-            System.out.println(e);
+            return null;
         }
-        return null;
     }
 
     /**
-     * NATIVE 统一下单
-     * @param money
-     * @param body
-     * @return
+     * 统一下单接口（支持 Native / App / JSAPI / H5）
+     * @param money 金额（元）
+     * @param body 商品描述
+     * @param outTradeNo 商户订单号
+     * @param tradeType 支付类型：NATIVE / APP / JSAPI / H5
+     * @param apiconfig 支付配置
+     * @param openidOrWapUrl JSAPI传openid，H5传wap_url
+     * @return Map<String,String> 返回支付信息（code_url、prepay_id、h5_url）
      */
-    public static Map<String, String> native_payment_order(String money, String body, String outTradeNo,TypechoApiconfig apiconfig) {
+    public static Map<String, String> unifiedOrder(String money, String body, String outTradeNo,
+                                                   String tradeType, Map<String, Object> apiconfig,
+                                                   String openidOrWapUrl) {
         try {
             CloseableHttpClient httpClient = initHttpClient(apiconfig);
-            String MCH_ID = apiconfig.getWxpayMchId();
-            String NOTIFY_URL = apiconfig.getWxpayNotifyUrl();
-            HttpPost httpPost = new HttpPost(NATIVE_PAY_API);
-            // 请求body参数
-            String reqdata = "{"
-                    //+ "\"time_expire\":\"2018-06-08T10:34:56+08:00\","
-                    + "\"amount\": {"
-                    + "\"total\":" + Integer.parseInt(String.valueOf(Float.parseFloat(money) * 100).split("\\.")[0]) + ","
-                    + "\"currency\":\"" + CURRENCY_CNY + "\""
-                    + "},"
-                    + "\"mchid\":\"" + MCH_ID + "\","
-                    + "\"description\":\"" + body + "\","
-                    + "\"notify_url\":\"" + NOTIFY_URL + "\","
-                    + "\"out_trade_no\":\"" + outTradeNo + "\","
-                    + "\"goods_tag\":\"商品购买\","
-                    + "\"appid\":\"" + apiconfig.getWxpayAppId() + "\""
-                    + "}";
-            StringEntity entity = new StringEntity(reqdata, "utf-8");
+            String MCH_ID = apiconfig.get("wxpayMchId").toString();
+            String NOTIFY_URL = apiconfig.get("wxpayNotifyUrl").toString();
+            String APPID = apiconfig.get("wxpayAppId").toString();
+
+            String url = null;
+            JSONObject json = new JSONObject();
+            json.put("mchid", MCH_ID);
+            json.put("description", body);
+            json.put("out_trade_no", outTradeNo);
+            JSONObject amountJson = new JSONObject();
+            amountJson.put("total", (int)(Float.parseFloat(money) * 100));
+            amountJson.put("currency", CURRENCY_CNY);
+            json.put("amount", amountJson);
+            json.put("notify_url", NOTIFY_URL);
+            json.put("appid", APPID);
+
+            switch (tradeType.toUpperCase()) {
+                case "NATIVE":
+                    url = NATIVE_PAY_API;
+                    break;
+                case "APP":
+                    url = APP_PAY_API;
+                    break;
+                case "JSAPI":
+                    url = JSAPI_PAY_API;
+                    if (openidOrWapUrl != null) {
+                        JSONObject payer = new JSONObject();
+                        payer.put("openid", openidOrWapUrl);
+                        json.put("payer", payer);
+                    }
+                    break;
+                case "H5":
+                    url = H5_PAY_API;
+                    if (openidOrWapUrl != null) {
+                        JSONObject sceneInfo = new JSONObject();
+                        JSONObject h5Info = new JSONObject();
+                        h5Info.put("type", "Wap");
+                        h5Info.put("wap_url", openidOrWapUrl);
+                        h5Info.put("wap_name", body);
+                        sceneInfo.put("h5_info", h5Info);
+                        json.put("scene_info", sceneInfo);
+                    }
+                    break;
+                default:
+                    throw new RuntimeException("tradeType不支持");
+            }
+
+            HttpPost httpPost = new HttpPost(url);
+            StringEntity entity = new StringEntity(json.toJSONString(), "utf-8");
             entity.setContentType("application/json");
             httpPost.setEntity(entity);
             httpPost.setHeader("Accept", "application/json");
 
-            //完成签名并执行请求
-            CloseableHttpResponse response = null;
+            CloseableHttpResponse response = httpClient.execute(httpPost);
+            int statusCode = response.getStatusLine().getStatusCode();
+            String respBody = EntityUtils.toString(response.getEntity());
             Map<String, String> resultMap = new HashMap<>();
-            try {
-                System.out.println(httpPost);
-                response = httpClient.execute(httpPost);
 
-                int statusCode = response.getStatusLine().getStatusCode();
-                if (statusCode == 200) { //处理成功
-                    String codeUrl = EntityUtils.toString(response.getEntity());
-                    codeUrl = codeUrl.substring(codeUrl.indexOf("w"), codeUrl.indexOf("}") - 1);
-                    //String path = QRCodeGenerator.generateQRCodeImage(codeUrl);
-                    String path = codeUrl;
-                    resultMap.put("code", "200");
-                    resultMap.put("data", path);
-                    System.out.println("生成成功，路径为：" + path);
-                    System.out.println("success,return body = " + codeUrl);
-                    return resultMap;
-                } else if (statusCode == 204) { //处理成功，无返回Body
-                    System.out.println("success");
-                    resultMap.put("code", "204");
-                    resultMap.put("msg", "处理成功，但无返回Body");
-                    return resultMap;
-                } else {
-                    System.out.println("failed,resp code = " + statusCode + ",return body = " + EntityUtils.toString(response.getEntity()));
-                    throw new IOException("request failed");
+            if (statusCode == 200 || statusCode == 201) {
+                JSONObject respJson = JSON.parseObject(respBody);
+                switch (tradeType.toUpperCase()) {
+                    case "NATIVE":
+                        resultMap.put("code", "200");
+                        resultMap.put("data", respJson.getString("code_url"));
+                        break;
+                    case "APP":
+                        resultMap.put("code", "200");
+                        resultMap.put("prepay_id", respJson.getString("prepay_id"));
+                        break;
+                    case "JSAPI":
+                        resultMap.put("code", "200");
+                        resultMap.put("prepay_id", respJson.getString("prepay_id"));
+                        break;
+                    case "H5":
+                        resultMap.put("code", "200");
+                        resultMap.put("h5_url", respJson.getJSONObject("h5_url").getString("web_url"));
+                        break;
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
-            } finally {
-                response.close();
+                return resultMap;
+            } else {
+                resultMap.put("code", String.valueOf(statusCode));
+                resultMap.put("msg", respBody);
+                return resultMap;
             }
-        }  catch (Exception e) {
+
+        } catch (Exception e) {
             e.printStackTrace();
+            return null;
         }
-        return null;
     }
 
     /**
-     * NATIVE 查询订单
-     * @param outTradeNo 商户订单号
-     * @return
+     * 查询订单（通用）
      */
-    public static Map<String, String> native_query_order(String outTradeNo,TypechoApiconfig apiconfig) {
+    public static Map<String, String> queryOrder(String outTradeNo, Map<String, Object> apiconfig) {
         CloseableHttpResponse response = null;
-        String MCH_ID = apiconfig.getWxpayMchId();
+        String MCH_ID = apiconfig.get("wxpayMchId").toString();
         try {
-            String url = NATIVE_PAY_OUT_TRADE_NO_QUERY_ORDER_API + outTradeNo;
-            //请求URL
+            String url = "https://api.mch.weixin.qq.com/v3/pay/transactions/id/" + outTradeNo;
             URIBuilder uriBuilder = new URIBuilder(url);
-
             uriBuilder.setParameter("mchid", MCH_ID);
-
-            //完成签名并执行请求
             HttpGet httpGet = new HttpGet(uriBuilder.build());
             httpGet.addHeader("Accept", "application/json");
             response = initHttpClient(apiconfig).execute(httpGet);
@@ -195,257 +207,114 @@ public class WeChatPayUtils {
                 String resData = EntityUtils.toString(response.getEntity());
                 Map<String, Object> data = JSON.parseObject(resData, HashMap.class);
                 String tradeState = String.valueOf(data.get("trade_state"));
-                if("SUCCESS".equals(tradeState)){
-                    resultMap.put("msg", "支付成功");
-                }else if("NOTPAY".equals(tradeState)){
-                    resultMap.put("msg", "订单尚未支付");
-                }else if("CLOSED".equals(tradeState)){
-                    resultMap.put("msg", "此订单已关闭，请重新下单");
-                }else if("USERPAYING".equals(tradeState)){
-                    resultMap.put("msg", "正在支付中，请尽快支付完成哦");
-                }else if("PAYERROR".equals(tradeState)){
-                    resultMap.put("msg", "支付失败，请重新下单");
-                }
+                if ("SUCCESS".equals(tradeState)) resultMap.put("msg", "支付成功");
+                else if ("NOTPAY".equals(tradeState)) resultMap.put("msg", "订单尚未支付");
+                else if ("CLOSED".equals(tradeState)) resultMap.put("msg", "此订单已关闭，请重新下单");
+                else if ("USERPAYING".equals(tradeState)) resultMap.put("msg", "正在支付中");
+                else if ("PAYERROR".equals(tradeState)) resultMap.put("msg", "支付失败，请重新下单");
                 resultMap.put("code", "200");
                 resultMap.put("tradeState", tradeState);
-//                resultMap.put("openId", String.valueOf(JSON.parseObject(String.valueOf(data.get("payer")), HashMap.class).get("openid")));
-//                resultMap.put("transactionId", String.valueOf(data.get("transaction_id")));
-                return resultMap;
-            } else if (statusCode == 204) {
-                System.out.println("success");resultMap.put("code", "204");
-                resultMap.put("msg", "处理成功，但无返回Body");
                 return resultMap;
             } else {
-                System.out.println("failed,resp code = " + statusCode+ ",return body = " + EntityUtils.toString(response.getEntity()));
-                throw new IOException("request failed");
+                resultMap.put("code", String.valueOf(statusCode));
+                resultMap.put("msg", EntityUtils.toString(response.getEntity()));
+                return resultMap;
             }
-        } catch (URISyntaxException e) {
+        } catch (Exception e) {
             e.printStackTrace();
-        } catch (ClientProtocolException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+            return null;
         } finally {
-            try {
-                response.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            try { if (response != null) response.close(); } catch (IOException ignored) {}
         }
-        return null;
     }
 
     /**
-     * APIV3密钥版，NATIVE支付回调参数解密
-     * @param map
-     * @return
+     * APIV3 回调参数解密
      */
-    public static Map<String, Object> paramDecodeForAPIV3(Map<String, Object> map,TypechoApiconfig apiconfig){
-        String MCH_API_V3_KEY = apiconfig.getMchApiV3Key();
-        //使用微信SDK提供的AesUtil工具类和APIV3密钥进行签名验证
+    public static Map<String, Object> paramDecodeForAPIV3(Map<String, Object> map, Map<String,Object> apiconfig){
+        String MCH_API_V3_KEY = apiconfig.get("mchApiV3Key").toString();
         AesUtil aesUtil = new AesUtil(MCH_API_V3_KEY.getBytes(StandardCharsets.UTF_8));
         JSONObject paramsObj = new JSONObject(map);
         JSONObject rJ = paramsObj.getJSONObject("resource");
         Map<String, String> paramMap = (Map) rJ;
         try {
-            //如果APIV3密钥和微信返回的resource中的信息不一致，是拿不到微信返回的支付信息
             String decryptToString = aesUtil.decryptToString(
                     paramMap.get("associated_data").getBytes(StandardCharsets.UTF_8),
                     paramMap.get("nonce").getBytes(StandardCharsets.UTF_8),
                     paramMap.get("ciphertext"));
-
-            //验证成功后将获取的支付信息转为Map
-            Map<String, Object> resultMap = WeChatPayUtils.strToMap(decryptToString);
-            return resultMap;
-        } catch (GeneralSecurityException e) {
+            return strToMap(decryptToString);
+        } catch (Exception e) {
             e.printStackTrace();
+            return null;
         }
-        return null;
     }
 
-    /**
-     * 交易起始时间
-     */
-    public static String getTimeStart(){
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
-        return sdf.format(new Date());
+    // -------------------------- 以下保留原有通用方法 --------------------------
+
+    public static String getTimeStart(){ return new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()); }
+    public static String getTimeExpire(){ Calendar now = Calendar.getInstance(); now.add(Calendar.MINUTE,30); return new SimpleDateFormat("yyyyMMddHHmmss").format(now.getTime()); }
+    public static String getRandomStr() { return UUID.randomUUID().toString().replace("-", ""); }
+    public static String generateOrderNo() { return new SimpleDateFormat("yyyyMMddHHmmssSSS").format(new Date()) + makeRandom(15); }
+    public static String makeRandom(int n){ Long num =  (long)(Math.random()*9*Math.pow(10,n-1)) + (long)Math.pow(10,n-1); return num.toString(); }
+
+    public static String formatUrlMap(Map<String, String> paraMap, boolean urlEncode, boolean keyToLower){
+        String buff = "";
+        try {
+            List<Map.Entry<String, String>> infoIds = new ArrayList<>(paraMap.entrySet());
+            Collections.sort(infoIds, Comparator.comparing(Map.Entry::getKey));
+            StringBuilder buf = new StringBuilder();
+            for (Map.Entry<String, String> item : infoIds) {
+                if (StringUtils.isNotBlank(item.getKey())) {
+                    String key = item.getKey();
+                    String val = item.getValue();
+                    if (urlEncode) val = URLEncoder.encode(val, "utf-8");
+                    if (keyToLower) buf.append(key.toLowerCase()).append("=").append(val);
+                    else buf.append(key).append("=").append(val);
+                    buf.append("&");
+                }
+            }
+            buff = buf.toString();
+            if (!buff.isEmpty()) buff = buff.substring(0, buff.length() - 1);
+        } catch (Exception e) { return null; }
+        return buff;
     }
 
-    /**
-     * 交易结束时间（订单失效时间）
-     * @return
-     */
-    public static String getTimeExpire(){
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
-        Calendar now = Calendar.getInstance();
-        now.add(Calendar.MINUTE, 30);
-        return sdf.format(now.getTimeInMillis());
-    }
+    public static Map<String,Object> strToMap(String str){ return JSON.parseObject(str, HashedMap.class); }
 
-    /**
-     * 获取32位随机字符串
-     * @return
-     */
-    public static String getRandomStr() {
-        return UUID.randomUUID().toString().replace("-", "");
-    }
-
-    /**
-     * 生成订单号
-     * @return
-     */
-    public static String generateOrderNo() {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmssSSS");
-        return sdf.format(new Date()) + makeRandom(15);
-    }
-
-    /**
-     * 生成随机数 纯数字
-     *
-     * @return
-     */
-    public static String makeRandom(int n){
-        if(n<1){
-            throw new IllegalArgumentException("随机数位数必须大于0");
-        }
-        Long num =  (long)(Math.random()*9*Math.pow(10,n-1)) + (long)Math.pow(10,n-1);
-        return num.toString();
-    }
-
-    /**
-     * 将Map转换为XML格式的字符串
-     *
-     * @param data Map类型数据
-     * @return XML格式的字符串
-     * @throws Exception
-     */
-    public static String mapToXml(Map<String, String> data) throws Exception {
+    public static String mapToXml(Map<String,String> data) throws Exception {
         org.w3c.dom.Document document = WXPayXmlUtil.newDocument();
         org.w3c.dom.Element root = document.createElement("xml");
         document.appendChild(root);
         for (String key: data.keySet()) {
-            String value = data.get(key);
-            if (value == null) {
-                value = "";
-            }
-            value = value.trim();
+            String value = data.get(key) == null ? "" : data.get(key).trim();
             org.w3c.dom.Element filed = document.createElement(key);
             filed.appendChild(document.createTextNode(value));
             root.appendChild(filed);
         }
         TransformerFactory tf = TransformerFactory.newInstance();
         Transformer transformer = tf.newTransformer();
-        DOMSource source = new DOMSource(document);
-        transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+        transformer.setOutputProperty(OutputKeys.ENCODING,"UTF-8");
+        transformer.setOutputProperty(OutputKeys.INDENT,"yes");
         StringWriter writer = new StringWriter();
-        StreamResult result = new StreamResult(writer);
-        transformer.transform(source, result);
-        String output = writer.getBuffer().toString(); //.replaceAll("\n|\r", "");
-        try {
-            writer.close();
-        }
-        catch (Exception ex) {
-        }
-        return output;
+        transformer.transform(new DOMSource(document), new StreamResult(writer));
+        return writer.getBuffer().toString();
     }
 
-    /**
-     * Xml字符串转换为Map
-     *
-     * @param
-     * @return
-     */
-
-    public static Map<String, String> xmlStrToMap(String strXML) throws Exception {
-        try {
-            Map<String, String> data = new HashMap<String, String>();
-            DocumentBuilder documentBuilder = WXPayXmlUtil.newDocumentBuilder();
-            InputStream stream = new ByteArrayInputStream(strXML.getBytes("UTF-8"));
-            org.w3c.dom.Document doc = documentBuilder.parse(stream);
-            doc.getDocumentElement().normalize();
-            NodeList nodeList = doc.getDocumentElement().getChildNodes();
-            for (int idx = 0; idx < nodeList.getLength(); ++idx) {
-                Node node = nodeList.item(idx);
-                if (node.getNodeType() == Node.ELEMENT_NODE) {
-                    org.w3c.dom.Element element = (org.w3c.dom.Element) node;
-                    data.put(element.getNodeName(), element.getTextContent());
-                }
+    public static Map<String,String> xmlStrToMap(String strXML) throws Exception {
+        Map<String,String> data = new HashMap<>();
+        DocumentBuilder documentBuilder = WXPayXmlUtil.newDocumentBuilder();
+        InputStream stream = new ByteArrayInputStream(strXML.getBytes("UTF-8"));
+        org.w3c.dom.Document doc = documentBuilder.parse(stream);
+        doc.getDocumentElement().normalize();
+        NodeList nodeList = doc.getDocumentElement().getChildNodes();
+        for(int idx=0; idx<nodeList.getLength(); idx++){
+            Node node = nodeList.item(idx);
+            if(node.getNodeType()==Node.ELEMENT_NODE){
+                org.w3c.dom.Element element = (org.w3c.dom.Element) node;
+                data.put(element.getNodeName(), element.getTextContent());
             }
-            try {
-                stream.close();
-            } catch (Exception ex) {
-                // do nothing
-            }
-            return data;
-        } catch (Exception ex) {
-            //WXPayUtil.getLogger().warn("Invalid XML, can not convert to map. Error message: {}. XML content: {}", ex.getMessage(), strXML);
-            throw ex;
         }
-
+        stream.close();
+        return data;
     }
-
-
-
-    /**
-     * 方法用途: 对所有传入参数按照字段名的 ASCII 码从小到大排序（字典序），并且生成url参数串<br>
-     * 实现步骤: <br>
-     *
-     * @param paraMap    要排序的Map对象
-     * @param urlEncode  是否需要URLENCODE
-     * @param keyToLower 是否需要将Key转换为全小写
-     *                   true:key转化成小写，false:不转化
-     * @return
-     */
-    public static String formatUrlMap(Map<String, String> paraMap, boolean urlEncode, boolean keyToLower) {
-        String buff = "";
-        Map<String, String> tmpMap = paraMap;
-        try {
-            List<Map.Entry<String, String>> infoIds = new ArrayList<Map.Entry<String, String>>(tmpMap.entrySet());
-            // 对所有传入参数按照字段名的 ASCII 码从小到大排序（字典序）
-            Collections.sort(infoIds, new Comparator<Map.Entry<String, String>>() {
-                @Override
-                public int compare(Map.Entry<String, String> o1, Map.Entry<String, String> o2) {
-                    return (o1.getKey()).toString().compareTo(o2.getKey());
-                }
-            });
-            // 构造URL 键值对的格式
-            StringBuilder buf = new StringBuilder();
-            for (Map.Entry<String, String> item : infoIds) {
-                if (StringUtils.isNotBlank(item.getKey())) {
-                    String key = item.getKey();
-                    String val = item.getValue();
-                    if (urlEncode) {
-                        val = URLEncoder.encode(val, "utf-8");
-                    }
-                    if (keyToLower) {
-                        buf.append(key.toLowerCase() + "=" + val);
-                    } else {
-                        buf.append(key + "=" + val);
-                    }
-                    buf.append("&");
-                }
-
-            }
-            buff = buf.toString();
-            if (buff.isEmpty() == false) {
-                buff = buff.substring(0, buff.length() - 1);
-            }
-        } catch (Exception e) {
-            return null;
-        }
-        return buff;
-    }
-
-    /**
-     * 字符串转换为Map集合
-     * @param str
-     * @return
-     */
-    public static Map<String, Object> strToMap(String str){
-        Map<String, Object> map = JSON.parseObject(str, HashedMap.class);
-        return map;
-    }
-
-
 }

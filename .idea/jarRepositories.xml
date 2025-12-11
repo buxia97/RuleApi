@@ -7,11 +7,6 @@
       <option name="url" value="https://repo.maven.apache.org/maven2" />
     </remote-repository>
     <remote-repository>
-      <option name="id" value="spring-milestones" />
-      <option name="name" value="Spring Milestones" />
-      <option name="url" value="https://repo.spring.io/milestone" />
-    </remote-repository>
-    <remote-repository>
       <option name="id" value="nexus-aliyun" />
       <option name="name" value="nexus-aliyun" />
       <option name="url" value="http://maven.aliyun.com/nexus/content/groups/public/" />
@@ -27,9 +22,9 @@
       <option name="url" value="https://repository.jboss.org/nexus/content/repositories/public/" />
     </remote-repository>
     <remote-repository>
-      <option name="id" value="getui-nexus" />
-      <option name="name" value="getui-nexus" />
-      <option name="url" value="http://mvn.gt.igexin.com/nexus/content/repositories/releases/" />
+      <option name="id" value="nexus-aliyun" />
+      <option name="name" value="nexus-aliyun" />
+      <option name="url" value="https://maven.aliyun.com/nexus/content/groups/public/" />
     </remote-repository>
   </component>
 </project>

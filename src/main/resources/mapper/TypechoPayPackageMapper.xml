@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.RuleApi.dao.TypechoPayPackageDao">
+
+    <resultMap id="BaseResultMap" type="com.RuleApi.entity.TypechoPayPackage" >
+        <result column="id" property="id" />
+        <result column="name" property="name" />
+        <result column="intro" property="intro" />
+        <result column="price" property="price" />
+        <result column="gold" property="gold" />
+        <result column="integral" property="integral" />
+        <result column="appleProductId" property="appleProductId" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        `id`,
+        `name`,
+        `intro`,
+        `price`,
+        `gold`,
+        `integral`,
+        `appleProductId`
+    </sql>
+
+    <!-- 插入数据 -->
+    <insert id="insert" parameterType="com.RuleApi.entity.TypechoPayPackage">
+        INSERT INTO ${prefix}_pay_package
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test ='null != id'>
+                `id`,
+            </if>
+            <if test ='null != name'>
+                `name`,
+            </if>
+            <if test ='null != intro'>
+                `intro`,
+            </if>
+            <if test ='null != price'>
+                `price`,
+            </if>
+            <if test ='null != gold'>
+                `gold`,
+            </if>
+            <if test ='null != integral'>
+                `integral`,
+            </if>
+            <if test ='null != appleProductId'>
+                `appleProductId`
+            </if>
+
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test ='null != id'>
+                #{id},
+            </if>
+            <if test ='null != name'>
+                #{name},
+            </if>
+            <if test ='null != intro'>
+                #{intro},
+            </if>
+            <if test ='null != price'>
+                #{price},
+            </if>
+            <if test ='null != gold'>
+                #{gold},
+            </if>
+            <if test ='null != integral'>
+                #{integral},
+            </if>
+            <if test ='null != appleProductId'>
+                #{appleProductId}
+            </if>
+        </trim>
+    </insert>
+
+    <!-- 批量插入数据 -->
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO ${prefix}_pay_package ( <include refid="Base_Column_List" /> ) VALUES
+        <foreach collection="list" item="curr" index="index" separator=",">
+            (
+                #{curr.id},
+                #{curr.name},
+                #{curr.intro},
+                #{curr.price},
+                #{curr.gold},
+                #{curr.integral}
+            )
+        </foreach>
+    </insert>
+
+    <!-- 更新 -->
+    <update id="update" parameterType="com.RuleApi.entity.TypechoPayPackage">
+        UPDATE ${prefix}_pay_package
+        <set>
+            <if test ='null != name'>`name` = #{name},</if>
+            <if test ='null != intro'>`intro` = #{intro},</if>
+            <if test ='null != price'>`price` = #{price},</if>
+            <if test ='null != gold'>`gold` = #{gold},</if>
+            <if test ='null != integral'>`integral` = #{integral},</if>
+            <if test ='null != appleProductId'>`appleProductId` = #{appleProductId}</if>
+        </set>
+        WHERE `id` = #{id}
+    </update>
+
+    <!-- 删除 -->
+    <delete id="delete">
+        DELETE FROM typecho_pay_package
+        WHERE `id` = #{key}
+    </delete>
+
+    <!-- 批量删除 -->
+    <delete id="batchDelete" parameterType = "java.util.List">
+        DELETE FROM ${prefix}_pay_package WHERE id IN
+        <foreach collection="list"  item="item" open="(" separator="," close=")"  >
+            #{item}
+        </foreach>
+    </delete>
+
+    <!-- 主键查询 -->
+    <select id="selectByKey" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM ${prefix}_pay_package
+        WHERE `id` = #{key}
+    </select>
+
+    <!-- 条件查询 -->
+    <select id="selectList" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM ${prefix}_pay_package
+        <where>
+            <if test ='null != id'>
+                and `id` = #{id}
+            </if>
+            <if test ='null != name'>
+                and `name` = #{name}
+            </if>
+            <if test ='null != intro'>
+                and `intro` = #{intro}
+            </if>
+            <if test ='null != price'>
+                and `price` = #{price}
+            </if>
+            <if test ='null != gold'>
+                and `gold` = #{gold}
+            </if>
+            <if test ='null != integral'>
+                and `integral` = #{integral}
+            </if>
+            <if test ='null != appleProductId'>
+                and `appleProductId` = #{appleProductId}
+            </if>
+
+        </where>
+    </select>
+
+    <!-- 分页条件查询 -->
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM ${prefix}_pay_package
+        <where>
+            <if test ='null != typechoPayPackage.id'>
+                and `id` = #{typechoPayPackage.id}
+            </if>
+            <if test ='null != typechoPayPackage.name'>
+                and `name` = #{typechoPayPackage.name}
+            </if>
+            <if test ='null != typechoPayPackage.intro'>
+                and `intro` = #{typechoPayPackage.intro}
+            </if>
+            <if test ='null != typechoPayPackage.price'>
+                and `price` = #{typechoPayPackage.price}
+            </if>
+            <if test ='null != typechoPayPackage.gold'>
+                and `gold` = #{typechoPayPackage.gold}
+            </if>
+            <if test ='null != typechoPayPackage.integral'>
+                and `integral` = #{typechoPayPackage.integral}
+            </if>
+            <if test ='null != typechoPayPackage.appleProductId'>
+                and `appleProductId` = #{typechoPayPackage.appleProductId}
+            </if>
+
+        </where>
+        limit #{page,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
+    </select>
+
+    <!-- 总量查询 -->
+    <select id="total" resultType="java.lang.Integer">
+        SELECT count(*) FROM ${prefix}_pay_package
+        <where>
+            <if test ='null != id'>
+                and `id` = #{id}
+            </if>
+            <if test ='null != name'>
+                and `name` = #{name}
+            </if>
+            <if test ='null != intro'>
+                and `intro` = #{intro}
+            </if>
+            <if test ='null != price'>
+                and `price` = #{price}
+            </if>
+            <if test ='null != gold'>
+                and `gold` = #{gold}
+            </if>
+            <if test ='null != integral'>
+                and `integral` = #{integral}
+            </if>
+        </where>
+    </select>
+</mapper>

@@ -4,6 +4,8 @@ import javax.mail.MessagingException;
 
 import org.springframework.mail.javamail.MimeMessageHelper;
 
+import java.util.Map;
+
 public interface MailService {
 
     void handleAttachments(MimeMessageHelper mimeMessageHelper, String subject, String[] attachmentFilePaths);
@@ -20,7 +22,7 @@ public interface MailService {
      * @throws MessagingException
      */
     void send(String subject, String content, String[] toEmails, String[] ccPeoples,
-              String[] bccPeoples, String[] attachmentFilePaths) throws MessagingException;
+              String[] bccPeoples, String[] attachmentFilePaths, Map apiconfig) throws MessagingException;
 
 
     /**
@@ -29,7 +31,7 @@ public interface MailService {
      * @param content String 邮件内容
      * @param toEmails String[] 接收的邮箱
      */
-    void send(String subject, String content, String[] toEmails) throws MessagingException;
+    void send(String subject, String content, String[] toEmails, Map apiconfig) throws MessagingException;
 
 
     /**
@@ -41,7 +43,7 @@ public interface MailService {
      * <li>new String[] {"F:\\0desk\\邮件文档哦.pdf", "F:\\0desk\\maven-jar-plugin.txt"}</li>
      * @throws MessagingException
      */
-    void send(String subject, String content, String[] toEmails, String[] attachmentFilePaths)
+    void send(String subject, String content, String[] toEmails, String[] attachmentFilePaths, Map apiconfig)
             throws MessagingException;
 
 }

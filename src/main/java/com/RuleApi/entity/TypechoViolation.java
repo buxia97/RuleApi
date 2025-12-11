@@ -43,4 +43,9 @@ public class TypechoViolation implements Serializable {
      * handler  处理人，0为系统自动，其它为真实用户
      */
     private Integer handler;
+
+    /**
+     * value  预留字段，用于指定范围禁言
+     */
+    private Integer value;
 }

@@ -54,10 +54,10 @@ public interface TypechoChatMsgDao {
     /**
      * [分页条件查询]
      **/
-    List<TypechoChatMsg> selectPage (@Param("typechoChatMsg") TypechoChatMsg typechoChatMsg, @Param("page") Integer page, @Param("pageSize") Integer pageSize);
+    List<TypechoChatMsg> selectPage (@Param("typechoChatMsg") TypechoChatMsg typechoChatMsg, @Param("page") Integer page, @Param("pageSize") Integer pageSize, @Param("searchKey") String searchKey);
 
     /**
      * [总量查询]
      **/
-    int total(TypechoChatMsg typechoChatMsg);
+    int total(@Param("typechoChatMsg") TypechoChatMsg typechoChatMsg, @Param("searchKey") String searchKey);
 }

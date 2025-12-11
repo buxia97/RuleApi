@@ -40,6 +40,11 @@ public class TypechoShop implements Serializable {
     private Integer price;
 
     /**
+     * price  商品积分
+     */
+    private Integer integral;
+
+    /**
      * num  商品数量
      */
     private Integer num;

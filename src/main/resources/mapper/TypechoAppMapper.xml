@@ -175,25 +175,25 @@
         INSERT INTO ${prefix}_app ( <include refid="Base_Column_List" /> ) VALUES
         <foreach collection="list" item="curr" index="index" separator=",">
             (
-            #{curr.id},
-            #{curr.keyKey},
-            #{curr.name},
-            #{curr.type},
-            #{curr.logo},
-            #{curr.keywords},
-            #{curr.description},
-            #{curr.announcement},
-            #{curr.mail},
-            #{curr.website},
-            #{curr.currencyName},
-            #{curr.version},
-            #{curr.versionCode},
-            #{curr.versionIntro},
-            #{curr.androidUrl},
-            #{curr.iosUrl},
-            #{curr.adpid},
-            #{curr.field1},
-            #{curr.field2}
+                #{curr.id},
+                #{curr.keyKey},
+                #{curr.name},
+                #{curr.type},
+                #{curr.logo},
+                #{curr.keywords},
+                #{curr.description},
+                #{curr.announcement},
+                #{curr.mail},
+                #{curr.website},
+                #{curr.currencyName},
+                #{curr.version},
+                #{curr.versionCode},
+                #{curr.versionIntro},
+                #{curr.androidUrl},
+                #{curr.iosUrl},
+                #{curr.adpid},
+                #{curr.field1},
+                #{curr.field2}
             )
         </foreach>
     </insert>

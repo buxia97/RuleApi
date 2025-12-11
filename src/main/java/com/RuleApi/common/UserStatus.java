@@ -1,20 +1,16 @@
 package com.RuleApi.common;
 
-import com.RuleApi.entity.TypechoApiconfig;
-import com.RuleApi.entity.TypechoComments;
-import com.RuleApi.entity.TypechoMetas;
-import com.RuleApi.entity.TypechoUsers;
-import com.RuleApi.service.TypechoApiconfigService;
-import com.RuleApi.service.TypechoUsersService;
+import com.RuleApi.entity.*;
+import com.RuleApi.service.AllconfigService;
+import com.RuleApi.service.UsersService;
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Component
@@ -61,17 +57,21 @@ public class UserStatus {
         return new String(decodedBytes);
     }
     //获取总系统配置
-    public TypechoApiconfig getConfig(String dataprefix, TypechoApiconfigService apiconfigService, RedisTemplate redisTemplate){
-        TypechoApiconfig config = new TypechoApiconfig();
+    public Map getConfig(String dataprefix, AllconfigService allconfigService, RedisTemplate redisTemplate){
+
+        Map allConfig = new HashMap<>();
         try{
-            Map configJson = new HashMap<String, String>();
-            Map cacheInfo =new HashMap<String, String>();
-            cacheInfo = redisHelp.getMapValue(dataprefix+"_"+"config",redisTemplate);
+            Map cacheInfo = redisHelp.getMapValue(dataprefix+"_"+"config",redisTemplate);
             if(cacheInfo.size()>0){
-                configJson = cacheInfo;
+                allConfig = cacheInfo;
             }else{
                 String curKey = "";
-                TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+                TypechoAllconfig query = new TypechoAllconfig();
+                List<TypechoAllconfig> allconfigList = allconfigService.selectList(query);
+                for (int i = 0; i < allconfigList.size(); i++) {
+                    TypechoAllconfig item = allconfigList.get(i);
+                    allConfig.put(item.getField(),item.getValue());
+                }
                 if(redisHelp.getRedis(dataprefix+"_"+"apiNewVersion",redisTemplate)!=null){
                     String apiNewVersion = redisHelp.getRedis(dataprefix+"_"+"apiNewVersion",redisTemplate);
                     HashMap data = JSON.parseObject(apiNewVersion, HashMap.class);
@@ -80,25 +80,28 @@ public class UserStatus {
                         curKey = decrypt(curKey);
                     }
                 }
-                if(apiconfig.getLocalPath()!=null&&!apiconfig.getLocalPath().isEmpty()){
-                    String forbidden = apiconfig.getForbidden()+curKey;
-                    apiconfig.setForbidden(forbidden);
+                if(allConfig.get("forbidden")!=null&&!allConfig.get("forbidden").toString().equals("")){
+                    String forbidden = allConfig.get("forbidden").toString()+curKey;
+                    allConfig.put("forbidden",forbidden);
                 }
-                configJson = JSONObject.parseObject(JSONObject.toJSONString(apiconfig), Map.class);
                 redisHelp.delete(dataprefix+"_"+"config",redisTemplate);
-                redisHelp.setKey(dataprefix+"_"+"config",configJson,6000,redisTemplate);
+                redisHelp.setKey(dataprefix+"_"+"config",allConfig,6000,redisTemplate);
             }
-            config = JSON.parseObject(JSON.toJSONString(configJson), TypechoApiconfig.class);
         }catch (Exception e){
             System.err.println("读取配置出错！");
             e.printStackTrace();
         }
-        return config;
+        return allConfig;
     }
 
-    public static Map getUserInfo(Integer id,TypechoApiconfigService apiconfigService,TypechoUsersService usersService){
-
-        TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
+    public static Map getUserInfo(Integer id, AllconfigService allconfigService, UsersService usersService){
+        Map allConfig = new HashMap<>();
+        TypechoAllconfig query = new TypechoAllconfig();
+        List<TypechoAllconfig> allconfigList = allconfigService.selectList(query);
+        for (int i = 0; i < allconfigList.size(); i++) {
+            TypechoAllconfig item = allconfigList.get(i);
+            allConfig.put(item.getField(),item.getValue());
+        }
         Map userJson = new HashMap();
         TypechoUsers user = usersService.selectByKey(id);
         if(user!=null){
@@ -119,11 +122,11 @@ public class UserStatus {
                         String qq = mail.replace("@qq.com","");
                         userJson.put("avatar", "https://q1.qlogo.cn/g?b=qq&nk="+qq+"&s=640");
                     }else{
-                        userJson.put("avatar", baseFull.getAvatar(apiconfig.getWebinfoAvatar(), mail));
+                        userJson.put("avatar", baseFull.getAvatar(allConfig.get("webinfoAvatar").toString(), mail));
                     }
                     //json.put("avatar",baseFull.getAvatar(apiconfig.getWebinfoAvatar(),user.getMail()));
                 }else{
-                    userJson.put("avatar",apiconfig.getWebinfoAvatar()+"null");
+                    userJson.put("avatar",allConfig.get("webinfoAvatar").toString()+"null");
                 }
             }else{
                 userJson.put("avatar", user.getAvatar());
@@ -132,6 +135,8 @@ public class UserStatus {
             userJson.put("experience", user.getExperience());
             userJson.put("introduce", user.getIntroduce());
             userJson.put("bantime", user.getBantime());
+            userJson.put("ip", user.getIp());
+            userJson.put("local", user.getLocal());
             //判断是否为VIP
             userJson.put("vip", user.getVip());
             userJson.put("isvip", 0);
@@ -146,8 +151,22 @@ public class UserStatus {
             userJson.put("uid", 0);
             userJson.put("name", "用户已注销");
             userJson.put("groupKey", "");
-            userJson.put("avatar", apiconfig.getWebinfoAvatar() + "null");
+            userJson.put("avatar", allConfig.get("webinfoAvatar").toString()+ "null");
         }
         return userJson;
+    }
+    public static Integer isIdentify(Integer uid,String prefix,JdbcTemplate jdbcTemplate){
+        String sql = "SELECT COUNT(*) " +
+                "FROM (" +
+                "    SELECT uid FROM `"+prefix+"_company` WHERE uid = ? and identifyStatus = 1" +
+                "    UNION ALL " +
+                "    SELECT uid FROM `"+prefix+"_consumer` WHERE uid = ? and identifyStatus = 1" +
+                ") AS combined_data";
+        Integer identifyNum = jdbcTemplate.queryForObject(sql, Integer.class, uid, uid);
+        if(identifyNum<1){
+            return 0;
+        }else{
+            return 1;
+        }
     }
 }

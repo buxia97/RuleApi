@@ -10,6 +10,8 @@
         <result column="text" property="text" />
         <result column="created" property="created" />
         <result column="handler" property="handler" />
+        <result column="value" property="value" />
+
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -18,7 +20,8 @@
         `type`,
         `text`,
         `created`,
-        `handler`
+        `handler`,
+        `value`
     </sql>
 
     <!-- 插入数据 -->
@@ -41,7 +44,10 @@
                 `created`,
             </if>
             <if test ='null != handler'>
-                `handler`
+                `handler`,
+            </if>
+            <if test ='null != value'>
+                `value`
             </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
@@ -61,7 +67,10 @@
                 #{created},
             </if>
             <if test ='null != handler'>
-                #{handler}
+                #{handler},
+            </if>
+            <if test ='null != value'>
+                #{value}
             </if>
         </trim>
     </insert>
@@ -89,7 +98,8 @@
             <if test ='null != type'>`type` = #{type},</if>
             <if test ='null != text'>`text` = #{text},</if>
             <if test ='null != created'>`created` = #{created},</if>
-            <if test ='null != handler'>`handler` = #{handler}</if>
+            <if test ='null != handler'>`handler` = #{handler},</if>
+            <if test ='null != value'>`value` = #{value}</if>
         </set>
         WHERE `id` = #{id}
     </update>
@@ -164,7 +174,12 @@
             <if test ='null != typechoViolation.handler'>
                 and `handler` = #{typechoViolation.handler}
             </if>
+            <if test ='null != typechoViolation.value'>
+                and `value` = #{typechoViolation.valuer}
+            </if>
+
         </where>
+        order by created desc
         limit #{page,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
     </select>
 

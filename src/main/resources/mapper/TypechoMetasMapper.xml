@@ -12,8 +12,6 @@
         <result column="count" property="count" />
         <result column="order" property="orderKey" />
         <result column="parent" property="parent" />
-        <result column="imgurl" property="imgurl" />
-        <result column="isrecommend" property="isrecommend" />
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -182,9 +180,6 @@
             <if test ='null != parent'>
                 and `parent` = #{parent}
             </if>
-            <if test ='null != parent'>
-                and `isrecommend` = #{isrecommend}
-            </if>
         </where>
     </select>
 
@@ -225,7 +220,7 @@
             </if>
         </where>
         <if test="order != null and order != ''">
-            order by CONCAT('`', #{order}, '`') desc
+            order by `${order}` desc
         </if>
         limit ${page}, ${pageSize}
     </select>

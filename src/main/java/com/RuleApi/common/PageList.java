@@ -3,6 +3,7 @@ package com.RuleApi.common;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -46,5 +47,10 @@ public class PageList<T extends Serializable> {
     /**
      * 对象集合
      */
-    private List<T> list;
+    private List<T> list = new ArrayList<>();
+
+    /**
+     * msg
+     */
+    private  String msg;
 }

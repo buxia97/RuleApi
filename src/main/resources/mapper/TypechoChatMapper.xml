@@ -111,15 +111,15 @@
         INSERT INTO ${prefix}_chat ( <include refid="Base_Column_List" /> ) VALUES
         <foreach collection="list" item="curr" index="index" separator=",">
             (
-            #{curr.id},
-            #{curr.uid},
-            #{curr.toid},
-            #{curr.created},
-            #{curr.lastTime},
-            #{curr.type},
-            #{curr.name},
-            #{curr.pic},
-            #{curr.ban}
+                #{curr.id},
+                #{curr.uid},
+                #{curr.toid},
+                #{curr.created},
+                #{curr.lastTime},
+                #{curr.type},
+                #{curr.name},
+                #{curr.pic},
+                #{curr.ban}
             )
         </foreach>
     </insert>

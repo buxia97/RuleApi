@@ -15,7 +15,7 @@ public class TypechoApp implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * id
+     * id  
      */
     private Integer id;
 

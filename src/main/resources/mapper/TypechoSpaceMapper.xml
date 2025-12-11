@@ -112,16 +112,16 @@
         INSERT INTO ${prefix}_space ( <include refid="Base_Column_List" /> ) VALUES
         <foreach collection="list" item="curr" index="index" separator=",">
             (
-            #{curr.id},
-            #{curr.uid},
-            #{curr.created},
-            #{curr.modified},
-            #{curr.text},
-            #{curr.pic},
-            #{curr.type},
-            #{curr.likes},
-            #{curr.toid},
-            #{curr.status}
+                #{curr.id},
+                #{curr.uid},
+                #{curr.created},
+                #{curr.modified},
+                #{curr.text},
+                #{curr.pic},
+                #{curr.type},
+                #{curr.likes},
+                #{curr.toid},
+                #{curr.status}
             )
         </foreach>
     </insert>

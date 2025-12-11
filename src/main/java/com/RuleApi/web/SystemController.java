@@ -5,6 +5,7 @@ import com.RuleApi.entity.*;
 import com.RuleApi.service.*;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import net.dreamlu.mica.xss.core.XssCleanIgnore;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,9 +17,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-import com.RuleApi.common.*;
 
-import javax.servlet.http.HttpServletRequest;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,20 +38,24 @@ public class SystemController {
     HttpClient HttpClient = new HttpClient();
     RedisHelp redisHelp =new RedisHelp();
 
-    baseFull baseFull = new baseFull();
 
     @Autowired
-    private TypechoApiconfigService apiconfigService;
+    private ApiconfigService apiconfigService;
 
     @Autowired
-    private TypechoAdsService adsService;
+    private AdsService adsService;
 
     @Autowired
     private PushService pushService;
 
+    @Autowired
+    private AllconfigService allconfigService;
 
     @Autowired
-    private TypechoAppService appService;
+    private PayPackageService payPackageService;
+
+    @Autowired
+    private AppService appService;
 
     @Autowired
     private RedisTemplate redisTemplate;
@@ -60,8 +63,12 @@ public class SystemController {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Autowired
+    private EmailtemplateService emailtemplateService;
 
     UserStatus UStatus = new UserStatus();
+
+    baseFull baseFull = new baseFull();
 
 
     @Value("${webinfo.key}")
@@ -131,7 +138,7 @@ public class SystemController {
      * */
     @RequestMapping(value = "/getConfig")
     @ResponseBody
-    @LoginRequired(purview = "-2")
+    @LoginRequired(purview = "2")
     public String getConfig(@RequestParam(value = "webkey", required = false,defaultValue = "") String  webkey) {
         if(webkey.length()<1){
             return Result.getResultJson(0,"请输入正确的访问key",null);
@@ -167,7 +174,7 @@ public class SystemController {
      */
     @RequestMapping(value = "/setupWebKey")
     @ResponseBody
-    @LoginRequired(purview = "-2")
+    @LoginRequired(purview = "2")
     public String setupWebKey(@RequestParam(value = "webkey", required = false,defaultValue = "") String  webkey,@RequestParam(value = "params", required = false) String  params) {
         if(webkey.length()<1){
             return Result.getResultJson(0,"请输入正确的访问key",null);
@@ -177,7 +184,7 @@ public class SystemController {
         }
         Map jsonToMap = new HashMap();
         try {
-            //读取参数，开始写入
+        //读取参数，开始写入
             if (StringUtils.isNotBlank(params)) {
                 jsonToMap = JSONObject.parseObject(JSON.parseObject(params).toString());
                 //新的配置
@@ -207,7 +214,7 @@ public class SystemController {
      */
     @RequestMapping(value = "/setupCache")
     @ResponseBody
-    @LoginRequired(purview = "-2")
+    @LoginRequired(purview = "2")
     public String setupCache(@RequestParam(value = "webkey", required = false,defaultValue = "") String  webkey,@RequestParam(value = "params", required = false) String  params) {
         if(webkey.length()<1){
             return Result.getResultJson(0,"请输入正确的访问key",null);
@@ -284,7 +291,7 @@ public class SystemController {
      */
     @RequestMapping(value = "/setupMysql")
     @ResponseBody
-    @LoginRequired(purview = "-2")
+    @LoginRequired(purview = "2")
     public String setupMysql(@RequestParam(value = "webkey", required = false,defaultValue = "") String  webkey,@RequestParam(value = "params", required = false) String  params) {
         if(webkey.length()<1){
             return Result.getResultJson(0,"请输入正确的访问key",null);
@@ -351,7 +358,7 @@ public class SystemController {
      */
     @RequestMapping(value = "/setupRedis")
     @ResponseBody
-    @LoginRequired(purview = "-2")
+    @LoginRequired(purview = "2")
     public String setupRedis(@RequestParam(value = "webkey", required = false,defaultValue = "") String  webkey,@RequestParam(value = "params", required = false) String  params) {
         if(webkey.length()<1){
             return Result.getResultJson(0,"请输入正确的访问key",null);
@@ -424,7 +431,7 @@ public class SystemController {
      */
     @RequestMapping(value = "/setupEmail")
     @ResponseBody
-    @LoginRequired(purview = "-2")
+    @LoginRequired(purview = "2")
     public String setupEmail(@RequestParam(value = "webkey", required = false,defaultValue = "") String  webkey,@RequestParam(value = "params", required = false) String  params) {
         if(webkey.length()<1){
             return Result.getResultJson(0,"请输入正确的访问key",null);
@@ -484,7 +491,7 @@ public class SystemController {
      */
     @RequestMapping(value = "/setupConfig")
     @ResponseBody
-    @LoginRequired(purview = "-2")
+    @LoginRequired(purview = "2")
     public String setupConfig(@RequestParam(value = "webkey", required = false,defaultValue = "") String  webkey,@RequestParam(value = "params", required = false) String  params) {
         if(webkey.length()<1){
             return Result.getResultJson(0,"请输入正确的访问key",null);
@@ -512,7 +519,7 @@ public class SystemController {
      */
     @RequestMapping(value = "/allConfig")
     @ResponseBody
-    @LoginRequired(purview = "-2")
+    @LoginRequired(purview = "2")
     public String allConfig(@RequestParam(value = "webkey", required = false,defaultValue = "") String  webkey) {
         if(webkey.length()<1){
             return Result.getResultJson(0,"请输入正确的访问key",null);
@@ -835,7 +842,7 @@ public class SystemController {
      */
     @RequestMapping(value = "/sendPushMsg")
     @ResponseBody
-    @LoginRequired(purview = "-2")
+    @LoginRequired(purview = "2")
     public String sendPushMsg(@RequestParam(value = "webkey", required = false,defaultValue = "") String  webkey,
                               @RequestParam(value = "cid", required = false) String  cid,
                               @RequestParam(value = "title", required = false) String  title,
@@ -846,7 +853,8 @@ public class SystemController {
         if(!webkey.equals(this.key)){
             return Result.getResultJson(0,"请输入正确的访问key",null);
         }
-        pushService.sendPushMsg(cid,title,content,"payload","打开评论区");
+        Map apiconfig = UStatus.getConfig(this.dataprefix,allconfigService,redisTemplate);
+        pushService.sendPushMsg(cid,title,content,"payload","打开评论区",apiconfig);
         return Result.getResultJson(1, "发送成功", null);
     }
 
@@ -855,9 +863,9 @@ public class SystemController {
      */
     @RequestMapping(value = "/addApp")
     @ResponseBody
-    @LoginRequired(purview = "-2")
+    @LoginRequired(purview = "2")
     public String addApp(@RequestParam(value = "webkey", required = false,defaultValue = "") String  webkey,
-                         @RequestParam(value = "params", required = false) String  params) {
+                             @RequestParam(value = "params", required = false) String  params) {
 
         TypechoApp insert = null;
         if(webkey.length()<1){
@@ -892,9 +900,9 @@ public class SystemController {
      */
     @RequestMapping(value = "/updateApp")
     @ResponseBody
-    @LoginRequired(purview = "-2")
+    @LoginRequired(purview = "2")
     public String updateApp(@RequestParam(value = "webkey", required = false,defaultValue = "") String  webkey,
-                            @RequestParam(value = "params", required = false) String  params) {
+                                 @RequestParam(value = "params", required = false) String  params) {
 
         TypechoApp update = null;
         if(webkey.length()<1){
@@ -931,9 +939,9 @@ public class SystemController {
      */
     @RequestMapping(value = "/deleteApp")
     @ResponseBody
-    @LoginRequired(purview = "-2")
+    @LoginRequired(purview = "2")
     public String deleteApp(@RequestParam(value = "webkey", required = false,defaultValue = "") String  webkey,
-                            @RequestParam(value = "id", required = false) String  id) {
+                                @RequestParam(value = "id", required = false) String  id) {
 
         if(webkey.length()<1){
             return Result.getResultJson(0,"请输入正确的访问key",null);
@@ -961,7 +969,7 @@ public class SystemController {
      */
     @RequestMapping(value = "/appList")
     @ResponseBody
-    @LoginRequired(purview = "-2")
+    @LoginRequired(purview = "2")
     public String appList(){
         List jsonList = new ArrayList();
         List cacheList = redisHelp.getList(this.dataprefix+"_"+"appList",redisTemplate);
@@ -1015,19 +1023,93 @@ public class SystemController {
                 }
                 appJson = JSONObject.parseObject(JSONObject.toJSONString(app), Map.class);
                 //获取补充性字段
-                TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
-                appJson.put("adsVideoType",apiconfig.getAdsVideoType());
-                appJson.put("isInvite",apiconfig.getIsInvite());
-                appJson.put("isEmail",apiconfig.getIsEmail());
-                appJson.put("isPro",1);
+                Map apiconfig = UStatus.getConfig(this.dataprefix,allconfigService,redisTemplate);
+                Integer isPhone = 0;
+                if(apiconfig.get("isPhone")!=null){
+                    isPhone = Integer.parseInt(apiconfig.get("isPhone").toString());
+                }
+                Integer adsVideoType = 0;
+                if(apiconfig.get("adsVideoType")!=null){
+                    adsVideoType = Integer.parseInt(apiconfig.get("adsVideoType").toString());
+                }
+                Integer verifyLevel = 0;
+                if(apiconfig.get("verifyLevel")!=null){
+                    verifyLevel = Integer.parseInt(apiconfig.get("verifyLevel").toString());
+                }
+                Integer isInvite = 0;
+                if(apiconfig.get("isInvite")!=null){
+                    isInvite = Integer.parseInt(apiconfig.get("isInvite").toString());
+                }
+                Integer isEmail = 0;
+                if(apiconfig.get("isEmail")!=null){
+                    isEmail = Integer.parseInt(apiconfig.get("isEmail").toString());
+                }
+                Integer allowDelete = 0;
+                if(apiconfig.get("allowDelete")!=null){
+                    allowDelete = Integer.parseInt(apiconfig.get("allowDelete").toString());
+                }
+                Integer switchAlipay = 1;
+                if(apiconfig.get("switchAlipay")!=null){
+                    switchAlipay = Integer.parseInt(apiconfig.get("switchAlipay").toString());
+                }
+                Integer switchWxpay = 1;
+                if(apiconfig.get("switchWxpay")!=null){
+                    switchWxpay = Integer.parseInt(apiconfig.get("switchWxpay").toString());
+                }
+                Integer switchEpay = 1;
+                if(apiconfig.get("switchEpay")!=null){
+                    switchEpay = Integer.parseInt(apiconfig.get("switchEpay").toString());
+                }
+                Integer switchApplepay = 1;
+                if(apiconfig.get("switchApplepay")!=null){
+                    switchApplepay = Integer.parseInt(apiconfig.get("switchApplepay").toString());
+                }
+                Integer switchTokenpay = 1;
+                if(apiconfig.get("switchTokenpay")!=null){
+                    switchTokenpay = Integer.parseInt(apiconfig.get("switchTokenpay").toString());
+                }
+                Integer switchQQLogin = 1;
+                if(apiconfig.get("switchQQLogin")!=null){
+                    switchQQLogin = Integer.parseInt(apiconfig.get("switchQQLogin").toString());
+                }
+                Integer switchWxLogin = 1;
+                if(apiconfig.get("switchWxLogin")!=null){
+                    switchWxLogin = Integer.parseInt(apiconfig.get("switchWxLogin").toString());
+                }
+                Integer switchWbLogin = 1;
+                if(apiconfig.get("switchWbLogin")!=null){
+                    switchWbLogin = Integer.parseInt(apiconfig.get("switchWbLogin").toString());
+                }
+                Integer switchAppleLogin = 1;
+                if(apiconfig.get("switchAppleLogin")!=null){
+                    switchAppleLogin = Integer.parseInt(apiconfig.get("switchAppleLogin").toString());
+                }
+                Integer minPayNum = 5;
+                if(apiconfig.get("minPayNum")!=null){
+                    minPayNum = Integer.parseInt(apiconfig.get("minPayNum").toString());
+                }
+                appJson.put("isPhone",isPhone);
+                appJson.put("adsVideoType",adsVideoType);
+                appJson.put("verifyLevel",verifyLevel);
+                appJson.put("isInvite",isInvite);
+                appJson.put("isEmail",isEmail);
+                appJson.put("allowDelete",allowDelete);
 
-
+                appJson.put("switchAlipay",switchAlipay);
+                appJson.put("switchWxpay",switchWxpay);
+                appJson.put("switchEpay",switchEpay);
+                appJson.put("switchApplepay",switchApplepay);
+                appJson.put("switchTokenpay",switchTokenpay);
+                appJson.put("switchQQLogin",switchQQLogin);
+                appJson.put("switchWxLogin",switchWxLogin);
+                appJson.put("switchWbLogin" ,switchWbLogin);
+                appJson.put("switchAppleLogin",switchAppleLogin);
+                appJson.put("minPayNum",minPayNum);
+                appJson.put("isPro",0);
                 redisHelp.delete(this.dataprefix+"_"+"appJson_"+key,redisTemplate);
-                redisHelp.setKey(this.dataprefix+"_"+"appJson_"+key,appJson,10,redisTemplate);
+                redisHelp.setKey(this.dataprefix+"_"+"appJson_"+key,appJson,600,redisTemplate);
             }
-
             JSONObject response = new JSONObject();
-
             response.put("code", 1);
             response.put("msg", "");
             response.put("data", appJson);
@@ -1044,6 +1126,299 @@ public class SystemController {
         }
 
     }
+    /***
+     * 添加支付套餐
+     */
+    @RequestMapping(value = "/addPayPackage")
+    @ResponseBody
+    @LoginRequired(purview = "2")
+    public String addPayPackage(@RequestParam(value = "webkey", required = false,defaultValue = "") String  webkey,
+                         @RequestParam(value = "params", required = false) String  params) {
 
+        TypechoPayPackage insert = null;
+        if(webkey.length()<1){
+            return Result.getResultJson(0,"请输入正确的访问key",null);
+        }
+        if(!webkey.equals(this.key)){
+            return Result.getResultJson(0,"请输入正确的访问key",null);
+        }
+        try{
+            if (StringUtils.isNotBlank(params)) {
+                JSONObject object = JSON.parseObject(params);
+                insert = object.toJavaObject(TypechoPayPackage.class);
+            }
+            int rows = payPackageService.insert(insert);
+            if(rows > 0){
+                redisHelp.delete(this.dataprefix+"_"+"payPackageList",redisTemplate);
+            }
+            JSONObject response = new JSONObject();
+            response.put("code" , rows);
+            response.put("msg"  , rows > 0 ? "添加成功" : "添加失败");
+            return response.toString();
+        }catch (Exception e){
+            e.printStackTrace();
+            return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
+        }
+    }
+
+    /***
+     * 修改应用
+     */
+    @RequestMapping(value = "/updatePayPackage")
+    @ResponseBody
+    @LoginRequired(purview = "2")
+    public String updatePayPackage(@RequestParam(value = "webkey", required = false,defaultValue = "") String  webkey,
+                            @RequestParam(value = "params", required = false) String  params) {
+
+        TypechoPayPackage update = null;
+        if(webkey.length()<1){
+            return Result.getResultJson(0,"请输入正确的访问key",null);
+        }
+        if(!webkey.equals(this.key)){
+            return Result.getResultJson(0,"请输入正确的访问key",null);
+        }
+        try{
+            if (StringUtils.isNotBlank(params)) {
+                JSONObject object = JSON.parseObject(params);
+                update = object.toJavaObject(TypechoPayPackage.class);
+            }
+            int rows = payPackageService.update(update);
+            if(rows > 0){
+                redisHelp.delete(this.dataprefix+"_"+"payPackageList",redisTemplate);
+            }
+            JSONObject response = new JSONObject();
+            response.put("code" , rows);
+            response.put("msg"  , rows > 0 ? "保存成功" : "保存失败");
+            return response.toString();
+        }catch (Exception e){
+            e.printStackTrace();
+            return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
+        }
+    }
+    /***
+     * 删除App
+     */
+    @RequestMapping(value = "/deletePayPackage")
+    @ResponseBody
+    @LoginRequired(purview = "2")
+    public String deletePayPackage(@RequestParam(value = "webkey", required = false,defaultValue = "") String  webkey,
+                            @RequestParam(value = "id", required = false) String  id) {
+
+        if(webkey.length()<1){
+            return Result.getResultJson(0,"请输入正确的访问key",null);
+        }
+        if(!webkey.equals(this.key)){
+            return Result.getResultJson(0,"请输入正确的访问key",null);
+        }
+        try{
+            int rows = payPackageService.delete(id);
+            if(rows > 0){
+                redisHelp.delete(this.dataprefix+"_"+"payPackageList",redisTemplate);
+            }
+            JSONObject response = new JSONObject();
+            response.put("code" , rows);
+            response.put("msg"  , rows > 0 ? "删除成功" : "删除失败");
+            return response.toString();
+        }catch (Exception e){
+            e.printStackTrace();
+            return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
+        }
+    }
+    /***
+     * 查询支付套餐列表
+     */
+    @RequestMapping(value = "/payPackageList")
+    @ResponseBody
+    @LoginRequired(purview = "0")
+    public String payPackageList(){
+        List jsonList = new ArrayList();
+        List cacheList = redisHelp.getList(this.dataprefix+"_"+"payPackageList",redisTemplate);
+        try {
+            if (cacheList.size() > 0) {
+                jsonList = cacheList;
+            } else {
+                jsonList = payPackageService.selectList(null);
+                if(jsonList.size() < 1){
+                    JSONObject noData = new JSONObject();
+                    noData.put("code" , 1);
+                    noData.put("msg"  , "");
+                    noData.put("data" , new ArrayList());
+                    noData.put("count", 0);
+                    return noData.toString();
+                }
+                redisHelp.delete(this.dataprefix+"_"+"payPackageList",redisTemplate);
+                redisHelp.setList(this.dataprefix+"_"+"payPackageList",jsonList,10,redisTemplate);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+            if(cacheList.size()>0){
+                jsonList = cacheList;
+            }
+        }
+        JSONObject response = new JSONObject();
+        response.put("code" , 1);
+        response.put("msg"  , "");
+        response.put("data" , jsonList);
+        response.put("count", jsonList.size());
+        return response.toString();
+    }
+
+
+    /***
+     * 获取邮件模板配置
+     */
+    @RequestMapping(value = "/getEmailTemplateConfig")
+    @ResponseBody
+    @LoginRequired(purview = "-3")
+    public String getEmailTemplateConfig(@RequestParam(value = "webkey", required = false,defaultValue = "") String  webkey) {
+        try{
+            if(webkey.length()<1){
+                return Result.getResultJson(0,"请输入正确的访问key",null);
+            }
+            if(!webkey.equals(this.key)){
+                return Result.getResultJson(0,"请输入正确的访问key",null);
+            }
+            TypechoEmailtemplate emailtemplate = emailtemplateService.selectByKey(1);
+            Map json = JSONObject.parseObject(JSONObject.toJSONString(emailtemplate), Map.class);
+            JSONObject response = new JSONObject();
+            response.put("code", 1);
+            response.put("msg", "");
+            response.put("data", json);
+            return response.toString();
+        }catch (Exception e){
+            e.printStackTrace();
+            return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
+        }
+
+    }
+    /***
+     * 配置修改
+     */
+    @RequestMapping(value = "/emailTemplateConfigUpdate")
+    @ResponseBody
+    @XssCleanIgnore
+    @LoginRequired(purview = "2")
+    public String emailTemplateConfigUpdate(@RequestParam(value = "params", required = false,defaultValue = "") String  params,@RequestParam(value = "webkey", required = false) String  webkey) {
+        TypechoEmailtemplate update = null;
+        if(webkey.length()<1){
+            return Result.getResultJson(0,"请输入正确的访问key",null);
+        }
+        if(!webkey.equals(this.key)){
+            return Result.getResultJson(0,"请输入正确的访问key",null);
+        }
+        try{
+            if (StringUtils.isNotBlank(params)) {
+                JSONObject object = JSON.parseObject(params);
+                update = object.toJavaObject(TypechoEmailtemplate.class);
+            }
+            update.setId(1);
+            int rows = emailtemplateService.update(update);
+            JSONObject response = new JSONObject();
+            response.put("code" , rows);
+            response.put("msg"  , rows > 0 ? "修改成功，当前配置已生效！" : "修改失败");
+            return response.toString();
+        }catch (Exception e){
+            e.printStackTrace();
+            return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
+        }
+
+    }
+    // 2.0版本新接口部分
+
+    /***
+     * 获取2.0数据库中的配置
+     */
+    @RequestMapping(value = "/getAllConfig")
+    @ResponseBody
+    @LoginRequired(purview = "2")
+    public String getAllConfig(@RequestParam(value = "webkey", required = false,defaultValue = "") String  webkey) {
+        if(webkey.length()<1){
+            return Result.getResultJson(0,"请输入正确的访问key",null);
+        }
+        if(!webkey.equals(this.key)){
+            return Result.getResultJson(0,"请输入正确的访问key",null);
+        }
+        Map allConfig = new HashMap<>();
+        TypechoAllconfig query = new TypechoAllconfig();
+        List<TypechoAllconfig> allconfigList = allconfigService.selectList(query);
+        for (int i = 0; i < allconfigList.size(); i++) {
+            TypechoAllconfig item = allconfigList.get(i);
+            allConfig.put(item.getField(),item.getValue());
+        }
+        JSONObject response = new JSONObject();
+        response.put("code", 1);
+        response.put("msg", "");
+        response.put("data", allConfig);
+        return response.toString();
+    }
+
+
+    /***
+     * 配置修改
+     */
+    @RequestMapping(value = "/allConfigUpdate")
+    @ResponseBody
+    @LoginRequired(purview = "2")
+    public String allConfigUpdate(@RequestParam(value = "params", required = false,defaultValue = "") String  params,
+                                  @RequestParam(value = "webkey", required = false) String  webkey) {
+        if(webkey.length()<1){
+            return Result.getResultJson(0,"请输入正确的访问key",null);
+        }
+        if(!webkey.equals(this.key)){
+            return Result.getResultJson(0,"请输入正确的访问key",null);
+        }
+        try{
+            Map<String, Object> configJson = new HashMap<>();
+            if (StringUtils.isNotBlank(params)) {
+                ObjectMapper mapper = new ObjectMapper();
+                configJson = mapper.readValue(params, Map.class);
+            }
+            for (Map.Entry<String, Object> entry : configJson.entrySet()) {
+                TypechoAllconfig update = new TypechoAllconfig();
+                update.setField(entry.getKey());
+                Integer total = allconfigService.total(update);
+                if(total > 0){
+                    update.setValue(entry.getValue().toString());
+                    allconfigService.update(update);
+                }else{
+                    //如果没有这个字段，就强行添加，因为属于配置中心
+                    update.setType("String");
+                    update.setValue(entry.getValue().toString());
+                    allconfigService.insert(update);
+                }
+
+            }
+            //更新Redis缓存
+            Map allConfig = new HashMap<>();
+            TypechoAllconfig query = new TypechoAllconfig();
+            List<TypechoAllconfig> allconfigList = allconfigService.selectList(query);
+            for (int i = 0; i < allconfigList.size(); i++) {
+                TypechoAllconfig item = allconfigList.get(i);
+                allConfig.put(item.getField(),item.getValue());
+            }
+            redisHelp.delete(dataprefix+"_"+"config",redisTemplate);
+            redisHelp.setKey(dataprefix+"_"+"config",allConfig,6000,redisTemplate);
+            redisHelp.deleteKeysWithPattern("*"+this.dataprefix+"_appJson_*",redisTemplate,this.dataprefix);
+            JSONObject response = new JSONObject();
+            response.put("code" , 1);
+            response.put("msg"  , "修改成功，当前配置已生效！" );
+            return response.toString();
+        }catch (Exception e){
+            e.printStackTrace();
+            return Result.getResultJson(0,"接口请求异常，请联系管理员",null);
+        }
+
+    }
+
+    /***
+     * 商业版专用，获取
+     */
+    @RequestMapping(value = "/newVersion")
+    @ResponseBody
+    public String newVersion() {
+        JSONObject response = new JSONObject();
+        response.put("isAuthorize", 0);
+        return response.toString();
+    }
 
 }

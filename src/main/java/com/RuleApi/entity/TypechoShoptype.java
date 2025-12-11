@@ -7,7 +7,7 @@ import java.util.List;
 
 /**
  * TypechoShoptype
- * @author shoptype 2023-07-10
+ * @author buxia97 2023-07-10
  */
 @Data
 public class TypechoShoptype implements Serializable {

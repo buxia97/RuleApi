@@ -89,8 +89,8 @@
         INSERT INTO ${prefix}_relationships ( <include refid="Base_Column_List" /> ) VALUES
         <foreach collection="list" item="curr" index="index" separator=",">
             (
-                #{curr.cid},
-                #{curr.mid}
+            #{curr.cid},
+            #{curr.mid}
             )
         </foreach>
     </insert>

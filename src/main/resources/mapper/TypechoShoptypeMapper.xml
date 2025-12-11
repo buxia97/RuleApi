@@ -71,12 +71,12 @@
         INSERT INTO ${prefix}_shoptype ( <include refid="Base_Column_List" /> ) VALUES
         <foreach collection="list" item="curr" index="index" separator=",">
             (
-            #{curr.id},
-            #{curr.parent},
-            #{curr.name},
-            #{curr.pic},
-            #{curr.intro},
-            #{curr.orderKey}
+                #{curr.id},
+                #{curr.parent},
+                #{curr.name},
+                #{curr.pic},
+                #{curr.intro},
+                #{curr.orderKey}
             )
         </foreach>
     </insert>
@@ -169,7 +169,7 @@
             </if>
         </where>
         <if test ='"" != order'>
-            order by `${order}` desc
+            order by ${order} desc
         </if>
         limit #{page,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
     </select>

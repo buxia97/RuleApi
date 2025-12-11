@@ -58,4 +58,9 @@ public class TypechoPaylog implements Serializable {
      * status  支付状态（0未支付，1已支付）
      */
     private Integer status;
+
+    /**
+     * packageId  支付套餐
+     */
+    private Integer packageId;
 }

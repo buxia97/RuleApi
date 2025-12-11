@@ -23,7 +23,7 @@
     </sql>
 
     <!-- 插入数据 -->
-    <insert id="insert" parameterType="com.RuleApi.entity.TypechoUserlog">
+    <insert id="insert" parameterType="com.RuleApi.entity.TypechoUserlog" keyProperty="id" useGeneratedKeys="true">
         INSERT INTO ${prefix}_userlog
         <trim prefix="(" suffix=")" suffixOverrides=",">
             <if test ='null != id'>

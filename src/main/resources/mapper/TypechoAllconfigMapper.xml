@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.RuleApi.dao.TypechoAllconfigDao">
+
+    <resultMap id="BaseResultMap" type="com.RuleApi.entity.TypechoAllconfig" >
+        <result column="id" property="id" />
+        <result column="name" property="name" />
+        <result column="type" property="type" />
+        <result column="value" property="value" />
+        <result column="field" property="field" />
+        <result column="isPublic" property="isPublic" />
+        <result column="classId" property="classId" />
+        <result column="modules" property="modules" />
+        <result column="intro" property="intro" />
+        <result column="grade" property="grade" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        `id`,
+        `name`,
+        `type`,
+        `value`,
+        `field`,
+        `isPublic`,
+        `classId`,
+        `modules`,
+        `intro`,
+        `grade`
+    </sql>
+
+    <!-- 插入数据 -->
+    <insert id="insert" parameterType="com.RuleApi.entity.TypechoAllconfig">
+        INSERT INTO ${prefix}_allconfig
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test ='null != id'>
+                `id`,
+            </if>
+            <if test ='null != name'>
+                `name`,
+            </if>
+            <if test ='null != type'>
+                `type`,
+            </if>
+            <if test ='null != value'>
+                `value`,
+            </if>
+            <if test ='null != field'>
+                `field`,
+            </if>
+            <if test ='null != isPublic'>
+                `isPublic`,
+            </if>
+            <if test ='null != classId'>
+                `classId`,
+            </if>
+            <if test ='null != modules'>
+                `modules`,
+            </if>
+            <if test ='null != intro'>
+                `intro`,
+            </if>
+            <if test ='null != grade'>
+                `grade`
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test ='null != id'>
+                #{id},
+            </if>
+            <if test ='null != name'>
+                #{name},
+            </if>
+            <if test ='null != type'>
+                #{type},
+            </if>
+            <if test ='null != value'>
+                #{value},
+            </if>
+            <if test ='null != field'>
+                #{field},
+            </if>
+            <if test ='null != isPublic'>
+                #{isPublic},
+            </if>
+            <if test ='null != classId'>
+                #{classId},
+            </if>
+            <if test ='null != modules'>
+                #{modules},
+            </if>
+            <if test ='null != intro'>
+                #{intro},
+            </if>
+            <if test ='null != grade'>
+                #{grade}
+            </if>
+        </trim>
+    </insert>
+
+    <!-- 批量插入数据 -->
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO ${prefix}_allconfig ( <include refid="Base_Column_List" /> ) VALUES
+        <foreach collection="list" item="curr" index="index" separator=",">
+            (
+                #{curr.id},
+                #{curr.name},
+                #{curr.type},
+                #{curr.value},
+                #{curr.field},
+                #{curr.isPublic},
+                #{curr.classId},
+                #{curr.modules},
+                #{curr.intro},
+                #{curr.grade}
+            )
+        </foreach>
+    </insert>
+
+    <!-- 更新 -->
+    <update id="update" parameterType="com.RuleApi.entity.TypechoAllconfig">
+        UPDATE ${prefix}_allconfig
+        <set>
+            <if test ='null != name'>`name` = #{name},</if>
+            <if test ='null != type'>`type` = #{type},</if>
+            <if test ='null != value'>`value` = #{value},</if>
+            <if test ='null != field'>`field` = #{field},</if>
+            <if test ='null != isPublic'>`isPublic` = #{isPublic},</if>
+            <if test ='null != classId'>`classId` = #{classId},</if>
+            <if test ='null != modules'>`modules` = #{modules},</if>
+            <if test ='null != intro'>`intro` = #{intro},</if>
+            <if test ='null != grade'>`grade` = #{grade}</if>
+        </set>
+        WHERE `field` = #{field}
+    </update>
+
+    <!-- 删除 -->
+    <delete id="delete">
+        DELETE FROM ${prefix}_allconfig
+        WHERE `id` = #{key}
+    </delete>
+
+    <!-- 批量删除 -->
+    <delete id="batchDelete" parameterType = "java.util.List">
+        DELETE FROM ${prefix}_allconfig WHERE id IN
+        <foreach collection="list"  item="item" open="(" separator="," close=")"  >
+            #{item}
+        </foreach>
+    </delete>
+
+    <!-- 主键查询 -->
+    <select id="selectByKey" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM ${prefix}_allconfig
+        WHERE `id` = #{key}
+    </select>
+
+    <!-- 条件查询 -->
+    <select id="selectList" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM ${prefix}_allconfig
+        <where>
+            <if test ='null != id'>
+                and `id` = #{id}
+            </if>
+            <if test ='null != name'>
+                and `name` = #{name}
+            </if>
+            <if test ='null != type'>
+                and `type` = #{type}
+            </if>
+            <if test ='null != value'>
+                and `value` = #{value}
+            </if>
+            <if test ='null != field'>
+                and `field` = #{field}
+            </if>
+            <if test ='null != isPublic'>
+                and `isPublic` = #{isPublic}
+            </if>
+            <if test ='null != classId'>
+                and `classId` = #{classId}
+            </if>
+            <if test ='null != modules'>
+                and `modules` = #{modules}
+            </if>
+            <if test ='null != intro'>
+                and `intro` = #{intro}
+            </if>
+            <if test ='null != grade'>
+                and `grade` = #{grade}
+            </if>
+        </where>
+    </select>
+
+    <!-- 分页条件查询 -->
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM ${prefix}_allconfig
+        <where>
+            <if test ='null != typechoAllconfig.id'>
+                and `id` = #{typechoAllconfig.id}
+            </if>
+            <if test ='null != typechoAllconfig.name'>
+                and `name` = #{typechoAllconfig.name}
+            </if>
+            <if test ='null != typechoAllconfig.type'>
+                and `type` = #{typechoAllconfig.type}
+            </if>
+            <if test ='null != typechoAllconfig.value'>
+                and `value` = #{typechoAllconfig.value}
+            </if>
+            <if test ='null != typechoAllconfig.field'>
+                and `field` = #{typechoAllconfig.field}
+            </if>
+            <if test ='null != typechoAllconfig.isPublic'>
+                and `isPublic` = #{typechoAllconfig.isPublic}
+            </if>
+            <if test ='null != typechoAllconfig.classId'>
+                and `classId` = #{typechoAllconfig.classId}
+            </if>
+            <if test ='null != typechoAllconfig.modules'>
+                and `modules` = #{typechoAllconfig.modules}
+            </if>
+            <if test ='null != typechoAllconfig.intro'>
+                and `intro` = #{typechoAllconfig.intro}
+            </if>
+            <if test ='null != typechoAllconfig.grade'>
+                and `grade` = #{typechoAllconfig.grade}
+            </if>
+        </where>
+        limit #{page,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
+    </select>
+
+    <!-- 总量查询 -->
+    <select id="total" resultType="java.lang.Integer">
+        SELECT count(*) FROM ${prefix}_allconfig
+        <where>
+            <if test ='null != id'>
+                and `id` = #{id}
+            </if>
+            <if test ='null != name'>
+                and `name` = #{name}
+            </if>
+            <if test ='null != type'>
+                and `type` = #{type}
+            </if>
+            <if test ='null != value'>
+                and `value` = #{value}
+            </if>
+            <if test ='null != field'>
+                and `field` = #{field}
+            </if>
+            <if test ='null != isPublic'>
+                and `isPublic` = #{isPublic}
+            </if>
+            <if test ='null != classId'>
+                and `classId` = #{classId}
+            </if>
+            <if test ='null != modules'>
+                and `modules` = #{modules}
+            </if>
+            <if test ='null != intro'>
+                and `intro` = #{intro}
+            </if>
+            <if test ='null != grade'>
+                and `grade` = #{grade}
+            </if>
+        </where>
+    </select>
+</mapper>

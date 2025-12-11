@@ -2,7 +2,10 @@ package com.RuleApi.common;
 
 //常用数据处理类
 
-import com.RuleApi.entity.TypechoUsers;
+import com.RuleApi.entity.*;
+import com.RuleApi.service.*;
+import com.alibaba.fastjson.JSONObject;
+import net.coobird.thumbnailator.Thumbnails;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.sl.usermodel.PictureData;
 import org.apache.poi.util.Units;
@@ -14,8 +17,10 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
+import org.lionsoul.ip2region.xdb.Searcher;
 import org.springframework.boot.system.ApplicationHome;
 import org.springframework.util.DigestUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.*;
@@ -45,15 +50,187 @@ public class baseFull {
         return list.toArray();
     }
 
-    //获取字符串内图片地址
-    public List<String> getImageSrc(String htmlCode) {
-        List<String> urls = extractUrls(htmlCode);
-        List<String> imageUrls = new ArrayList<>();
+    //处理文章数据，公告方法
+    public Map<Object,Object> getContentListInfo(TypechoContents contents,
+                                                 FieldsService fieldsService,
+                                                 RelationshipsService relationshipsService,
+                                                 MetasService metasService,
+                                                 UsersService usersService,
+                                                 Map apiconfig){
+        if(contents==null){
+            return null;
+        }
+        Map json = JSONObject.parseObject(JSONObject.toJSONString(contents), Map.class);
+        //加入自定义字段信息，这里取消注释即可开启，但是数据库查询会消耗性能
+        String cid = json.get("cid").toString();
+        TypechoFields f = new TypechoFields();
+        f.setCid(Integer.parseInt(cid));
+        List<TypechoFields> fields = fieldsService.selectList(f);
+        json.put("fields",fields);
 
-        for (String url : urls) {
-            if (url.matches(".+\\.(ico|jpe?g|png|bmp|gif|webp|ICO|JPE?G|PNG|BMP|GIF|WEBP)$")) {
-                imageUrls.add(url.replaceAll("\\)", ""));
+        TypechoRelationships rs = new TypechoRelationships();
+        rs.setCid(Integer.parseInt(cid));
+        List<TypechoRelationships> relationships = relationshipsService.selectList(rs);
+
+        List metas = new ArrayList();
+        List tags = new ArrayList();
+        if(relationships.size()>0){
+            for (int j = 0; j < relationships.size(); j++) {
+                Map info = JSONObject.parseObject(JSONObject.toJSONString(relationships.get(j)), Map.class);
+                if(info!=null){
+                    String mid = info.get("mid").toString();
+
+                    TypechoMetas metasList  = metasService.selectByKey(mid);
+                    if(metasList!=null){
+                        Map metasInfo = JSONObject.parseObject(JSONObject.toJSONString(metasList), Map.class);
+                        String type = metasInfo.get("type").toString();
+                        if(type.equals("category")){
+                            metas.add(metasInfo);
+                        }
+                        if(type.equals("tag")){
+                            tags.add(metasInfo);
+                        }
+                    }
+
+                }
+
             }
+        }
+
+        //写入作者详细信息
+        Integer uid = Integer.parseInt(json.get("authorId").toString());
+        if(uid>0){
+            TypechoUsers author = usersService.selectByKey(uid);
+            Map authorInfo = new HashMap();
+            if(author!=null){
+                String name = author.getName();
+                if(author.getScreenName()!=null&&author.getScreenName()!=""){
+                    name = author.getScreenName();
+                }
+                String avatar = apiconfig.get("webinfoAvatar").toString() + "null";
+                if(author.getAvatar()!=null&&author.getAvatar()!=""){
+                    avatar = author.getAvatar();
+                }else{
+                    if(author.getMail()!=null&&author.getMail()!=""){
+                        String mail = author.getMail();
+
+                        if(mail.indexOf("@qq.com") != -1){
+                            String qq = mail.replace("@qq.com","");
+                            avatar = "https://q1.qlogo.cn/g?b=qq&nk="+qq+"&s=640";
+                        }else{
+                            avatar = baseFull.getAvatar(apiconfig.get("webinfoAvatar").toString(), author.getMail());
+                        }
+                        //avatar = baseFull.getAvatar(apiconfig.get("webinfoAvatar").toString(), author.getMail());
+                    }
+                }
+
+                authorInfo.put("name",name);
+                authorInfo.put("avatar",avatar);
+                authorInfo.put("customize",author.getCustomize());
+                authorInfo.put("experience",author.getExperience());
+                authorInfo.put("ip", author.getIp());
+                authorInfo.put("local", author.getLocal());
+                //判断是否为VIP
+                authorInfo.put("isvip", 0);
+                Long date = System.currentTimeMillis();
+                String curTime = String.valueOf(date).substring(0, 10);
+                Integer viptime  = author.getVip();
+
+                if(viptime>Integer.parseInt(curTime)||viptime.equals(1)){
+                    authorInfo.put("isvip", 1);
+                }
+                if(viptime.equals(1)){
+                    //永久VIP
+                    authorInfo.put("isvip", 2);
+                }
+            }else{
+                authorInfo.put("name","用户已注销");
+                authorInfo.put("avatar",apiconfig.get("webinfoAvatar").toString() + "null");
+            }
+
+
+            json.put("authorInfo",authorInfo);
+        }
+
+        String text = json.get("text").toString();
+        boolean status = text.contains("<!--markdown-->");
+        if(status){
+            json.put("markdown",1);
+        }else{
+            json.put("markdown",0);
+        }
+        List imgList = new ArrayList<>();
+        if(status){
+            //先把typecho的图片引用模式转为标准markdown
+            List oldImgList = getImageSrc(text);
+            List codeList = getImageCode(text);
+            for(int c = 0; c < codeList.size(); c++){
+                String codeimg = codeList.get(c).toString();
+                String urlimg = oldImgList.get(c).toString();
+                text=text.replace(codeimg,"![image"+c+"]("+urlimg+")");
+            }
+            imgList = getImageSrcFromMarkdown(text);
+        }else{
+            imgList = extractImageSrcFromHtml(text);
+        }
+
+        text = baseFull.toStrByChinese(text);
+
+        json.put("images",imgList);
+        json.put("text",text.length()>400 ? text.substring(0,400) : text);
+        json.put("category",metas);
+        json.put("tag",tags);
+        json.remove("password");
+        return json;
+    }
+
+    // 方法用于从Markdown文本中提取图片URL
+    public List<String> getImageSrc(String markdown) {
+        List<String> urls = new ArrayList<>();
+        Map<String, String> references = new HashMap<>();
+
+        // 正则表达式用于匹配底部定义的URL
+        Pattern refPattern = Pattern.compile("^\\s*\\[(\\d+)]:\\s*(https?://[^\\s]+)", Pattern.MULTILINE);
+        Matcher refMatcher = refPattern.matcher(markdown);
+        while (refMatcher.find()) {
+            references.put(refMatcher.group(1), refMatcher.group(2));
+        }
+
+        // 正则表达式用于匹配图片引用
+        Pattern imgPattern = Pattern.compile("!\\[.*?]\\[(\\d+)]");
+        Matcher imgMatcher = imgPattern.matcher(markdown);
+        while (imgMatcher.find()) {
+            String refId = imgMatcher.group(1);
+            if (references.containsKey(refId)) {
+                urls.add(references.get(refId));
+            }
+        }
+
+        return urls;
+    }
+
+
+    //从markdown文本中提取图片地址
+    public List<String> getImageSrcFromMarkdown(String markdown) {
+        List<String> imageUrls = new ArrayList<>();
+        Pattern pattern = Pattern.compile("!\\[.*?]\\((.*?)(\\s+\".*?\")?\\)");
+        Matcher matcher = pattern.matcher(markdown);
+        while (matcher.find()) {
+            String imageUrl = matcher.group(1).trim();  // 获取图片URL
+            imageUrls.add(imageUrl);
+        }
+        return imageUrls;
+    }
+
+    public List<String> extractImageSrcFromHtml(String html) {
+        List<String> imageUrls = new ArrayList<>();
+        // 正则表达式匹配<img>标签的src属性
+        Pattern pattern = Pattern.compile("<img\\s[^>]*?src\\s*=\\s*['\"]([^'\"]*?)['\"][^>]*?>", Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher(html);
+
+        while (matcher.find()) {
+            String imageUrl = matcher.group(1);
+            imageUrls.add(imageUrl);
         }
 
         return imageUrls;
@@ -287,6 +464,35 @@ public class baseFull {
         } else {
             return 0; // 不是媒体文件
         }
+    }
+    //获取IP属地
+    public String getLocal(String ip) throws IOException {
+        ApplicationHome h = new ApplicationHome(getClass());
+        File jarF = h.getSource();
+        /* 配置文件路径 */
+        String dbPath = jarF.getParentFile().toString()+"/ip2region.xdb";
+        String region = "";
+        Searcher searcher = null;
+        try {
+            searcher = Searcher.newWithFileOnly(dbPath);
+        } catch (IOException e) {
+            System.out.printf("failed to create searcher with `%s`: %s\n", dbPath, e);
+            return "";
+        }
+        // 2、查询
+        try {
+            long sTime = System.nanoTime();
+            region = searcher.search(ip);
+            long cost = TimeUnit.NANOSECONDS.toMicros((long) (System.nanoTime() - sTime));
+            System.out.printf("{region: %s, ioCount: %d, took: %d μs}\n", region, searcher.getIOCount(), cost);
+        } catch (Exception e) {
+            System.out.printf("failed to search(%s): %s\n", ip, e);
+        }
+
+        // 3、关闭资源
+        searcher.close();
+        return region;
+
     }
 
 

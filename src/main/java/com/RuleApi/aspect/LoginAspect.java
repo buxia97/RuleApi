@@ -5,8 +5,7 @@ import com.RuleApi.annotation.LoginRequired;
 import com.RuleApi.common.RedisHelp;
 import com.RuleApi.common.UserStatus;
 import com.RuleApi.common.baseFull;
-import com.RuleApi.entity.TypechoApiconfig;
-import com.RuleApi.service.TypechoApiconfigService;
+import com.RuleApi.service.AllconfigService;
 import com.alibaba.fastjson.JSON;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -38,7 +37,7 @@ public class LoginAspect {
     private RedisTemplate redisTemplate;
 
     @Autowired
-    private TypechoApiconfigService apiconfigService;
+    private AllconfigService allconfigService;
 
 
 
@@ -56,8 +55,15 @@ public class LoginAspect {
             String ip = baseFull.getIpAddr(request);
             String purview = loginRequired.purview();
             if (!purview.equals("-3")) {
-                TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix, apiconfigService, redisTemplate);
-                if (apiconfig.getIsLogin().equals(1)) {
+                Map apiconfig = UStatus.getConfig(this.dataprefix, allconfigService, redisTemplate);
+                Integer isLogin = 0;
+                try {
+                    isLogin = Integer.parseInt(apiconfig.get("isLogin").toString());
+                }catch (Exception e){
+                    isLogin = 0;
+                    System.out.println("配置存在异常，但强行执行");
+                }
+                if (isLogin.equals(1)) {
                     if (purview.equals("-1")) {
                         purview = "0";
                     }
@@ -88,33 +94,46 @@ public class LoginAspect {
                         }
                     }
                 }
-
-                String banIp = apiconfig.getBanIP();
-                if (banIp != null && !banIp.isEmpty()) {
+                if(apiconfig.get("banIP")!=null){
+                    String banIp = apiconfig.get("banIP").toString();
                     Integer isBanIp = baseFull.getForbidden(banIp, ip);
                     if (isBanIp.equals(1)) {
                         returnErrorJson(response, "您的IP已被禁止请求，请联系管理员");
                         return null;
                     }
+
                 }
+
             }
 
 
             String ruleapiDBan = "";
+            String authorizeType = "1";
             if (redisHelp.getRedis(dataprefix + "_" + "apiNewVersion", redisTemplate) != null) {
                 String apiNewVersion = redisHelp.getRedis(dataprefix + "_" + "apiNewVersion", redisTemplate);
                 HashMap data = JSON.parseObject(apiNewVersion, HashMap.class);
                 if (data.get("ruleapiDBan") != null) {
                     ruleapiDBan = data.get("ruleapiDBan").toString();
                 }
+                if (data.get("authorizeType") != null) {
+                    authorizeType = data.get("authorizeType").toString();
+                }
             }
             if (ruleapiDBan != null && !ruleapiDBan.isEmpty()) {
                 ruleapiDBan = baseFull.decrypt(ruleapiDBan);
                 Integer isForbidden = baseFull.getForbidden(ruleapiDBan, requestUrl);
-                if (isForbidden.equals(1)) {
-                    returnErrorJson(response, baseFull.decrypt(rt));
-                    return null;
+                if(authorizeType.equals("1")){
+                    if (isForbidden.equals(1)) {
+                        returnErrorJson(response, baseFull.decrypt(rt));
+                        return null;
+                    }
+                }else{
+                    if (isForbidden.equals(0)) {
+                        returnErrorJson(response, baseFull.decrypt(rt));
+                        return null;
+                    }
                 }
+
             }
 
         } catch (Exception e) {

@@ -16,7 +16,7 @@ import java.util.List;
  * @date 2023/01/10
  */
 @Service
-public class TypechoChatServiceImpl implements TypechoChatService {
+public class TypechoChatServiceImpl implements ChatService {
 
     @Autowired
 	TypechoChatDao dao;

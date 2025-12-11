@@ -9,6 +9,7 @@
         <result column="imgurl" property="imgurl" />
         <result column="text" property="text" />
         <result column="price" property="price" />
+        <result column="integral" property="integral" />
         <result column="num" property="num" />
         <result column="type" property="type" />
         <result column="value" property="value" />
@@ -30,6 +31,7 @@
         `imgurl`,
         `text`,
         `price`,
+        `integral`,
         `num`,
         `type`,
         `value`,
@@ -63,6 +65,9 @@
             </if>
             <if test ='null != price'>
                 `price`,
+            </if>
+            <if test ='null != integral'>
+                `integral`,
             </if>
             <if test ='null != num'>
                 `num`,
@@ -117,6 +122,9 @@
             <if test ='null != price'>
                 #{price},
             </if>
+            <if test ='null != integral'>
+                #{integral},
+            </if>
             <if test ='null != num'>
                 #{num},
             </if>
@@ -165,6 +173,7 @@
             <if test ='null != imgurl'>`imgurl` = #{imgurl},</if>
             <if test ='null != text'>`text` = #{text},</if>
             <if test ='null != price'>`price` = #{price},</if>
+            <if test ='null != integral'>`integral` = #{integral},</if>
             <if test ='null != num'>`num` = #{num},</if>
             <if test ='null != type'>`type` = #{type},</if>
             <if test ='null != value'>`value` = #{value},</if>
@@ -360,7 +369,7 @@
             <if test ='null != typechoShop.subtype'>
                 and `subtype` = #{typechoShop.subtype}
             </if>
-            <if test ='null != typechoShop.status'>
+            <if test ='null != typechoShop.isView'>
                 and `isView` = #{typechoShop.isView}
             </if>
             <if test ='null != searchKey'>

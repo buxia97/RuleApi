@@ -1,15 +1,11 @@
 package com.RuleApi.service.impl;
 
 import java.io.File;
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
+import java.util.Map;
 
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
-import javax.mail.internet.MimeUtility;
 
-import com.RuleApi.entity.TypechoApiconfig;
-import com.RuleApi.service.TypechoApiconfigService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
@@ -37,9 +33,6 @@ public class MailServiceImpl implements MailService{
 
     @Value(value = "${spring.mail.username}")
     private String username;
-
-    @Autowired
-    private TypechoApiconfigService apiconfigService;
 
 
 
@@ -90,12 +83,11 @@ public class MailServiceImpl implements MailService{
     @Override
     public void send(String subject, String content,
                      String[] toEmails, String[] ccPeoples, String[] bccPeoples,
-                     String[] attachmentFilePaths) throws MessagingException {
+                     String[] attachmentFilePaths,Map apiconfig) throws MessagingException {
         //附件处理需要进行二进制传输
         MimeMessage mimeMessage = mailSender.createMimeMessage();
         MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, true, defaultEncoding);
-        TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
-        String newEmailFromName = apiconfig.getWebinfoTitle();
+        String newEmailFromName = apiconfig.get("webinfoTitle").toString();
         //log.info("from = " + from);emailFromName
         mimeMessageHelper.setFrom(newEmailFromName + "<"+ username + ">");
 
@@ -134,9 +126,9 @@ public class MailServiceImpl implements MailService{
      * @param toEmails String[] 接收的邮箱
      */
     @Override
-    public void send(String subject, String content, String[] toEmails) throws MessagingException {
+    public void send(String subject, String content, String[] toEmails, Map apiconfig) throws MessagingException {
 
-        this.send(subject, content, toEmails, null, null, null);
+        this.send(subject, content, toEmails, null, null, null,apiconfig);
 
     }
 
@@ -150,9 +142,9 @@ public class MailServiceImpl implements MailService{
      * @throws MessagingException
      */
     @Override
-    public void send(String subject, String content, String[] toEmails, String[] attachmentFilePaths) throws MessagingException {
+    public void send(String subject, String content, String[] toEmails, String[] attachmentFilePaths, Map apiconfig) throws MessagingException {
 
-        this.send(subject, content, toEmails, null, null, attachmentFilePaths);
+        this.send(subject, content, toEmails, null, null, attachmentFilePaths,apiconfig);
 
     }
 

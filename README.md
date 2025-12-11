@@ -6,6 +6,12 @@ RuleApi，基于typecho正式版数据库，使用JAVA语言Springboot框架，�
 
 接口文档地址：https://docs.apipost.cn/preview/12e2d0e7ab2f8738/9c7fd18771884cb2
 
+## 旧版下载
+
+当前为2.x全新版本，1.x旧版本可在下方下载：
+通过网盘分享的文件：1.X版备份
+链接: https://pan.baidu.com/s/1Bk0PzQFu_Xwn-1dRnyg67Q?pwd=ibvj 提取码: ibvj
+
 ## 安装教程
 
 [RuleProject全项目安装教程](https://www.yuque.com/buxia97/ruleproject)

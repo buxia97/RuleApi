@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.RuleApi.dao.TypechoEmailtemplateDao">
+
+    <resultMap id="BaseResultMap" type="com.RuleApi.entity.TypechoEmailtemplate" >
+        <result column="id" property="id" />
+        <result column="verifyTemplate" property="verifyTemplate" />
+        <result column="reviewTemplate" property="reviewTemplate" />
+        <result column="safetyTemplate" property="safetyTemplate" />
+        <result column="replyTemplate" property="replyTemplate" />
+        <result column="orderTemplate" property="orderTemplate" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        `id`,
+        `verifyTemplate`,
+        `reviewTemplate`,
+        `safetyTemplate`,
+        `replyTemplate`,
+        `orderTemplate`
+    </sql>
+
+    <!-- 插入数据 -->
+    <insert id="insert" parameterType="com.RuleApi.entity.TypechoEmailtemplate">
+        INSERT INTO ${prefix}_emailtemplate
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test ='null != id'>
+                `id`,
+            </if>
+            <if test ='null != verifyTemplate'>
+                `verifyTemplate`,
+            </if>
+            <if test ='null != reviewTemplate'>
+                `reviewTemplate`,
+            </if>
+            <if test ='null != safetyTemplate'>
+                `safetyTemplate`,
+            </if>
+            <if test ='null != replyTemplate'>
+                `replyTemplate`,
+            </if>
+            <if test ='null != orderTemplate'>
+                `orderTemplate`
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test ='null != id'>
+                #{id},
+            </if>
+            <if test ='null != verifyTemplate'>
+                #{verifyTemplate},
+            </if>
+            <if test ='null != reviewTemplate'>
+                #{reviewTemplate},
+            </if>
+            <if test ='null != safetyTemplate'>
+                #{safetyTemplate},
+            </if>
+            <if test ='null != replyTemplate'>
+                #{replyTemplate},
+            </if>
+            <if test ='null != orderTemplate'>
+                #{orderTemplate}
+            </if>
+        </trim>
+    </insert>
+
+    <!-- 批量插入数据 -->
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO ${prefix}_emailtemplate ( <include refid="Base_Column_List" /> ) VALUES
+        <foreach collection="list" item="curr" index="index" separator=",">
+            (
+                #{curr.id},
+                #{curr.verifyTemplate},
+                #{curr.reviewTemplate},
+                #{curr.safetyTemplate},
+                #{curr.replyTemplate}
+            )
+        </foreach>
+    </insert>
+
+    <!-- 更新 -->
+    <update id="update" parameterType="com.RuleApi.entity.TypechoEmailtemplate">
+        UPDATE ${prefix}_emailtemplate
+        <set>
+            <if test ='null != verifyTemplate'>`verifyTemplate` = #{verifyTemplate},</if>
+            <if test ='null != reviewTemplate'>`reviewTemplate` = #{reviewTemplate},</if>
+            <if test ='null != safetyTemplate'>`safetyTemplate` = #{safetyTemplate},</if>
+            <if test ='null != replyTemplate'>`replyTemplate` = #{replyTemplate},</if>
+            <if test ='null != orderTemplate'>`orderTemplate` = #{orderTemplate}</if>
+        </set>
+        WHERE `id` = #{id}
+    </update>
+
+    <!-- 删除 -->
+    <delete id="delete">
+        DELETE FROM ${prefix}_emailtemplate
+        WHERE `id` = #{key}
+    </delete>
+
+    <!-- 批量删除 -->
+    <delete id="batchDelete" parameterType = "java.util.List">
+        DELETE FROM ${prefix}_emailtemplate WHERE id IN
+        <foreach collection="list"  item="item" open="(" separator="," close=")"  >
+            #{item}
+        </foreach>
+    </delete>
+
+    <!-- 主键查询 -->
+    <select id="selectByKey" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM ${prefix}_emailtemplate
+        WHERE `id` = #{key}
+    </select>
+
+    <!-- 条件查询 -->
+    <select id="selectList" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM ${prefix}_emailtemplate
+        <where>
+            <if test ='null != id'>
+                and `id` = #{id}
+            </if>
+            <if test ='null != verifyTemplate'>
+                and `verifyTemplate` = #{verifyTemplate}
+            </if>
+            <if test ='null != reviewTemplate'>
+                and `reviewTemplate` = #{reviewTemplate}
+            </if>
+            <if test ='null != safetyTemplate'>
+                and `safetyTemplate` = #{safetyTemplate}
+            </if>
+            <if test ='null != replyTemplate'>
+                and `replyTemplate` = #{replyTemplate}
+            </if>
+        </where>
+    </select>
+
+    <!-- 分页条件查询 -->
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM ${prefix}_emailtemplate
+        <where>
+            <if test ='null != typechoEmailtemplate.id'>
+                and `id` = #{typechoEmailtemplate.id}
+            </if>
+            <if test ='null != typechoEmailtemplate.verifyTemplate'>
+                and `verifyTemplate` = #{typechoEmailtemplate.verifyTemplate}
+            </if>
+            <if test ='null != typechoEmailtemplate.reviewTemplate'>
+                and `reviewTemplate` = #{typechoEmailtemplate.reviewTemplate}
+            </if>
+            <if test ='null != typechoEmailtemplate.safetyTemplate'>
+                and `safetyTemplate` = #{typechoEmailtemplate.safetyTemplate}
+            </if>
+            <if test ='null != typechoEmailtemplate.replyTemplate'>
+                and `replyTemplate` = #{typechoEmailtemplate.replyTemplate}
+            </if>
+        </where>
+        limit #{page,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
+    </select>
+
+    <!-- 总量查询 -->
+    <select id="total" resultType="java.lang.Integer">
+        SELECT count(*) FROM ${prefix}_emailtemplate
+        <where>
+            <if test ='null != id'>
+                and `id` = #{id}
+            </if>
+            <if test ='null != verifyTemplate'>
+                and `verifyTemplate` = #{verifyTemplate}
+            </if>
+            <if test ='null != reviewTemplate'>
+                and `reviewTemplate` = #{reviewTemplate}
+            </if>
+            <if test ='null != safetyTemplate'>
+                and `safetyTemplate` = #{safetyTemplate}
+            </if>
+            <if test ='null != replyTemplate'>
+                and `replyTemplate` = #{replyTemplate}
+            </if>
+        </where>
+    </select>
+</mapper>

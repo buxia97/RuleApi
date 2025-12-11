@@ -1,6 +1,6 @@
 package com.RuleApi.dao;
 
-import com.RuleApi.entity.TypechoApp;
+import com.RuleApi.entity.*;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 

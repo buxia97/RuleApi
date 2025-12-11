@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.RuleApi.dao.TypechoFilesDao">
+
+    <resultMap id="BaseResultMap" type="com.RuleApi.entity.TypechoFiles" >
+        <result column="id" property="id" />
+        <result column="name" property="name" />
+        <result column="md5" property="md5" />
+        <result column="links" property="links" />
+        <result column="source" property="source" />
+        <result column="created" property="created" />
+        <result column="uid" property="uid" />
+        <result column="type" property="type" />
+        <result column="suffix" property="suffix" />
+        <result column="size" property="size" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        `id`,
+        `name`,
+        `md5`,
+        `links`,
+        `source`,
+        `created`,
+        `uid`,
+        `type`,
+        `suffix`,
+        `size`
+    </sql>
+
+    <!-- 插入数据 -->
+    <insert id="insert" parameterType="com.RuleApi.entity.TypechoFiles">
+        INSERT INTO ${prefix}_files
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test ='null != id'>
+                `id`,
+            </if>
+            <if test ='null != name'>
+                `name`,
+            </if>
+            <if test ='null != md5'>
+                `md5`,
+            </if>
+            <if test ='null != links'>
+                `links`,
+            </if>
+            <if test ='null != source'>
+                `source`,
+            </if>
+            <if test ='null != created'>
+                `created`,
+            </if>
+            <if test ='null != uid'>
+                `uid`,
+            </if>
+            <if test ='null != type'>
+                `type`,
+            </if>
+            <if test ='null != suffix'>
+                `suffix`,
+            </if>
+            <if test ='null != size'>
+                `size`
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test ='null != id'>
+                #{id},
+            </if>
+            <if test ='null != name'>
+                #{name},
+            </if>
+            <if test ='null != md5'>
+                #{md5},
+            </if>
+            <if test ='null != links'>
+                #{links},
+            </if>
+            <if test ='null != source'>
+                #{source},
+            </if>
+            <if test ='null != created'>
+                #{created},
+            </if>
+            <if test ='null != uid'>
+                #{uid},
+            </if>
+            <if test ='null != type'>
+                #{type},
+            </if>
+            <if test ='null != suffix'>
+                #{suffix},
+            </if>
+            <if test ='null != size'>
+                #{size}
+            </if>
+        </trim>
+    </insert>
+
+    <!-- 批量插入数据 -->
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO ${prefix}_files ( <include refid="Base_Column_List" /> ) VALUES
+        <foreach collection="list" item="curr" index="index" separator=",">
+            (
+                #{curr.id},
+                #{curr.name},
+                #{curr.md5},
+                #{curr.links},
+                #{curr.source},
+                #{curr.created},
+                #{curr.uid},
+                #{curr.type},
+                #{curr.suffix}
+            )
+        </foreach>
+    </insert>
+
+    <!-- 更新 -->
+    <update id="update" parameterType="com.RuleApi.entity.TypechoFiles">
+        UPDATE ${prefix}_files
+        <set>
+            <if test ='null != name'>`name` = #{name},</if>
+            <if test ='null != md5'>`md5` = #{md5},</if>
+            <if test ='null != links'>`links` = #{links},</if>
+            <if test ='null != source'>`source` = #{source},</if>
+            <if test ='null != created'>`created` = #{created},</if>
+            <if test ='null != uid'>`uid` = #{uid},</if>
+            <if test ='null != type'>`type` = #{type},</if>
+            <if test ='null != suffix'>`suffix` = #{suffix},</if>
+            <if test ='null != size'>`size` = #{size}</if>
+        </set>
+        WHERE `id` = #{id}
+    </update>
+
+    <!-- 删除 -->
+    <delete id="delete">
+        DELETE FROM ${prefix}_files
+        WHERE `id` = #{key}
+    </delete>
+
+    <!-- 批量删除 -->
+    <delete id="batchDelete" parameterType = "java.util.List">
+        DELETE FROM ${prefix}_files WHERE id IN
+        <foreach collection="list"  item="item" open="(" separator="," close=")"  >
+            #{item}
+        </foreach>
+    </delete>
+
+    <!-- 主键查询 -->
+    <select id="selectByKey" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM ${prefix}_files
+        WHERE `id` = #{key}
+    </select>
+
+    <!-- 条件查询 -->
+    <select id="selectList" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM ${prefix}_files
+        <where>
+            <if test ='null != id'>
+                and `id` = #{id}
+            </if>
+            <if test ='null != name'>
+                and `name` = #{name}
+            </if>
+            <if test ='null != md5'>
+                and `md5` = #{md5}
+            </if>
+            <if test ='null != links'>
+                and `links` = #{links}
+            </if>
+            <if test ='null != source'>
+                and `source` = #{source}
+            </if>
+            <if test ='null != created'>
+                and `created` = #{created}
+            </if>
+            <if test ='null != uid'>
+                and `uid` = #{uid}
+            </if>
+            <if test ='null != type'>
+                and `type` = #{type}
+            </if>
+            <if test ='null != suffix'>
+                and `suffix` = #{suffix}
+            </if>
+        </where>
+    </select>
+
+    <!-- 分页条件查询 -->
+    <select id="selectPage" resultMap="BaseResultMap">
+        SELECT <include refid="Base_Column_List" />
+        FROM ${prefix}_files
+        <where>
+            <if test ='null != typechoFiles.id'>
+                and `id` = #{typechoFiles.id}
+            </if>
+            <if test ='null != typechoFiles.name'>
+                and `name` = #{typechoFiles.name}
+            </if>
+            <if test ='null != typechoFiles.md5'>
+                and `md5` = #{typechoFiles.md5}
+            </if>
+            <if test ='null != typechoFiles.links'>
+                and `links` = #{typechoFiles.links}
+            </if>
+            <if test ='null != typechoFiles.source'>
+                and `source` = #{typechoFiles.source}
+            </if>
+            <if test ='null != typechoFiles.created'>
+                and `created` = #{typechoFiles.created}
+            </if>
+            <if test ='null != typechoFiles.uid'>
+                and `uid` = #{typechoFiles.uid}
+            </if>
+            <if test ='null != typechoFiles.type'>
+                and `type` = #{typechoFiles.type}
+            </if>
+            <if test ='null != typechoFiles.suffix'>
+                and `suffix` = #{typechoFiles.suffix}
+            </if>
+            <if test ='null != searchKey'>
+                and CONCAT(IFNULL(`name`, ''), IFNULL(`links`, '')LIKE CONCAT('%', #{searchKey}, '%')
+            </if>
+        </where>
+        <if test ='"" != order'>
+            order by ${order} desc
+        </if>
+        limit #{page,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
+    </select>
+
+    <!-- 总量查询 -->
+    <select id="total" resultType="java.lang.Integer">
+        SELECT count(*) FROM ${prefix}_files
+        <where>
+            <if test ='null != typechoFiles.id'>
+                and `id` = #{typechoFiles.id}
+            </if>
+            <if test ='null != typechoFiles.name'>
+                and `name` = #{typechoFiles.name}
+            </if>
+            <if test ='null != typechoFiles.md5'>
+                and `md5` = #{typechoFiles.md5}
+            </if>
+            <if test ='null != typechoFiles.links'>
+                and `links` = #{typechoFiles.links}
+            </if>
+            <if test ='null != typechoFiles.source'>
+                and `source` = #{typechoFiles.source}
+            </if>
+            <if test ='null != typechoFiles.created'>
+                and `created` = #{typechoFiles.created}
+            </if>
+            <if test ='null != typechoFiles.uid'>
+                and `uid` = #{typechoFiles.uid}
+            </if>
+            <if test ='null != typechoFiles.type'>
+                and `type` = #{typechoFiles.type}
+            </if>
+            <if test ='null != typechoFiles.suffix'>
+                and `suffix` = #{typechoFiles.suffix}
+            </if>
+            <if test ='null != searchKey'>
+                and CONCAT(IFNULL(`name`, ''), IFNULL(`links`, '')LIKE CONCAT('%', #{searchKey}, '%')
+            </if>
+        </where>
+    </select>
+</mapper>

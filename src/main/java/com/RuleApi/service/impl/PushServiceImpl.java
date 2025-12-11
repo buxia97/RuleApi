@@ -1,9 +1,7 @@
 package com.RuleApi.service.impl;
 
-import com.RuleApi.entity.TypechoApiconfig;
-import com.RuleApi.entity.TypechoFields;
 import com.RuleApi.service.PushService;
-import com.RuleApi.service.TypechoApiconfigService;
+import com.RuleApi.service.AllconfigService;
 import com.getui.push.v2.sdk.ApiHelper;
 import com.getui.push.v2.sdk.GtApiConfiguration;
 import com.getui.push.v2.sdk.api.PushApi;
@@ -22,7 +20,6 @@ import com.getui.push.v2.sdk.dto.req.message.ios.Alert;
 import com.getui.push.v2.sdk.dto.req.message.ios.Aps;
 import com.getui.push.v2.sdk.dto.req.message.ios.IosDTO;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -33,18 +30,20 @@ import java.util.Map;
 public class PushServiceImpl implements PushService {
 
     @Autowired
-    private TypechoApiconfigService apiconfigService;
+    private AllconfigService allconfigService;
     /**
      * 发送单Cid消息
      */
     @Override
-    public  void sendPushMsg(String cid, String title, String content, String ClickType, String pushText){
+    public  void sendPushMsg(String cid, String title, String content, String ClickType, String pushText, Map apiconfig){
         GtApiConfiguration apiConfiguration = new GtApiConfiguration();
         //填写应用配置，参数在“Uni Push”下的“应用配置”页面中获取
-        TypechoApiconfig apiconfig = apiconfigService.selectByKey(1);
-        apiConfiguration.setAppId(apiconfig.getPushAppId());
-        apiConfiguration.setAppKey(apiconfig.getPushAppKey());
-        apiConfiguration.setMasterSecret(apiconfig.getPushMasterSecret());
+        String pushAppId = apiconfig.get("pushAppId").toString();
+        String pushAppKey = apiconfig.get("pushAppKey").toString();
+        String pushMasterSecret = apiconfig.get("pushMasterSecret").toString();
+        apiConfiguration.setAppId(pushAppId);
+        apiConfiguration.setAppKey(pushAppKey);
+        apiConfiguration.setMasterSecret(pushMasterSecret);
         apiConfiguration.setDomain("https://restapi.getui.com/v2/");
         // 实例化ApiHelper对象，用于创建接口对象
         ApiHelper apiHelper = ApiHelper.build(apiConfiguration);

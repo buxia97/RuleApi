@@ -123,10 +123,60 @@ public class TypechoUsers implements Serializable {
     private Integer posttime;
 
     /**
+     * 用户IP
+     */
+    private String ip;
+
+    /**
+     * 用户归属地
+     */
+    private String local;
+
+    /**
+     * 用户手机号
+     */
+    private String phone;
+
+    /**
      * 用户主页背景图链接
      */
     private String userBg;
 
+    /**
+     * 用户邀请码
+     */
+    private String invitationCode;
+
+    /**
+     * 邀请用户
+     */
+    private Integer invitationUser;
+
+
+    /**
+     * 用户积分
+     */
+    private Integer points;
+
+    /**
+     * 佩戴荣誉
+     */
+    private Integer honor;
+
+    /**
+     * 用户性别(0未知，1男性，2女性)
+     */
+    private Integer gender;
+
+    /**
+     * 地区
+     */
+    private String region;
+
+    /**
+     * 出生日期
+     */
+    private Integer birthday;
 
 
 }

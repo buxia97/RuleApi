@@ -27,6 +27,7 @@
         <result column="istop" property="istop" />
         <result column="isswiper" property="isswiper" />
         <result column="replyTime" property="replyTime" />
+
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -177,23 +178,23 @@
         INSERT INTO ${prefix}_contents ( <include refid="Base_Column_List" /> ) VALUES
         <foreach collection="list" item="curr" index="index" separator=",">
             (
-            #{curr.cid},
-            #{curr.title},
-            #{curr.slug},
-            #{curr.created},
-            #{curr.modified},
-            #{curr.text},
-            #{curr.orderKey},
-            #{curr.authorId},
-            #{curr.template},
-            #{curr.type},
-            #{curr.status},
-            #{curr.password},
-            #{curr.commentsNum},
-            #{curr.allowComment},
-            #{curr.allowPing},
-            #{curr.allowFeed},
-            #{curr.parent}
+                #{curr.cid},
+                #{curr.title},
+                #{curr.slug},
+                #{curr.created},
+                #{curr.modified},
+                #{curr.text},
+                #{curr.orderKey},
+                #{curr.authorId},
+                #{curr.template},
+                #{curr.type},
+                #{curr.status},
+                #{curr.password},
+                #{curr.commentsNum},
+                #{curr.allowComment},
+                #{curr.allowPing},
+                #{curr.allowFeed},
+                #{curr.parent}
             )
         </foreach>
     </insert>

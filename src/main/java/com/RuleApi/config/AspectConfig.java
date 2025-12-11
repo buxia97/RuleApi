@@ -1,6 +1,7 @@
 package com.RuleApi.config;
 
 import com.RuleApi.aspect.LoginAspect;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration

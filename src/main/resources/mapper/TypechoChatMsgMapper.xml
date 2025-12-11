@@ -186,6 +186,9 @@
             <if test ='null != typechoChatMsg.url'>
                 and `url` = #{typechoChatMsg.url}
             </if>
+            <if test ='null != searchKey'>
+                and CONCAT(IFNULL(`text`, '')) LIKE CONCAT('%', #{searchKey}, '%')
+            </if>
         </where>
         order by created desc
         limit #{page,jdbcType=INTEGER}, #{pageSize,jdbcType=INTEGER}
@@ -195,26 +198,29 @@
     <select id="total" resultType="java.lang.Integer">
         SELECT count(*) FROM ${prefix}_chat_msg
         <where>
-            <if test ='null != id'>
-                and `id` = #{id}
+            <if test ='null != typechoChatMsg.id'>
+                and `id` = #{typechoChatMsg.id}
             </if>
-            <if test ='null != uid'>
-                and `uid` = #{uid}
+            <if test ='null != typechoChatMsg.uid'>
+                and `uid` = #{typechoChatMsg.uid}
             </if>
-            <if test ='null != cid'>
-                and `cid` = #{cid}
+            <if test ='null != typechoChatMsg.cid'>
+                and `cid` = #{typechoChatMsg.cid}
             </if>
-            <if test ='null != text'>
-                and `text` = #{text}
+            <if test ='null != typechoChatMsg.text'>
+                and `text` = #{typechoChatMsg.text}
             </if>
-            <if test ='null != created'>
-                and `created` = #{created}
+            <if test ='null != typechoChatMsg.created'>
+                and `created` = #{typechoChatMsg.created}
             </if>
-            <if test ='null != type'>
-                and `type` = #{type}
+            <if test ='null != typechoChatMsg.type'>
+                and `type` = #{typechoChatMsg.type}
             </if>
-            <if test ='null != url'>
-                and `url` = #{url}
+            <if test ='null != typechoChatMsg.url'>
+                and `url` = #{typechoChatMsg.url}
+            </if>
+            <if test ='null != searchKey'>
+                and CONCAT(IFNULL(`text`, '')) LIKE CONCAT('%', #{searchKey}, '%')
             </if>
         </where>
         order by created desc

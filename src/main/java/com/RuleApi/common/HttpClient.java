@@ -147,7 +147,6 @@ public class HttpClient {
         }
         return result;
     }
-
     public static String doGetImg(String httpurl,String pexelsKey) {
         //HttpURLConnection神奇的无法传递Authorization，所以使用curl了
         String[] cmds = {"curl", "-H", "Authorization:"+pexelsKey, httpurl};

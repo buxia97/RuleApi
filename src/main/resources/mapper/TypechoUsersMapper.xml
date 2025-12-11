@@ -25,7 +25,17 @@
         <result column="clientId" property="clientId" />
         <result column="bantime" property="bantime" />
         <result column="posttime" property="posttime" />
+        <result column="ip" property="ip" />
+        <result column="local" property="local" />
+        <result column="phone" property="phone" />
         <result column="userBg" property="userBg" />
+        <result column="invitationCode" property="invitationCode" />
+        <result column="invitationUser" property="invitationUser" />
+        <result column="points" property="points" />
+        <result column="honor" property="honor" />
+        <result column="gender" property="gender" />
+        <result column="region" property="region" />
+        <result column="birthday" property="birthday" />
     </resultMap>
 
     <sql id="Base_Column_List">
@@ -51,7 +61,17 @@
         `clientId`,
         `bantime`,
         `posttime`,
-        `userBg`
+        `ip`,
+        `local`,
+        `phone`,
+        `userBg`,
+        `invitationCode`,
+        `invitationUser`,
+        `points`,
+        `honor`,
+        `gender`,
+        `region`,
+        `birthday`
     </sql>
 
     <!-- 插入数据 -->
@@ -98,9 +118,32 @@
                 `clientId`,
             </if>
             <if test ='null != bantime'>
-                `bantime`
+                `bantime`,
             </if>
-
+            <if test ='null != ip'>
+                `ip`,
+            </if>
+            <if test ='null != local'>
+                `local`,
+            </if>
+            <if test ='null != phone'>
+                `phone`,
+            </if>
+            <if test ='null != invitationUser'>
+                `invitationUser`,
+            </if>
+            <if test ='null != honor'>
+                `honor`,
+            </if>
+            <if test ='null != gender'>
+                `gender`,
+            </if>
+            <if test ='null != region'>
+                `region`,
+            </if>
+            <if test ='null != birthday'>
+                `birthday`
+            </if>
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
             <if test ='null != uid'>
@@ -143,9 +186,32 @@
                 #{clientId},
             </if>
             <if test ='null != bantime'>
-                #{bantime}
+                #{bantime},
             </if>
-
+            <if test ='null != ip'>
+                #{ip},
+            </if>
+            <if test ='null != local'>
+                #{local},
+            </if>
+            <if test ='null != phone'>
+                #{phone},
+            </if>
+            <if test ='null != invitationUser'>
+                #{invitationUser},
+            </if>
+            <if test ='null != honor'>
+                #{honor},
+            </if>
+            <if test ='null != gender'>
+                #{gender},
+            </if>
+            <if test ='null != region'>
+                #{region},
+            </if>
+            <if test ='null != birthday'>
+                #{birthday},
+            </if>
         </trim>
     </insert>
 
@@ -195,7 +261,17 @@
             <if test ='null != clientId'>`clientId` = #{clientId},</if>
             <if test ='null != bantime'>`bantime` = #{bantime},</if>
             <if test ='null != posttime'>`posttime` = #{posttime},</if>
-            <if test ='null != userBg'>`userBg` = #{userBg}</if>
+            <if test ='null != ip'>`ip` = #{ip},</if>
+            <if test ='null != local'>`local` = #{local},</if>
+            <if test ='null != phone'>`phone` = #{phone},</if>
+            <if test ='null != userBg'>`userBg` = #{userBg},</if>
+            <if test ='null != invitationCode'>`invitationCode` = #{invitationCode},</if>
+            <if test ='null != invitationUser'>`invitationUser` = #{invitationUser},</if>
+            <if test ='null != points'>`points` = #{points},</if>
+            <if test ='null != honor'>`honor` = #{honor},</if>
+            <if test ='null != gender'>`gender` = #{gender},</if>
+            <if test ='null != region'>`region` = #{region},</if>
+            <if test ='null != birthday'>`birthday` = #{birthday}</if>
         </set>
         WHERE `uid` = #{uid}
     </update>
@@ -259,6 +335,27 @@
             <if test ='null != authCode'>
                 and `authCode` = #{authCode}
             </if>
+            <if test ='null != phone'>
+                and `phone` = #{phone}
+            </if>
+            <if test ='null != invitationCode'>
+                and `invitationCode` = #{invitationCode}
+            </if>
+            <if test ='null != invitationUser'>
+                and `invitationUser` = #{invitationUser}
+            </if>
+            <if test ='null != honor'>
+                and `honor` = #{honor}
+            </if>
+            <if test ='null != region'>
+                and `region` = #{region}
+            </if>
+            <if test ='null != gender'>
+                and `gender` = #{gender}
+            </if>
+            <if test ='null != region'>
+                and `region` = #{region}
+            </if>
         </where>
     </select>
 
@@ -304,6 +401,18 @@
             <if test ='null != typechoUsers.experience'>
                 and `experience` = #{typechoUsers.experience}
             </if>
+            <if test ='null != typechoUsers.invitationUser'>
+                and `invitationUser` = #{typechoUsers.invitationUser}
+            </if>
+            <if test ='null != typechoUsers.honor'>
+                and `honor` = #{typechoUsers.honor}
+            </if>
+            <if test ='null != typechoUsers.gender'>
+                and `gender` = #{typechoUsers.gender}
+            </if>
+            <if test ='null != typechoUsers.region'>
+                and `region` = #{typechoUsers.region}
+            </if>
             <if test ='null != typechoUsers.vip'>
                 and `vip` > UNIX_TIMESTAMP() or `vip` = 1
             </if>
@@ -311,7 +420,7 @@
                 and `bantime` > UNIX_TIMESTAMP() or `bantime` = 1
             </if>
             <if test ='null != searchKey'>
-                and CONCAT(IFNULL(`name`, ''), IFNULL(`screenName`, ''), IFNULL(`uid`, ''), IFNULL(`mail`, '')) LIKE CONCAT('%', #{searchKey}, '%')
+                and CONCAT(IFNULL(`name`, ''), IFNULL(`screenName`, ''), IFNULL(`uid`, ''), IFNULL(`mail`, ''), IFNULL(`region`, ''), IFNULL(`local`, '')) LIKE CONCAT('%', #{searchKey}, '%')
             </if>
 
         </where>
@@ -357,6 +466,12 @@
             </if>
             <if test ='null != typechoUsers.authCode'>
                 and `authCode` = #{typechoUsers.authCode}
+            </if>
+            <if test ='null != typechoUsers.invitationUser'>
+                and `invitationUser` = #{typechoUsers.invitationUser}
+            </if>
+            <if test ='null != typechoUsers.honor'>
+                and `honor` = #{typechoUsers.honor}
             </if>
             <if test ='null != searchKey'>
                 and CONCAT(IFNULL(`name`, ''), IFNULL(`screenName`, ''), IFNULL(`uid`, ''), IFNULL(`mail`, '')) LIKE CONCAT('%', #{searchKey}, '%')

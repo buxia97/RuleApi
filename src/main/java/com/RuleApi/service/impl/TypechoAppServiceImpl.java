@@ -1,9 +1,9 @@
 package com.RuleApi.service.impl;
 
+import com.RuleApi.entity.*;
 import com.RuleApi.common.PageList;
-import com.RuleApi.dao.TypechoAppDao;
-import com.RuleApi.entity.TypechoApp;
-import com.RuleApi.service.TypechoAppService;
+import com.RuleApi.dao.*;
+import com.RuleApi.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,7 +16,7 @@ import java.util.List;
  * @date 2023/06/09
  */
 @Service
-public class TypechoAppServiceImpl implements TypechoAppService {
+public class TypechoAppServiceImpl implements AppService {
 
     @Autowired
 	TypechoAppDao dao;

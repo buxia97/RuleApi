@@ -40,7 +40,7 @@
     </sql>
 
     <!-- 插入数据 -->
-    <insert id="insert" parameterType="com.RuleApi.entity.TypechoComments">
+    <insert id="insert" parameterType="com.RuleApi.entity.TypechoComments"  keyProperty="coid" useGeneratedKeys="true">
         INSERT INTO ${prefix}_comments
         <trim prefix="(" suffix=")" suffixOverrides=",">
             <if test ='null != coid'>
@@ -143,20 +143,20 @@
         INSERT INTO ${prefix}_comments ( <include refid="Base_Column_List" /> ) VALUES
         <foreach collection="list" item="curr" index="index" separator=",">
             (
-            #{curr.coid},
-            #{curr.cid},
-            #{curr.created},
-            #{curr.author},
-            #{curr.authorId},
-            #{curr.ownerId},
-            #{curr.mail},
-            #{curr.url},
-            #{curr.ip},
-            #{curr.agent},
-            #{curr.text},
-            #{curr.type},
-            #{curr.status},
-            #{curr.parent}
+                #{curr.coid},
+                #{curr.cid},
+                #{curr.created},
+                #{curr.author},
+                #{curr.authorId},
+                #{curr.ownerId},
+                #{curr.mail},
+                #{curr.url},
+                #{curr.ip},
+                #{curr.agent},
+                #{curr.text},
+                #{curr.type},
+                #{curr.status},
+                #{curr.parent}
             )
         </foreach>
     </insert>

@@ -4,6 +4,8 @@ import com.RuleApi.annotation.LoginRequired;
 import com.RuleApi.common.*;
 import com.RuleApi.entity.*;
 import com.RuleApi.service.*;
+import com.RuleApi.dto.AppleVerifyRequest;
+import com.RuleApi.dto.AppleVerifyResponse;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -14,29 +16,24 @@ import com.alipay.api.internal.util.AlipaySignature;
 import com.alipay.api.request.AlipayTradePrecreateRequest;
 import com.alipay.api.response.AlipayTradePrecreateResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.wxpay.sdk.WXPay;
-import com.github.wxpay.sdk.WXPayConstants;
-import com.github.wxpay.sdk.WXPayUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.hssf.usermodel.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.DigestUtils;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -52,21 +49,23 @@ public class PayController {
     private RedisTemplate redisTemplate;
 
     @Autowired
-    private TypechoUsersService usersService;
-
+    private UsersService usersService;
 
     @Autowired
-    private TypechoPaylogService paylogService;
+    private PayPackageService payPackageService;
+
+    @Autowired
+    private PaylogService paylogService;
 
     @Autowired
     private SecurityService securityService;
 
     @Autowired
-    private TypechoPaykeyService paykeyService;
-
+    private PaykeyService paykeyService;
 
     @Autowired
-    private TypechoApiconfigService apiconfigService;
+    private AllconfigService allconfigService;
+
 
     @Value("${web.prefix}")
     private String dataprefix;
@@ -78,7 +77,169 @@ public class PayController {
     ResultAll Result = new ResultAll();
     HttpClient HttpClient = new HttpClient();
     UserStatus UStatus = new UserStatus();
+    RestTemplate restTemplate = new RestTemplate();
 
+    /**
+     * Apple客户端支付成功后调用此接口，服务端验证苹果收据
+     */
+    @PostMapping("/verifyReceipt")
+    public ResponseEntity<Map<String, Object>> verifyReceipt(@RequestBody AppleVerifyRequest req) {
+        Map apiconfig = UStatus.getConfig(this.dataprefix,allconfigService,redisTemplate);
+
+        String prodUrl = "";
+        if(apiconfig.get("appleProdUrl")!=null){
+            prodUrl = apiconfig.get("appleProdUrl").toString();
+        }
+        String sandboxUrl = "";
+        if(apiconfig.get("appleSandboxUrl")!=null){
+            sandboxUrl = apiconfig.get("appleSandboxUrl").toString();
+        }
+        String sharedSecret = null;
+        if(apiconfig.get("appleSharedSecret")!=null){
+            sharedSecret = apiconfig.get("appleSharedSecret").toString();
+        }
+        String bundleId = "";
+        if(apiconfig.get("appleBundleId")!=null){
+            bundleId = apiconfig.get("appleBundleId").toString();
+        }
+        //初始化配置信息
+
+        Map<String, Object> result = new HashMap<>();
+        String uid = req.getUserId();
+        Integer payType = 0;
+        if(req.getPayType()!=null){
+            payType = req.getPayType();
+        }
+        String receipt = req.getReceipt();
+        if (receipt == null || receipt.isEmpty()) {
+            result.put("success", false);
+            result.put("msg", "receipt empty");
+            return ResponseEntity.ok(result);
+        }
+
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("receipt-data", receipt);
+        if (sharedSecret != null && !sharedSecret.isEmpty()) {
+            payload.put("password", sharedSecret);
+        }
+
+        AppleVerifyResponse resp = postToApple(prodUrl, payload);
+        if (resp == null) {
+            result.put("success", false);
+            result.put("msg", "apple verify failed");
+            return ResponseEntity.ok(result);
+        }
+
+        if (resp.getStatus() == 21007) {
+            resp = postToApple(sandboxUrl, payload);
+        }
+
+        if (resp.getStatus() == 0) {
+            Map<String, Object> receiptMap = resp.getReceipt();
+            if (receiptMap != null && receiptMap.containsKey("bundle_id")) {
+                String respBundleId = receiptMap.get("bundle_id").toString();
+                if (!bundleId.equals(respBundleId)) {
+                    result.put("success", false);
+                    result.put("msg", "bundle_id mismatch");
+                    return ResponseEntity.ok(result);
+                }
+            }
+            if (receiptMap != null && receiptMap.containsKey("in_app")) {
+                List<Map<String, Object>> inAppList = (List<Map<String, Object>>) receiptMap.get("in_app");
+
+                if (inAppList != null && !inAppList.isEmpty()) {
+                    Long date = System.currentTimeMillis();
+                    String created = String.valueOf(date).substring(0,10);
+                    Map<String, Object> lastPurchase = inAppList.get(inAppList.size() - 1);
+
+                    String transactionId = (String) lastPurchase.get("transaction_id");
+                    String productId = (String) lastPurchase.get("product_id");
+                    String quantity = (String) lastPurchase.get("quantity");
+
+                    //先生成订单，根据支付类型不同，支付套餐还是VIP支付
+                    //根据 productId 获取对应金额，或获取VIP套餐
+
+                    Integer amount = 0;
+                    Integer integral = 0;
+                    TypechoPayPackage payPackage = new TypechoPayPackage();
+                    payPackage.setAppleProductId(productId);
+                    List<TypechoPayPackage> payPackageList = payPackageService.selectList(payPackage);
+                    if(payPackageList.size() > 0){
+                        payPackage = payPackageList.get(0);
+                        amount = payPackage.getGold();
+                        integral = payPackage.getIntegral();
+                    }else{
+                        result.put("success", false);
+                        result.put("msg", "未找到支付套餐");
+                        return ResponseEntity.ok(result);
+                    }
+                    //存入充值记录
+                    //支付完成后，写入充值日志
+                    String trade_no =transactionId;
+                    String out_trade_no = transactionId;
+
+                    TypechoPaylog paylog = new TypechoPaylog();
+                    //根据订单和发起人，是否有数据库对应，来是否充值成功
+                    paylog.setOutTradeNo(out_trade_no);
+                    paylog.setStatus(1);
+                    List<TypechoPaylog> logList= paylogService.selectList(paylog);
+                    if(logList.size() > 0){
+                        result.put("success", false);
+                        result.put("msg", "订单已存在！");
+                        return ResponseEntity.ok(result);
+                    }else{
+
+                        Integer TotalAmount = amount;
+                        paylog.setStatus(1);
+                        paylog.setCreated(Integer.parseInt(created));
+                        paylog.setUid(Integer.parseInt(uid));
+                        paylog.setOutTradeNo(out_trade_no);
+                        paylog.setTotalAmount(TotalAmount.toString());
+                        paylog.setPaytype("applePay");
+                        paylog.setSubject("苹果支付");
+                        paylogService.insert(paylog);
+                        //订单修改后，插入用户表
+                        TypechoUsers users = usersService.selectByKey(uid);
+                        Integer oldAssets = users.getAssets();
+                        Integer oldPoints = users.getPoints();
+                        Integer assets = oldAssets + amount;
+                        Integer points = oldPoints + integral;
+                        users.setAssets(assets);
+                        users.setPoints(points);
+                        usersService.update(users);
+                    }
+
+
+                }
+            }
+
+            // 发货 / 业务逻辑
+            result.put("success", true);
+            return ResponseEntity.ok(result);
+        } else {
+            result.put("success", false);
+            result.put("status", resp.getStatus());
+            result.put("msg", "apple verify failed with status");
+            return ResponseEntity.ok(result);
+        }
+    }
+
+    /**
+     * 向 Apple 服务器发送验证请求
+     */
+    private AppleVerifyResponse postToApple(String url, Map<String, Object> payload) {
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(payload, headers);
+            ResponseEntity<AppleVerifyResponse> response =
+                    restTemplate.postForEntity(url, entity, AppleVerifyResponse.class);
+            return response.getBody();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 
     /**
      * 支付宝扫码支付
@@ -87,22 +248,46 @@ public class PayController {
     @RequestMapping(value = "/scancodePay")
     @ResponseBody
     @LoginRequired(purview = "0")
-    public String scancodepay(@RequestParam(value = "num", required = false) String num, @RequestParam(value = "token", required = false) String  token) throws AlipayApiException {
+    public String scancodepay(@RequestParam(value = "num", required = false) String num,
+                              @RequestParam(value = "token", required = false) String  token,
+                              @RequestParam(value = "packageId", required = false ,defaultValue = "0") Integer  packageId) throws AlipayApiException {
 
-
-        Pattern pattern = Pattern.compile("[0-9]*");
-        if(!pattern.matcher(num).matches()){
-            return Result.getResultJson(0,"充值金额必须为正整数",null);
+        //当packageId为0时，以num参数结算，当packageId不为0时，以套餐价格结算。
+        TypechoPayPackage payPackage = new TypechoPayPackage();
+        if(packageId.equals(0)){
+            Pattern pattern = Pattern.compile("[0-9]*");
+            if(!pattern.matcher(num).matches()){
+                return Result.getResultJson(0,"充值金额必须为正整数",null);
+            }
+            if(Integer.parseInt(num) <= 0){
+                return Result.getResultJson(0,"充值金额不正确",null);
+            }
+        }else{
+            payPackage = payPackageService.selectByKey(packageId);
+            if(payPackage == null){
+                return Result.getResultJson(0,"套餐不存在",null);
+            }
+            num = payPackage.getPrice().toString();
         }
-        if(Integer.parseInt(num) <= 0){
-            return Result.getResultJson(0,"充值金额不正确",null);
-        }
-
         Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
         Integer uid =Integer.parseInt(map.get("uid").toString());
         //登录情况下，恶意充值攻击拦截
-        TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
-        if(apiconfig.getBanRobots().equals(1)) {
+        Map apiconfig = UStatus.getConfig(this.dataprefix,allconfigService,redisTemplate);
+        Integer minPayNum = 5;
+        if(apiconfig.get("minPayNum")!=null){
+            minPayNum = Integer.parseInt(apiconfig.get("minPayNum").toString());
+        }
+        if(Integer.parseInt(num) < minPayNum){
+            return Result.getResultJson(0,"最小充值金额为："+minPayNum,null);
+        }
+        Integer switchAlipay = 1;
+        if(apiconfig.get("switchAlipay")!=null){
+            switchAlipay = Integer.parseInt(apiconfig.get("switchAlipay").toString());
+        }
+        if(switchAlipay.equals(0)){
+            return Result.getResultJson(0,"支付渠道已关闭",null);
+        }
+        if(apiconfig.get("banRobots").toString().equals("1")) {
             String isSilence = redisHelp.getRedis(this.dataprefix + "_" + uid + "_silence", redisTemplate);
             if (isSilence != null) {
                 return Result.getResultJson(0, "你的操作太频繁了，请稍后再试", null);
@@ -124,9 +309,9 @@ public class PayController {
         }
         //攻击拦截结束
 
-        final String APPID = apiconfig.getAlipayAppId();
-        String RSA2_PRIVATE = apiconfig.getAlipayPrivateKey();
-        String ALIPAY_PUBLIC_KEY = apiconfig.getAlipayPublicKey();
+        final String APPID = apiconfig.get("alipayAppId").toString();
+        String RSA2_PRIVATE = apiconfig.get("alipayPrivateKey").toString();
+        String ALIPAY_PUBLIC_KEY = apiconfig.get("alipayPublicKey").toString();
 
         Date now = new Date();
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss");//可以方便地修改日期格式
@@ -146,7 +331,7 @@ public class PayController {
                 "    \"body\":\"" + body + "\"," +
                 "    \"subject\":\"商品购买\"," +
                 "    \"timeout_express\":\"90m\"}");//设置业务参数
-        request.setNotifyUrl(apiconfig.getAlipayNotifyUrl());
+        request.setNotifyUrl(apiconfig.get("alipayNotifyUrl").toString());
         AlipayTradePrecreateResponse response = alipayClient.execute(request);//通过alipayClient调用API，获得对应的response类
         System.out.print(response.getBody());
 
@@ -156,21 +341,28 @@ public class PayController {
             Long date = System.currentTimeMillis();
             String created = String.valueOf(date).substring(0,10);
             TypechoPaylog paylog = new TypechoPaylog();
-            Integer TotalAmount = Integer.parseInt(total_fee) * apiconfig.getScale();
+            Integer TotalAmount = Integer.parseInt(total_fee) * Integer.parseInt(apiconfig.get("scale").toString());
             paylog.setStatus(0);
             paylog.setCreated(Integer.parseInt(created));
             paylog.setUid(uid);
             paylog.setOutTradeNo(order_no);
-            paylog.setTotalAmount(TotalAmount.toString());
             paylog.setPaytype("scancodePay");
-            paylog.setSubject("扫码支付");
+            if(packageId.equals(0)){
+                paylog.setSubject("支付宝支付");
+                paylog.setTotalAmount(TotalAmount.toString());
+            }else{
+                TotalAmount = payPackage.getGold();
+                paylog.setTotalAmount(TotalAmount.toString());
+                paylog.setSubject("支付宝支付-套餐充值");
+                paylog.setPackageId(packageId);
+            }
             paylogService.insert(paylog);
             //再返回二维码
             String qrcode = response.getQrCode();
             JSONObject toResponse = new JSONObject();
             toResponse.put("code" ,1);
-            toResponse.put("logid" ,paylog.getPid());
             toResponse.put("data" , qrcode);
+            toResponse.put("pid" , paylog.getPid());
             toResponse.put("msg"  , "获取成功");
             return toResponse.toString();
         } else{
@@ -199,10 +391,10 @@ public class PayController {
             params.put(name, valueStr);
         }
         System.err.println(params);
-        TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
+        Map apiconfig = UStatus.getConfig(this.dataprefix,allconfigService,redisTemplate);
         String CHARSET = "UTF-8";
         //支付宝公钥
-        String ALIPAY_PUBLIC_KEY = apiconfig.getAlipayPublicKey();
+        String ALIPAY_PUBLIC_KEY = apiconfig.get("alipayPublicKey").toString();
 
         String tradeStatus = request.getParameter("trade_status");
         boolean flag = AlipaySignature.rsaCheckV1(params, ALIPAY_PUBLIC_KEY, CHARSET, "RSA2");
@@ -214,9 +406,9 @@ public class PayController {
                 String trade_no = params.get("trade_no");
                 String out_trade_no = params.get("out_trade_no");
                 String total_amount = params.get("total_amount");
-                Integer scale = apiconfig.getScale();
-                Integer integral = Double.valueOf(total_amount).intValue() * scale;
-
+                Integer scale = Integer.parseInt(apiconfig.get("scale").toString());
+                Integer gold = Double.valueOf(total_amount).intValue() * scale;
+                Integer integral = 0;
                 Long date = System.currentTimeMillis();
                 String created = String.valueOf(date).substring(0,10);
                 TypechoPaylog paylog = new TypechoPaylog();
@@ -231,12 +423,25 @@ public class PayController {
                     paylog.setTradeNo(trade_no);
                     paylog.setPid(pid);
                     paylog.setCreated(Integer.parseInt(created));
+                    paylog.setPackageId(logList.get(0).getPackageId());
+                    //如果是套餐充值，且套餐存在，则赋值套餐
+                    if(!paylog.getPackageId().equals(0)){
+                        TypechoPayPackage payPackage = payPackageService.selectByKey(paylog.getPackageId());
+                        if(payPackage != null){
+                            gold = payPackage.getGold();
+                            integral = payPackage.getIntegral();
+                        }
+                    }
+
                     paylogService.update(paylog);
                     //订单修改后，插入用户表
                     TypechoUsers users = usersService.selectByKey(uid);
                     Integer oldAssets = users.getAssets();
-                    Integer assets = oldAssets + integral;
+                    Integer assets = oldAssets + gold;
+                    Integer oldPoints = users.getPoints();
+                    Integer points = oldPoints + integral;
                     users.setAssets(assets);
+                    users.setPoints(points);
                     usersService.update(users);
                 }else{
                     System.err.println("数据库不存在订单");
@@ -369,18 +574,52 @@ public class PayController {
     }
 
     /**
-     * 微信支付
-     * */
+     * 微信支付（支持 App / JSAPI / Native / H5）
+     */
     @RequestMapping(value = "/WxPay")
     @ResponseBody
     @LoginRequired(purview = "0")
-    public String wxAdd(HttpServletRequest request,@RequestParam(value = "price", required = false) Integer price,@RequestParam(value = "token", required = false) String  token) throws Exception {
-        try{
-            Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
-            Integer uid =Integer.parseInt(map.get("uid").toString());
-            //登录情况下，恶意充值攻击拦截
-            TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
-            if(apiconfig.getBanRobots().equals(1)) {
+    public String wxAdd(HttpServletRequest request,
+                        @RequestParam(value = "price", required = false) Integer price,
+                        @RequestParam(value = "token", required = false) String token,
+                        @RequestParam(value = "packageId", required = false ,defaultValue = "0") Integer packageId,
+                        @RequestParam(value = "tradeType", required = false ,defaultValue = "NATIVE") String tradeType,
+                        @RequestParam(value = "openidOrWapUrl", required = false) String openidOrWapUrl) throws Exception {
+        try {
+            // 处理套餐或自定义金额
+            TypechoPayPackage payPackage = new TypechoPayPackage();
+            if(packageId.equals(0)){
+                if(price == null || price <= 0){
+                    return Result.getResultJson(0,"充值金额不正确",null);
+                }
+            } else {
+                payPackage = payPackageService.selectByKey(packageId);
+                if(payPackage == null){
+                    return Result.getResultJson(0,"套餐不存在",null);
+                }
+                price = payPackage.getPrice();
+            }
+
+            Map map = redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
+            Integer uid = Integer.parseInt(map.get("uid").toString());
+
+            // 登录情况下，恶意充值攻击拦截
+            Map<String,Object> apiconfig = UStatus.getConfig(this.dataprefix,allconfigService,redisTemplate);
+            Integer minPayNum = 5;
+            if(apiconfig.get("minPayNum")!=null){
+                minPayNum = Integer.parseInt(apiconfig.get("minPayNum").toString());
+            }
+            if(price < minPayNum){
+                return Result.getResultJson(0,"最小充值金额为："+minPayNum,null);
+            }
+            Integer switchWxpay = 1;
+            if(apiconfig.get("switchWxpay")!=null){
+                switchWxpay = Integer.parseInt(apiconfig.get("switchWxpay").toString());
+            }
+            if(switchWxpay.equals(0)){
+                return Result.getResultJson(0,"支付渠道已关闭",null);
+            }
+            if("1".equals(apiconfig.get("banRobots").toString())) {
                 String isSilence = redisHelp.getRedis(this.dataprefix+"_"+uid+"_silence",redisTemplate);
                 if(isSilence!=null){
                     return Result.getResultJson(0,"你的操作太频繁了，请稍后再试",null);
@@ -388,50 +627,64 @@ public class PayController {
                 String isRepeated = redisHelp.getRedis(this.dataprefix+"_"+uid+"_isRepeated",redisTemplate);
                 if(isRepeated==null){
                     redisHelp.setRedis(this.dataprefix+"_"+uid+"_isRepeated","1",2,redisTemplate);
-                }else{
+                } else {
                     Integer frequency = Integer.parseInt(isRepeated) + 1;
-                    if(frequency==3){
+                    if(frequency >= 3){
                         securityService.safetyMessage("用户ID："+uid+"，在微信充值接口疑似存在攻击行为，请及时确认处理。","system");
                         redisHelp.setRedis(this.dataprefix+"_"+uid+"_silence","1",900,redisTemplate);
                         return Result.getResultJson(0,"你的请求存在恶意行为，15分钟内禁止操作！",null);
-                    }else{
+                    } else {
                         redisHelp.setRedis(this.dataprefix+"_"+uid+"_isRepeated",frequency.toString(),3,redisTemplate);
+                        return Result.getResultJson(0,"你的操作太频繁了",null);
                     }
-                    return Result.getResultJson(0,"你的操作太频繁了",null);
                 }
             }
 
-            //攻击拦截结束
-            Integer scale = apiconfig.getScale();
-            //商户订单号
-            Date now = new Date();
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss");//可以方便地修改日期格式
-            String timeID = dateFormat.format(now);
-            String outTradeNo = timeID+"WxPay";
-            Map<String, String> data = WeChatPayUtils.native_payment_order(price.toString(), "微信商品下单", outTradeNo,apiconfig);
-            System.out.println(data.toString());
-            if("200".equals(data.get("code"))){
-                //先生成订单
+            // 商户订单号
+            String outTradeNo = new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()) + "WxPay";
+
+            // 调用统一下单
+            Map<String, String> data = WeChatPayUtils.unifiedOrder(
+                    price.toString(),
+                    packageId.equals(0) ? "微信商品下单" : "微信支付-套餐充值",
+                    outTradeNo,
+                    tradeType,
+                    apiconfig,
+                    openidOrWapUrl
+            );
+            if(data != null && "200".equals(data.get("code"))){
+                // 生成订单记录
                 Long date = System.currentTimeMillis();
                 String created = String.valueOf(date).substring(0,10);
                 TypechoPaylog paylog = new TypechoPaylog();
 
+                Integer scale = Integer.parseInt(apiconfig.get("scale").toString());
                 Integer TotalAmount = price * scale;
+
                 paylog.setStatus(0);
                 paylog.setCreated(Integer.parseInt(created));
                 paylog.setUid(uid);
                 paylog.setOutTradeNo(outTradeNo);
-                paylog.setTotalAmount(TotalAmount.toString());
                 paylog.setPaytype("WxPay");
-                paylog.setSubject("扫码支付");
+
+                if(packageId.equals(0)){
+                    paylog.setSubject("微信支付");
+                    paylog.setTotalAmount(TotalAmount.toString());
+                } else {
+                    TotalAmount = payPackage.getGold();
+                    paylog.setTotalAmount(TotalAmount.toString());
+                    paylog.setSubject("微信支付-套餐充值");
+                    paylog.setPackageId(packageId);
+                }
                 paylogService.insert(paylog);
-                //再返回二维码
+
+                // 返回支付信息
                 data.put("outTradeNo", outTradeNo);
                 data.put("totalAmount", price.toString());
 
                 JSONObject toResponse = new JSONObject();
                 toResponse.put("code" ,1);
-                toResponse.put("logid" ,paylog.getPid());
+                toResponse.put("pid" , paylog.getPid());
                 toResponse.put("data" , data);
                 toResponse.put("msg"  , "获取成功");
                 return toResponse.toString();
@@ -439,92 +692,106 @@ public class PayController {
                 JSONObject toResponse = new JSONObject();
                 toResponse.put("code", 0);
                 toResponse.put("data", "");
-                toResponse.put("msg", "请求失败");
+                toResponse.put("msg", "请求失败：" + (data != null ? data.get("msg") : "未知错误"));
                 return toResponse.toString();
             }
-        }catch (Exception e){
+
+        } catch (Exception e){
             e.printStackTrace();
             JSONObject toResponse = new JSONObject();
             toResponse.put("code", 0);
             toResponse.put("data", "");
-            toResponse.put("msg", "请求失败，请求存在异常");
+            toResponse.put("msg", "请求异常");
             return toResponse.toString();
         }
-
-
     }
     /**
-     * 微信回调
-     * */
+     * 微信回调（支持 App、JSAPI、Native 扫码、H5）
+     */
     @RequestMapping(value = "/wxPayNotify")
     @ResponseBody
     public String wxPayNotify(
             HttpServletRequest request,
             HttpServletResponse response) throws Exception {
-        TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
-        Map<String, Object> map = new ObjectMapper().readValue(request.getInputStream(), Map.class);
-        Map<String, Object> dataMap = WeChatPayUtils.paramDecodeForAPIV3(map,apiconfig);
-        //判断是否⽀付成功
-        if("SUCCESS".equals(dataMap.get("trade_state"))){
-            //支付完成后，写入充值日志
-            String trade_no = dataMap.get("transaction_id").toString();
-            String out_trade_no = dataMap.get("out_trade_no").toString();
 
+        Map apiconfig = UStatus.getConfig(this.dataprefix, allconfigService, redisTemplate);
+
+        // 解析微信回调请求
+        Map<String, Object> map = new ObjectMapper().readValue(request.getInputStream(), Map.class);
+        Map<String, Object> dataMap = WeChatPayUtils.paramDecodeForAPIV3(map, apiconfig);
+
+        // 判断支付是否成功
+        if ("SUCCESS".equals(dataMap.get("trade_state"))) {
+            String trade_no = String.valueOf(dataMap.get("transaction_id"));
+            String out_trade_no = String.valueOf(dataMap.get("out_trade_no"));
+            String trade_type = String.valueOf(dataMap.getOrDefault("trade_type", "NATIVE")); // 默认为 NATIVE
 
             Long date = System.currentTimeMillis();
-            String created = String.valueOf(date).substring(0,10);
+            String created = String.valueOf(date).substring(0, 10);
+
             TypechoPaylog paylog = new TypechoPaylog();
-            //根据订单和发起人，是否有数据库对应，来是否充值成功
             paylog.setOutTradeNo(out_trade_no);
             paylog.setStatus(0);
-            List<TypechoPaylog> logList= paylogService.selectList(paylog);
-            if(logList.size() > 0){
-                Integer pid = logList.get(0).getPid();
-                Integer uid = logList.get(0).getUid();
+
+            // 查询订单
+            List<TypechoPaylog> logList = paylogService.selectList(paylog);
+            if (logList.size() > 0) {
+                TypechoPaylog oldLog = logList.get(0);
+                Integer pid = oldLog.getPid();
+                Integer uid = oldLog.getUid();
+
                 paylog.setStatus(1);
                 paylog.setTradeNo(trade_no);
                 paylog.setPid(pid);
                 paylog.setCreated(Integer.parseInt(created));
+                paylog.setPackageId(oldLog.getPackageId());
+
+                // 更新订单及用户资产
+                String total_amount = oldLog.getTotalAmount();
+                Integer gold = Double.valueOf(total_amount).intValue();
+                Integer integral = 0;
+
+                if (!paylog.getPackageId().equals(0)) {
+                    TypechoPayPackage payPackage = payPackageService.selectByKey(paylog.getPackageId());
+                    if (payPackage != null) {
+                        gold = payPackage.getGold();
+                        integral = payPackage.getIntegral();
+                    }
+                }
+
                 paylogService.update(paylog);
 
-                //订单修改后，插入用户表
-                String total_amount = logList.get(0).getTotalAmount();
-                Integer integral = Double.valueOf(total_amount).intValue();
                 TypechoUsers users = usersService.selectByKey(uid);
-                Integer oldAssets = users.getAssets();
-                Integer assets = oldAssets + integral;
-                users.setAssets(assets);
+                users.setAssets(users.getAssets() + gold);
+                users.setPoints(users.getPoints() + integral);
                 usersService.update(users);
-            }else{
+
+            } else {
                 System.err.println("数据库不存在订单");
                 Map<String, String> returnMap = new HashMap<>();
                 returnMap.put("code", "FALL");
                 returnMap.put("message", "");
-                //将返回微信的对象转换为xml
                 String returnXml = WeChatPayUtils.mapToXml(returnMap);
                 return returnXml;
             }
 
-            //给微信发送我已接收通知的响应
-            //创建给微信响应的对象
+            // 返回微信成功响应（保持原格式）
             Map<String, String> returnMap = new HashMap<>();
             returnMap.put("code", "SUCCESS");
             returnMap.put("message", "成功");
-            //将返回微信的对象转换为xml
+            String returnXml = WeChatPayUtils.mapToXml(returnMap);
+            return returnXml;
+
+        } else {
+            System.err.println("微信支付失败");
+            Map<String, String> returnMap = new HashMap<>();
+            returnMap.put("code", "FALL");
+            returnMap.put("message", "");
             String returnXml = WeChatPayUtils.mapToXml(returnMap);
             return returnXml;
         }
-        //支付失败
-        System.err.println("微信支付失败");
-        //创建给微信响应的对象
-        Map<String, String> returnMap = new HashMap<>();
-        returnMap.put("code", "FALL");
-        returnMap.put("message", "");
-        //将返回微信的对象转换为xml
-        String returnXml = WeChatPayUtils.mapToXml(returnMap);
-        return returnXml;
-
     }
+
 
     /**
      * 卡密充值相关
@@ -577,10 +844,10 @@ public class PayController {
     @ResponseBody
     @LoginRequired(purview = "2")
     public String tokenPayList (@RequestParam(value = "searchParams", required = false) String  searchParams,
-                                @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
-                                @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
+                            @RequestParam(value = "page"        , required = false, defaultValue = "1") Integer page,
+                            @RequestParam(value = "limit"       , required = false, defaultValue = "15") Integer limit,
                                 @RequestParam(value = "searchKey"        , required = false, defaultValue = "") String searchKey,
-                                @RequestParam(value = "token", required = false) String  token) {
+                            @RequestParam(value = "token", required = false) String  token) {
         Integer total = 0;
         Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
         TypechoPaykey query = new TypechoPaykey();
@@ -626,7 +893,6 @@ public class PayController {
         query.setStatus(0);
         PageList<TypechoPaykey> pageList = paykeyService.selectPage(query, 1, limit,null);
         List<TypechoPaykey> list = pageList.getList();
-
         String fileName = "tokenPayExcel"  + ".xls";//设置要导出的文件的名字
         //新增数据行，并且设置单元格数据
 
@@ -667,9 +933,15 @@ public class PayController {
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer uid =Integer.parseInt(map.get("uid").toString());
             //登录情况下，恶意充值攻击拦截
-            //登录情况下，恶意充值攻击拦截
-            TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
-            if(apiconfig.getBanRobots().equals(1)) {
+            Map apiconfig = UStatus.getConfig(this.dataprefix,allconfigService,redisTemplate);
+            Integer switchTokenpay = 1;
+            if(apiconfig.get("switchTokenpay")!=null){
+                switchTokenpay = Integer.parseInt(apiconfig.get("switchTokenpay").toString());
+            }
+            if(switchTokenpay.equals(0)){
+                return Result.getResultJson(0,"支付渠道已关闭",null);
+            }
+            if(apiconfig.get("banRobots").toString().equals("1")) {
                 String isSilence = redisHelp.getRedis(this.dataprefix+"_"+uid+"_silence",redisTemplate);
                 if(isSilence!=null){
                     return Result.getResultJson(0,"你的操作太频繁了，请稍后再试",null);
@@ -753,17 +1025,52 @@ public class PayController {
     @RequestMapping(value = "/EPay")
     @ResponseBody
     @LoginRequired(purview = "0")
-    public String EPay(@RequestParam(value = "type", required = false) String type,@RequestParam(value = "money", required = false) Integer money,@RequestParam(value = "device", required = false) String device,@RequestParam(value = "token", required = false) String  token,HttpServletRequest request) {
+    public String EPay(@RequestParam(value = "type", required = false) String type,
+                       @RequestParam(value = "money", required = false) Integer money,
+                       @RequestParam(value = "device", required = false) String device,
+                       @RequestParam(value = "token", required = false) String  token,
+                       @RequestParam(value = "packageId", required = false ,defaultValue = "0") Integer  packageId,
+                       HttpServletRequest request) {
         if(type==null&&money==null&&money==null&&device==null){
             return Result.getResultJson(0,"参数不正确",null);
         }
         try{
-
+            //当packageId为0时，以num参数结算，当packageId不为0时，以套餐价格结算。
+            TypechoPayPackage payPackage = new TypechoPayPackage();
+            if(packageId.equals(0)){
+                Pattern pattern = Pattern.compile("[0-9]*");
+                if(!pattern.matcher(money.toString()).matches()){
+                    return Result.getResultJson(0,"充值金额必须为正整数",null);
+                }
+                if(money <= 0){
+                    return Result.getResultJson(0,"充值金额不正确",null);
+                }
+            }else{
+                payPackage = payPackageService.selectByKey(packageId);
+                if(payPackage == null){
+                    return Result.getResultJson(0,"套餐不存在",null);
+                }
+                money = payPackage.getPrice();
+            }
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer uid =Integer.parseInt(map.get("uid").toString());
             //登录情况下，恶意充值攻击拦截
-            TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
-            if(apiconfig.getBanRobots().equals(1)) {
+            Map apiconfig = UStatus.getConfig(this.dataprefix,allconfigService,redisTemplate);
+            Integer minPayNum = 5;
+            if(apiconfig.get("minPayNum")!=null){
+                minPayNum = Integer.parseInt(apiconfig.get("minPayNum").toString());
+            }
+            if(money < minPayNum){
+                return Result.getResultJson(0,"最小充值金额为："+minPayNum,null);
+            }
+            Integer switchEpay = 1;
+            if(apiconfig.get("switchEpay")!=null){
+                switchEpay = Integer.parseInt(apiconfig.get("switchEpay").toString());
+            }
+            if(switchEpay.equals(0)){
+                return Result.getResultJson(0,"支付渠道已关闭",null);
+            }
+            if(apiconfig.get("banRobots").toString().equals("1")) {
                 String isSilence = redisHelp.getRedis(this.dataprefix+"_"+uid+"_silence",redisTemplate);
                 if(isSilence!=null){
                     return Result.getResultJson(0,"你的操作太频繁了，请稍后再试",null);
@@ -785,18 +1092,18 @@ public class PayController {
             }
 
             //攻击拦截结束
-            String url = apiconfig.getEpayUrl();
+            String url = apiconfig.get("epayUrl").toString();
             Date now = new Date();
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss");//可以方便地修改日期格式
             String timeID = dateFormat.format(now);
             String outTradeNo=timeID+"Epay_"+type;
             String  clientip = baseFull.getIpAddr(request);
             Map<String,String> sign = new HashMap<>();
-            sign.put("pid",apiconfig.getEpayPid().toString());
+            sign.put("pid",apiconfig.get("epayPid").toString());
             sign.put("type",type.toString());
             sign.put("out_trade_no",outTradeNo);
-            sign.put("notify_url",apiconfig.getEpayNotifyUrl());
-            sign.put("return_url",apiconfig.getEpayNotifyUrl());
+            sign.put("notify_url",apiconfig.get("epayNotifyUrl").toString());
+            sign.put("return_url",apiconfig.get("epayNotifyUrl").toString());
             sign.put("clientip",clientip);
             sign.put("name","在线充值金额");
             sign.put("money",money.toString());
@@ -806,7 +1113,7 @@ public class PayController {
                 signStr += m.getKey() + "=" +m.getValue()+"&";
             }
             signStr = signStr.substring(0,signStr.length()-1);
-            signStr += apiconfig.getEpayKey();
+            signStr += apiconfig.get("epayKey").toString();
             signStr = DigestUtils.md5DigestAsHex(signStr.getBytes());
             sign.put("sign_type","MD5");
             sign.put("sign",signStr);
@@ -826,20 +1133,28 @@ public class PayController {
                 Long date = System.currentTimeMillis();
                 String created = String.valueOf(date).substring(0,10);
                 TypechoPaylog paylog = new TypechoPaylog();
-                Integer TotalAmount = money * apiconfig.getScale();
+                Integer TotalAmount = money * Integer.parseInt(apiconfig.get("scale").toString());
                 paylog.setStatus(0);
                 paylog.setCreated(Integer.parseInt(created));
                 paylog.setUid(uid);
                 paylog.setOutTradeNo(outTradeNo);
                 paylog.setTotalAmount(TotalAmount.toString());
                 paylog.setPaytype("ePay_"+type);
-                paylog.setSubject("扫码支付");
+                if(packageId.equals(0)){
+                    paylog.setSubject("易支付");
+                    paylog.setTotalAmount(TotalAmount.toString());
+                }else{
+                    TotalAmount = payPackage.getGold();
+                    paylog.setTotalAmount(TotalAmount.toString());
+                    paylog.setSubject("易支付-套餐充值");
+                    paylog.setPackageId(packageId);
+                }
                 paylogService.insert(paylog);
                 //再返回数据
                 JSONObject toResponse = new JSONObject();
                 toResponse.put("code" ,1);
-                toResponse.put("payapi" ,apiconfig.getEpayUrl());
-                toResponse.put("logid" ,paylog.getPid());
+                toResponse.put("pid" , paylog.getPid());
+                toResponse.put("payapi" ,apiconfig.get("epayUrl").toString());
                 toResponse.put("data" , jsonMap);
                 toResponse.put("msg"  , "获取成功");
                 return toResponse.toString();
@@ -863,7 +1178,7 @@ public class PayController {
     @RequestMapping(value = "/EPayNotify")
     @ResponseBody
     public String EPayNotify(HttpServletRequest request,
-                             HttpServletResponse response) throws AlipayApiException {
+                         HttpServletResponse response) throws AlipayApiException {
         Map<String, String> params = new HashMap<String, String>();
         Map requestParams = request.getParameterMap();
         for (Iterator iter = requestParams.keySet().iterator(); iter.hasNext(); ) {
@@ -879,13 +1194,12 @@ public class PayController {
         System.err.println(params);
         try{
             if(params.get("trade_status").equals("TRADE_SUCCESS")){
-                TypechoApiconfig apiconfig = UStatus.getConfig(this.dataprefix,apiconfigService,redisTemplate);
+                Map apiconfig = UStatus.getConfig(this.dataprefix,allconfigService,redisTemplate);
                 //支付完成后，写入充值日志
                 String trade_no = params.get("trade_no");
                 String out_trade_no = params.get("out_trade_no");
                 String total_amount = params.get("money");
-                Integer scale = apiconfig.getScale();
-                Integer integral = Double.valueOf(total_amount).intValue() * scale;
+
 
                 Long date = System.currentTimeMillis();
                 String created = String.valueOf(date).substring(0,10);
@@ -901,12 +1215,28 @@ public class PayController {
                     paylog.setTradeNo(trade_no);
                     paylog.setPid(pid);
                     paylog.setCreated(Integer.parseInt(created));
+                    paylog.setPackageId(logList.get(0).getPackageId());
+                    //订单修改后，插入用户表
+                    Integer scale = Integer.parseInt(apiconfig.get("scale").toString());
+                    Integer gold = Double.valueOf(total_amount).intValue() * scale;
+                    Integer integral = 0;
+                    //如果是套餐充值，且套餐存在，则赋值套餐
+                    if(!paylog.getPackageId().equals(0)){
+                        TypechoPayPackage payPackage = payPackageService.selectByKey(paylog.getPackageId());
+                        if(payPackage != null){
+                            gold = payPackage.getGold();
+                            integral = payPackage.getIntegral();
+                        }
+                    }
                     paylogService.update(paylog);
                     //订单修改后，插入用户表
                     TypechoUsers users = usersService.selectByKey(uid);
                     Integer oldAssets = users.getAssets();
-                    Integer assets = oldAssets + integral;
+                    Integer assets = oldAssets + gold;
+                    Integer oldPoints = users.getPoints();
+                    Integer points = oldPoints + integral;
                     users.setAssets(assets);
+                    users.setPoints(points);
                     usersService.update(users);
                     return "success";
                 }else{
@@ -930,12 +1260,15 @@ public class PayController {
     @RequestMapping(value = "/payStatus")
     @ResponseBody
     @LoginRequired(purview = "0")
-    public String payStatus (@RequestParam(value = "pid", required = false) Integer  pid,
-                                @RequestParam(value = "token", required = false) String  token) {
+    public String payStatus (@RequestParam(value = "pid", required = false ,defaultValue = "0") Integer  pid,
+                             @RequestParam(value = "token", required = false) String  token) {
         try {
             Map map =redisHelp.getMapValue(this.dataprefix+"_"+"userInfo"+token,redisTemplate);
             Integer uid  = Integer.parseInt(map.get("uid").toString());
             TypechoPaylog paylog = paylogService.selectByKey(pid);
+            if(paylog==null){
+                return Result.getResultJson(1,"暂无支付记录",null);
+            }
             if(paylog.getUid().equals(uid)){
                 if(paylog.getStatus().equals(1)){
                     return Result.getResultJson(1,"充值成功",null);
