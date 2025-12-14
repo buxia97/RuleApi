@@ -1942,8 +1942,6 @@ public class ContentsController {
         userlog.setCid(-1);
         Integer upcomingWithdraw = userlogService.total(userlog);
 
-        Integer upcomingIdentifyConsumer = jdbcTemplate.queryForObject("select count(*) from `" + prefix + "_consumer` where identifyStatus = '0';", Integer.class);
-        Integer upcomingIdentifyCompany = jdbcTemplate.queryForObject("select count(*) from `" + prefix + "_company` where identifyStatus = '0';", Integer.class);
         data.put("allContents",allContents);
         data.put("allComments",allComments);
         data.put("allUsers",allUsers);
@@ -1959,8 +1957,6 @@ public class ContentsController {
         data.put("upcomingSpace",upcomingSpace);
         data.put("upcomingAds",upcomingAds);
         data.put("upcomingWithdraw",upcomingWithdraw);
-        data.put("upcomingIdentifyConsumer",upcomingIdentifyConsumer);
-        data.put("upcomingIdentifyCompany",upcomingIdentifyCompany);
 
         JSONObject response = new JSONObject();
         response.put("code" , 1);
