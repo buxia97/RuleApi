@@ -96,12 +96,12 @@
 
     <!-- 删除 -->
     <delete id="delete">
-        DELETE FROM typecho_userapi
+        DELETE FROM ${prefix}_userapi
         WHERE `id` = #{key}
     </delete>
 
     <delete id="deleteUserAll">
-        DELETE FROM typecho_userapi
+        DELETE FROM ${prefix}_userapi
         WHERE `uid` = #{key}
     </delete>
 
