@@ -135,7 +135,8 @@ public class UserStatus {
             userJson.put("experience", user.getExperience());
             userJson.put("introduce", user.getIntroduce());
             userJson.put("bantime", user.getBantime());
-            userJson.put("ip", user.getIp());
+            // 不下发真实登录 IP：这个 json 会出现在帖子列表/评论/软件评价等公开接口里，
+            // 前端只用 local（归属地）展示，ip 没有使用方。
             userJson.put("local", user.getLocal());
             //判断是否为VIP
             userJson.put("vip", user.getVip());

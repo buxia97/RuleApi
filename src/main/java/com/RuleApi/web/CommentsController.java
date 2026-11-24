@@ -510,7 +510,7 @@ public class CommentsController {
                 if(apiconfig.get("cmsSwitch").toString().equals("1")|apiconfig.get("cmsSwitch").toString().equals("3")){
                     try{
                         String setText = baseFull.htmlToText(text);
-                        setText = baseFull.encrypt(setText);
+                        // 审核入参必须是原文：encrypt 是 Base64，腾讯 TMS 永远匹配不到中文违规词
                         Map violationData = securityService.textViolation(setText);
                         String Suggestion = violationData.get("Suggestion").toString();
                         if(Suggestion.equals("Block")){
@@ -781,7 +781,7 @@ public class CommentsController {
                 if(apiconfig.get("cmsSwitch").toString().equals("1")|apiconfig.get("cmsSwitch").toString().equals("3")){
                     try{
                         String setText = baseFull.htmlToText(text);
-                        setText = baseFull.encrypt(setText);
+                        // 审核入参必须是原文：encrypt 是 Base64，腾讯 TMS 永远匹配不到中文违规词
                         Map violationData = securityService.textViolation(setText);
                         String Suggestion = violationData.get("Suggestion").toString();
                         if(Suggestion.equals("Block")){

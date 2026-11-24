@@ -658,7 +658,7 @@ public class ContentsController {
                 //腾讯云内容违规检测
                 if(apiconfig.get("cmsSwitch").toString().equals("1")|apiconfig.get("cmsSwitch").toString().equals("3")){
                     try{
-                        String setTitle = baseFull.encrypt(title);
+                        String setTitle = title;
                         Map violationData = securityService.textViolation(setTitle);
                         String Suggestion = violationData.get("Suggestion").toString();
                         if(Suggestion.equals("Block")){
@@ -712,7 +712,7 @@ public class ContentsController {
                     if(apiconfig.get("cmsSwitch").toString().equals("1")|apiconfig.get("cmsSwitch").toString().equals("3")){
                         try{
                             String setText = baseFull.htmlToText(text);
-                            setText = baseFull.encrypt(setText);
+                            // 审核入参必须是原文：encrypt 是 Base64，腾讯 TMS 永远匹配不到中文违规词
                             Map violationData = securityService.textViolation(setText);
                             String Suggestion = violationData.get("Suggestion").toString();
                             if(Suggestion.equals("Block")){
@@ -1064,7 +1064,7 @@ public class ContentsController {
                 //腾讯云内容违规检测
                 if(apiconfig.get("cmsSwitch").toString().equals("1")|apiconfig.get("cmsSwitch").toString().equals("3")){
                     try{
-                        String setTitle = baseFull.encrypt(title);
+                        String setTitle = title;
                         Map violationData = securityService.textViolation(setTitle);
                         String Suggestion = violationData.get("Suggestion").toString();
                         if(Suggestion.equals("Block")){
@@ -1120,7 +1120,7 @@ public class ContentsController {
                     if(apiconfig.get("cmsSwitch").toString().equals("1")|apiconfig.get("cmsSwitch").toString().equals("3")){
                         try{
                             String setText = baseFull.htmlToText(text);
-                            setText = baseFull.encrypt(setText);
+                            // 审核入参必须是原文：encrypt 是 Base64，腾讯 TMS 永远匹配不到中文违规词
                             Map violationData = securityService.textViolation(setText);
                             String Suggestion = violationData.get("Suggestion").toString();
                             if(Suggestion.equals("Block")){
@@ -2352,8 +2352,9 @@ public class ContentsController {
         for (int i = 0; i < length; i += maxLength) {
             int end = Math.min(length, i + maxLength);
             String chunk = text.substring(i, end);
-            String encryptedText = baseFull.encrypt(chunk);
-            Map result = securityService.textViolation(encryptedText);
+            // 分段送审是因为 TMS 单次有长度上限；但入参必须是原文 ——
+            // 这里原来先 Base64（encrypt），中文违规词一律匹配不到，等于整段审核失效。
+            Map result = securityService.textViolation(chunk);
             results.add(result);
         }
         return results;

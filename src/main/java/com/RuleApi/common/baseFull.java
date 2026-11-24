@@ -520,6 +520,29 @@ public class baseFull {
         return isForbidden;
     }
 
+    /**
+     * 上传落盘后缀白名单：不在表里的一律落成 .bin
+     *
+     * 落盘名 = UUID + 本方法结果。只要放行了可执行后缀，配合"本地存储 + 目录可执行"就是 RCE；
+     * 放行 .svg 则是同源存储型 XSS（SVG 能内嵌 script）。所以这里用白名单，不用黑名单。
+     */
+    private static final java.util.Set<String> SAFE_UPLOAD_SUFFIX = new java.util.HashSet<String>(java.util.Arrays.asList(
+            ".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".avif", ".heic", ".heif", ".ico",
+            ".mp4", ".avi", ".mkv", ".mov", ".mp3", ".wav", ".m4a", ".aac",
+            ".pdf", ".zip", ".rar", ".7z", ".txt", ".md", ".csv",
+            ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".apk"));
+
+    public static String safeUploadSuffix(String ext) {
+        if (ext == null) {
+            return ".bin";
+        }
+        String e = ext.trim().toLowerCase();
+        if (!e.startsWith(".")) {
+            e = "." + e;
+        }
+        return SAFE_UPLOAD_SUFFIX.contains(e) ? e : ".bin";
+    }
+
     // 加密字符串
     public String encrypt(String plainText) {
         byte[] encodedBytes = Base64.getEncoder().encode(plainText.getBytes());

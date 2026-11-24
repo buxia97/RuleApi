@@ -216,6 +216,13 @@ public class UsersController {
                     json.remove("address");
                     json.remove("authCode");
                     json.remove("pay");
+                    // 列表是公开接口（默认 isLogin=0）：登录 IP / 设备指纹 / 该用户的邀请码 /
+                    // 精确生日都属于"看不到也用不上、但被抓走就能用"的信息。
+                    // 注意 posttime / logged 不能删：榜单（发帖榜/活跃榜）靠它们渲染。
+                    json.remove("ip");
+                    json.remove("clientId");
+                    json.remove("invitationCode");
+                    json.remove("birthday");
                     if (!group.equals("administrator")) {
                         json.remove("assets");
                     }
@@ -476,16 +483,13 @@ public class UsersController {
                     }
                 }
                 String curGroup = info.getGroupKey();
-                if (!group.equals("administrator")&&isVip.equals(0)) {
-                    json.remove("mail");
-                    json.remove("phone");
-                }
-                //再次判断，如果用户是管理员，只有管理员能看管理员
-                if(curGroup.equals("administrator")){
-                    if (!group.equals("administrator")){
-                        json.remove("mail");
-                        json.remove("phone");
-                    }
+                // 联系方式：只有「查自己」返回完整值（前端靠它判断是否已绑定），
+                // 查别人（含管理员、含 VIP）一律只给打码值。
+                // 原实现是"VIP 与管理员能看别人完整手机号邮箱"，等于把隐私边界交给会员等级。
+                boolean isSelfInfo = logUid > 0 && String.valueOf(logUid).equals(String.valueOf(key));
+                if (!isSelfInfo) {
+                    json.put("mail", MaskUtils.maskContact(info.getMail()));
+                    json.put("phone", MaskUtils.maskContact(info.getPhone()));
                 }
                 if (uStatus != 0) {
                     TypechoFan fan = new TypechoFan();
@@ -2074,10 +2078,27 @@ public class UsersController {
                 }
                 jsonToMap.remove("code");
                 if (jsonToMap.get("password") != null) {
+                    // 历史问题：空串也会走 phpass.HashPassword 写库，等于把原密码覆盖成空密码，
+                    // 之后用空密码就能登录；而且任何持 token 的请求都能改，没有旧密码校验。
                     String p = jsonToMap.get("password").toString();
-                    String passwd = phpass.HashPassword(p);
-                    jsonToMap.put("password", passwd);
+                    if (StringUtils.isBlank(p)) {
+                        return Result.getResultJson(0, "新密码不能为空", null);
+                    }
+                    if (p.length() < 6 || !p.matches(".*[A-Za-z].*") || !p.matches(".*\\d.*")) {
+                        return Result.getResultJson(0, "密码需包含字母和数字，且不少于6位", null);
+                    }
+                    String oldPassword = jsonToMap.get("oldPassword") == null ? "" : jsonToMap.get("oldPassword").toString();
+                    if (StringUtils.isBlank(oldPassword)) {
+                        return Result.getResultJson(0, "请先填写原密码", null);
+                    }
+                    TypechoUsers curUser = service.selectByKey(Integer.parseInt(uid));
+                    if (curUser == null || curUser.getPassword() == null
+                            || !phpass.CheckPassword(oldPassword, curUser.getPassword())) {
+                        return Result.getResultJson(0, "原密码不正确", null);
+                    }
+                    jsonToMap.put("password", phpass.HashPassword(p));
                 }
+                jsonToMap.remove("oldPassword");
 
                 if (jsonToMap.get("uid") == null) {
                     return Result.getResultJson(0, "用户不存在", null);
@@ -2102,7 +2123,7 @@ public class UsersController {
                     if(apiconfig.get("cmsSwitch").toString().equals("1")|apiconfig.get("cmsSwitch").toString().equals("3")){
                         try {
                             String setText = baseFull.htmlToText(introduce);
-                            setText = baseFull.encrypt(setText);
+                            // 审核入参必须是原文：encrypt 是 Base64，腾讯 TMS 永远匹配不到中文违规词
                             Map violationData = securityService.textViolation(setText);
                             String Suggestion = violationData.get("Suggestion").toString();
                             if(Suggestion.equals("Block")){
@@ -2125,22 +2146,9 @@ public class UsersController {
                     }
                 }
 
-                jsonToMap.remove("name");
-                jsonToMap.remove("group");
-                //部分字段不允许修改
-                jsonToMap.remove("customize");
-                jsonToMap.remove("created");
-                jsonToMap.remove("activated");
-                jsonToMap.remove("logged");
-                jsonToMap.remove("authCode");
-                jsonToMap.remove("bantime");
-                jsonToMap.remove("posttime");
-                //jsonToMap.remove("introduce");
-
-                jsonToMap.remove("assets");
-                jsonToMap.remove("experience");
-                jsonToMap.remove("vip");
-                jsonToMap.remove("points");
+                // 不再用 remove 黑名单挡字段：历史事故就是挡了 "group"，
+                // 而实体字段叫 groupKey（列名才叫 group），params={"groupKey":"administrator"}
+                // 直接把自己提成管理员。写入字段由下方白名单统一收口。
                 if(jsonToMap.get("screenName")!=null){
                     //验证用户名是否违禁
                     String screenName = jsonToMap.get("screenName").toString();
@@ -2161,7 +2169,7 @@ public class UsersController {
                     if(apiconfig.get("cmsSwitch").toString().equals("1")|apiconfig.get("cmsSwitch").toString().equals("3")){
                         try{
                             String setText = baseFull.htmlToText(screenName);
-                            setText = baseFull.encrypt(setText);
+                            // 审核入参必须是原文：encrypt 是 Base64，腾讯 TMS 永远匹配不到中文违规词
                             Map violationData = securityService.textViolation(setText);
                             String Suggestion = violationData.get("Suggestion").toString();
                             if(Suggestion.equals("Block")){
@@ -2184,7 +2192,21 @@ public class UsersController {
                     }
                 }
 
-                update = JSON.parseObject(JSON.toJSONString(jsonToMap), TypechoUsers.class);
+                // 白名单：只允许用户改这几列。groupKey / assets / vip / experience / points /
+                // bantime / titleHonor / frameHonor / isMerchant / created 等身份与资产列一律不可写。
+                Map<String, Object> selfEditable = new HashMap<String, Object>();
+                String[] selfEditKeys = new String[]{
+                        "screenName", "introduce", "url", "avatar", "userBg",
+                        "gender", "region", "birthday", "mail", "phone", "password",
+                        // pay = 提现收款方式（type|实名人|账号|收款码图），提现账户页走 userEdit 写它
+                        "pay"
+                };
+                for (String key : selfEditKeys) {
+                    if (jsonToMap.get(key) != null) {
+                        selfEditable.put(key, jsonToMap.get(key));
+                    }
+                }
+                update = JSON.parseObject(JSON.toJSONString(selfEditable), TypechoUsers.class);
             }else{
                 return Result.getResultJson(0, "参数不正确", null);
             }
@@ -2472,29 +2494,28 @@ public class UsersController {
         }
         Integer total = 0;
         TypechoUserlog query = new TypechoUserlog();
+        // 类型与归属必须无条件设置。原实现把这两句写在 if(searchParams 非空) 里，
+        // 只要不带 searchParams，query 就是「全空条件」→ 直接把全站所有人的 userlog
+        // （不止提现，连消费/购买记录）分页返回给任何登录用户。
+        query.setType("withdraw");
+        Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
+        Integer logUid = Integer.parseInt(map.get("uid").toString());
+        String group = map.get("group") == null ? "" : map.get("group").toString();
+        boolean isAdmin = group.equals("administrator");
+        if (!isAdmin) {
+            // 非管理员只能看自己的提现记录（不允许用 searchParams 覆盖）
+            query.setUid(logUid);
+        }
         if (StringUtils.isNotBlank(searchParams)) {
-
             JSONObject object = JSON.parseObject(searchParams);
-            query.setType("withdraw");
-            Map map = redisHelp.getMapValue(this.dataprefix + "_" + "userInfo" + token, redisTemplate);
-            Integer uid = Integer.parseInt(map.get("uid").toString());
-            String group = map.get("group").toString();
-            //不是管理员就只能看自己的提现记录
-            if (!group.equals("administrator")) {
-                object.put("uid", uid);
-
-            }
-            if (object.get("uid") != null) {
-
+            if (isAdmin && object.get("uid") != null) {
                 query.setUid(Integer.parseInt(object.get("uid").toString()));
             }
             if (object.get("cid") != null) {
-
                 query.setCid(Integer.parseInt(object.get("cid").toString()));
             }
-            total = userlogService.total(query);
-
         }
+        total = userlogService.total(query);
 
         PageList<TypechoUserlog> pageList = userlogService.selectPage(query, page, limit);
         List jsonList = new ArrayList();
@@ -3662,7 +3683,7 @@ public class UsersController {
         TypechoViolation query = new TypechoViolation();
         Integer total = 0;
         List jsonList = new ArrayList();
-        List cacheList = redisHelp.getList(this.dataprefix+"_"+"violationList_"+page+"_"+limit+"_"+searchParams,redisTemplate);
+        List cacheList = redisHelp.getList(this.dataprefix+"_"+"violationList_v2_"+page+"_"+limit+"_"+searchParams,redisTemplate);
         if (StringUtils.isNotBlank(searchParams)) {
             JSONObject object = JSON.parseObject(searchParams);
             query = object.toJavaObject(TypechoViolation.class);
@@ -3687,19 +3708,26 @@ public class UsersController {
                     Map json = JSONObject.parseObject(JSONObject.toJSONString(list.get(i)), Map.class);
                     TypechoViolation violation = list.get(i);
                     Integer userid = violation.getUid();
-                    //获取用户信息
-                    Map userJson = UserStatus.getUserInfo(userid,allconfigService,service);
-                    //获取用户等级
-//                    TypechoComments comments = new TypechoComments();
-//                    comments.setAuthorId(userid);
-//                    Integer lv = commentsService.total(comments,null);
-//                    userJson.put("lv", baseFull.getLv(lv));
-                    json.put("userJson",userJson);
+                    // 小黑屋是公示功能：只下发公示必需的字段。
+                    // 原实现把整份用户档案（含 mail/phone/ip/experience/honor/invitationCode）
+                    // 塞进公开接口，等于把被处罚用户的隐私一起公开。
+                    Map fullUser = UserStatus.getUserInfo(userid,allconfigService,service);
+                    Map<String, Object> publicUser = new HashMap<String, Object>();
+                    publicUser.put("uid", userid);
+                    publicUser.put("name", fullUser.get("name"));
+                    publicUser.put("avatar", fullUser.get("avatar"));
+                    publicUser.put("bantime", fullUser.get("bantime"));
+                    publicUser.put("groupKey", fullUser.get("groupKey"));
+                    publicUser.put("vip", fullUser.get("vip"));
+                    publicUser.put("isvip", fullUser.get("isvip"));
+                    // handler 是处理人（管理员）uid，公示不需要
+                    json.remove("handler");
+                    json.put("userJson", publicUser);
                     jsonList.add(json);
                 }
 
-                redisHelp.delete(this.dataprefix+"_"+"violationList_"+page+"_"+limit+"_"+searchParams,redisTemplate);
-                redisHelp.setList(this.dataprefix+"_"+"violationList_"+page+"_"+limit+"_"+searchParams,jsonList,30,redisTemplate);
+                redisHelp.delete(this.dataprefix+"_"+"violationList_v2_"+page+"_"+limit+"_"+searchParams,redisTemplate);
+                redisHelp.setList(this.dataprefix+"_"+"violationList_v2_"+page+"_"+limit+"_"+searchParams,jsonList,30,redisTemplate);
             }
         }catch (Exception e){
             e.printStackTrace();

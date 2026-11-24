@@ -63,7 +63,7 @@ public class UploadServiceImpl  implements UploadService {
             byte[] imageBytes = Base64.getDecoder().decode(base64Image);
             InputStream inputStream = new ByteArrayInputStream(imageBytes);
 
-            String newFileName = UUID.randomUUID() + eName;
+            String newFileName = UUID.randomUUID() + baseFull.safeUploadSuffix(eName);
             Calendar cal = Calendar.getInstance();
             int year = cal.get(Calendar.YEAR);
             int month = cal.get(Calendar.MONTH) + 1;
@@ -90,7 +90,7 @@ public class UploadServiceImpl  implements UploadService {
                     Long sizeLong = Long.valueOf(size);
                     files.setSize(sizeLong);
                     files.setName(newFileName);
-                    files.setSuffix("png");
+                    files.setSuffix(baseFull.safeUploadSuffix(eName).substring(1));
                     Long date = System.currentTimeMillis();
                     String curTime = String.valueOf(date).substring(0, 10);
                     files.setCreated(Integer.parseInt(curTime));
@@ -144,7 +144,7 @@ public class UploadServiceImpl  implements UploadService {
                     Long sizeLong = Long.valueOf(size);
                     files.setSize(sizeLong);
                     files.setName(newFileName);
-                    files.setSuffix("png");
+                    files.setSuffix(baseFull.safeUploadSuffix(eName).substring(1));
                     Long date = System.currentTimeMillis();
                     String curTime = String.valueOf(date).substring(0, 10);
                     files.setCreated(Integer.parseInt(curTime));
@@ -180,7 +180,7 @@ public class UploadServiceImpl  implements UploadService {
                 Long sizeLong = Long.valueOf(size);
                 files.setSize(sizeLong);
                 files.setName(newFileName);
-                files.setSuffix("png");
+                files.setSuffix(baseFull.safeUploadSuffix(eName).substring(1));
                 Long date = System.currentTimeMillis();
                 String curTime = String.valueOf(date).substring(0, 10);
                 files.setCreated(Integer.parseInt(curTime));
@@ -219,7 +219,7 @@ public class UploadServiceImpl  implements UploadService {
                         Long sizeLong = Long.valueOf(size);
                         files.setSize(sizeLong);
                         files.setName(newFileName);
-                        files.setSuffix("png");
+                        files.setSuffix(baseFull.safeUploadSuffix(eName).substring(1));
                         Long date = System.currentTimeMillis();
                         String curTime = String.valueOf(date).substring(0, 10);
                         files.setCreated(Integer.parseInt(curTime));
@@ -313,7 +313,7 @@ public class UploadServiceImpl  implements UploadService {
                 Long sizeLong = Long.valueOf(size);
                 files.setSize(sizeLong);
                 files.setName(newFileName);
-                files.setSuffix("png");
+                files.setSuffix(baseFull.safeUploadSuffix(eName).substring(1));
                 Long date = System.currentTimeMillis();
                 String curTime = String.valueOf(date).substring(0, 10);
                 files.setCreated(Integer.parseInt(curTime));
@@ -366,7 +366,7 @@ public class UploadServiceImpl  implements UploadService {
                     Long sizeLong = Long.valueOf(size);
                     files.setSize(sizeLong);
                     files.setName(newFileName);
-                    files.setSuffix("png");
+                    files.setSuffix(baseFull.safeUploadSuffix(eName).substring(1));
                     Long date = System.currentTimeMillis();
                     String curTime = String.valueOf(date).substring(0, 10);
                     files.setCreated(Integer.parseInt(curTime));
@@ -434,7 +434,7 @@ public class UploadServiceImpl  implements UploadService {
                 return Result.getResultJson(0,"请上传图片或者视频文件",null);
             }
         }
-        String newFileName = UUID.randomUUID()+eName;
+        String newFileName = UUID.randomUUID() + baseFull.safeUploadSuffix(eName);
         Calendar cal = Calendar.getInstance();
         int year = cal.get(Calendar.YEAR);
         int month=cal.get(Calendar.MONTH)+1;
@@ -631,7 +631,7 @@ public class UploadServiceImpl  implements UploadService {
             }
         }
         //1.在文件名称中添加随机唯一的值
-        String newFileName = UUID.randomUUID()+eName;
+        String newFileName = UUID.randomUUID() + baseFull.safeUploadSuffix(eName);
 
         // String uuid = UUID.randomUUID().toString().replaceAll("-","");
         filename = newFileName;
@@ -703,7 +703,7 @@ public class UploadServiceImpl  implements UploadService {
             }
         }
         //1.在文件名称中添加随机唯一的值
-        String newFileName = UUID.randomUUID()+eName;
+        String newFileName = UUID.randomUUID() + baseFull.safeUploadSuffix(eName);
 
         // String uuid = UUID.randomUUID().toString().replaceAll("-","");
         filename = newFileName;
@@ -872,7 +872,7 @@ public class UploadServiceImpl  implements UploadService {
             return Result.getResultJson(0, "上传文件不符合要求", null);
         }
 
-        String newFileName = UUID.randomUUID() + eName;
+        String newFileName = UUID.randomUUID() + baseFull.safeUploadSuffix(eName);
         Calendar cal = Calendar.getInstance();
         int year = cal.get(Calendar.YEAR);
         int month = cal.get(Calendar.MONTH) + 1;
